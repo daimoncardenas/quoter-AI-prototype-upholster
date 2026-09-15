@@ -1,0 +1,6 @@
+# Generated tooling cache (absolute paths, machine-specific)
+.atl/
+node_modules/
+
+# El paquete cifrado se genera con npm run build; la llave no vive en el repo.
+dist/

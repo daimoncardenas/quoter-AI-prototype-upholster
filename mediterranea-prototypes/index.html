@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="author" content="Daimon Cardenas">
+  <meta name="copyright" content="Diseño conceptual de Daimon Cardenas. Prototipo de demostración, no afiliado a Mediterránea Insumos.">
+  <meta name="description" content="Cotizador inteligente de telas para muebles de Mediterránea Insumos.">
+  <title>Cotiza tu proyecto | Mediterránea Insumos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+:root{--ink:#105262;--ink-2:#0b3f4c;--accent:#00a19a;--gold:#ffffff;--gold-light:#cfe4e6;--cream:#f7f4ee;--paper:#fff;--text:#243536;--muted:#6d7c7c;--line:#dce3df;--success:#2f806c;--shadow:0 24px 70px rgba(1,43,46,.12);--header-h:108px;--logo-h:74px}
+[hidden]{display:none!important}*{box-sizing:border-box}html{font-size:16px;scroll-padding-bottom:calc(var(--banner-h,0px) + 86px)}body{margin:0;background:var(--cream);color:var(--text);font-family:Montserrat,Arial,sans-serif;min-height:100vh;padding-bottom:calc(var(--banner-h,0px) + 86px)}button,input,select{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid rgba(0,161,154,.45);outline-offset:2px}.site-header{height:var(--header-h);background:var(--ink);color:white;display:flex;align-items:center;justify-content:space-between;padding:0 4vw;border-bottom:1px solid rgba(255,255,255,.12)}.brand{display:flex;align-items:center;text-decoration:none}.brand img{display:block;width:auto;height:var(--logo-h)}.header-copy{display:flex;align-items:center;gap:28px}.eyebrow{text-transform:uppercase;font-size:.72rem;letter-spacing:.17em;font-weight:700;color:var(--ink-2)}.site-header .eyebrow{color:var(--gold-light)}.gold{color:var(--gold)}.secure{font-size:.74rem;color:#d5e0dd}.secure span{color:var(--gold);margin-right:6px}.app-shell{display:grid;grid-template-columns:310px minmax(0,1fr);max-width:1420px;min-height:calc(100vh - var(--header-h) - var(--banner-h,0px));margin:auto;background:white;box-shadow:var(--shadow)}.journey{background:var(--ink);color:white;padding:46px 34px 28px;display:flex;flex-direction:column}.journey h1{font:600 2.15rem/1.04 Cormorant Garamond,serif;margin:10px 0 14px}.journey-intro p{font-size:.82rem;line-height:1.6;color:#bbccca;margin:0}.step-list{list-style:none;padding:0;margin:38px 0 28px;position:relative}.step-list:before{content:"";position:absolute;left:17px;top:20px;bottom:22px;width:1px;background:rgba(255,255,255,.17)}.step-list li{position:relative;display:flex;gap:14px;align-items:center;margin:0 0 22px;color:#7f9b9b;transition:.25s}.step-list li>span{z-index:1;width:35px;height:35px;border-radius:50%;display:grid;place-items:center;background:var(--ink);border:1px solid #4d7071;font-size:.74rem;font-weight:700}.step-list b,.step-list small{display:block}.step-list b{font-size:.78rem;letter-spacing:.03em}.step-list small{font-size:.65rem;margin-top:3px}.step-list li.active,.step-list li.done{color:white}.step-list li.active>span{background:var(--gold);border-color:var(--gold);color:var(--ink)}.step-list li.done>span{background:var(--ink-2);border-color:var(--gold);color:var(--gold)}.help-card{margin-top:auto;border-top:1px solid rgba(255,255,255,.14);padding-top:22px;display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:center}.help-icon{width:30px;height:30px;border:1px solid var(--gold);color:var(--gold);border-radius:50%;display:grid;place-items:center}.help-card b,.help-card small{display:block;font-size:.7rem}.help-card small{font-size:.6rem;color:#9bb0ae;margin-top:3px}.text-button{border:0;background:transparent;color:var(--gold-light);padding:2px 0;text-decoration:underline;text-underline-offset:3px;font-size:.66rem;text-align:left;grid-column:2}.workspace{padding:44px clamp(28px,5vw,78px) 26px;min-width:0}.mobile-progress{display:none}.wizard-step{display:none;animation:rise .35s ease}.wizard-step.active{display:block}@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}.step-heading{max-width:720px;margin-bottom:30px}.step-heading.centered{text-align:center;margin-left:auto;margin-right:auto}.step-heading h2,.success-state h2{font:600 clamp(2rem,4vw,3.05rem)/1 Cormorant Garamond,serif;color:var(--ink);margin:9px 0 12px}.step-heading p{font-size:.9rem;line-height:1.65;color:var(--muted);margin:0}.furniture-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}.furniture-card{min-height:126px;background:white;border:1px solid var(--line);border-radius:4px;padding:18px;text-align:left;color:var(--ink);transition:.2s}.furniture-card:hover{border-color:var(--accent);transform:translateY(-2px)}.furniture-card.selected{border:2px solid var(--accent);background:#eefaf9;box-shadow:0 10px 25px rgba(0,161,154,.10)}.furniture-icon{font:600 2.2rem Cormorant Garamond,serif;display:block;color:var(--accent);height:43px}.furniture-card b,.furniture-card small{display:block}.furniture-card b{font:600 1.1rem Cormorant Garamond,serif}.furniture-card small{font-size:.68rem;color:var(--muted);margin-top:4px}.upload-zone{margin-top:18px;border:1px dashed #adc0bb;border-radius:4px;min-height:118px;padding:18px;background:#f8faf8;display:flex;align-items:center}.upload-zone.dragging{border-color:var(--accent);background:#eefaf9}.upload-copy{width:100%;display:flex;align-items:center;gap:16px}.upload-copy>div{flex:1}.upload-copy b{font-size:.82rem;color:var(--ink)}.upload-copy p{font-size:.68rem;color:var(--muted);margin:5px 0 0}.upload-icon{width:45px;height:45px;border-radius:50%;display:grid;place-items:center;background:#e7efec;color:var(--ink);font-size:1.35rem}.upload-zone{flex-direction:column;align-items:stretch;gap:14px}.photo-strip{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}.photo-strip:empty{display:none}.photo-thumb{position:relative;width:58px;height:54px;border-radius:3px;background-size:cover;background-position:center;border:1px solid var(--line)}.photo-thumb button{position:absolute;top:-6px;right:-6px;width:19px;height:19px;border-radius:50%;border:0;background:var(--ink);color:#fff;font-size:.68rem;line-height:1;display:grid;place-items:center;padding:0}.photo-thumb button:hover{background:#a94848}.photo-count{font-size:.63rem;color:var(--muted);align-self:center}.secondary-button,.back-button,.primary-button{border:0;border-radius:2px;padding:13px 19px;font-weight:700;font-size:.75rem;transition:.2s}.secondary-button{background:white;color:var(--ink);border:1px solid #9fb4af}.secondary-button:hover{border-color:var(--accent)}.primary-button{background:var(--ink);color:#fff;box-shadow:0 8px 18px rgba(7,56,59,.15)}.primary-button:hover{background:var(--ink-2);transform:translateY(-1px)}.primary-button:disabled{opacity:.45;cursor:not-allowed;transform:none}.field-error{color:#a64040;font-size:.72rem;margin:7px 0}.measure-guide{display:grid;grid-template-columns:minmax(260px,.9fr) 1.2fr;gap:38px}.measure-visual{background:var(--ink);border-radius:4px;color:#fff;padding:28px}.furniture-drawing{height:210px;margin:25px 16px 40px;position:relative}.drawing-shape{height:100%;display:grid;place-items:center;box-sizing:border-box;padding:0 30px}.drawing-shape svg{width:100%;height:100%;color:rgba(255,255,255,.62)}.drawing-shape svg [fill=solid]{fill:var(--ink-2)}.furniture-drawing>span{position:absolute;font-size:.62rem;color:var(--gold-light);letter-spacing:.06em}.width-line{left:25%;bottom:-28px}.height-line{left:-18px;top:35%;transform:rotate(-90deg)}.depth-line{right:-13px;top:-20px}.measure-visual p{font-size:.68rem;line-height:1.55;color:#bcd0cd}.measure-fields,.select-grid,.contact-fields{display:grid;grid-template-columns:1fr 1fr;gap:18px}.measure-fields label,.select-grid label,.contact-fields label{font-size:.72rem;font-weight:700;color:var(--ink);position:relative}.field-note{position:static;display:block;margin-top:6px;font-size:.62rem;font-weight:500;color:var(--muted);line-height:1.4}.measure-fields label>span.unit{position:absolute;right:13px;bottom:15px;color:#8aa09c;font-weight:500}.measure-fields input,.measure-fields select,.select-grid select,.contact-fields input{width:100%;margin-top:8px;border:1px solid var(--line);background:white;border-radius:2px;padding:14px;color:var(--text);font-size:.8rem;min-height:47px}.measure-fields input:invalid:not(:placeholder-shown),.contact-fields input:invalid:not(:placeholder-shown){border-color:#b55}.preference-layout{display:grid;gap:30px}.choice-group h3{font:600 1.25rem Cormorant Garamond,serif;color:var(--ink);margin:0 0 13px}.chip-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.chip-grid label input{position:absolute;opacity:0}.chip-grid span{display:flex;align-items:center;min-height:52px;border:1px solid var(--line);padding:12px;border-radius:3px;font-size:.7rem;color:var(--ink);cursor:pointer;transition:.2s}.chip-grid input:checked+span{background:var(--ink);border-color:var(--ink);color:white}.ai-card{display:grid;grid-template-columns:.85fr 1.15fr;background:white;border:1px solid var(--line);box-shadow:0 18px 55px rgba(7,56,59,.09);min-height:350px}.ai-summary{background:#f3f7f5;border-right:1px solid var(--line);padding:34px 30px;display:flex;flex-direction:column;justify-content:center;gap:4px}.ai-summary h4{font:600 1.15rem/1.2 Cormorant Garamond,serif;color:var(--ink);margin:0 0 14px}.ai-summary dl{margin:0;display:grid;gap:11px}.ai-summary dl>div{display:grid;gap:2px}.ai-summary dt{font-size:.6rem;text-transform:uppercase;letter-spacing:.11em;color:var(--muted);font-weight:700}.ai-summary dd{margin:0;font-size:.74rem;color:var(--text);line-height:1.45}.ai-analysis{padding:38px;display:flex;flex-direction:column;justify-content:center}.ai-badge{font-size:.66rem;text-transform:uppercase;letter-spacing:.12em;font-weight:700;color:var(--ink-2)}.pulse{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:6px;box-shadow:0 0 0 5px rgba(0,161,154,.17)}.ai-analysis h3{font:600 1.75rem Cormorant Garamond,serif;color:var(--ink);margin:15px 0 7px}.ai-analysis>p{font-size:.76rem;line-height:1.55;color:var(--muted)}.analysis-checks{margin:11px 0 18px;display:grid;gap:10px}.analysis-checks>div{display:flex;gap:11px}.analysis-checks>div>span{width:23px;height:23px;border-radius:50%;background:#e6f0eb;color:var(--success);display:grid;place-items:center;font-size:.68rem;font-weight:700}
+.analysis-checks>div.warn>span{background:#fbefd9;color:#9a6b22}.analysis-checks p{margin:0}.analysis-checks b,.analysis-checks small{display:block}.analysis-checks b{font-size:.7rem;color:var(--ink)}.analysis-checks small{font-size:.62rem;color:var(--muted);margin-top:2px}.analyze{align-self:flex-start}.notice{display:flex;gap:11px;margin-top:16px;background:#f3f7f5;padding:12px 15px;color:#5c706c}.notice>span{flex:0 0 20px;height:20px;border:1px solid #86a39d;border-radius:50%;display:grid;place-items:center;font:600 .65rem serif}.notice p{font-size:.65rem;line-height:1.5;margin:0}.fabric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.fabric-card{border:1px solid var(--line);background:white;border-radius:4px;overflow:hidden;text-align:left;padding:0;transition:.2s}.fabric-card:hover{transform:translateY(-2px);box-shadow:0 10px 25px rgba(7,56,59,.08)}.fabric-card.selected{border:2px solid var(--accent)}.fabric-card .swatch{position:relative}.best-match{position:absolute;left:0;top:0;background:var(--accent);color:#fff;font-size:.54rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:5px 9px}.fabric-card.over-budget{opacity:.72}.why{margin:9px 0 0;font-size:.62rem;line-height:1.5;color:var(--muted)}.why b{color:var(--ink-2)}.why.over{color:#9a6b22}.swatch{height:104px;position:relative}.swatch:after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 3px,rgba(255,255,255,.08) 3px 4px)}.swatch.has-photo:after{display:none}.fabric-card-body{padding:15px}.fabric-card b,.fabric-card small{display:block}.fabric-card b{font:600 1.05rem Cormorant Garamond,serif;color:var(--ink)}.fabric-card small{font-size:.62rem;color:var(--muted);margin-top:4px;line-height:1.45}.fabric-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}.fabric-tags span{background:#edf2ef;color:var(--ink-2);padding:4px 6px;font-size:.54rem;border-radius:10px}.quote-note{display:flex;gap:9px;margin:10px 0 0;background:#fbf6ec;border-left:3px solid #c9a227;padding:11px 14px;font-size:.66rem;line-height:1.5;color:#7a5c18}.quote-preview{display:flex;align-items:center;justify-content:space-between;margin-top:18px;background:var(--ink);color:white;padding:25px 30px}.quote-preview h3{font:600 1.6rem Cormorant Garamond,serif;margin:6px 0 3px}.quote-preview p{font-size:.62rem;color:#abc0bd;margin:0}.price-block{text-align:right}.price-block small,.price-block span,.price-block strong{display:block}.price-block small,.price-block span{font-size:.6rem;color:#abc0bd}.price-block strong{font:600 1.4rem Cormorant Garamond,serif;color:var(--gold-light);margin:5px 0}.final-layout{display:grid;grid-template-columns:1.15fr .85fr;gap:32px}.contact-fields{align-content:start}.contact-fields .consent{grid-column:1/-1;display:flex;gap:10px;color:var(--muted);font-weight:500;line-height:1.5;font-size:.64rem}.consent input{width:17px;height:17px;margin:1px 0 0;min-height:auto}.summary-card{background:var(--ink);color:white;padding:25px}.summary-title{display:flex;align-items:center;gap:12px;margin:14px 0 18px}.mini-photo{width:64px;height:54px;border-radius:2px;background:#315c5e center/cover}.summary-title b,.summary-title small{display:block}.summary-title b{font:600 1rem Cormorant Garamond,serif}.summary-title small{font-size:.6rem;color:#a9bfbc;margin-top:3px}.summary-card dl{border-top:1px solid rgba(255,255,255,.14);margin:0;padding-top:8px}.summary-card dl div{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:.64rem}.summary-card dt{color:#a9bfbc}.summary-card dd{margin:0;color:#fff;font-weight:600}.summary-card>p{font-size:.56rem;line-height:1.5;color:#89a6a3;margin:13px 0 0}.wizard-actions{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line);margin-top:32px;padding-top:20px}
+}.back-button{background:transparent;color:var(--ink);padding-left:0}.back-button:disabled{opacity:.28;cursor:not-allowed}.wizard-actions>span{font-size:.6rem;color:#879592}.success-state{text-align:center;padding:60px 10%;max-width:720px;margin:auto}.success-mark{width:76px;height:76px;border-radius:50%;display:grid;place-items:center;margin:0 auto 22px;background:var(--ink);border:6px solid #dbe9e3;color:var(--gold);font-size:2rem}.success-state p{color:var(--muted);line-height:1.65;font-size:.85rem}.request-number{display:inline-flex;flex-direction:column;margin:18px 0 25px;background:#f2f6f3;padding:14px 28px}.request-number small{font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}.request-number strong{font:600 1.2rem Cormorant Garamond,serif;color:var(--ink);margin-top:4px}.demo-banner{position:fixed;left:0;right:0;bottom:0;z-index:80;background:#08313c;color:#a9c2c5;border-top:2px solid #9a6b22;padding:11px clamp(16px,3vw,32px);display:flex;align-items:center;justify-content:center;gap:8px 20px;flex-wrap:wrap}
+.demo-banner b{font-size:.62rem;text-transform:uppercase;letter-spacing:.11em;color:#e5b667;white-space:nowrap}
+.demo-banner p{margin:0;font-size:.63rem;line-height:1.5;text-align:center}.demo-copy{flex:0 1 auto;max-width:104ch}.demo-author{margin:0;flex:0 0 auto;font-size:.63rem;color:#a9c2c5;white-space:nowrap;padding-left:20px;border-left:1px solid rgba(255,255,255,.18)}.demo-author b{color:#fff;text-transform:none;letter-spacing:0;font-size:.66rem}@media(max-width:760px){.demo-author{border-left:0;padding-left:0}}
+.chat-fab{position:fixed;right:24px;bottom:calc(22px + var(--banner-h,0px));border:0;background:var(--ink);color:#fff;border-radius:40px;padding:12px 18px;display:flex;gap:8px;align-items:center;box-shadow:0 10px 30px rgba(7,56,59,.2);font-size:.72rem;z-index:4}.chat-fab span{font-size:1rem}.chat-panel{position:fixed;right:24px;bottom:calc(22px + var(--banner-h,0px));width:min(365px,calc(100vw - 30px));height:490px;background:white;box-shadow:0 25px 80px rgba(0,25,28,.3);z-index:5;display:flex;flex-direction:column;transform:translateY(20px) scale(.96);opacity:0;pointer-events:none;transition:.25s;border-radius:5px;overflow:hidden}.chat-panel.open{transform:none;opacity:1;pointer-events:auto}.chat-panel header{background:var(--ink);padding:16px;color:white;display:flex;justify-content:space-between;align-items:center}.chat-panel header>div{display:flex;gap:10px;align-items:center}.chat-panel header p{margin:0}.chat-panel header b,.chat-panel header small{display:block}.chat-panel header b{font-size:.72rem}.chat-panel header small{font-size:.55rem;color:#aac0bd;margin-top:3px}.ai-orb{width:34px;height:34px;border-radius:50%;background:var(--gold);color:var(--ink);display:grid;place-items:center}.chat-panel header button{border:0;background:transparent;color:white;font-size:1.5rem}.messages{flex:1;padding:18px;background:#f6f7f4;overflow:auto;display:flex;flex-direction:column;gap:10px}.message{max-width:85%;padding:11px 13px;font-size:.68rem;line-height:1.5;border-radius:3px}.message.bot{background:white;color:var(--text);align-self:flex-start}.message.user{background:var(--ink);color:white;align-self:flex-end}.quick-questions{display:flex;flex-wrap:wrap;gap:6px}.quick-questions button{background:white;border:1px solid #cbd7d3;border-radius:15px;padding:6px 9px;color:var(--ink);font-size:.58rem}.chat-panel form{display:flex;border-top:1px solid var(--line);padding:10px}.chat-panel form input{flex:1;border:0;padding:8px;font-size:.7rem;outline:none}.chat-panel form button{width:35px;height:35px;border:0;border-radius:50%;background:var(--ink);color:white}.mobile-progress{margin-bottom:25px}
+@media(max-width:900px){.app-shell{grid-template-columns:235px}.journey{padding:35px 22px}.journey h1{font-size:1.7rem}.workspace{padding:35px 28px}.furniture-grid,.fabric-grid{grid-template-columns:repeat(2,1fr)}.measure-guide,.ai-card,.final-layout{grid-template-columns:1fr}.measure-visual{display:none}.ai-summary{padding:24px;border-right:0;border-bottom:1px solid var(--line)}.chip-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:650px){:root{--header-h:78px;--logo-h:54px}.site-header{padding:0 18px}.header-copy .eyebrow,.secure{display:none}.app-shell{display:block;min-height:calc(100vh - var(--header-h) - var(--banner-h,0px))}.journey{display:none}.workspace{padding:24px 18px 18px}.mobile-progress{display:block}.mobile-progress>div:first-child{display:flex;justify-content:space-between;font-size:.68rem;color:var(--muted);margin-bottom:8px}.mobile-progress b{color:var(--ink)}.progress-track{height:3px;background:#dfe6e2}.progress-track span{display:block;height:100%;width:16.66%;background:var(--accent);transition:.3s}.step-heading{margin-bottom:22px}.step-heading h2{font-size:2rem}.furniture-grid{gap:9px}.furniture-card{min-height:105px;padding:13px}.upload-copy{flex-wrap:wrap}.upload-copy .secondary-button{width:100%}.photo-preview{width:72px}.measure-fields,.select-grid,.contact-fields{grid-template-columns:1fr}.chip-grid{grid-template-columns:1fr 1fr}.ai-analysis{padding:24px}.fabric-grid{grid-template-columns:1fr}.quote-preview{align-items:flex-start;gap:18px;padding:20px;flex-direction:column}.price-block{text-align:left}.contact-fields .consent{grid-column:auto}.wizard-actions{position:sticky;bottom:var(--banner-h,0px);background:white;margin:24px -18px -18px;padding:14px 18px;z-index:3;box-shadow:0 -8px 18px rgba(7,56,59,.05)}.wizard-actions>span{display:none}.chat-fab{right:14px;bottom:calc(75px + var(--banner-h,0px))}.chat-panel{right:15px;bottom:calc(80px + var(--banner-h,0px))}.success-state{padding:36px 3%}}
+/* Escritorio: la ventana define el alto. Las acciones quedan siempre a la vista
+   y, si un paso no entra, scrollea el paso — nunca la página. En móvil el
+   scroll de página es lo natural, así que esto no aplica. */
+@media(min-width:651px){
+  html,body{height:100%;overflow:hidden}
+  body{padding-bottom:0}
+  .app-shell{height:calc(100vh - var(--header-h) - var(--banner-h,0px));min-height:0}
+  .journey{overflow-y:auto}
+  .workspace{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  #quoteForm{display:flex;flex-direction:column;flex:1;min-height:0}
+  .wizard-step.active,.success-state{flex:1 1 auto;min-height:0;overflow-y:auto;padding-right:4px}
+  .wizard-actions{flex:0 0 auto;margin-top:20px}
+  .chat-fab,.chat-panel{bottom:calc(22px + var(--banner-h,0px) + var(--actions-h,0px))}
+  /* La columna del progreso se comprime con la ventana en vez de scrollear.
+     Todo lo vertical va atado a vh; el horizontal lo siguen fijando los
+     breakpoints de ancho, por eso padding-block y no padding. */
+  .journey{padding-block:clamp(20px,3.2vh,46px) clamp(14px,2.2vh,28px)}
+  .journey h1{font-size:clamp(1.4rem,2.7vh,2.15rem);margin-block:clamp(5px,1vh,10px) clamp(8px,1.4vh,14px)}
+  .journey-intro p{font-size:clamp(.71rem,1.05vh,.82rem);line-height:1.5}
+  .step-list{margin-block:clamp(12px,3vh,38px) clamp(10px,2.2vh,28px)}
+  .step-list li{margin-bottom:clamp(7px,2vh,22px)}
+  .help-card{padding-top:clamp(11px,1.9vh,22px)}
+  /* El paso 1 crece con las miniaturas, así que su respiro también cede. */
+  .upload-zone{padding:clamp(10px,1.8vh,18px);min-height:0}
+  .furniture-card{min-height:clamp(74px,11.5vh,126px);padding:clamp(8px,1.5vh,18px)}
+  .furniture-icon{font-size:clamp(1.25rem,2.8vh,2.2rem);height:clamp(22px,4vh,43px)}
+  .step-heading{margin-bottom:clamp(10px,2.2vh,30px)}
+  .furniture-grid{gap:clamp(8px,1.4vh,13px)}
+  .furniture-card b{font-size:clamp(.92rem,1.5vh,1.1rem)}
+  .upload-zone{margin-top:clamp(10px,1.8vh,18px)}
+  .workspace{padding-block:clamp(18px,4.4vh,44px) clamp(12px,2.6vh,26px)}
+  .step-heading p{font-size:clamp(.76rem,1.2vh,.9rem)}
+  /* Los titulares escalaban solo con el ancho, así que en pantallas anchas y
+     bajas quedaban enormes y forzaban scroll. Ahora ceden por la dimensión que
+     escasee: min() toma la menor de las dos. */
+  .step-heading h2,.success-state h2{font-size:clamp(1.7rem,min(4vw,5.2vh),3.05rem)}
+  .success-state{padding-block:clamp(12px,3.5vh,60px);flex:0 1 auto;margin-block:auto}
+  .success-mark{width:clamp(56px,8vh,76px);height:clamp(56px,8vh,76px);font-size:clamp(1.4rem,3vh,2rem);margin-bottom:clamp(9px,2vh,22px);border-width:clamp(4px,.7vh,6px)}
+  .success-state p{margin-block:clamp(4px,1.1vh,16px)}
+  .request-number{margin-block:clamp(10px,2vh,28px)}
+  /* El diámetro del punto y el centro de la línea que los une salen del mismo
+     valor, o la línea deja de pasar por el medio al comprimirse. */
+  .step-list{--dot:clamp(28px,4.3vh,35px)}
+  .step-list li>span{width:var(--dot);height:var(--dot);font-size:clamp(.66rem,1vh,.74rem)}
+  .step-list:before{left:calc(var(--dot) / 2)}
+  .step-list b{font-size:clamp(.72rem,1.1vh,.78rem)}
+  .step-list small{font-size:clamp(.57rem,.92vh,.65rem);margin-top:2px}
+  .journey{padding-block:clamp(14px,3.2vh,46px) clamp(10px,2.2vh,28px)}
+  .step-list li{margin-bottom:clamp(5px,2vh,22px)}
+@media print{html,body{height:auto!important;overflow:visible!important}.demo-banner{position:static!important}.chat-fab,.chat-panel,#logoutBtn{display:none!important}body::after{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27340%27%20height%3D%27230%27%3E%3Ctext%20x%3D%27170%27%20y%3D%27115%27%20fill%3D%27%230b3f4c%27%20fill-opacity%3D%270.14%27%20font-family%3D%27Helvetica%2CArial%2Csans-serif%27%20font-size%3D%2715%27%20letter-spacing%3D%271.5%27%20text-anchor%3D%27middle%27%20transform%3D%27rotate%28-28%20170%20115%29%27%3EPROTOTIPO%20%C2%B7%20DAIMON%20CARDENAS%3C%2Ftext%3E%3C%2Fsvg%3E");background-repeat:repeat}}
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#"><img src="data:image/png;base64,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" alt="Mediterránea Insumos" width="1024" height="620"></a>
+    <div class="header-copy">
+      <span class="eyebrow">Cotizador inteligente</span>
+      <span class="secure"><span aria-hidden="true">◇</span> Tus datos están protegidos</span>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <aside class="journey" aria-label="Progreso de la cotización">
+      <div class="journey-intro">
+        <span class="eyebrow gold">Tu proyecto</span>
+        <h1>Cotiza la tela ideal para tu mueble</h1>
+        <p>Te guiaremos paso a paso. Solo necesitas una foto y las medidas aproximadas.</p>
+      </div>
+      <ol class="step-list">
+        <li class="active" data-step-dot="1"><span>1</span><div><b>Tu mueble</b><small>Tipo y fotografía</small></div></li>
+        <li data-step-dot="2"><span>2</span><div><b>Medidas</b><small>Datos principales</small></div></li>
+        <li data-step-dot="3"><span>3</span><div><b>Preferencias</b><small>Uso y estilo</small></div></li>
+        <li data-step-dot="4"><span>4</span><div><b>Validación</b><small>Revisión previa</small></div></li>
+        <li data-step-dot="5"><span>5</span><div><b>Recomendación</b><small>Telas sugeridas</small></div></li>
+        <li data-step-dot="6"><span>6</span><div><b>Tu cotización</b><small>Datos de contacto</small></div></li>
+      </ol>
+      <div class="help-card">
+        <span class="help-icon">?</span>
+        <div><b>¿Necesitas ayuda?</b><small>Nuestro asistente te acompaña.</small></div>
+        <button type="button" class="text-button" data-open-chat>Preguntar</button>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <div class="mobile-progress" aria-live="polite">
+        <div><span id="mobileStep">Paso 1 de 6</span><b id="mobileTitle">Tu mueble</b></div>
+        <div class="progress-track"><span id="progressBar"></span></div>
+      </div>
+
+      <form id="quoteForm" novalidate>
+        <section class="wizard-step active" data-step="1">
+          <div class="step-heading">
+            <span class="eyebrow">Empecemos</span>
+            <h2>¿Qué mueble quieres renovar?</h2>
+            <p>Selecciona la opción que más se parece. La imagen nos ayudará a confirmar los detalles.</p>
+          </div>
+          <div class="furniture-grid" role="radiogroup" aria-label="Tipo de mueble"></div>
+          <input type="hidden" id="furnitureType" value="Sofá">
+
+          <div class="upload-zone" id="uploadZone">
+            <input id="furniturePhoto" type="file" accept="image/*" multiple hidden>
+            <div class="upload-copy">
+              <span class="upload-icon">↥</span>
+              <div><b>Sube fotos de tu mueble</b><p id="uploadHint">De frente, en diagonal y un detalle de la tela, con buena luz.</p></div>
+              <button type="button" class="secondary-button" id="selectPhoto">Seleccionar fotos</button>
+            </div>
+            <div class="photo-strip" id="photoStrip"></div>
+          </div>
+          <p class="field-error" id="photoError" hidden></p>
+        </section>
+
+        <section class="wizard-step" data-step="2">
+          <div class="step-heading">
+            <span class="eyebrow">Medidas aproximadas</span>
+            <h2>Cuéntanos el tamaño de tu <span data-furniture-label>sofá</span></h2>
+            <p>Mide los puntos más largos. Puedes usar centímetros y corregirlos antes de enviar.</p>
+          </div>
+          <div class="measure-guide">
+            <div class="measure-visual">
+              <div class="furniture-drawing"><div class="drawing-shape" id="drawingShape" aria-hidden="true"></div><span class="width-line">A — Ancho</span><span class="height-line">B — Alto</span><span class="depth-line">C — Fondo</span></div>
+              <p>Las medidas permiten estimar el consumo. Un asesor confirmará el cálculo final.</p>
+            </div>
+            <div class="measure-fields">
+              <label>Ancho total <span class="unit">cm</span><input type="number" id="width" min="20" max="1000" placeholder="Ej. 210" required></label>
+              <label>Alto total <span class="unit">cm</span><input type="number" id="height" min="20" max="500" placeholder="Ej. 85" required></label>
+              <label>Profundidad <span class="unit">cm</span><input type="number" id="depth" min="10" max="500" placeholder="Ej. 90" required></label>
+              <label id="quantityField"><span id="quantityLabel">Número de puestos</span> <select id="seats"><option value="1">1 puesto</option><option value="2">2 puestos</option><option value="3" selected>3 puestos</option><option value="4">4 puestos</option><option value="5">5 o más</option></select></label>
+              <label id="cushionsField">Número de cojines <select id="cushions"></select></label>
+              <label>¿Qué deseas tapizar? <select id="coverage"></select></label>
+            </div>
+          </div>
+        </section>
+
+        <section class="wizard-step" data-step="3">
+          <div class="step-heading">
+            <span class="eyebrow">Una recomendación para ti</span>
+            <h2>¿Cómo se usará el mueble?</h2>
+            <p>Con estas respuestas podemos priorizar durabilidad, limpieza, textura y estilo.</p>
+          </div>
+          <div class="preference-layout">
+            <div class="choice-group">
+              <h3>¿Qué necesitas de la tela?</h3>
+              <div class="chip-grid"></div>
+            </div>
+            <div class="select-grid">
+              <label>Estilo que prefieres<select id="style"></select></label>
+              <label>Gama de color<select id="color"></select></label>
+              <label>Presupuesto por metro<select id="budget"></select></label>
+              <label>Punto de atención<select id="city"></select></label>
+            </div>
+          </div>
+        </section>
+
+        <section class="wizard-step" data-step="4">
+          <div class="step-heading centered">
+            <span class="eyebrow">Revisión previa</span>
+            <h2>Revisemos que todo sea coherente</h2>
+            <p>Revisamos la fotografía y las medidas que registraste antes de calcular tu estimación.</p>
+          </div>
+          <div class="ai-card" id="aiCard">
+            <div class="ai-summary" id="aiSummary"></div>
+            <div class="ai-analysis">
+              <div class="ai-badge"><span class="pulse"></span> Asistente Mediterránea</div>
+              <h3 id="analysisTitle">Listo para revisar</h3>
+              <p id="analysisText">Selecciona “Revisar mi información” para comprobar la fotografía y las medidas.</p>
+              <div class="analysis-checks" id="analysisChecks" hidden></div>
+              <button type="button" class="primary-button analyze" id="analyzeButton">✦ Revisar mi información</button>
+            </div>
+          </div>
+          <p class="field-error" id="analysisError" hidden>Revisa tu información para continuar.</p>
+          <div class="notice"><span>i</span><p>Esta revisión comprueba que la fotografía sea legible y que las medidas sean plausibles. No identifica el mueble ni obtiene medidas desde la imagen: eso lo confirma un asesor junto con la cotización definitiva.</p></div>
+        </section>
+
+        <section class="wizard-step" data-step="5">
+          <div class="step-heading">
+            <span class="eyebrow">Selección personalizada</span>
+            <h2>Estas telas podrían funcionar en tu proyecto</h2>
+            <p>Ordenadas según el uso, estilo, gama de color y presupuesto que indicaste. Puedes elegir cualquiera.</p>
+          </div>
+          <div class="fabric-grid" id="fabricGrid"></div>
+          <input type="hidden" id="selectedFabric" value="Palermo Light">
+          <div class="quote-preview">
+            <div><span class="eyebrow gold">Estimación inicial</span><h3><span id="metersRange">14–17</span> metros de tela</h3><p>Incluye un margen aproximado para cortes y desperdicio.</p></div>
+            <div class="price-block"><small>Rango del material</small><strong id="priceRange">$418.600 – $508.300</strong><span>Antes de envío y mano de obra</span></div>
+          </div>
+          <p class="quote-note" id="quoteNote" hidden></p>
+        </section>
+
+        <section class="wizard-step" data-step="6">
+          <div class="step-heading">
+            <span class="eyebrow">Último paso</span>
+            <h2>¿A dónde enviamos tu cotización?</h2>
+            <p>Un asesor revisará la información y podrá comunicarse contigo para confirmar los detalles.</p>
+          </div>
+          <div class="final-layout">
+            <div class="contact-fields">
+              <label>Nombre completo<input type="text" id="fullName" placeholder="Escribe tu nombre" required></label>
+              <label>Correo electrónico<input type="email" id="email" placeholder="nombre@correo.com" required></label>
+              <label>Celular o WhatsApp<input type="tel" id="phone" placeholder="Ej. 300 123 4567" required></label>
+              <label class="consent"><input type="checkbox" id="consent" required><span>Autorizo el tratamiento de mis datos para recibir esta cotización y ser contactado por Mediterránea Insumos.</span></label>
+            </div>
+            <aside class="summary-card">
+              <span class="eyebrow gold">Resumen</span>
+              <div class="summary-title"><div class="mini-photo" id="summaryPhoto"></div><div><b id="summaryFurniture">Sofá de 3 puestos</b><small id="summaryMeasures">210 × 85 × 90 cm</small></div></div>
+              <dl>
+                <div><dt>Tela elegida</dt><dd id="summaryFabric">Palermo Light · Arena</dd></div>
+                <div><dt>Consumo estimado</dt><dd id="summaryConsumo">14–17 m</dd></div>
+                <div><dt>Cantidad a cotizar</dt><dd id="summaryMeters">14–17 m</dd></div>
+                <div><dt>Rango estimado</dt><dd id="summaryPrice">$418.600 – $508.300</dd></div>
+              </dl>
+              <p>Este valor es orientativo. No constituye una cotización definitiva.</p>
+            </aside>
+          </div>
+        </section>
+
+        <section class="success-state" id="successState" hidden>
+          <div class="success-mark">✓</div>
+          <span class="eyebrow">Solicitud recibida</span>
+          <h2>Tu proyecto ya está en buenas manos</h2>
+          <p>Enviamos la cotización a <b id="successEmail"></b>.</p>
+          <p id="successMessage"></p>
+          <p id="successSeller"></p>
+          <div class="request-number"><small>Número de solicitud</small><strong id="requestNumber">COT-0000</strong></div>
+          <button type="button" class="secondary-button" id="restartButton">Crear otra cotización</button>
+        </section>
+
+        <footer class="wizard-actions" id="wizardActions">
+          <button type="button" class="back-button" id="backButton" disabled>← Volver</button>
+          <span id="stepHint">Puedes modificar tus respuestas en cualquier momento</span>
+          <button type="button" class="primary-button" id="nextButton">Continuar →</button>
+        </footer>
+      </form>
+    </section>
+  </main>
+
+  <button class="chat-fab" type="button" data-open-chat aria-label="Abrir asistente"><span>✦</span><b>¿Tienes dudas?</b></button>
+  <aside class="chat-panel" id="chatPanel" aria-label="Asistente Mediterránea" aria-hidden="true">
+    <header><div><span class="ai-orb">✦</span><p><b>Asistente Mediterránea</b><small>Orientación sobre telas y medidas</small></p></div><button type="button" id="closeChat" aria-label="Cerrar">×</button></header>
+    <div class="messages" id="messages"><div class="message bot">Hola, puedo ayudarte a elegir una tela o explicarte cómo medir tu mueble.</div><div class="quick-questions"><button type="button">¿Cómo tomo las medidas?</button><button type="button">Tengo mascotas</button><button type="button">¿El valor es definitivo?</button></div></div>
+    <form id="chatForm"><input id="chatInput" placeholder="Escribe tu pregunta…" aria-label="Pregunta para el asistente"><button aria-label="Enviar">↑</button></form>
+  </aside>
+
+  <aside class="demo-banner" id="demoBanner">
+    <div class="demo-copy">
+      <p><b>Prototipo demostrativo</b> — Esta no es la página oficial de Mediterránea. Diseño conceptual para evaluación privada.</p>
+    </div>
+    <p class="demo-author">Hecho por <b>Daimon Cardenas</b></p>
+  </aside>
+  <script src="store.js"></script>
+  <script>
+const state={step:1,furniture:'Sofá',photos:[],analyzed:false,fabric:null,fabricTouched:false};
+const steps=[...document.querySelectorAll('.wizard-step')];
+const nextButton=document.getElementById('nextButton');
+const backButton=document.getElementById('backButton');
+const photoInput=document.getElementById('furniturePhoto');
+const uploadZone=document.getElementById('uploadZone');
+const photoError=document.getElementById('photoError');
+const money=n=>Store.money(n);
+// Furniture types, their consumption rules and their plausible measurement
+// ranges are all defined in the backoffice; nothing about them lives here.
+let furnitureRules={},measureRanges={};
+const MEASURE_LABELS={width:'ancho',height:'alto',depth:'fondo'};
+// The catalog lives in the backoffice. Read it on every render so a tela
+// created or deactivated there shows up here without touching this file.
+const activeFabrics=()=>Store.all('fabrics').filter(f=>f.active);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+
+function showStep(n){
+  state.step=n; steps.forEach(s=>s.classList.toggle('active',+s.dataset.step===n));
+  document.querySelectorAll('[data-step-dot]').forEach(li=>{const x=+li.dataset.stepDot;li.classList.toggle('active',x===n);li.classList.toggle('done',x<n)});
+  const names=['Tu mueble','Medidas','Preferencias','Validación','Recomendación','Tu cotización'];
+  document.getElementById('mobileStep').textContent=`Paso ${n} de 6`; document.getElementById('mobileTitle').textContent=names[n-1];
+  document.getElementById('progressBar').style.width=`${n/6*100}%`; backButton.disabled=n===1;
+  nextButton.textContent=n===6?'Enviar cotización  →':'Continuar  →';
+  document.getElementById('stepHint').textContent=n===6?'Recibirás una copia en tu correo':'Puedes modificar tus respuestas en cualquier momento';
+  if(n===4) renderReviewSummary(); if(n===5) renderFabrics(); if(n===6) updateSummary(); const pane=steps.find(x=>x.classList.contains('active'));
+  if(pane&&pane.scrollHeight>pane.clientHeight)pane.scrollTo({top:0,behavior:'smooth'});else window.scrollTo({top:0,behavior:'smooth'});
+}
+
+let furnitureCards=[];
+const seatsSelect=document.getElementById('seats');
+
+// The quantity options must name what is being counted, or the summary reads
+// "Cabecero · 3 puestos".
+function renderFurnitureOptions(){
+  const list=Store.activeFurniture();
+  furnitureRules={};measureRanges={};
+  list.forEach(f=>{
+    furnitureRules[f.name]={id:f.id,meters:f.meters,label:f.quantityLabel,unit:f.unit,scaleByQty:!!f.scaleByQty,widthScaled:!!f.widthScaled};
+    measureRanges[f.name]=f.ranges;
+  });
+  const grid=document.querySelector('.furniture-grid');
+  grid.innerHTML=list.map((f,i)=>`<button type="button" class="furniture-card${i===0?' selected':''}" data-furniture="${esc(f.name)}" role="radio" aria-checked="${i===0}" tabindex="${i===0?0:-1}"><span class="furniture-icon">${esc(f.icon||'▰')}</span><b>${esc(f.name)}</b><small>${esc(f.hint||'')}</small></button>`).join('');
+  furnitureCards=[...grid.querySelectorAll('.furniture-card')];
+  furnitureCards.forEach(card=>card.addEventListener('click',()=>selectFurniture(card)));
+  if(!list.some(f=>f.name===state.furniture))state.furniture=list.length?list[0].name:'';
+  document.getElementById('furnitureType').value=state.furniture;
+}
+
+function renderPreferenceOptions(){
+  const cfg=Store.settings();
+  document.querySelector('.chip-grid').innerHTML=(cfg.needs||[]).map(nd=>
+    `<label><input type="checkbox" value="${esc(nd)}"><span>${esc(nd)}</span></label>`).join('');
+  const fill=(id,arr)=>{document.getElementById(id).innerHTML=arr.map(o=>`<option>${esc(o)}</option>`).join('')};
+  fill('style',cfg.styles||[]);fill('color',cfg.colors||[]);
+  /* n cortes definen n+1 tramos. Antes se emitían n opciones y el corte más alto
+   * no aparecía en ninguna etiqueta: con 100/120/140/160 el cliente leía
+   * "Más de $140.000" y los $160.000 no existían para él. Peor, esa opción
+   * llevaba value=160000, así que decía "más de" y por dentro topaba. */
+  const b=(cfg.budgets||[]).slice().sort((x,y)=>x-y);
+  const tramos=b.map((v,i)=>i===0
+    ? {label:`Hasta ${money(v)}`,value:v}
+    : {label:`Entre ${money(b[i-1])} y ${money(v)}`,value:v});
+  // El tramo abierto no tiene tope: sin value, recommend() no marca nada como
+  // "sobre presupuesto", que es lo que "más de" significa.
+  if(b.length)tramos.push({label:`Más de ${money(b[b.length-1])}`,value:''});
+  else tramos.push({label:'Sin preferencia',value:''});
+  document.getElementById('budget').innerHTML=tramos.map((t,i)=>
+    `<option value="${t.value}"${i===1?' selected':''}>${esc(t.label)}</option>`).join('');
+  document.getElementById('coverage').innerHTML=
+    `<option value="complete">Todo el mueble</option><option value="seats">Solo asiento y respaldo</option><option value="partial">Una parte específica</option>`;
+  const maxQ=Math.max(2,+cfg.maxQuantity||5);
+  document.getElementById('cushions').innerHTML='<option value="0">Sin cojines removibles</option>'+
+    Array.from({length:maxQ-1},(_,k)=>k+2).map(n=>`<option value="${n}"${n===3?' selected':''}>${n===maxQ?n+' o más':n} cojines</option>`).join('');
+}
+
+/* Un dibujo por tipo de mueble, elegido por id igual que las plantillas de
+ * despiece — el nombre lo puede editar el backoffice. Un cabecero con un sofá
+ * dibujado al lado no es un detalle estético: es el paso donde le pedimos al
+ * cliente que mida, y el dibujo es la instrucción. */
+const DIBUJOS={
+  sofa:`<svg viewBox="0 0 200 120" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round">
+    <rect x="18" y="10" width="164" height="66" rx="11"/>
+    <rect x="5" y="50" width="27" height="56" rx="7" fill="solid" stroke="currentColor"/>
+    <rect x="168" y="50" width="27" height="56" rx="7" fill="solid" stroke="currentColor"/>
+    <rect x="32" y="64" width="136" height="42" rx="5"/>
+    <path d="M77 64v42M123 64v42"/>
+    <path d="M20 106v8M180 106v8" stroke-linecap="round"/></svg>`,
+  'sofa-l':`<svg viewBox="0 0 200 120" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round">
+    <rect x="18" y="10" width="116" height="60" rx="11"/>
+    <rect x="5" y="46" width="26" height="52" rx="7" fill="solid" stroke="currentColor"/>
+    <rect x="31" y="58" width="103" height="40" rx="5"/>
+    <path d="M82 58v40"/>
+    <rect x="134" y="58" width="61" height="52" rx="7" fill="solid" stroke="currentColor"/>
+    <path d="M134 82h61" stroke-dasharray="5 5"/>
+    <path d="M20 98v8M188 110v6" stroke-linecap="round"/></svg>`,
+  poltrona:`<svg viewBox="0 0 200 120" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round">
+    <rect x="62" y="10" width="76" height="62" rx="11"/>
+    <rect x="48" y="48" width="26" height="54" rx="7" fill="solid" stroke="currentColor"/>
+    <rect x="126" y="48" width="26" height="54" rx="7" fill="solid" stroke="currentColor"/>
+    <rect x="74" y="62" width="52" height="40" rx="5"/>
+    <path d="M62 102v10M138 102v10" stroke-linecap="round"/></svg>`,
+  silla:`<svg viewBox="0 0 200 120" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round">
+    <rect x="76" y="6" width="48" height="58" rx="7"/>
+    <rect x="68" y="64" width="64" height="18" rx="4" fill="solid" stroke="currentColor"/>
+    <path d="M74 82v30M126 82v30M84 82v30M116 82v30" stroke-linecap="round"/></svg>`,
+  cabecero:`<svg viewBox="0 0 200 120" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round">
+    <rect x="30" y="8" width="140" height="82" rx="9" fill="solid" stroke="currentColor"/>
+    <circle cx="72" cy="34" r="2.6" fill="currentColor" stroke="none"/>
+    <circle cx="100" cy="34" r="2.6" fill="currentColor" stroke="none"/>
+    <circle cx="128" cy="34" r="2.6" fill="currentColor" stroke="none"/>
+    <circle cx="86" cy="60" r="2.6" fill="currentColor" stroke="none"/>
+    <circle cx="114" cy="60" r="2.6" fill="currentColor" stroke="none"/>
+    <path d="M14 90h172" stroke-linecap="round"/>
+    <path d="M40 90v18M160 90v18" stroke-linecap="round"/></svg>`,
+  otro:`<svg viewBox="0 0 200 120" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round">
+    <rect x="34" y="24" width="132" height="70" rx="9" stroke-dasharray="8 6"/>
+    <path d="M100 48v22M89 59h22" stroke-linecap="round"/></svg>`
+};
+function renderFurnitureDrawing(id){
+  const caja=document.getElementById('drawingShape');
+  if(caja)caja.innerHTML=DIBUJOS[id]||DIBUJOS.otro;
+}
+function renderQuantityOptions(){
+  const rule=furnitureRules[state.furniture];if(!rule)return;
+  const prev=seatsSelect.value||'3';const maxQ=Math.max(2,+Store.settings().maxQuantity||5);
+  seatsSelect.innerHTML=Array.from({length:maxQ},(_,k)=>k+1).map(n=>`<option value="${n}">${n===maxQ?n+' o más':n} ${n===1?rule.unit[0]:rule.unit[1]}</option>`).join('');
+  seatsSelect.value=prev;
+  document.getElementById('quantityLabel').textContent=rule.label;
+  // Los cojines solo se preguntan donde entran en la cuenta. En los demás
+  // muebles el campo no aparece: pedir un dato que no se usa confunde, y una
+  // nota explicándolo no lo arregla.
+  document.getElementById('cushionsField').hidden=!Store.templateUses({id:rule.id},'cushions');
+  renderFurnitureDrawing(rule.id);
+}
+
+function selectFurniture(card){
+  furnitureCards.forEach(c=>{const on=c===card;c.classList.toggle('selected',on);c.setAttribute('aria-checked',String(on));c.tabIndex=on?0:-1});
+  state.furniture=card.dataset.furniture;
+  document.getElementById('furnitureType').value=state.furniture;
+  document.querySelectorAll('[data-furniture-label]').forEach(x=>x.textContent=state.furniture.toLowerCase());
+  renderQuantityOptions();
+}
+// A radiogroup has to be navigable with the arrow keys, not just Tab.
+document.querySelector('.furniture-grid').addEventListener('keydown',e=>{
+  const dir={ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1}[e.key];if(!dir)return;
+  const i=furnitureCards.indexOf(document.activeElement);if(i<0)return;
+  e.preventDefault();
+  const next=furnitureCards[(i+dir+furnitureCards.length)%furnitureCards.length];
+  selectFurniture(next);next.focus();
+});
+
+function photoLimits(){
+  const cfg=Store.settings();
+  return {min:Math.max(1,+cfg.minPhotos||3),max:Math.max(+cfg.minPhotos||3,+cfg.maxPhotos||7)};
+}
+
+function renderPhotos(){
+  const {min,max}=photoLimits();
+  const strip=document.getElementById('photoStrip');
+  strip.innerHTML=state.photos.map((ph,i)=>
+    `<div class="photo-thumb" style="background-image:url(${ph.dataUrl})" role="img" aria-label="Foto ${i+1}">`+
+    `<button type="button" data-drop="${i}" aria-label="Quitar foto ${i+1}">×</button></div>`).join('')+
+    (state.photos.length?`<span class="photo-count">${state.photos.length} de ${max}</span>`:'');
+  uploadZone.classList.toggle('has-photo',state.photos.length>0);
+  document.getElementById('uploadHint').textContent=
+    state.photos.length>=min?`Puedes agregar hasta ${max} fotos.`
+                            :`Necesitamos entre ${min} y ${max} fotos: de frente, en diagonal y un detalle de la tela.`;
+  document.getElementById('selectPhoto').disabled=state.photos.length>=max;
+  const mini=document.getElementById('summaryPhoto');
+  mini.style.backgroundImage=state.photos.length?`url(${state.photos[0].dataUrl})`:'';
+  if(state.photos.length>=min)photoError.hidden=true;
+}
+document.getElementById('photoStrip').addEventListener('click',e=>{
+  const b=e.target.closest('[data-drop]');if(!b)return;
+  state.photos.splice(+b.dataset.drop,1);renderPhotos();
+});
+
+function readImage(file){
+  return new Promise(resolve=>{
+    const reader=new FileReader();
+    reader.onerror=()=>resolve(null);
+    reader.onload=e=>{
+      const probe=new Image();
+      // Keep the real dimensions: step 4 reports what we can actually measure.
+      probe.onload=()=>resolve({dataUrl:e.target.result,width:probe.naturalWidth,height:probe.naturalHeight,bytes:file.size});
+      probe.onerror=()=>resolve(null);
+      probe.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function loadPhotos(files){
+  const {max}=photoLimits();
+  const imagenes=[...files||[]].filter(f=>f&&f.type.startsWith('image/'));
+  if(!imagenes.length)return;
+  const hueco=max-state.photos.length;
+  if(hueco<=0){
+    photoError.textContent=`Ya alcanzaste el máximo de ${max} fotos. Quita alguna para agregar otra.`;
+    photoError.hidden=false;return;
+  }
+  const nuevas=(await Promise.all(imagenes.slice(0,hueco).map(readImage))).filter(Boolean);
+  state.photos=state.photos.concat(nuevas);
+  if(imagenes.length>hueco){
+    photoError.textContent=`Solo agregamos ${hueco} ${hueco===1?'foto':'fotos'}: el máximo es ${max}.`;
+    photoError.hidden=false;
+  }
+  renderPhotos();
+}document.getElementById('selectPhoto').addEventListener('click',()=>photoInput.click());
+photoInput.addEventListener('change',()=>{loadPhotos(photoInput.files);photoInput.value=''});
+['dragenter','dragover'].forEach(ev=>uploadZone.addEventListener(ev,e=>{e.preventDefault();uploadZone.classList.add('dragging')}));
+['dragleave','drop'].forEach(ev=>uploadZone.addEventListener(ev,e=>{e.preventDefault();uploadZone.classList.remove('dragging');if(ev==='drop')loadPhotos(e.dataTransfer.files)}));
+
+function validStep(){
+  if(state.step===1){const {min}=photoLimits();
+    if(state.photos.length<min){
+      const faltan=min-state.photos.length;
+      photoError.textContent=`Agrega ${faltan} ${faltan===1?'foto más':'fotos más'}: necesitamos al menos ${min}.`;
+      photoError.hidden=false;uploadZone.scrollIntoView({behavior:'smooth',block:'center'});return false}}
+  if(state.step===2){const fields=['width','height','depth'].map(id=>document.getElementById(id));const bad=fields.find(x=>!x.value||!x.checkValidity());if(bad){bad.reportValidity();return false}}
+  if(state.step===4&&!state.analyzed){const err=document.getElementById('analysisError');err.hidden=false;err.scrollIntoView({behavior:'smooth',block:'center'});document.getElementById('analyzeButton').focus();return false}
+  if(state.step===6){const ids=['fullName','email','phone','consent'];const bad=ids.map(id=>document.getElementById(id)).find(x=>!x.checkValidity());if(bad){bad.reportValidity();return false}}
+  return true;
+}
+nextButton.addEventListener('click',()=>{if(!validStep())return;if(state.step<6){showStep(state.step+1);return}
+  nextButton.disabled=true;submitQuote().catch(err=>{console.error(err);alert('Ocurrió un problema al enviar tu solicitud.')}).finally(()=>{nextButton.disabled=false})});
+backButton.addEventListener('click',()=>{if(state.step>1)showStep(state.step-1)});
+
+
+// Step 4 reviews the data the customer entered, so it shows that data as text.
+// It is a cotización: there is nothing to confirm visually here.
+function renderReviewSummary(){
+  const rule=furnitureRules[state.furniture];
+  const qty=seatsSelect.options[seatsSelect.selectedIndex].text;
+  const w=document.getElementById('width').value,h=document.getElementById('height').value,d=document.getElementById('depth').value;
+  const coverage={complete:'Todo el mueble',seats:'Solo asiento y respaldo',partial:'Una parte específica'}[document.getElementById('coverage').value]||'—';
+  const needs=[...document.querySelectorAll('.chip-grid input:checked')].map(x=>x.value);
+  const rows=[
+    ['Mueble',rule.scaleByQty&&seatsSelect.value==='1'?state.furniture:`${state.furniture} · ${qty}`],
+    ['Medidas',w&&h&&d?`${w} × ${h} × ${d} cm (ancho × alto × fondo)`:'Sin registrar'],
+    ['Qué se tapiza',coverage],
+    ['Uso previsto',needs.length?needs.join(' · '):'Sin preferencias marcadas'],
+    ['Estilo y color',`${document.getElementById('style').value} · ${document.getElementById('color').value}`],
+    ['Punto de atención',document.getElementById('city').selectedOptions[0]?document.getElementById('city').selectedOptions[0].text:''],
+    ['Fotografías',`${state.photos.length} adjunta${state.photos.length===1?'':'s'}`]
+  ];
+  document.getElementById('aiSummary').innerHTML=
+    '<h4>Esto es lo que vamos a revisar</h4><dl>'+
+    rows.map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')+'</dl>';
+}
+
+
+function runReview(){
+  const checks=[];
+
+  // 1. the photos — we genuinely know their sizes, so report those and nothing more
+  const n=state.photos.length;
+  const chicas=state.photos.filter(ph=>ph.width<600||ph.height<600);
+  if(!n){
+    checks.push({ok:false,title:'Fotografías recibidas',detail:'No recibimos ninguna fotografía.'});
+  }else if(chicas.length){
+    const menor=chicas.reduce((a,b)=>(a.width*a.height<=b.width*b.height?a:b));
+    checks.push({ok:false,title:`${n} fotografía${n===1?'':'s'} recibida${n===1?'':'s'}`,
+      detail:`${chicas.length} ${chicas.length===1?'es de baja resolución':'son de baja resolución'} (la menor mide ${menor.width}×${menor.height} px). Un asesor podría pedirte otras.`});
+  }else{
+    const menor=state.photos.reduce((a,b)=>(a.width*a.height<=b.width*b.height?a:b));
+    checks.push({ok:true,title:`${n} fotografía${n===1?'':'s'} recibida${n===1?'':'s'}`,
+      detail:`Todas tienen resolución suficiente (la menor mide ${menor.width}×${menor.height} px).`});
+  }
+
+  // 2. the measurements — real arithmetic against plausible ranges
+  const r=measureRanges[state.furniture]||{width:[20,1000],height:[20,500],depth:[5,500]};
+  const odd=Object.keys(r).filter(k=>{
+    const v=+document.getElementById(k).value;
+    return !v||v<r[k][0]||v>r[k][1];
+  });
+  checks.push({ok:!odd.length,title:'Medidas registradas',
+    detail:odd.length
+      ? `El ${odd.map(k=>MEASURE_LABELS[k]).join(' y el ')} está fuera de lo habitual para ${state.furniture.toLowerCase()}. Puedes corregirlo o dejar que un asesor lo confirme.`
+      : `Ancho, alto y fondo están dentro de lo habitual para ${state.furniture.toLowerCase()}.`});
+
+  // 3. completeness — what the estimate actually needs
+  checks.push({ok:true,title:'Datos suficientes para estimar',
+    detail:'Podemos calcular un rango preliminar de tela con esta información.'});
+
+  return checks;
+}
+
+document.getElementById('analyzeButton').addEventListener('click',()=>{
+  const btn=document.getElementById('analyzeButton');
+  btn.disabled=true;btn.textContent='Revisando…';
+  document.getElementById('analysisTitle').textContent='Revisando tu información';
+  document.getElementById('analysisText').textContent='Comprobando la fotografía y las medidas que registraste.';
+  setTimeout(()=>{
+    state.analyzed=true;
+    document.getElementById('analysisError').hidden=true;
+    btn.remove();
+    const checks=runReview();
+    const caveats=checks.filter(c=>!c.ok).length;
+    document.getElementById('analysisTitle').textContent=caveats?'Revisión lista, con observaciones':'Revisión lista';
+    document.getElementById('analysisText').textContent=caveats
+      ? 'Puedes continuar: un asesor confirmará los puntos señalados.'
+      : 'Podemos calcular tu estimación preliminar.';
+    const box=document.getElementById('analysisChecks');
+    box.innerHTML=checks.map(c=>`<div class="${c.ok?'':'warn'}"><span>${c.ok?'✓':'!'}</span><p><b>${esc(c.title)}</b><small>${esc(c.detail)}</small></p></div>`).join('');
+    box.hidden=false;
+  },1200);
+});
+
+/* Oculto es no preguntado: la solicitud no debe llevar un número que el cliente
+ * nunca eligió para ese mueble. */
+const cojines=()=>document.getElementById('cushionsField').hidden
+  ? 0 : (+document.getElementById('cushions').value||0);
+function wizardInputs(){
+  return {width:+document.getElementById('width').value||0,
+          height:+document.getElementById('height').value||0,
+          depth:+document.getElementById('depth').value||0,
+          seats:+seatsSelect.value||1,
+          cushions:cojines(),
+          coverage:document.getElementById('coverage').value};
+}
+/* Los muebles con plantilla se calculan por piezas contra el ancho del rollo de
+ * la tela elegida; los demás siguen con el rango base del backoffice. Así se
+ * migran de a uno y ninguno se queda sin cotizar mientras tanto. */
+function consumo(){
+  const rec=Store.furnitureByName(state.furniture);
+  const comp=Store.estimateByComponents(rec,wizardInputs(),state.fabric);
+  if(comp)return {range:comp.range,modelo:'componentes',tecnico:comp.tecnico,
+                  rollWidthCm:comp.rollWidthCm,piezas:comp.despiece.length};
+  return {range:estimateBaseline(),modelo:'heuristica',tecnico:null,
+          rollWidthCm:null,piezas:0};
+}
+function estimate(){return consumo().range}
+function estimateBaseline(){
+  const rule=furnitureRules[state.furniture];let min=rule.meters[0],max=rule.meters[1];const width=+document.getElementById('width').value||200;const coverage=document.getElementById('coverage').value;
+  if(rule.widthScaled){const factor=Math.max(.75,Math.min(1.4,width/210));min*=factor;max*=factor}
+  if(rule.scaleByQty){const qty=+seatsSelect.value||1;min*=qty;max*=qty}
+  const s=Store.settings();
+  const cov=coverage==='seats'?s.coverageSeats:coverage==='partial'?s.coveragePartial:null;
+  if(cov){min*=(+cov[0]||100)/100;max*=(+cov[1]||100)/100}
+  // Waste and safety margin are set by the backoffice, not hardcoded here.
+  const uplift=(1+(+s.wastePct||0)/100)*(1+(+s.marginPct||0)/100);
+  min*=uplift;max*=uplift;
+  return [Math.max(1,Math.round(min)),Math.max(2,Math.ceil(max))];
+}
+function renderFabrics(){
+  const ranked=Store.recommend({
+    needs:[...document.querySelectorAll('.chip-grid input:checked')].map(x=>x.value),
+    style:document.getElementById('style').value,
+    color:document.getElementById('color').value,
+    budget:+document.getElementById('budget').value||null
+  });
+  const grid=document.getElementById('fabricGrid');grid.innerHTML='';
+  if(!ranked.length){
+    grid.innerHTML='<p class="field-error">No hay telas disponibles en este momento. Un asesor te contactará con opciones.</p>';
+    state.fabric=null;updateEstimate();return;
+  }
+  // Keep the current pick only if it still exists and is still active.
+  if(state.fabric&&!ranked.some(r=>String(r.fabric.id)===String(state.fabric.id)))state.fabric=null;
+  // Otherwise lead with the best match. Scoring replaces the old special case
+  // that force-selected one fabric whenever "Mascotas" was ticked.
+  if(!state.fabric)state.fabric=ranked[0].fabric;
+  document.getElementById('selectedFabric').value=state.fabric.name;
+
+  const best=ranked[0].score>0?ranked[0].fabric.id:null;
+  ranked.forEach(r=>{
+    const f=r.fabric,on=String(f.id)===String(state.fabric.id);
+    const card=document.createElement('button');card.type='button';
+    card.className='fabric-card'+(on?' selected':'')+(r.overBudget?' over-budget':'');
+    card.setAttribute('aria-pressed',String(on));
+    card.innerHTML=`<div class="swatch" style="background:${Store.swatch(f)}">`+
+      `${String(f.id)===String(best)?'<span class="best-match">Mejor coincidencia</span>':''}</div>`+
+      `<div class="fabric-card-body"><b>${esc(f.name)} · ${esc(f.colorName)}</b>`+
+      `<small>${money(f.price)} por metro · Precio de referencia</small>`+
+      `<div class="fabric-tags">${(f.tags||[]).map(t=>`<span>${esc(t)}</span>`).join('')}</div>`+
+      (r.reasons.length?`<p class="why"><b>Por qué te la sugerimos:</b> ${esc(r.reasons.join(' · '))}</p>`:'')+
+      (r.overBudget?`<p class="why over">Por encima del presupuesto que indicaste</p>`:'')+
+      `</div>`;
+    card.addEventListener('click',()=>{state.fabricTouched=true;state.fabric=f;renderFabrics()});
+    grid.appendChild(card);
+    // La imagen de la tela está en IndexedDB: la tarjeta nace con el color y
+    // Store.paintSwatch la reemplaza si el backoffice cargó una foto.
+    Store.paintSwatch(card.querySelector('.swatch'),f);
+  });
+  updateEstimate();
+}
+const fmtM=n=>String(Math.round((+n||0)*100)/100).replace('.',',');
+/* "25–25 metros" no es un rango, es un número dicho dos veces. Un pedido
+ * mínimo aplasta los dos extremos contra el mismo valor y pasa seguido. */
+const rangoM=(a,b)=>{const [x,y]=[+a,+b].sort((m,n)=>m-n);return x===y?fmtM(x):`${fmtM(x)}–${fmtM(y)}`};
+
+/* El consumo es lo que se estima que come el mueble. Lo que se le cobra al
+ * cliente depende de cómo se venda ESA tela: incrementos, pedido mínimo, si el
+ * sobrante vuelve al inventario. Cuando los dos números no coinciden hay que
+ * decir por qué, no cobrar de más en silencio. */
+function billable(){
+  const c=consumo(),[min,max]=c.range;
+  if(!state.fabric)return {min,max,facMin:min,facMax:max,razones:[],consumo:c};
+  const a=Store.quantities(state.fabric,min),b=Store.quantities(state.fabric,max);
+  return {min,max,facMin:a.facturable,facMax:b.facturable,consumo:c,
+          razones:[...new Set(a.razones.concat(b.razones))],desglose:{min:a,max:b}};
+}
+const precioRango=q=>{const a=money(q.facMin*state.fabric.price),b=money(q.facMax*state.fabric.price);return a===b?a:`${a} – ${b}`};
+function updateEstimate(){
+  const q=billable();
+  document.getElementById('metersRange').textContent=rangoM(q.facMin,q.facMax);
+  document.getElementById('priceRange').textContent=state.fabric?precioRango(q):'Por confirmar';
+  const nota=document.getElementById('quoteNote');
+  nota.textContent=q.razones.join(' ');
+  nota.hidden=!q.razones.length;
+}
+function furnitureSummaryLabel(){
+  const rule=furnitureRules[state.furniture];const qtyText=seatsSelect.options[seatsSelect.selectedIndex].text;
+  // "Poltrona · 1 poltrona" reads badly; a single piece needs no count.
+  if(rule.scaleByQty&&seatsSelect.value==='1')return state.furniture;
+  return `${state.furniture} · ${qtyText}`;
+}
+function updateSummary(){
+  document.getElementById('summaryFurniture').textContent=furnitureSummaryLabel();
+  document.getElementById('summaryMeasures').textContent=`${document.getElementById('width').value} × ${document.getElementById('height').value} × ${document.getElementById('depth').value} cm`;
+  document.getElementById('summaryFabric').textContent=state.fabric?`${state.fabric.name} · ${state.fabric.colorName}`:'Por confirmar';
+  const q=billable();
+  document.getElementById('summaryConsumo').textContent=`${rangoM(q.min,q.max)} m`;
+  document.getElementById('summaryMeters').textContent=`${rangoM(q.facMin,q.facMax)} m`;
+  document.getElementById('summaryPrice').textContent=state.fabric?precioRango(q):'Por confirmar';
+}
+async function submitQuote(){
+  const q=billable(),min=q.min,max=q.max;
+  const id=Store.nextQuoteId();
+  const settings=Store.settings();
+  const citySelect=document.getElementById('city');
+  const servicePointId=citySelect.value;
+  // El desplegable solo muestra el nombre del punto (la ciudad ya la dice el
+  // optgroup), pero la solicitud congela "ciudad · punto" — así dos puntos
+  // en la misma ciudad (los tres de Bogotá) se distinguen en el backoffice.
+  const punto=servicePointId?Store.get('servicePoints',servicePointId):null;
+  const city=punto?`${punto.city} · ${punto.name}`
+    :(citySelect.selectedOptions[0]?citySelect.selectedOptions[0].text:'');
+  // "Asignar por ubicación" is a real toggle in the backoffice, so honour it.
+  // The quote keeps the point id, which survives a rename, and the name only
+  // as a label ("Otra ciudad" has no id, so it never auto-assigns).
+  const asignado=settings.autoAssignByZone?Store.sellerForPoint(servicePointId):null;
+  const seller=asignado?asignado.name:'';
+
+  // The photos are far too big for localStorage, so they go to IndexedDB and the
+  // quote keeps only their ids.
+  const photoIds=[];
+  for(let i=0;i<state.photos.length;i++){
+    const pid=`photo-${id}-${i+1}`;
+    try{await Photos.put(pid,state.photos[i].dataUrl);photoIds.push(pid)}
+    catch(err){console.warn('[wizard] foto no guardada',err)}
+  }
+
+  /* La fecha del cliente, no la del meridiano de Greenwich. toISOString() da la
+   * fecha UTC, así que desde las 19:00 en Colombia (UTC-5) fechaba la solicitud
+   * al día siguiente. */
+  const ahora=new Date(),dosDigitos=n=>String(n).padStart(2,'0');
+  const hoy=`${ahora.getFullYear()}-${dosDigitos(ahora.getMonth()+1)}-${dosDigitos(ahora.getDate())}`;
+
+  const quote={
+    id,date:hoy,
+    customer:{name:document.getElementById('fullName').value.trim(),
+              email:document.getElementById('email').value.trim(),
+              phone:document.getElementById('phone').value.trim()},
+    furniture:state.furniture,
+    quantityLabel:furnitureRules[state.furniture].scaleByQty&&seatsSelect.value==='1'?'':seatsSelect.options[seatsSelect.selectedIndex].text,
+    measures:{width:+document.getElementById('width').value||null,
+              height:+document.getElementById('height').value||null,
+              depth:+document.getElementById('depth').value||null},
+    coverage:document.getElementById('coverage').value,
+    cushions:cojines(),
+    needs:[...document.querySelectorAll('.chip-grid input:checked')].map(x=>x.value),
+    style:document.getElementById('style').value,
+    colorRange:document.getElementById('color').value,
+    budget:+document.getElementById('budget').value||null,
+    city,servicePointId,
+    fabricId:state.fabric?state.fabric.id:null,
+    fabricName:state.fabric?`${state.fabric.name} · ${state.fabric.colorName}`:'',
+    meters:[min,max],
+    /* Congelado a propósito: si mañana cambian el precio o la forma de venta de
+     * la tela, esta solicitud tiene que seguir diciendo lo que se le prometió
+     * al cliente. Lo vigente se recalcula, lo cotizado no. */
+    billing:state.fabric?{
+      modelo:q.consumo.modelo,tecnico:q.consumo.tecnico,
+      rollWidthCm:q.consumo.rollWidthCm,piezas:q.consumo.piezas,
+      consumo:[q.min,q.max],facturable:[q.facMin,q.facMax],
+      compra:[q.desglose.min.compra,q.desglose.max.compra],
+      sobrante:[q.desglose.min.sobrante,q.desglose.max.sobrante],
+      razones:q.razones,reglas:q.desglose.max.reglas
+    }:null,
+    price:state.fabric?[q.facMin*state.fabric.price,q.facMax*state.fabric.price]:null,
+    seller,sellerId:asignado?asignado.id:'',status:'Nueva',photoIds
+  };
+  try{Store.put('quotes',quote)}
+  catch(err){
+    // Never swallow this: the client would think the request was sent.
+    alert('No pudimos guardar tu solicitud en este navegador ('+err.message+'). Intenta de nuevo.');
+    return;
+  }
+
+  document.getElementById('wizardActions').hidden=true;syncActionsHeight();
+  steps.forEach(s=>s.classList.remove('active'));
+  document.getElementById('successState').hidden=false;
+  document.getElementById('successEmail').textContent=quote.customer.email;
+  document.getElementById('requestNumber').textContent=id;
+  document.getElementById('successMessage').textContent=settings.confirmationMessage;
+  document.getElementById('successSeller').textContent=seller?`Tu asesor asignado es ${seller}.`:'';
+  document.querySelector('.mobile-progress').style.display='none';
+  document.querySelector('.step-list').style.opacity='.35';
+}
+document.getElementById('restartButton').addEventListener('click',()=>location.reload());
+
+const chatPanel=document.getElementById('chatPanel');document.querySelectorAll('[data-open-chat]').forEach(b=>b.addEventListener('click',()=>{chatPanel.classList.add('open');chatPanel.setAttribute('aria-hidden','false');document.getElementById('chatInput').focus()}));document.getElementById('closeChat').addEventListener('click',()=>{chatPanel.classList.remove('open');chatPanel.setAttribute('aria-hidden','true')});
+const replies={medidas:'Mide el ancho, alto y profundidad en los puntos más largos. En el siguiente paso verás una guía según el tipo de mueble.',mascotas:'Te recomiendo priorizar telas de fácil limpieza, trama cerrada y buena resistencia al uso. Marcaremos esas opciones en tus recomendaciones.',definitivo:'No. El sistema genera un rango orientativo. Un asesor confirma la cantidad, disponibilidad y precio antes de tu compra.'};
+function replyTo(text){const q=text.toLowerCase();return q.includes('medid')?replies.medidas:q.includes('mascota')?replies.mascotas:q.includes('definit')||q.includes('valor')?replies.definitivo:'Puedo orientarte sobre medidas, uso, cuidado y selección de telas. Si tu pregunta requiere inventario o precio final, la incluiré para que un asesor la confirme.'}
+function addMessage(text,type){const m=document.createElement('div');m.className=`message ${type}`;m.textContent=text;document.getElementById('messages').appendChild(m);m.scrollIntoView({behavior:'smooth'})}
+document.querySelectorAll('.quick-questions button').forEach(b=>b.addEventListener('click',()=>{addMessage(b.textContent,'user');setTimeout(()=>addMessage(replyTo(b.textContent),'bot'),350)}));
+document.getElementById('chatForm').addEventListener('submit',e=>{e.preventDefault();const input=document.getElementById('chatInput');if(!input.value.trim())return;const value=input.value;addMessage(value,'user');input.value='';setTimeout(()=>addMessage(replyTo(value),'bot'),400)});
+
+// Los puntos ya vienen ordenados por Store; agruparlos por ciudad conserva
+// ese orden (el grupo nace en la posición del primer punto que lo usa), así
+// que basta con recorrerlos una vez, sin ordenar las ciudades aparte.
+function renderCities(){
+  const sel=document.getElementById('city');const puntos=Store.activeServicePoints();
+  const grupos=[];
+  puntos.forEach(p=>{
+    let g=grupos.find(x=>x.city===p.city);
+    if(!g){g={city:p.city,items:[]};grupos.push(g)}
+    g.items.push(p);
+  });
+  sel.innerHTML=grupos.map(g=>
+    `<optgroup label="${esc(g.city)}">${g.items.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</optgroup>`
+  ).join('')+'<option value="">Otra ciudad</option>';
+}
+function renderAllOptions(){renderFurnitureOptions();renderPreferenceOptions();renderCities();renderQuantityOptions()}
+// The banner wraps on narrow screens and reflows once the web fonts land, so
+// its height is observed rather than measured once; the layout offsets read it
+// back from --banner-h.
+function syncBannerHeight(){
+  document.documentElement.style.setProperty('--banner-h',document.getElementById('demoBanner').offsetHeight+'px');
+}
+if(window.ResizeObserver) new ResizeObserver(syncBannerHeight).observe(document.getElementById('demoBanner'));
+else addEventListener('resize',syncBannerHeight);
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(syncBannerHeight);
+syncBannerHeight();
+
+// Las acciones del wizard quedan ancladas al pie en escritorio, justo donde flota
+// el botón de chat. Se publica su alto para que el botón las libere.
+function syncActionsHeight(){
+  const el=document.getElementById('wizardActions');
+  const apila=matchMedia('(min-width:651px)').matches&&!el.hidden;
+  document.documentElement.style.setProperty('--actions-h',apila?el.offsetHeight+'px':'0px');
+}
+if(window.ResizeObserver) new ResizeObserver(syncActionsHeight).observe(document.getElementById('wizardActions'));
+addEventListener('resize',syncActionsHeight);
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(syncActionsHeight);
+syncActionsHeight();
+renderAllOptions();
+renderPhotos();
+// The backoffice writes to the same store; refresh if it changes while open.
+Store.onChange(()=>{renderAllOptions();if(state.step===4)renderReviewSummary();if(state.step===5)renderFabrics()});
+showStep(1);
+  </script>
+</body>
+</html>

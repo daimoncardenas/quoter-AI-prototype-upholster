@@ -1,0 +1,23 @@
+{
+  "name": "mediterranea-prototypes",
+  "private": true,
+  "description": "Prototypes for the Mediterránea Insumos fabric quoting flow. The prototypes themselves have no dependencies — these are only for the tests.",
+  "scripts": {
+    "test": "node tests/wizard.spec.mjs && node tests/photos.spec.mjs && node tests/wiring.spec.mjs && node tests/review.spec.mjs && node tests/entities.spec.mjs && node tests/recommend.spec.mjs && node tests/auth.spec.mjs && node tests/billing.spec.mjs && node tests/components.spec.mjs && node tests/points.spec.mjs && node tests/sealed.spec.mjs",
+    "test:wizard": "node tests/wizard.spec.mjs",
+    "test:wiring": "node tests/wiring.spec.mjs",
+    "test:review": "node tests/review.spec.mjs",
+    "test:entities": "node tests/entities.spec.mjs",
+    "test:recommend": "node tests/recommend.spec.mjs",
+    "test:auth": "node tests/auth.spec.mjs",
+    "test:photos": "node tests/photos.spec.mjs",
+    "build": "node tools/build.mjs",
+    "test:billing": "node tests/billing.spec.mjs",
+    "test:components": "node tests/components.spec.mjs",
+    "test:points": "node tests/points.spec.mjs",
+    "test:sealed": "node tests/sealed.spec.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.62.1"
+  }
+}

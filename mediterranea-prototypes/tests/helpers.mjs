@@ -1,0 +1,22 @@
+/* The backoffice now sits behind a login, so tests have to sign in first. */
+export async function openAdmin(page, D, email = 'maria@mediterraneacol.com') {
+  await page.goto(D + 'admin.html');
+  if (await page.isVisible('#loginScreen')) {
+    await page.fill('#loginEmail', email);
+    await page.fill('#loginPassword', 'mediterranea');
+    await page.click('#loginSubmit');
+    await page.waitForSelector('#appShell:not([hidden])');
+  }
+  return page;
+}
+
+/* Los campos de lista del backoffice son etiquetas, no texto separado por comas.
+ * Para dejar una lista EXACTA hay que quitar las que están y escribir las nuevas;
+ * escribir sin más agrega, que es justo lo que un page.fill() ya no hace. */
+export async function setTags(page, selector, values) {
+  const quitar = page.locator(`${selector} .tag button`);
+  while (await quitar.count()) await quitar.first().click();
+  await page.click(`${selector} input`);
+  // La coma final confirma la última etiqueta.
+  if (values.length) await page.keyboard.type(values.join(',') + ',');
+}
