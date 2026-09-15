@@ -2,8 +2,9 @@
  * Three numbers that are only equal when a fabric sells in fine increments
  * with no minimum, and that people confuse constantly. */
 import { chromium } from 'playwright';
+import { PHOTOS_DB } from './client.mjs';
 import { openAdmin } from './helpers.mjs';
-const D = 'file://' + process.cwd() + '/';
+const D = 'file://' + process.cwd() + '/generated/';
 const png = ['1','2','3'].map(n => new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
 
 let fails = 0;
@@ -18,7 +19,7 @@ const errs = []; page.on('pageerror', e => errs.push(String(e)));
 
 async function fresh(file) {
   await page.goto(D + file);
-  await page.evaluate(() => { localStorage.clear(); indexedDB.deleteDatabase('med-photos'); });
+  await page.evaluate((db) => { localStorage.clear(); indexedDB.deleteDatabase(db); }, PHOTOS_DB);
   if (file === 'admin.html') { await openAdmin(page, D); } else { await page.goto(D + file); }
 }
 async function wizardTo(step) {

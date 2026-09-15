@@ -1,5 +1,6 @@
 import { chromium } from 'playwright';
-const D = 'file://' + process.cwd() + '/';
+import { PHOTOS_DB } from './client.mjs';
+const D = 'file://' + process.cwd() + '/generated/';
 const BIG = ['1','2','3'].map(n=>new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);   // 1200x900
 const SMALL = BIG.slice(0,2).concat(new URL('./fixture-sofa-baja.png', import.meta.url).pathname); // una de 463x259
 let fails = 0;
@@ -10,7 +11,7 @@ const errs=[]; page.on('pageerror',e=>errs.push(String(e)));
 
 async function review({photo, furniture, w, h, d}) {
   await page.goto(D+'index.html');
-  await page.evaluate(()=>{localStorage.clear();indexedDB.deleteDatabase('med-photos')});
+  await page.evaluate((db)=>{localStorage.clear();indexedDB.deleteDatabase(db)}, PHOTOS_DB);
   await page.goto(D+'index.html');
   if (furniture) await page.click(`.furniture-card[data-furniture="${furniture}"]`);
   await page.setInputFiles('#furniturePhoto', photo);

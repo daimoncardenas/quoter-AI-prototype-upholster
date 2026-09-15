@@ -4,3 +4,13 @@ node_modules/
 
 # El paquete cifrado se genera con npm run build; la llave no vive en el repo.
 dist/
+
+# Per-client render of the shared templates (index.html/admin.html/store.js),
+# produced by `npm run generate` from clients/<slug>/ + .env. Regenerated on
+# demand, and shipping every client's output in one place defeats the point
+# of white-labeling.
+generated/
+generated-macizo/
+
+# Selects which client CLIENT resolves to locally; see .env.example.
+.env

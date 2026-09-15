@@ -1,0 +1,423 @@
+{
+  "fabrics": [
+    {
+      "id": 1,
+      "name": "Lino Verona",
+      "collection": "Naturales",
+      "price": 89000,
+      "color": "#9d8b72",
+      "colorName": "Arena",
+      "use": "Uso residencial",
+      "tags": [
+        "Textura natural",
+        "Lavable"
+      ],
+      "active": true,
+      "needs": [
+        "Fácil limpieza"
+      ],
+      "styles": [
+        "Natural",
+        "Minimalista"
+      ],
+      "colorFamily": "Neutros y arena",
+      "rollWidthCm": 140,
+      "rollLengthM": 30,
+      "saleUnit": "metro",
+      "incrementM": 0.1,
+      "minOrderM": 1,
+      "supplierMinM": 0,
+      "reusableRemainder": true
+    },
+    {
+      "id": 2,
+      "name": "Velvet Siena",
+      "collection": "Esenciales",
+      "price": 119000,
+      "color": "#335f60",
+      "colorName": "Petróleo",
+      "use": "Alto tráfico",
+      "tags": [
+        "Suave",
+        "Antimanchas"
+      ],
+      "active": true,
+      "needs": [
+        "Alto tráfico",
+        "Fácil limpieza",
+        "Suave"
+      ],
+      "styles": [
+        "Clásico",
+        "Moderno"
+      ],
+      "colorFamily": "Azules",
+      "rollWidthCm": 140,
+      "rollLengthM": 30,
+      "saleUnit": "metro",
+      "incrementM": 0.5,
+      "minOrderM": 2,
+      "supplierMinM": 0,
+      "reusableRemainder": true
+    },
+    {
+      "id": 3,
+      "name": "Bouclé Capri",
+      "collection": "Texturas",
+      "price": 137000,
+      "color": "#ded3bd",
+      "colorName": "Marfil",
+      "use": "Uso residencial",
+      "tags": [
+        "Tendencia",
+        "Acogedora"
+      ],
+      "active": true,
+      "needs": [
+        "Suave"
+      ],
+      "styles": [
+        "Moderno",
+        "Minimalista"
+      ],
+      "colorFamily": "Neutros y arena",
+      "rollWidthCm": 150,
+      "rollLengthM": 25,
+      "saleUnit": "metro",
+      "incrementM": 0.25,
+      "minOrderM": 1,
+      "supplierMinM": 0,
+      "reusableRemainder": true
+    },
+    {
+      "id": 4,
+      "name": "Náutica Bari",
+      "collection": "Performance",
+      "price": 108000,
+      "color": "#606f78",
+      "colorName": "Gris océano",
+      "use": "Exterior",
+      "tags": [
+        "UV",
+        "Repelente al agua"
+      ],
+      "active": true,
+      "needs": [
+        "Resistente al agua",
+        "Sol",
+        "Alto tráfico"
+      ],
+      "styles": [
+        "Moderno"
+      ],
+      "colorFamily": "Grises",
+      "rollWidthCm": 160,
+      "rollLengthM": 40,
+      "saleUnit": "metro",
+      "incrementM": 0.5,
+      "minOrderM": 1,
+      "supplierMinM": 0,
+      "reusableRemainder": true
+    },
+    {
+      "id": 5,
+      "name": "Terciopelo Roma",
+      "collection": "Esenciales",
+      "price": 125000,
+      "color": "#9a644d",
+      "colorName": "Terracota",
+      "use": "Uso residencial",
+      "tags": [
+        "Elegante",
+        "Fácil limpieza"
+      ],
+      "active": true,
+      "needs": [
+        "Fácil limpieza",
+        "Suave"
+      ],
+      "styles": [
+        "Clásico"
+      ],
+      "colorFamily": "Tonos cálidos",
+      "rollWidthCm": 140,
+      "rollLengthM": 20,
+      "saleUnit": "metro",
+      "incrementM": 0.1,
+      "minOrderM": 1,
+      "supplierMinM": 25,
+      "reusableRemainder": false
+    },
+    {
+      "id": 6,
+      "name": "Milo Protect",
+      "collection": "Performance",
+      "price": 144000,
+      "color": "#767059",
+      "colorName": "Oliva",
+      "use": "Pet friendly",
+      "tags": [
+        "Pet friendly",
+        "Alta resistencia"
+      ],
+      "active": false,
+      "needs": [
+        "Mascotas",
+        "Alto tráfico"
+      ],
+      "styles": [
+        "Natural"
+      ],
+      "colorFamily": "Verdes",
+      "rollWidthCm": 140,
+      "rollLengthM": 30,
+      "saleUnit": "rollo",
+      "incrementM": 0.1,
+      "minOrderM": 1,
+      "supplierMinM": 0,
+      "reusableRemainder": false
+    }
+  ],
+  "users": [
+    {
+      "id": "u-admin",
+      "name": "María Camila Restrepo",
+      "email": "maria@mediterraneacol.com",
+      "role": "admin",
+      "sellerId": null,
+      "active": true
+    },
+    {
+      "id": "u-laura",
+      "name": "Laura Méndez",
+      "email": "laura@mediterraneacol.com",
+      "role": "seller",
+      "sellerId": 1,
+      "active": true
+    },
+    {
+      "id": "u-andres",
+      "name": "Andrés Rojas",
+      "email": "andres@mediterraneacol.com",
+      "role": "seller",
+      "sellerId": 2,
+      "active": true
+    },
+    {
+      "id": "u-paula",
+      "name": "Paula Gómez",
+      "email": "paula@mediterraneacol.com",
+      "role": "seller",
+      "sellerId": 3,
+      "active": true
+    },
+    {
+      "id": "u-daniel",
+      "name": "Daniel Ortiz",
+      "email": "daniel@mediterraneacol.com",
+      "role": "seller",
+      "sellerId": 4,
+      "active": false
+    }
+  ],
+  "servicePoints": [
+    {
+      "id": "sp-12-de-octubre",
+      "name": "12 de Octubre",
+      "city": "Bogotá",
+      "address": "Carrera 52 # 76-08",
+      "phone": "+57 301 2844326",
+      "active": true,
+      "order": 1
+    },
+    {
+      "id": "sp-patio-bonito",
+      "name": "Patio Bonito",
+      "city": "Bogotá",
+      "address": "Calle 40 # 86A-15",
+      "phone": "+57 313 7173625",
+      "active": true,
+      "order": 2
+    },
+    {
+      "id": "sp-primera-de-mayo",
+      "name": "Primera de Mayo",
+      "city": "Bogotá",
+      "address": "Ac 26 sur # 37B-49",
+      "phone": "+57 301 2843857",
+      "active": true,
+      "order": 3
+    },
+    {
+      "id": "sp-cali",
+      "name": "Cali",
+      "city": "Cali",
+      "address": "Calle 24 # 8-32",
+      "phone": "+57 300 1980365",
+      "active": true,
+      "order": 4
+    }
+  ],
+  "sellers": [
+    {
+      "id": 1,
+      "name": "Laura Méndez",
+      "email": "laura@mediterraneacol.com",
+      "servicePointIds": [
+        "sp-12-de-octubre"
+      ],
+      "active": true,
+      "quotes": 14
+    },
+    {
+      "id": 2,
+      "name": "Andrés Rojas",
+      "email": "andres@mediterraneacol.com",
+      "servicePointIds": [
+        "sp-patio-bonito"
+      ],
+      "active": true,
+      "quotes": 11
+    },
+    {
+      "id": 3,
+      "name": "Paula Gómez",
+      "email": "paula@mediterraneacol.com",
+      "servicePointIds": [
+        "sp-primera-de-mayo",
+        "sp-cali"
+      ],
+      "active": true,
+      "quotes": 9
+    },
+    {
+      "id": 4,
+      "name": "Daniel Ortiz",
+      "email": "daniel@mediterraneacol.com",
+      "servicePointIds": [
+        "sp-cali"
+      ],
+      "active": false,
+      "quotes": 8
+    }
+  ],
+  "quotes": [
+    {
+      "id": "COT-1042",
+      "date": "2026-09-04",
+      "customer": {
+        "name": "Natalia Peña",
+        "email": "",
+        "phone": ""
+      },
+      "furniture": "Sofá",
+      "quantityLabel": "3 puestos",
+      "city": "Bogotá · Patio Bonito",
+      "servicePointId": "sp-patio-bonito",
+      "seller": "",
+      "sellerId": "",
+      "status": "Nueva",
+      "fabricName": "Lino Verona",
+      "photoIds": []
+    },
+    {
+      "id": "COT-1041",
+      "date": "2026-09-04",
+      "customer": {
+        "name": "Carlos Pardo",
+        "email": "",
+        "phone": ""
+      },
+      "furniture": "Poltrona",
+      "quantityLabel": "",
+      "city": "Bogotá · 12 de Octubre",
+      "servicePointId": "sp-12-de-octubre",
+      "seller": "Laura Méndez",
+      "sellerId": 1,
+      "status": "En gestión",
+      "fabricName": "Velvet Siena",
+      "photoIds": []
+    },
+    {
+      "id": "COT-1040",
+      "date": "2026-09-03",
+      "customer": {
+        "name": "Ana Lucía Díaz",
+        "email": "",
+        "phone": ""
+      },
+      "furniture": "Sofá en L",
+      "quantityLabel": "4 módulos",
+      "city": "Bogotá · Primera de Mayo",
+      "servicePointId": "sp-primera-de-mayo",
+      "seller": "Paula Gómez",
+      "sellerId": 3,
+      "status": "Nueva",
+      "fabricName": "Bouclé Capri",
+      "photoIds": []
+    },
+    {
+      "id": "COT-1039",
+      "date": "2026-09-03",
+      "customer": {
+        "name": "Julián Vega",
+        "email": "",
+        "phone": ""
+      },
+      "furniture": "Cabecero",
+      "quantityLabel": "",
+      "city": "Bogotá · Patio Bonito",
+      "servicePointId": "sp-patio-bonito",
+      "seller": "Andrés Rojas",
+      "sellerId": 2,
+      "status": "En gestión",
+      "fabricName": "Terciopelo Roma",
+      "photoIds": []
+    },
+    {
+      "id": "COT-1038",
+      "date": "2026-09-02",
+      "customer": {
+        "name": "María Torres",
+        "email": "",
+        "phone": ""
+      },
+      "furniture": "Poltrona",
+      "quantityLabel": "",
+      "city": "Cali · Cali",
+      "servicePointId": "sp-cali",
+      "seller": "Daniel Ortiz",
+      "sellerId": 4,
+      "status": "Cotizada",
+      "fabricName": "Náutica Bari",
+      "photoIds": []
+    },
+    {
+      "id": "COT-1037",
+      "date": "2026-09-01",
+      "customer": {
+        "name": "Felipe Cano",
+        "email": "",
+        "phone": ""
+      },
+      "furniture": "Silla",
+      "quantityLabel": "6 sillas",
+      "city": "Cali · Cali",
+      "servicePointId": "sp-cali",
+      "seller": "Paula Gómez",
+      "sellerId": 3,
+      "status": "Cotizada",
+      "fabricName": "Lino Verona",
+      "photoIds": []
+    }
+  ],
+  "settings": {
+    "senderEmail": "cotizaciones@mediterraneacol.com",
+    "budgets": [
+      100000,
+      120000,
+      140000,
+      160000
+    ]
+  }
+}

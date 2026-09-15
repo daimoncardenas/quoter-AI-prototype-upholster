@@ -1,12 +1,14 @@
 /* El catálogo de puntos de atención que alimenta el "Punto de atención" del
- * cotizador: las cuatro tiendas reales de upholster-prototype-quoter, agrupadas por ciudad
+ * cotizador: las cuatro tiendas reales del cliente activo (clients/mediterranea/
+ * por defecto), agrupadas por ciudad
  * en el desplegable. Antes cada vendedor escribía sus zonas como texto libre
  * y el selector salía de la unión de esos textos; ahora el backoffice
  * administra los puntos y los vendedores los cubren por id, igual que ya
  * pasaba con sellerId en quotes. */
 import { chromium } from 'playwright';
+import { client, PHOTOS_DB, userEmail, emailFor } from './client.mjs';
 import { openAdmin } from './helpers.mjs';
-const D = 'file://' + process.cwd() + '/';
+const D = 'file://' + process.cwd() + '/generated/';
 const png = ['1','2','3'].map(n => new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
 
 let fails = 0;
@@ -24,7 +26,7 @@ page.on('dialog', d => d.accept());
 
 async function fresh(file) {
   await page.goto(D + file);
-  await page.evaluate(() => { localStorage.clear(); indexedDB.deleteDatabase('med-photos'); });
+  await page.evaluate((db) => { localStorage.clear(); indexedDB.deleteDatabase(db); }, PHOTOS_DB);
   if (file === 'admin.html') { await openAdmin(page, D); } else { await page.goto(D + file); }
 }
 async function wizardTo(step, opts = {}) {
@@ -185,9 +187,9 @@ check('y desaparece del selector', (await cityOptionTexts()).includes('Zona Borr
 
 console.log('\nUN NAVEGADOR CON ZONAS DE TEXTO LIBRE MIGRA A PUNTOS POR ID');
 await page.goto(D + 'index.html');
-await page.evaluate(() => { localStorage.clear(); indexedDB.deleteDatabase('med-photos'); });
-await page.evaluate(() => {
-  // Forma antigua y ningún med.v1.servicePoints — dispara la migración en el
+await page.evaluate((db) => { localStorage.clear(); indexedDB.deleteDatabase(db); }, PHOTOS_DB);
+await page.evaluate(({ ns, lauraEmail, customEmail }) => {
+  // Forma antigua y ningún <ns>servicePoints — dispara la migración en el
   // primer read. Dos casos a la vez:
   //  - el id 1 coincide con una vendedora semilla (Laura) y sus zonas son
   //    puros nombres de las demo placeholder (con acento y mayúsculas
@@ -198,13 +200,13 @@ await page.evaluate(() => {
   //    la lista solo aplica a las cuatro semillas originales. Para este
   //    vendedor esos nombres son lugares reales que escribió, así que ambos
   //    deben sobrevivir como puntos nuevos y NO desaparecer en silencio.
-  localStorage.setItem('med.v1.sellers', JSON.stringify([
-    { id: 1, name: 'Laura Méndez', email: 'laura@upholster-prototype-quoter.com',
+  localStorage.setItem(ns + 'sellers', JSON.stringify([
+    { id: 1, name: 'Laura Méndez', email: lauraEmail,
       zones: ['bogota norte'], active: true, quotes: 0 },
-    { id: 103, name: 'Vendedor Custom', email: 'custom@upholster-prototype-quoter.com',
+    { id: 103, name: 'Vendedor Custom', email: customEmail,
       zones: ['Chía', 'Medellín'], active: true, quotes: 0 }
   ]));
-});
+}, { ns: client.storageNamespace, lauraEmail: userEmail('u-laura'), customEmail: emailFor('custom') });
 await page.goto(D + 'index.html');
 const pointNamesAfterMigration = await page.evaluate(() => Store.all('servicePoints').map(p => p.name));
 check('"Bogotá Norte" nunca se crea: solo la tenía una vendedora semilla, y esa se resuelve por su cobertura real',

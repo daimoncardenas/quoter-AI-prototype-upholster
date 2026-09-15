@@ -1,5 +1,6 @@
 import { chromium } from 'playwright';
-const D = 'file://' + process.cwd() + '/';
+import { PHOTOS_DB } from './client.mjs';
+const D = 'file://' + process.cwd() + '/generated/';
 const png = ['1','2','3'].map(n=>new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
 let fails = 0;
 const check = (n, got, want) => { const ok = JSON.stringify(got)===JSON.stringify(want); if(!ok)fails++;
@@ -7,7 +8,7 @@ const check = (n, got, want) => { const ok = JSON.stringify(got)===JSON.stringif
 const browser = await chromium.launch(); const page = await browser.newPage();
 const errs = []; page.on('pageerror', e => errs.push(String(e)));
 async function fresh(){ await page.goto(D+'index.html');
-  await page.evaluate(()=>{localStorage.clear();indexedDB.deleteDatabase('med-photos')}); await page.goto(D+'index.html'); }
+  await page.evaluate((db)=>{localStorage.clear();indexedDB.deleteDatabase(db)}, PHOTOS_DB); await page.goto(D+'index.html'); }
 async function reach(step){
   await page.setInputFiles('#furniturePhoto', png);
   await page.waitForFunction(()=>state.photos.length>=3);

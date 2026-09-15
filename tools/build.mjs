@@ -15,6 +15,9 @@
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { webcrypto, randomInt } from 'node:crypto';
+import { resolveClient } from './env.mjs';
+import { loadClientPack } from './client-pack.mjs';
+import { generate } from './generate.mjs';
 
 const { subtle } = webcrypto;
 // getRandomValues exige su propio `this`, así que no se desestructura.
@@ -49,7 +52,7 @@ async function encrypt(plaintext, passphrase) {
 /* --------------------------------------------------------------- la cáscara --
  * Lo único que se entrega en claro: el formulario, el descifrador y el bulto
  * cifrado. Ni una línea del prototipo. */
-function shell({ title, logo, eyebrow, lead, payload }) {
+function shell({ title, logo, logoAlt, brandName, eyebrow, lead, payload }) {
   return `<!doctype html>
 <html lang="es">
 <head>
@@ -82,7 +85,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 </head>
 <body>
   <div class="stack">
-    <img src="${logo}" alt="upholster-prototype-quoter" class="logo">
+    <img src="${logo}" alt="${logoAlt}" class="logo">
     <form class="card" id="form">
       <span class="eyebrow">${eyebrow}</span>
       <h1>Vista previa privada</h1>
@@ -93,7 +96,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
       <p class="error" id="error" hidden></p>
       <button type="submit" id="submit">Abrir prototipo</button>
     </form>
-    <p class="foot">Prototipo de trabajo, no es el sitio de upholster-prototype-quoter.
+    <p class="foot">Prototipo de trabajo, no es el sitio de ${brandName}.
       Sin la llave este archivo no contiene nada legible.</p>
   </div>
 <script>
@@ -227,20 +230,26 @@ const ttlArg = process.argv.find(a => a.startsWith('--ttl='));
 const TTL_HOURS = ttlArg ? Number(ttlArg.slice('--ttl='.length)) : 6;
 if (!(TTL_HOURS > 0)) throw new Error('--ttl debe ser un número de horas mayor que cero');
 
-const store = readFileSync('store.js', 'utf8');
+/* El build siempre parte de una generación fresca: así dist/ nunca queda
+ * desincronizado de clients/<slug>/ ni de los templates. */
+const clientEnvValue = resolveClient();
+const { client } = loadClientPack(clientEnvValue);
+generate(clientEnvValue);
+
+const store = readFileSync('generated/store.js', 'utf8');
 if (store.includes('</script>')) throw new Error('store.js contiene </script> y rompería el inlining');
 
 const PAGES = [
   { file: 'index.html', eyebrow: 'Propuesta',
-    lead: 'Este prototipo se comparte solo con upholster-prototype-quoter. Escribe la llave que enviamos por correo.' },
+    lead: `Este prototipo se comparte solo con ${client.displayName}. Escribe la llave que enviamos por correo.` },
   { file: 'admin.html', eyebrow: 'Backoffice',
-    lead: 'El backoffice del prototipo se comparte solo con upholster-prototype-quoter. Escribe la llave que enviamos por correo.' }
+    lead: `El backoffice del prototipo se comparte solo con ${client.displayName}. Escribe la llave que enviamos por correo.` }
 ];
 
 mkdirSync('dist', { recursive: true });
 
 for (const page of PAGES) {
-  const src = readFileSync(page.file, 'utf8');
+  const src = readFileSync(`generated/${page.file}`, 'utf8');
 
   /* store.js entra al bulto cifrado: si quedara fuera, el catálogo, los
    * vendedores y los hashes de los usuarios viajarían en claro. */
@@ -249,7 +258,7 @@ for (const page of PAGES) {
   const inlined = src.replace(tag, '<script>\n' + store + '\n</script>');
 
   const logo = src.split('src="')[1].split('"')[0];
-  if (!logo.startsWith('data:image/png')) throw new Error(`${page.file}: no encontré el logo embebido`);
+  if (!logo.startsWith('data:image/')) throw new Error(`${page.file}: no encontré el logo embebido`);
 
   const title = (src.match(/<title>([^<]*)<\/title>/) || [, page.file])[1];
 
@@ -259,7 +268,8 @@ for (const page of PAGES) {
    * Para volver a sellar la entrega: descomenta este bloque y las tres líneas
    * del final, y borra el writeFileSync en claro de abajo. */
   // writeFileSync(`dist/${page.file}`, shell({
-  //   title, logo, eyebrow: page.eyebrow, lead: page.lead,
+  //   title, logo, logoAlt: client.logo.alt, brandName: client.displayName,
+  //   eyebrow: page.eyebrow, lead: page.lead,
   //   payload: await encrypt(inlined, passphrase)
   // }));
   writeFileSync(`dist/${page.file}`, inlined);

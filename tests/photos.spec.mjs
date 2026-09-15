@@ -1,6 +1,7 @@
 import { chromium } from 'playwright';
+import { PHOTOS_DB } from './client.mjs';
 import { openAdmin } from './helpers.mjs';
-const D = 'file://' + process.cwd() + '/';
+const D = 'file://' + process.cwd() + '/generated/';
 const F = n => new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname;
 const TRES = ['1','2','3'].map(F);
 // 463×259: por debajo del umbral de 600 px que marca runReview(). Vive en el
@@ -13,7 +14,7 @@ const check = (n, got, want) => { const ok = JSON.stringify(got)===JSON.stringif
 const b = await chromium.launch(); const page = await b.newPage();
 const errs=[]; page.on('pageerror',e=>errs.push(String(e)));
 const fresh = async () => { await page.goto(D+'index.html');
-  await page.evaluate(()=>{localStorage.clear();indexedDB.deleteDatabase('med-photos')});
+  await page.evaluate((db)=>{localStorage.clear();indexedDB.deleteDatabase(db)}, PHOTOS_DB);
   await page.goto(D+'index.html'); };
 // Wait for the count to GROW, not just to reach files.length — a second upload
 // onto an already-full-enough strip would otherwise satisfy the wait instantly

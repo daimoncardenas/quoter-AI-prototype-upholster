@@ -1,9 +1,11 @@
+import { ADMIN_EMAIL, DEMO_PASSWORD } from './client.mjs';
+
 /* The backoffice now sits behind a login, so tests have to sign in first. */
-export async function openAdmin(page, D, email = 'maria@upholster-prototype-quoter.com') {
+export async function openAdmin(page, D, email = ADMIN_EMAIL) {
   await page.goto(D + 'admin.html');
   if (await page.isVisible('#loginScreen')) {
     await page.fill('#loginEmail', email);
-    await page.fill('#loginPassword', 'upholster-prototype-quoter');
+    await page.fill('#loginPassword', DEMO_PASSWORD);
     await page.click('#loginSubmit');
     await page.waitForSelector('#appShell:not([hidden])');
   }

@@ -13,21 +13,14 @@
 (function (global) {
   'use strict';
 
-  var NS = 'med.v1.';
+  var NS = '{{STORAGE_NS}}';
 
   /* ---------------------------------------------------------------- seeds -- */
 
   var SEEDS = {
     // needs / styles / colorFamily are what the recommendation matches against.
     // tags stay purely descriptive: they are shown on the card, not scored.
-    fabrics: [
-      { id: 1, name: 'Lino Verona',     collection: 'Naturales',   price: 89000,  color: '#9d8b72', colorName: 'Arena',       use: 'Uso residencial', tags: ['Textura natural', 'Lavable'],       active: true,  needs: ['Fácil limpieza'],                          styles: ['Natural','Minimalista'], colorFamily: 'Neutros y arena', rollWidthCm: 140, rollLengthM: 30, saleUnit: 'metro', incrementM: 0.1,  minOrderM: 1, supplierMinM: 0, reusableRemainder: true },
-      { id: 2, name: 'Velvet Siena',    collection: 'Esenciales',  price: 119000, color: '#335f60', colorName: 'Petróleo',    use: 'Alto tráfico',    tags: ['Suave', 'Antimanchas'],             active: true,  needs: ['Alto tráfico','Fácil limpieza','Suave'],   styles: ['Clásico','Moderno'],     colorFamily: 'Azules', rollWidthCm: 140, rollLengthM: 30, saleUnit: 'metro', incrementM: 0.5,  minOrderM: 2, supplierMinM: 0, reusableRemainder: true },
-      { id: 3, name: 'Bouclé Capri',    collection: 'Texturas',    price: 137000, color: '#ded3bd', colorName: 'Marfil',      use: 'Uso residencial', tags: ['Tendencia', 'Acogedora'],           active: true,  needs: ['Suave'],                                   styles: ['Moderno','Minimalista'], colorFamily: 'Neutros y arena', rollWidthCm: 150, rollLengthM: 25, saleUnit: 'metro', incrementM: 0.25, minOrderM: 1, supplierMinM: 0, reusableRemainder: true },
-      { id: 4, name: 'Náutica Bari',    collection: 'Performance', price: 108000, color: '#606f78', colorName: 'Gris océano', use: 'Exterior',        tags: ['UV', 'Repelente al agua'],          active: true,  needs: ['Resistente al agua','Sol','Alto tráfico'], styles: ['Moderno'],               colorFamily: 'Grises', rollWidthCm: 160, rollLengthM: 40, saleUnit: 'metro', incrementM: 0.5,  minOrderM: 1, supplierMinM: 0, reusableRemainder: true },
-      { id: 5, name: 'Terciopelo Roma', collection: 'Esenciales',  price: 125000, color: '#9a644d', colorName: 'Terracota',   use: 'Uso residencial', tags: ['Elegante', 'Fácil limpieza'],       active: true,  needs: ['Fácil limpieza','Suave'],                  styles: ['Clásico'],               colorFamily: 'Tonos cálidos', rollWidthCm: 140, rollLengthM: 20, saleUnit: 'metro', incrementM: 0.1,  minOrderM: 1, supplierMinM: 25, reusableRemainder: false },
-      { id: 6, name: 'Milo Protect',    collection: 'Performance', price: 144000, color: '#767059', colorName: 'Oliva',       use: 'Pet friendly',    tags: ['Pet friendly', 'Alta resistencia'], active: false, needs: ['Mascotas','Alto tráfico'],                 styles: ['Natural'],               colorFamily: 'Verdes', rollWidthCm: 140, rollLengthM: 30, saleUnit: 'rollo', incrementM: 0.1,  minOrderM: 1, supplierMinM: 0, reusableRemainder: false }
-    ],
+    fabrics: {{FABRICS_JSON}},
     // Muebles: cada tipo define su consumo, su unidad de cantidad y los rangos
     // de medida plausibles que usa la revisión del paso 4.
     //   scaleByQty : la cantidad cuenta piezas separadas, así que multiplica.
@@ -44,37 +37,14 @@
     ],
     // Usuarios del backoffice. Los vendedores tienen cuenta propia; el rol
     // decide qué secciones ve cada uno.
-    users: [
-      { id: "u-admin", name: "María Camila Restrepo", email: "maria@upholster-prototype-quoter.com", role: "admin", sellerId: null, active: true, hash: "ec109369230bca9a3971b57faeb26e4052b7ca58264659bacd06ba27d64abeb9" },
-      { id: "u-laura", name: "Laura Méndez", email: "laura@upholster-prototype-quoter.com", role: "seller", sellerId: 1, active: true, hash: "fec68487a786b1acccfb4c35dd1701eb1bdb1c3e1a6d27fd649f9f987c170b8c" },
-      { id: "u-andres", name: "Andrés Rojas", email: "andres@upholster-prototype-quoter.com", role: "seller", sellerId: 2, active: true, hash: "79e077be62a19f516f02288729f88342c342c1eaa9388c265e428e872b02bf1d" },
-      { id: "u-paula", name: "Paula Gómez", email: "paula@upholster-prototype-quoter.com", role: "seller", sellerId: 3, active: true, hash: "eaeb1179608c9fa24569a5ac74e90c59d6f52743aa8b8af8a9ecb8dca35ec90f" },
-      { id: "u-daniel", name: "Daniel Ortiz", email: "daniel@upholster-prototype-quoter.com", role: "seller", sellerId: 4, active: false, hash: "50d629def551fc794367ab2a9e2d383fa6a2883ca829deea103d3a2e38aa8ce6" }
-    ],
-    // Puntos de atención reales de upholster-prototype-quoter. El cotizador los agrupa por
+    users: {{USERS_JSON}},
+    // Puntos de atención reales del cliente. El cotizador los agrupa por
     // ciudad en el selector "Punto de atención". Un vendedor cubre puntos por
     // id (servicePointIds), nunca por texto libre — así un punto se puede
     // renombrar o mudar de dirección sin desligar a nadie.
-    servicePoints: [
-      { id: 'sp-12-de-octubre',   name: '12 de Octubre',   city: 'Bogotá', address: 'Carrera 52 # 76-08', phone: '+57 301 2844326', active: true, order: 1 },
-      { id: 'sp-patio-bonito',    name: 'Patio Bonito',    city: 'Bogotá', address: 'Calle 40 # 86A-15',  phone: '+57 313 7173625', active: true, order: 2 },
-      { id: 'sp-primera-de-mayo', name: 'Primera de Mayo', city: 'Bogotá', address: 'Ac 26 sur # 37B-49', phone: '+57 301 2843857', active: true, order: 3 },
-      { id: 'sp-cali',            name: 'Cali',            city: 'Cali',   address: 'Calle 24 # 8-32',    phone: '+57 300 1980365', active: true, order: 4 }
-    ],
-    sellers: [
-      { id: 1, name: 'Laura Méndez',  email: 'laura@upholster-prototype-quoter.com',  servicePointIds: ['sp-12-de-octubre'],                     active: true,  quotes: 14 },
-      { id: 2, name: 'Andrés Rojas',  email: 'andres@upholster-prototype-quoter.com', servicePointIds: ['sp-patio-bonito'],                      active: true,  quotes: 11 },
-      { id: 3, name: 'Paula Gómez',   email: 'paula@upholster-prototype-quoter.com',  servicePointIds: ['sp-primera-de-mayo', 'sp-cali'],        active: true,  quotes: 9  },
-      { id: 4, name: 'Daniel Ortiz',  email: 'daniel@upholster-prototype-quoter.com', servicePointIds: ['sp-cali'],                              active: false, quotes: 8  }
-    ],
-    quotes: [
-      { id: 'COT-1042', date: '2026-09-04', customer: { name: 'Natalia Peña',   email: '', phone: '' }, furniture: 'Sofá',      quantityLabel: '3 puestos', city: 'Bogotá · Patio Bonito',    servicePointId: 'sp-patio-bonito',    seller: '',              sellerId: '', status: 'Nueva',     fabricName: 'Lino Verona',     photoIds: [] },
-      { id: 'COT-1041', date: '2026-09-04', customer: { name: 'Carlos Pardo',   email: '', phone: '' }, furniture: 'Poltrona',  quantityLabel: '',          city: 'Bogotá · 12 de Octubre',   servicePointId: 'sp-12-de-octubre',   seller: 'Laura Méndez',  sellerId: 1, status: 'En gestión', fabricName: 'Velvet Siena',    photoIds: [] },
-      { id: 'COT-1040', date: '2026-09-03', customer: { name: 'Ana Lucía Díaz', email: '', phone: '' }, furniture: 'Sofá en L', quantityLabel: '4 módulos', city: 'Bogotá · Primera de Mayo', servicePointId: 'sp-primera-de-mayo', seller: 'Paula Gómez',   sellerId: 3, status: 'Nueva',      fabricName: 'Bouclé Capri',    photoIds: [] },
-      { id: 'COT-1039', date: '2026-09-03', customer: { name: 'Julián Vega',    email: '', phone: '' }, furniture: 'Cabecero',  quantityLabel: '',          city: 'Bogotá · Patio Bonito',    servicePointId: 'sp-patio-bonito',    seller: 'Andrés Rojas',  sellerId: 2, status: 'En gestión', fabricName: 'Terciopelo Roma', photoIds: [] },
-      { id: 'COT-1038', date: '2026-09-02', customer: { name: 'María Torres',   email: '', phone: '' }, furniture: 'Poltrona',  quantityLabel: '',          city: 'Cali · Cali',              servicePointId: 'sp-cali',            seller: 'Daniel Ortiz',  sellerId: 4, status: 'Cotizada',   fabricName: 'Náutica Bari',    photoIds: [] },
-      { id: 'COT-1037', date: '2026-09-01', customer: { name: 'Felipe Cano',    email: '', phone: '' }, furniture: 'Silla',     quantityLabel: '6 sillas',  city: 'Cali · Cali',              servicePointId: 'sp-cali',            seller: 'Paula Gómez',   sellerId: 3, status: 'Cotizada',   fabricName: 'Lino Verona',     photoIds: [] }
-    ]
+    servicePoints: {{SERVICE_POINTS_JSON}},
+    sellers: {{SELLERS_JSON}},
+    quotes: {{QUOTES_JSON}}
   };
 
   var DEFAULT_SETTINGS = {
@@ -88,7 +58,7 @@
     emailClientCopy: true,
     aiPhotoCheck: true,
     confirmationMessage: 'Hemos recibido tu solicitud. Uno de nuestros asesores revisará los datos y se comunicará contigo para confirmar la cotización.',
-    senderEmail: 'cotizaciones@upholster-prototype-quoter.com',
+    senderEmail: {{SENDER_EMAIL_JSON}},
     responseTime: 'Durante el mismo día hábil',
     // Opciones del cuestionario, editables desde Configuración.
     needs: ['Mascotas','Fácil limpieza','Resistente al agua','Alto tráfico','Suave','Sol'],
@@ -96,7 +66,7 @@
     colors: ['Neutros y arena','Grises','Verdes','Azules','Tonos cálidos','Quiero recomendaciones'],
     // Deben cubrir el rango real del catálogo (89.000–144.000), o todas las
     // telas quedan "sobre presupuesto" y el filtro no informa nada.
-    budgets: [100000,120000,140000,160000],
+    budgets: {{BUDGETS_JSON}},
     maxQuantity: 5,
     minPhotos: 3,
     maxPhotos: 7,
@@ -125,7 +95,7 @@
   }
 
   /* Placeholder zone names from the demo seeds that predate the real service
-   * points (upholster-prototype-quoter's four actual stores) — stand-ins for "Laura covers
+   * points (this client's actual stores) — stand-ins for "Laura covers
    * the north" etc. This list only ever applies to the four ORIGINAL demo
    * sellers (id 1-4): those are the only ones who could have had these exact
    * strings seeded for them. A custom seller who happens to have typed
@@ -351,9 +321,9 @@
     /* Three numbers that get confused constantly, and are only equal when the
      * fabric sells in fine increments with no minimum:
      *   consumo    — what the furniture is expected to eat
-     *   compra     — what upholster-prototype-quoter has to acquire to cover it
+     *   compra     — what the business has to acquire to cover it
      *   facturable — what the customer is actually charged
-     * A remainder that can go back to inventory is upholster-prototype-quoter's; one that
+     * A remainder that can go back to inventory is the business's; one that
      * cannot is the customer's, and they pay for it. */
     quantities: function (fabric, meters) {
       var r = Store.fabricRules(fabric);
@@ -730,7 +700,7 @@
    * this file, and anyone could mint themselves an admin.
    */
   var SESSION_KEY = NS + 'session';
-  var DEMO_PASSWORD = 'upholster-prototype-quoter';
+  var DEMO_PASSWORD = {{DEMO_PASSWORD_JSON}};
 
   function sha256Hex(text) {
     var bytes = new TextEncoder().encode(text);

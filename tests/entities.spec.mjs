@@ -1,12 +1,13 @@
 import { chromium } from 'playwright';
+import { PHOTOS_DB } from './client.mjs';
 import { openAdmin, setTags } from './helpers.mjs';
-const D = 'file://' + process.cwd() + '/';
+const D = 'file://' + process.cwd() + '/generated/';
 let fails = 0;
 const check = (n, got, want) => { const ok = JSON.stringify(got)===JSON.stringify(want); if(!ok)fails++;
   console.log(`  ${ok?'PASS':'FAIL'}  ${n}` + (ok?'':`\n        got:  ${JSON.stringify(got)}\n        want: ${JSON.stringify(want)}`)); };
 const b = await chromium.launch(); const page = await b.newPage();
 const errs=[]; page.on('pageerror',e=>errs.push(String(e)));
-const fresh = async f => { await page.goto(D+f); await page.evaluate(()=>{localStorage.clear();indexedDB.deleteDatabase('med-photos')}); if(f==='admin.html'){await openAdmin(page,D)}else{await page.goto(D+f)} };
+const fresh = async f => { await page.goto(D+f); await page.evaluate((db)=>{localStorage.clear();indexedDB.deleteDatabase(db)}, PHOTOS_DB); if(f==='admin.html'){await openAdmin(page,D)}else{await page.goto(D+f)} };
 
 console.log('\nTODA ENTIDAD DEL COTIZADOR VIVE EN EL STORE');
 await fresh('index.html');

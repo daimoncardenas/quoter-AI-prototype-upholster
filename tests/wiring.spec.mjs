@@ -1,6 +1,7 @@
 import { chromium } from 'playwright';
+import { PHOTOS_DB } from './client.mjs';
 import { openAdmin, setTags } from './helpers.mjs';
-const D = 'file://' + process.cwd() + '/';
+const D = 'file://' + process.cwd() + '/generated/';
 const png = ['1','2','3'].map(n=>new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
 
 let fails = 0;
@@ -15,7 +16,7 @@ const errs = []; page.on('pageerror', e => errs.push(String(e)));
 
 async function fresh(file) {
   await page.goto(D + file);
-  await page.evaluate(() => { localStorage.clear(); indexedDB.deleteDatabase('med-photos'); });
+  await page.evaluate((db) => { localStorage.clear(); indexedDB.deleteDatabase(db); }, PHOTOS_DB);
   if (file === 'admin.html') { await openAdmin(page, D); } else { await page.goto(D + file); }
 }
 // El modelo por componentes da decimales, y la UI los escribe con coma; un
@@ -224,7 +225,7 @@ const nightErrs = []; night.on('pageerror', e => nightErrs.push(String(e)));
 await night.clock.setFixedTime(new Date('2026-09-06T20:30:00-05:00'));
 
 await night.goto(D + 'index.html');
-await night.evaluate(() => { localStorage.clear(); indexedDB.deleteDatabase('med-photos'); });
+await night.evaluate((db) => { localStorage.clear(); indexedDB.deleteDatabase(db); }, PHOTOS_DB);
 await night.goto(D + 'index.html');
 await night.setInputFiles('#furniturePhoto', png);
 await night.waitForFunction(() => state.photos.length >= 3);

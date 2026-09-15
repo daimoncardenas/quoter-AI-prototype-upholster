@@ -3,7 +3,7 @@
  * tipos que todavía no tienen plantilla. */
 import { chromium } from 'playwright';
 import { openAdmin } from './helpers.mjs';
-const D = 'file://' + process.cwd() + '/';
+const D = 'file://' + process.cwd() + '/generated/';
 
 let fails = 0;
 const check = (name, got, want) => {
