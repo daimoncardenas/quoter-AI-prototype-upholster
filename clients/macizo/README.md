@@ -33,10 +33,12 @@ Everything below that's still open only concerns that demo data.
       serif anywhere), so Macizo uses `Roboto` for both headings and body, unlike
       Mediterránea's Cormorant Garamond + Montserrat pairing.
 - [x] No leftover Mediterránea teal anywhere — `theme.tints`/`theme.rgb` in
-      `client.json` cover the ~45 chrome colors (panel washes, captions on dark
-      surfaces, borders, status pills, shadow tints, focus rings, a print-watermark
-      SVG fill) that were hardcoded ad hoc in the shared templates instead of being
-      pack-driven; see CLAUDE.md's white-label section for the full breakdown.
+      `client.json` cover the 54 chrome colors (49 tints + 5 rgb: panel washes,
+      captions on dark surfaces, borders, status pills, shadow tints, focus rings)
+      that were hardcoded ad hoc in the shared templates instead of being
+      pack-driven. The print-watermark SVG fill comes from the core
+      `theme.inkSecondary`, not from tints. See CLAUDE.md's white-label section for
+      the full breakdown.
 - [ ] Real email domain and sender email (`client.json` → `copy.loginEmailPlaceholder`,
       `seed.json` → `settings.senderEmail`, and every user/seller email)
 - [ ] Real demo password (`client.json` → `demoPassword`)

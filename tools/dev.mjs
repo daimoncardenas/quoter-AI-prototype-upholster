@@ -2,9 +2,10 @@
  * http://127.0.0.1:PORT, and re-renders + reloads the browser whenever a
  * template, a client pack or .env changes.
  *
- * The live-reload hook and the "which client is this" badge are injected into
- * the HTTP response only. generated/ on disk stays exactly what
+ * The live-reload hook is injected into the HTTP response only, and adds
+ * nothing visible to the page. generated/ on disk stays exactly what
  * `npm run generate` writes, because the test suite and `npm run build` read it.
+ * The terminal prints which CLIENT is being served.
  *
  * Bound to 127.0.0.1 on purpose: the backoffice login hashes with
  * crypto.subtle, which browsers only expose on secure contexts (localhost
@@ -64,25 +65,13 @@ function broadcast(event, data = '') {
   for (const res of listeners) res.write(payload);
 }
 
-/* Dev-only overlay: a small badge naming the rendered client, plus the
- * EventSource that reloads the page after a re-render. JSON is escaped so a
- * display name can never close the <script> tag. */
+/* Dev-only live reload: reloads the page after a re-render and reports a
+ * failed render in the browser console. Adds nothing visible to the page. */
 function devSnippet() {
-  const info = JSON.stringify({ ...current, error: lastError }).replace(/</g, '\\u003c');
   return `<script>(function(){
-  var d = ${info};
-  var b = document.createElement('div');
-  b.id = '__dev-client-badge';
-  b.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:2147483647;padding:4px 8px;border-radius:4px;font:600 11px/1.4 system-ui,sans-serif;color:#fff;pointer-events:none';
-  function paint(err) {
-    b.textContent = err ? 'DEV · render failed: ' + err : 'DEV · CLIENT=' + d.clientEnv + ' · ' + d.displayName;
-    b.style.background = err ? 'rgba(170,20,20,.92)' : 'rgba(0,0,0,.72)';
-  }
-  paint(d.error);
-  document.body.appendChild(b);
   var es = new EventSource('/__dev/events');
   es.addEventListener('reload', function () { location.reload(); });
-  es.addEventListener('failed', function (e) { paint(e.data); });
+  es.addEventListener('failed', function (e) { console.error('[dev] render failed: ' + e.data); });
 })();</script>`;
 }
 

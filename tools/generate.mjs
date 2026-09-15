@@ -33,16 +33,39 @@ const json = v => JSON.stringify(v);
 const screamingSnake = s => s.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toUpperCase();
 
 /* #rrggbb -> "r,g,b", for feeding a hex color into an rgba(...) literal. */
+const HEX_COLOR = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+const RGB_LIST = /^(\d{1,3}),(\d{1,3}),(\d{1,3})$/;
+
 function hexToRgbList(hex) {
-  const h = hex.replace('#', '');
+  if (!HEX_COLOR.test(hex)) throw new Error(`Invalid hex color "${hex}" (expected #rgb or #rrggbb)`);
+  const h = hex.slice(1);
   const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);
   return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`;
+}
+
+/* A malformed color would otherwise render silently as broken CSS, so every
+ * theme value is checked before any template is written. */
+function validateTheme(theme, slug) {
+  const bad = [];
+  for (const [key, value] of Object.entries(theme)) {
+    if (key === 'tints' || key === 'rgb') continue;
+    if (!HEX_COLOR.test(value)) bad.push(`theme.${key} = ${JSON.stringify(value)} (expected #rgb or #rrggbb)`);
+  }
+  for (const [key, value] of Object.entries(theme.tints || {})) {
+    if (!HEX_COLOR.test(value)) bad.push(`theme.tints.${key} = ${JSON.stringify(value)} (expected #rgb or #rrggbb)`);
+  }
+  for (const [key, value] of Object.entries(theme.rgb || {})) {
+    const m = RGB_LIST.exec(value);
+    if (!m || m.slice(1).some(c => Number(c) > 255)) bad.push(`theme.rgb.${key} = ${JSON.stringify(value)} (expected "r,g,b" with 0-255)`);
+  }
+  if (bad.length) throw new Error(`clients/${slug}/client.json has invalid colors:\n  ${bad.join('\n  ')}`);
 }
 
 export function generate(clientEnvValue = resolveClient(), outDir = 'generated') {
   const { slug, client, seed, logoDataUri } = loadClientPack(clientEnvValue);
 
   const theme = client.theme;
+  validateTheme(theme, slug);
   const htmlValues = {
     META_COPYRIGHT: client.meta.copyright,
     META_DESCRIPTION_INDEX: client.meta.descriptionIndex,

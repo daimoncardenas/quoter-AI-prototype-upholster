@@ -33,8 +33,9 @@ npm run build                                     # generates, then writes dist/
   `tests/client.mjs` instead of hardcoding them — see `tests/README.md`.
 - No linter, no bundler. To look at the app, `npm run dev` (`tools/dev.mjs`: serves
   `generated/` on `127.0.0.1:$PORT`, default 3000, watches templates, `clients/` and
-  `.env`, re-renders and live-reloads; the reload script and a "DEV · CLIENT=…" badge
-  are injected into HTTP responses only, never written to `generated/`). Without a
+  `.env`, re-renders and live-reloads; the reload script is injected into HTTP
+  responses only, adds nothing visible, and is never written to `generated/`; the
+  terminal prints which `CLIENT` is served). Without a
   server, `npm run generate` then open `generated/index.html` or
   `generated/admin.html` directly in Chromium — do
   **not** open the root `index.html`/`admin.html`/`store.js` directly, they are
@@ -134,13 +135,17 @@ sealed-delivery gate page, currently disabled) also takes `fonts`/`theme` from t
 instead of hardcoding Cormorant Garamond/Montserrat and Mediterránea's old teal, so a
 re-enabled sealed delivery matches whichever client is active.
 **`theme.tints` / `theme.rgb`** — beyond the 14 core palette colors, both templates had
-~45 more colors hardcoded ad hoc (panel washes, captions on dark surfaces, borders,
-status-pill backgrounds, shadow tints, an SVG data-URI watermark fill...), almost all
+54 more colors hardcoded ad hoc (panel washes, captions on dark surfaces, borders,
+status-pill backgrounds, shadow tints, focus rings...), almost all
 of them a stale teal/green-blue drifted from Mediterránea's original ink/accent design
 that never got swept into the core token set. `theme.tints.<name>` (hex colors,
 `{{TINT_SCREAMING_SNAKE_NAME}}`) and `theme.rgb.<name>` (bare `"r,g,b"` strings for use
-inside `rgba(...)`, `{{RGB_SCREAMING_SNAKE_NAME}}`) cover every one of them — see
-`tools/generate.mjs` for the camelCase→`{{TOKEN}}` conversion. Each is an **explicit**
+inside `rgba(...)`, `{{RGB_SCREAMING_SNAKE_NAME}}`) cover every one of them (49 tints +
+5 rgb) — see `tools/generate.mjs` for the camelCase→`{{TOKEN}}` conversion. The print
+watermark's SVG data-URI fill is NOT one of them: it is `{{THEME_INK_2_HEX}}`, computed
+from the core `theme.inkSecondary`. `generate()` validates every `theme`, `theme.tints`
+(hex `#rgb`/`#rrggbb`) and `theme.rgb` (`"r,g,b"`, 0-255) value and fails listing
+each invalid one. Each is an **explicit**
 per-pack value rather than derived from the core palette (e.g. via `color-mix()`),
 because the original literals don't line up with any single current theme color closely
 enough to derive losslessly — Mediterránea's `tints`/`rgb` values are the exact original

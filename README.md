@@ -10,7 +10,7 @@ clientes. Qué cliente se renderiza lo decide `CLIENT`.
 
 `npm run dev` renderiza el cliente activo, lo sirve en
 `http://localhost:3000/` (cotizador) y `http://localhost:3000/admin.html`
-(backoffice), y muestra abajo a la izquierda qué `CLIENT` está corriendo. Al
+(backoffice), y la terminal indica qué `CLIENT` está corriendo. Al
 guardar un cambio en las plantillas, en `clients/` o en `.env`, vuelve a
 renderizar y recarga el navegador. Cambiar `CLIENT` en `.env` cambia de cliente
 sin reiniciar, salvo que se haya arrancado con `CLIENT=...` en la terminal: ese

@@ -27,7 +27,8 @@ const rand = n => webcrypto.getRandomValues(new Uint8Array(n));
  * rgba(...). Mismo helper que tools/generate.mjs (sin import compartido a
  * propósito: build.mjs no depende de generate.mjs más que por generate()). */
 function hexToRgbList(hex) {
-  const h = hex.replace('#', '');
+  if (!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex)) throw new Error(`Color hex inválido "${hex}" (se espera #rgb o #rrggbb)`);
+  const h = hex.slice(1);
   const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);
   return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`;
 }
