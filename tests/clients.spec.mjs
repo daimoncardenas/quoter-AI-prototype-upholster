@@ -97,6 +97,26 @@ for (const slug of SLUGS) {
   await page.waitForTimeout(350);
   check('entra con las credenciales de demo compartidas', await page.isVisible('#appShell'), true);
   check('ve su propio nombre en el topbar', await page.textContent('#meName'), admin.name);
+
+  console.log(`\nEL ADMIN DE ${CLIENT} ABRE UPGRADE (planes estáticos, no datos del cliente) Y CAMBIA DE PLAN`);
+  await page.click('button[data-page="upgrade"]');
+  check('ve los tres planes', await page.evaluate(() => document.querySelectorAll('#plansGrid .plan-card').length), 3);
+  check('en orden Essential, Professional, Business',
+    await page.$$eval('#plansGrid .plan-card h2', els => els.map(e => e.textContent)),
+    ['Essential', 'Professional', 'Business']);
+  check('Essential es el plan actual por defecto', await page.evaluate(() => Store.settings().plan), 'Essential');
+  page.once('dialog', d => d.accept());
+  await page.click('#plansGrid [data-plan="Professional"]');
+  await page.waitForTimeout(200);
+  check('mejorar a Professional lo deja como plan actual', await page.evaluate(() => Store.settings().plan), 'Professional');
+  check('la tarjeta de Professional queda marcada como actual, con botón deshabilitado',
+    await page.evaluate(() => {
+      const card = [...document.querySelectorAll('#plansGrid .plan-card')].find(c => c.querySelector('h2').textContent === 'Professional');
+      const btn = card.querySelector('.plan-cta button');
+      return { current: card.classList.contains('current'), cta: btn.textContent, disabled: btn.disabled };
+    }),
+    { current: true, cta: 'Tu plan actual', disabled: true });
+
   console.log('page errors: ' + (errs.length ? errs.join(' | ') : 'none'));
   if (errs.length) fails++;
 

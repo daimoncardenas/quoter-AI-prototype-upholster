@@ -54,6 +54,10 @@
     // sigue aproximando geometría de brazos, costuras y criterio del tapicero.
     rangeTolerancePct: 6,
     currency: 'COP',
+    // CARDYRAM's own subscription plan for the quoter product (backoffice
+    // "Upgrade" page) — same default for every client, so it belongs here and
+    // not in a client pack's seed.json, which holds only THAT client's data.
+    plan: 'Essential',
     autoAssignByZone: true,
     emailClientCopy: true,
     aiPhotoCheck: true,
@@ -894,7 +898,7 @@
     sections: function (user) {
       if (!user) return [];
       return user.role === 'admin'
-        ? ['dashboard', 'quotes', 'fabrics', 'furniture', 'sellers', 'points', 'settings']
+        ? ['dashboard', 'quotes', 'fabrics', 'furniture', 'sellers', 'points', 'settings', 'upgrade']
         : ['dashboard', 'quotes'];
     },
 

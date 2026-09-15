@@ -46,9 +46,9 @@ console.log('\nADMIN VE TODO');
 await signIn(p, ADMIN_EMAIL);
 check('entra', await p.isVisible('#appShell'), true);
 check('el login desaparece', await p.isVisible('#loginScreen'), false);
-check('ve las siete secciones',
+check('ve las ocho secciones',
   await p.$$eval('.nav button', bs => bs.filter(x=>!x.hidden).map(x=>x.dataset.page)),
-  ['dashboard','quotes','fabrics','furniture','sellers','points','settings']);
+  ['dashboard','quotes','fabrics','furniture','sellers','points','settings','upgrade']);
 check('el topbar muestra quién es', await p.textContent('#meName'), ADMIN_NAME);
 check('y su rol', await p.textContent('#meRole'), 'Administradora');
 check('ve todas las cotizaciones', await p.evaluate(()=>document.querySelectorAll('#quoteRows tr').length), 6);
@@ -60,9 +60,9 @@ check('entra', await p2.isVisible('#appShell'), true);
 check('solo ve resumen y cotizaciones',
   await p2.$$eval('.nav button', bs => bs.filter(x=>!x.hidden).map(x=>x.dataset.page)),
   ['dashboard','quotes']);
-check('catálogo, muebles, vendedores, puntos y configuración quedan fuera',
+check('catálogo, muebles, vendedores, puntos, configuración y upgrade quedan fuera',
   await p2.$$eval('.nav button', bs => bs.filter(x=>x.hidden).map(x=>x.dataset.page)),
-  ['fabrics','furniture','sellers','points','settings']);
+  ['fabrics','furniture','sellers','points','settings','upgrade']);
 await p2.click('button[data-page="quotes"]');
 const rows = await p2.textContent('#quoteRows');
 check('la tabla trae solo sus solicitudes', await p2.evaluate(()=>document.querySelectorAll('#quoteRows tr').length), 1);
@@ -72,6 +72,30 @@ check('no puede exportar', await p2.isVisible('#exportBtn'), false);
 await p2.click('button[data-page="dashboard"]');
 check('la tabla por vendedor no tiene sentido para quien solo ve lo suyo, así que se oculta',
   await p2.isVisible('#sellerCycleTablePanel'), false);
+
+console.log('\nUPGRADE ES SOLO PARA ADMINISTRADORAS');
+check('el nav item de la vendedora sigue sin mostrarlo',
+  await p2.isVisible('button[data-page="upgrade"]'), false);
+// Forzar el clic sobre el botón oculto (saltándose el chequeo de visibilidad
+// de Playwright, como haría alguien desde la consola del navegador) no debe
+// abrir la página: el mismo demo-gate que protege el resto de las secciones
+// de administración también protege esta.
+await p2.evaluate(()=>document.querySelector('[data-page="upgrade"]').click());
+await p2.waitForTimeout(150);
+check('forzar el clic sobre el botón oculto no abre la página',
+  await p2.evaluate(()=>document.getElementById('upgrade').classList.contains('active')), false);
+check('se queda en una sección que sí puede ver',
+  await p2.evaluate(()=>document.querySelector('.page.active').id !== 'upgrade'), true);
+await p2.click('button[data-page="dashboard"]');
+check('la administradora sí ve el nav item',
+  await p.isVisible('button[data-page="upgrade"]'), true);
+await p.click('button[data-page="upgrade"]');
+check('y abre la página con los tres planes',
+  await p.evaluate(()=>document.querySelectorAll('#plansGrid .plan-card').length), 3);
+check('en orden Essential, Professional, Business',
+  await p.$$eval('#plansGrid .plan-card h2', els => els.map(e=>e.textContent)),
+  ['Essential','Professional','Business']);
+await p.click('button[data-page="dashboard"]');
 
 console.log('\nSALIR CIERRA LA SESIÓN');
 await p2.click('#logoutBtn');

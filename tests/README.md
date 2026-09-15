@@ -32,7 +32,15 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   once closed (no controls in the UI, and a direct `Store.put` refused), comments
   allowed at any status including closed and never editable/deletable, and the
   dashboard's funnel/closed/acceptance-rate/average-days/per-seller metrics
-  matching what `Store` actually holds.
+  matching what `Store` actually holds. Also covers the "Upgrade" page: exactly
+  three plan cards in order (Essential/Professional/Business), each price built
+  through `Store.money` rather than hand-typed, the exact Incluye/Límites item
+  counts per plan, the integrations note below the cards, and the plan-change
+  flow — the current plan (`Store.settings().plan`, default Essential) drives
+  each card's label/CTA, a change asks for confirmation naming the plan and
+  its price, dismissing leaves the plan untouched, and confirming saves the
+  new plan, re-renders every card's state, shows a toast, and survives a
+  reload.
 
 - `entities.spec.mjs` — that every option the cotizador shows comes from the
   store: furniture types with their consumption rules and measurement ranges,
@@ -41,8 +49,10 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   style, colour and budget the customer chose, explains each suggestion, and
   never overrides an explicit pick.
 - `auth.spec.mjs` — the backoffice login: that the gate actually blocks, that an
-  adviser sees only their own requests and none of the administration sections,
-  and that passwords are never stored in the clear.
+  adviser sees only their own requests and none of the administration sections
+  (including the admin-only "Upgrade" plans page — hidden from the nav and
+  unreachable even by forcing a click on the hidden nav button), and that
+  passwords are never stored in the clear.
 - `photos.spec.mjs` — the 3-to-7 attachment range: that the wizard refuses to
   advance below the minimum, caps at the maximum, lets photos be removed, and
   that every one of them reaches the backoffice.
@@ -86,4 +96,9 @@ backoffice, deactivating the fabric removes it, and that same submitted quote ca
 moved to Cotizada, closed as Aceptada (asking for confirmation, then locking) and
 carry a visible comment — a short per-pack guard that the status cycle and its
 color-mode styling (`modes/inverted.css`, exercised by `clients/intertelas/`) hold
-on every pack's own seed, not only Mediterránea's. Self-documented at its top.
+on every pack's own seed, not only Mediterránea's. Also opens the admin-only
+"Upgrade" plans page on each pack and upgrades from Essential to Professional
+(accepting the confirmation dialog), a short guard that both its styling (same
+`modes/inverted.css` rules, reading correctly under `clients/intertelas/`'s
+inverted color mode) and its plan-change flow hold on every pack. Self-
+documented at its top.

@@ -29,15 +29,55 @@
     .demo-copy p{color:{{TINT_DEMO_CAPTION}};max-width:118ch;text-align:center}
     
     
-    .shell{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:calc(100vh - var(--header-h) - var(--banner-h,0px))}.sidebar{background:var(--ink);color:#fff;padding:28px 20px 22px;display:flex;flex-direction:column;position:sticky;top:var(--header-h);height:calc(100vh - var(--header-h) - var(--banner-h,0px))}.side-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.17em;color:var(--gold);padding:0 12px;margin-bottom:13px}.nav{display:grid;gap:5px}.nav button{border:0;background:transparent;color:{{TINT_NAV_INACTIVE_TEXT}};padding:12px;border-radius:3px;text-align:left;display:flex;align-items:center;gap:12px;font-size:.76rem;font-weight:600}.nav button:hover{background:rgba(255,255,255,.06);color:#fff}.nav button.active{background:var(--ink2);color:#fff;box-shadow:inset 3px 0 var(--gold)}.nav-icon{width:23px;text-align:center;color:var(--gold);font-size:1rem}.side-foot{margin-top:auto;border-top:1px solid rgba(255,255,255,.13);padding:20px 12px 14px}.side-foot p{font-size:.62rem;line-height:1.55;color:{{TINT_SIDE_FOOT_TEXT}};margin:0 0 12px}.public-link{color:var(--gold2);font-size:.67rem;text-underline-offset:3px}
-    .content{padding:36px clamp(24px,4vw,58px) calc(60px + var(--banner-h,0px));min-width:0}.page{display:none;animation:enter .25s ease}.page.active{display:block}@keyframes enter{from{opacity:.45;transform:translateY(5px)}to{opacity:1;transform:none}}.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:28px}.eyebrow{color:var(--ink2);text-transform:uppercase;letter-spacing:.17em;font-size:.68rem;font-weight:700}.page-head h1{font:600 clamp(2rem,3vw,2.65rem)/1 '{{FONT_HEADING_NAME}}',{{FONT_HEADING_FALLBACK}};color:var(--ink);margin:7px 0 5px}.page-head p{font-size:.78rem;color:var(--muted);margin:0;line-height:1.55}.button{border:0;border-radius:3px;padding:12px 17px;font-weight:700;font-size:.72rem;transition:.2s;white-space:nowrap}.button.primary{background:var(--ink);color:#fff}.button.primary:hover{background:var(--ink2);transform:translateY(-1px)}.button.secondary{background:#fff;border:1px solid {{TINT_BUTTON_SECONDARY_BORDER}};color:var(--ink)}.button.danger{background:#fff;border:1px solid #d9b9b9;color:var(--red)}.button.gold{background:var(--accent);color:#fff}.save-block{display:flex;align-items:center;gap:12px}.unsaved{font-size:.63rem;font-weight:700;color:var(--amber);white-space:nowrap;display:flex;align-items:center;gap:7px}.unsaved:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--amber)}.button.primary.dirty{background:var(--amber)}.button.primary.dirty:hover{background:#8a5f1e}.reset-data{width:100%;margin-top:14px;padding:11px 12px;white-space:normal;text-align:center;line-height:1.4}
+    .shell{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:calc(100vh - var(--header-h) - var(--banner-h,0px))}.sidebar{background:var(--ink);color:#fff;padding:24px 20px 16px;display:flex;flex-direction:column;position:sticky;top:var(--header-h);height:calc(100vh - var(--header-h) - var(--banner-h,0px));overflow-y:auto}.side-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.17em;color:var(--gold);padding:0 12px;margin-bottom:10px}.nav{display:grid;gap:4px}.nav button{border:0;background:transparent;color:{{TINT_NAV_INACTIVE_TEXT}};padding:9px 12px;border-radius:3px;text-align:left;display:flex;align-items:center;gap:12px;font-size:.76rem;font-weight:600}.nav button:hover{background:rgba(255,255,255,.06);color:#fff}.nav button.active{background:var(--ink2);color:#fff;box-shadow:inset 3px 0 var(--gold)}.nav-icon{width:23px;text-align:center;color:var(--gold);font-size:1rem}.side-foot{margin-top:auto;border-top:1px solid rgba(255,255,255,.13);padding:12px 12px 14px}.side-foot p{font-size:.62rem;line-height:1.55;color:{{TINT_SIDE_FOOT_TEXT}};margin:0 0 12px}.public-link{color:var(--gold2);font-size:.67rem;text-underline-offset:3px}
+    .content{padding:36px clamp(24px,4vw,58px) calc(60px + var(--banner-h,0px));min-width:0}.page{display:none;animation:enter .25s ease}.page.active{display:block}@keyframes enter{from{opacity:.45;transform:translateY(5px)}to{opacity:1;transform:none}}.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:28px}.eyebrow{color:var(--ink2);text-transform:uppercase;letter-spacing:.17em;font-size:.68rem;font-weight:700}.page-head h1{font:600 clamp(2rem,3vw,2.65rem)/1 '{{FONT_HEADING_NAME}}',{{FONT_HEADING_FALLBACK}};color:var(--ink);margin:7px 0 5px}.page-head p{font-size:.78rem;color:var(--muted);margin:0;line-height:1.55}.button{border:0;border-radius:3px;padding:12px 17px;font-weight:700;font-size:.72rem;transition:.2s;white-space:nowrap}.button.primary{background:var(--ink);color:#fff}.button.primary:hover{background:var(--ink2);transform:translateY(-1px)}.button.secondary{background:#fff;border:1px solid {{TINT_BUTTON_SECONDARY_BORDER}};color:var(--ink)}.button.danger{background:#fff;border:1px solid #d9b9b9;color:var(--red)}.button.gold{background:var(--accent);color:#fff}.save-block{display:flex;align-items:center;gap:12px}.unsaved{font-size:.63rem;font-weight:700;color:var(--amber);white-space:nowrap;display:flex;align-items:center;gap:7px}.unsaved:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--amber)}.button.primary.dirty{background:var(--amber)}.button.primary.dirty:hover{background:#8a5f1e}.reset-data{width:100%;margin-top:8px;padding:11px 12px;white-space:normal;text-align:center;line-height:1.4}
     .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}.stat{background:#fff;border:1px solid var(--line);padding:21px 22px;position:relative;overflow:hidden}.stat:after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}.stat span{display:block;color:var(--muted);font-size:.65rem}.stat strong{display:block;font:600 2rem '{{FONT_HEADING_NAME}}',{{FONT_HEADING_FALLBACK}};color:var(--ink);margin:8px 0 2px}.stat small{font-size:.58rem;color:var(--green)}.grid-main{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,.8fr);gap:18px}.panel{background:#fff;border:1px solid var(--line);box-shadow:0 10px 34px rgba({{RGB_SHADOW}},.045)}.panel-head{padding:19px 21px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.panel-head h2{font:600 1.3rem '{{FONT_HEADING_NAME}}',{{FONT_HEADING_FALLBACK}};color:var(--ink);margin:0}.panel-head a,.link-button{border:0;background:transparent;color:var(--ink2);font-size:.65rem;font-weight:700;text-decoration:underline;text-underline-offset:3px}.activity{list-style:none;margin:0;padding:8px 21px 14px}.activity li{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:11px;padding:14px 0;border-bottom:1px solid {{TINT_ACTIVITY_BORDER}}}.activity li:last-child{border:0}.activity-icon{width:31px;height:31px;border-radius:50%;background:var(--soft);display:grid;place-items:center;color:var(--ink)}.activity b,.activity small{display:block}.activity b{font-size:.69rem;color:var(--ink)}.activity small{font-size:.59rem;color:var(--muted);margin-top:4px}.activity time{font-size:.57rem;color:{{TINT_ACTIVITY_TIME_TEXT}}}.distribution{padding:22px}.donut{width:152px;height:152px;margin:4px auto 24px;border-radius:50%;background:conic-gradient(var(--ink) 0 45%,var(--accent) 45% 73%,{{TINT_DONUT_THIRD}} 73% 100%);position:relative}.donut:after{content:attr(data-total);position:absolute;inset:22px;border-radius:50%;background:#fff;display:grid;place-items:center;font:600 2rem '{{FONT_HEADING_NAME}}',{{FONT_HEADING_FALLBACK}};color:var(--ink)}.legend{display:grid;gap:10px}.legend div{display:flex;justify-content:space-between;font-size:.64rem}.legend span:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ink);margin-right:7px}.legend div:nth-child(2) span:before{background:var(--accent)}.legend div:nth-child(3) span:before{background:{{TINT_DONUT_THIRD}}}.legend div:nth-child(4) span:before{background:var(--green)}.legend div:nth-child(5) span:before{background:var(--red)}
     .toolbar{display:flex;gap:10px;margin-bottom:16px}.search{position:relative;flex:1}.search input{width:100%;background:#fff;border:1px solid var(--line);padding:12px 14px 12px 39px;font-size:.72rem}.search span{position:absolute;left:14px;top:11px;color:var(--muted)}.toolbar select{border:1px solid var(--line);background:#fff;color:var(--ink);padding:0 13px;font-size:.7rem}.table-wrap{background:#fff;border:1px solid var(--line);overflow:auto}.data-table{width:100%;border-collapse:collapse;min-width:780px}.data-table th{text-align:left;background:{{TINT_TABLE_HEAD_BG}};color:{{TINT_TABLE_HEAD_TEXT}};text-transform:uppercase;letter-spacing:.08em;font-size:.56rem;padding:13px 16px}.data-table td{border-top:1px solid var(--line);padding:15px 16px;font-size:.67rem}.data-table strong{color:var(--ink)}.status{display:inline-block;border-radius:20px;padding:5px 8px;font-size:.56rem;font-weight:700}.status.new{background:{{TINT_STATUS_NEW_BG}};color:var(--ink2)}.status.progress{background:#fbefd9;color:var(--amber)}.status.sent{background:{{TINT_STATUS_SENT_BG}};color:var(--green)}.status.accepted{background:color-mix(in srgb,var(--green) 20%,#fff);color:var(--green)}.status.rejected{background:color-mix(in srgb,var(--red) 20%,#fff);color:var(--red)}.mini-user{display:flex;align-items:center;gap:8px}.mini-avatar{width:27px;height:27px;border-radius:50%;background:var(--soft);display:grid;place-items:center;color:var(--ink);font-size:.58rem;font-weight:700}.row-action{border:0;background:transparent;font-size:1.1rem;color:var(--muted)}
     .catalog{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.fabric{background:#fff;border:1px solid var(--line);position:relative;transition:.2s}.fabric:hover{box-shadow:0 13px 34px rgba({{RGB_SHADOW}},.09);transform:translateY(-2px)}.swatch{height:112px;position:relative}.swatch:after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 3px,rgba(255,255,255,.09) 3px 4px)}.reco{font-size:.58rem;color:var(--muted);margin:9px 0 0;line-height:1.45}.reco.none{color:var(--amber)}.fabric-body{padding:16px}.fabric-top{display:flex;justify-content:space-between;gap:10px}.fabric h3{font:600 1.17rem '{{FONT_HEADING_NAME}}',{{FONT_HEADING_FALLBACK}};color:var(--ink);margin:0}.fabric p{font-size:.6rem;color:var(--muted);line-height:1.45;margin:5px 0 12px}.tags{display:flex;flex-wrap:wrap;gap:5px}.tags span{background:var(--soft);padding:4px 7px;border-radius:10px;font-size:.52rem;color:var(--ink2)}.fabric-actions{display:flex;gap:7px;border-top:1px solid var(--line);padding:11px 16px}.fabric-actions button{border:0;background:transparent;color:var(--ink2);padding:3px;font-size:.61rem;font-weight:700}.availability{width:8px;height:8px;background:var(--green);border-radius:50%;margin-top:5px;box-shadow:0 0 0 4px {{TINT_AVAILABILITY_RING}}}.availability.off{background:{{TINT_AVAILABILITY_OFF_BG}};box-shadow:0 0 0 4px {{TINT_AVAILABILITY_OFF_RING}}}
     .seller-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}.seller{background:#fff;border:1px solid var(--line);padding:20px}.seller-actions{display:flex;gap:7px;border-top:1px solid var(--line);margin-top:14px;padding-top:11px}.seller-actions button{border:0;background:transparent;color:var(--ink2);padding:3px;font-size:.61rem;font-weight:700}.seller-head{display:flex;justify-content:space-between;gap:12px}.seller-id{display:flex;gap:12px}.seller .avatar{width:42px;height:42px;background:var(--soft);color:var(--ink)}.seller h3{font:600 1.15rem '{{FONT_HEADING_NAME}}',{{FONT_HEADING_FALLBACK}};color:var(--ink);margin:2px 0}.seller p{font-size:.61rem;color:var(--muted);margin:3px 0}.seller-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0;border-top:1px solid var(--line);padding-top:14px}.seller-meta span{font-size:.58rem;color:var(--muted)}.seller-meta strong{display:block;font-size:.65rem;color:var(--ink);margin-top:4px}.zones{display:flex;flex-wrap:wrap;gap:6px}.zones span{border:1px solid {{TINT_ZONE_BORDER}};color:var(--ink2);padding:5px 8px;border-radius:14px;font-size:.56rem}.toggle{width:38px;height:21px;border:0;border-radius:20px;background:{{TINT_TOGGLE_OFF_BG}};position:relative}.toggle:after{content:"";position:absolute;width:15px;height:15px;border-radius:50%;background:#fff;left:3px;top:3px;transition:.2s}.toggle.on{background:var(--green)}.toggle.on:after{left:20px}
+    /* The shared .page-head p (var(--muted) on the cream page background) reads
+     * under 4.5:1 in this client's theme; every other page's lead line already
+     * lives with that, but this new section is held to the bar, so it takes the
+     * darker --text token here only, without touching the shared rule other
+     * pages still use. */
+    #upgrade .page-head p{color:var(--text)}
+    .plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:stretch;margin-bottom:20px}
+    .plan-card{background:#fff;border:1px solid var(--line);padding:26px 24px 24px;display:flex;flex-direction:column;box-shadow:0 10px 34px rgba({{RGB_SHADOW}},.045);transition:transform .2s ease,box-shadow .2s ease}
+    .plan-card:hover{transform:translateY(-3px);box-shadow:0 18px 44px rgba({{RGB_SHADOW}},.1)}
+    /* The current plan, whichever it is, carries the emphasis — not a fixed
+     * "popular" card — so this is driven entirely by renderUpgrade()'s state,
+     * never hardcoded to one plan. */
+    .plan-card.current{box-shadow:inset 0 4px 0 var(--accent),0 18px 46px rgba({{RGB_SHADOW}},.14)}
+    .plan-current-label{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink2);margin:0 0 6px}
+    .plan-card h2{font:600 1.3rem '{{FONT_HEADING_NAME}}',{{FONT_HEADING_FALLBACK}};color:var(--ink);margin:0 0 8px}
+    .plan-price{font:600 1.55rem '{{FONT_HEADING_NAME}}',{{FONT_HEADING_FALLBACK}};color:var(--ink);margin:0 0 10px}
+    .plan-price-period{font-size:.68rem;font-weight:600;color:var(--text);margin-left:2px}
+    .plan-audience{font-size:.66rem;color:var(--text);line-height:1.5;margin:0 0 16px}
+    .plan-divider{border:0;border-top:1px solid var(--line);margin:0 0 16px}
+    .plan-section-title{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--ink);margin:16px 0 8px;padding-top:14px;border-top:1px solid var(--line)}
+    .plan-section-title.first{margin-top:0;padding-top:0;border-top:0}
+    .plan-intro{font-size:.64rem;font-weight:700;color:var(--text);margin:0 0 8px}
+    .plan-list{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+    .plan-list li{font-size:.65rem;color:var(--text);line-height:1.45;padding-left:18px;position:relative}
+    /* Plain var(--accent)/var(--muted) on the card's white background measure
+     * ~3.2:1 / ~4.35:1 in this client's theme — both under WCAG AA. Blending
+     * each toward --ink (same color-mix() mechanism modes/inverted.css
+     * already uses for --mode-card-bg) keeps the accent/muted character while
+     * clearing 4.5:1 in every pack's theme, not just this one. */
+    .plan-list.incluye li:before{content:"✓";position:absolute;left:0;top:0;color:color-mix(in srgb,var(--accent) 55%,var(--ink) 45%);font-weight:700}
+    .plan-list.limits li:before{content:"–";position:absolute;left:0;top:0;color:color-mix(in srgb,var(--muted) 40%,var(--ink) 60%);font-weight:700}
+    .plan-cta{margin-top:auto;padding-top:18px}
+    .plan-cta .button{width:100%}
+    /* Explicit, opaque disabled state — never relies on the browser default
+     * (which would just dim the button's own colors and could land under
+     * 4.5:1 on either color mode); this stays the same light chip regardless
+     * of mode, since --soft is not one of the tokens modes/inverted.css flips. */
+    .plan-cta .button.primary{border:1px solid transparent}.plan-cta .button[disabled]{background:var(--soft);color:var(--ink);border:1px solid var(--line);cursor:default;opacity:1}
+    @media(prefers-reduced-motion:reduce){.plan-card{transition:none}.plan-card:hover{transform:none}}
+    .plans-note{font-size:.62rem;color:var(--text);line-height:1.55;margin:0;max-width:92ch}
     .settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}.settings-card{background:#fff;border:1px solid var(--line);padding:23px}.settings-card.wide{grid-column:1/-1}.settings-card h2{font:600 1.35rem '{{FONT_HEADING_NAME}}',{{FONT_HEADING_FALLBACK}};color:var(--ink);margin:0 0 5px}.settings-card>p{font-size:.62rem;color:var(--muted);line-height:1.5;margin:0 0 19px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field{font-size:.64rem;font-weight:700;color:var(--ink)}.field.full{grid-column:1/-1}.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);background:#fff;padding:11px;margin-top:7px;color:var(--text);font-size:.7rem}.field textarea{resize:vertical;min-height:80px}.tag-input{display:flex;flex-wrap:wrap;gap:6px;align-items:center;width:100%;box-sizing:border-box;border:1px solid var(--line);background:#fff;padding:7px 8px;margin-top:7px;min-height:44px;cursor:text}.tag-input:focus-within{border-color:var(--ink2);box-shadow:0 0 0 3px rgba({{ACCENT_RGB}},.13)}.tag-input .tag{display:inline-flex;align-items:center;gap:5px;background:var(--soft);color:var(--ink);border-radius:14px;padding:5px 5px 5px 11px;font-size:.62rem;font-weight:600;white-space:nowrap}.tag-input .tag button{border:0;background:transparent;color:var(--muted);font-size:.85rem;line-height:1;padding:0 3px;border-radius:50%;font-weight:400}.tag-input .tag button:hover{color:var(--red);background:#fff}.tag-input input{flex:1 1 110px;min-width:110px;width:auto;border:0;outline:0;margin:0;padding:5px 2px;background:transparent;font-size:.68rem;font-weight:500;color:var(--text)}.tag-input:empty:before,.tag-input .tag:empty{content:""}.setting-row{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:13px 0;border-bottom:1px solid var(--line)}.setting-row:last-child{border:0}.setting-row b,.setting-row small{display:block}.setting-row b{font-size:.67rem;color:var(--ink)}.setting-row small{font-size:.57rem;color:var(--muted);margin-top:4px;line-height:1.4}
     .modal-backdrop{position:fixed;inset:0;background:rgba({{RGB_MODAL_BACKDROP}},.62);z-index:40;display:none;place-items:center;padding:20px}.modal-backdrop.open{display:grid}.modal{background:#fff;width:min(650px,100%);max-height:90vh;overflow:auto;box-shadow:var(--shadow)}.modal-head{background:var(--ink);color:#fff;padding:20px 24px;display:flex;justify-content:space-between;align-items:center}.modal-head h2{font:600 1.45rem '{{FONT_HEADING_NAME}}',{{FONT_HEADING_FALLBACK}};margin:0}.close{border:0;background:transparent;color:#fff;font-size:1.5rem}.quote-reasons{margin:14px 0 0;background:#fbf6ec;border-left:3px solid #c9a227;padding:11px 14px;font-size:.63rem;line-height:1.5;color:#7a5c18}.quote-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:16px}.quote-gallery img{width:100%;height:118px;object-fit:cover;border:1px solid var(--line);display:block}.modal-hint{font-size:.64rem;color:var(--muted);margin:0 0 12px;line-height:1.5}.form-grid select[multiple]{padding:6px}.modal-section{font:600 1.05rem "{{FONT_HEADING_NAME}}",{{FONT_HEADING_FALLBACK}};color:var(--ink);margin:20px 0 10px;padding-top:14px;border-top:1px solid var(--line)}.check.full,.modal-hint.full{grid-column:1/-1}.modal-hint.full{margin:-6px 0 0}.check{display:flex;gap:9px;align-items:center;font-weight:500;font-size:.68rem;color:var(--text)}.check input{width:auto;margin:0}.point-checks{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;max-height:220px;overflow:auto;margin-bottom:4px}.pair{display:flex;gap:8px}.pair input{flex:1}.modal-actions #deleteFurniture{margin-right:auto}.modal-body{padding:23px}.color-field{display:grid;grid-template-columns:50px 1fr;gap:10px}.color-field input[type=color]{height:42px;padding:2px}.photo-field{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center;margin-top:6px}.photo-thumb{height:68px;border:1px dashed var(--line);border-radius:3px;background:var(--soft) center/cover no-repeat;display:grid;place-items:center;font-size:.52rem;font-weight:600;color:var(--muted);text-align:center;padding:6px}.photo-thumb.filled{border-style:solid}.photo-thumb.filled span{display:none}.photo-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.photo-actions p{width:100%;margin:0;font-size:.56rem;font-weight:500;color:var(--muted);line-height:1.45}.swatch.has-photo:after{display:none}.modal-actions{padding:16px 23px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:9px}.toast{position:fixed;right:22px;bottom:calc(22px + var(--banner-h,0px));background:var(--ink);color:#fff;padding:14px 18px;box-shadow:var(--shadow);font-size:.68rem;transform:translateY(100px);opacity:0;transition:.25s;z-index:60;border-left:3px solid var(--gold)}.toast.show{transform:none;opacity:1}.mobile-menu{display:none;border:0;background:transparent;color:#fff;font-size:1.4rem}
-    @media(max-width:1050px){.stats{grid-template-columns:repeat(2,1fr)}.catalog{grid-template-columns:repeat(2,1fr)}.grid-main{grid-template-columns:1fr}.distribution{display:grid;grid-template-columns:170px 1fr;align-items:center}.donut{margin:0}.seller-grid{grid-template-columns:1fr}}
+    @media(max-width:1050px){.stats{grid-template-columns:repeat(2,1fr)}.catalog{grid-template-columns:repeat(2,1fr)}.grid-main{grid-template-columns:1fr}.distribution{display:grid;grid-template-columns:170px 1fr;align-items:center}.donut{margin:0}.seller-grid{grid-template-columns:1fr}.plans-grid{grid-template-columns:1fr}}
     @media(max-width:760px){.topbar{height:66px;padding:0 16px}.profile>div:last-child,.env{display:none}.mobile-menu{display:block}.shell{display:block}.sidebar{position:fixed;left:0;top:66px;bottom:var(--banner-h,0px);width:245px;height:auto;z-index:30;overflow-y:auto;transform:translateX(-100%);transition:.25s}.sidebar.open{transform:none;box-shadow:20px 0 50px rgba(0,0,0,.25)}.content{padding:25px 16px 50px}.page-head{align-items:flex-start;flex-direction:column}.stats{grid-template-columns:1fr 1fr}.catalog{grid-template-columns:1fr}.settings-grid{grid-template-columns:1fr}.settings-card.wide{grid-column:auto}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.point-checks{grid-template-columns:1fr}.distribution{display:block}.donut{margin:0 auto 24px}.toolbar{flex-wrap:wrap}.toolbar select{height:42px}.seller-meta{grid-template-columns:1fr}.brand strong{font-size:.93rem}}
     @media(max-width:430px){.stats{grid-template-columns:1fr}.top-actions{gap:8px}.brand small{display:none}.seller{padding:16px}}
 @media print{html,body{height:auto!important;overflow:visible!important}.demo-banner{position:static!important}.chat-fab,.chat-panel,#logoutBtn{display:none!important}body::after{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27340%27%20height%3D%27230%27%3E%3Ctext%20x%3D%27170%27%20y%3D%27115%27%20fill%3D%27%23{{THEME_INK_2_HEX}}%27%20fill-opacity%3D%270.14%27%20font-family%3D%27Helvetica%2CArial%2Csans-serif%27%20font-size%3D%2715%27%20letter-spacing%3D%271.5%27%20text-anchor%3D%27middle%27%20transform%3D%27rotate%28-28%20170%20115%29%27%3EPROTOTIPO%20%C2%B7%20DAIMON%20CARDENAS%3C%2Ftext%3E%3C%2Fsvg%3E");background-repeat:repeat}}
@@ -74,6 +114,7 @@
         <button data-page="sellers"><span class="nav-icon">♙</span>Vendedores y zonas</button>
         <button data-page="points"><span class="nav-icon">⚑</span>Puntos de atención</button>
         <button data-page="settings"><span class="nav-icon">⚙</span>Configuración</button>
+        <button data-page="upgrade"><span class="nav-icon">✦</span>Upgrade</button>
       </nav>
       <div class="side-foot"><p>Los cambios de este prototipo se conservan únicamente en este navegador.</p><a class="public-link" href="index.html" target="_blank">Abrir cotizador público ↗</a><button class="button danger reset-data" id="resetData">Restablecer datos de demo</button></div>
     </aside>
@@ -116,6 +157,11 @@
           <article class="settings-card"><h2>Automatización</h2><p>Controla las acciones automáticas después de cada solicitud.</p><div class="setting-row"><div><b>Asignar por ubicación</b><small>Selecciona automáticamente al vendedor de la zona.</small></div><button class="toggle" id="setAutoAssign" aria-label="Asignar por ubicación"></button></div><div class="setting-row"><div><b>Enviar correo al cliente</b><small>Remite una copia inicial de la estimación.</small></div><button class="toggle" id="setEmailCopy" aria-label="Enviar correo"></button></div><div class="setting-row"><div><b>Validación visual con IA</b><small>Contrasta foto, tipo de mueble y medidas.</small></div><button class="toggle" id="setAiCheck" aria-label="Validación visual"></button></div></article>
           <article class="settings-card wide"><h2>Opciones del cuestionario</h2><p>Listas que ve el cliente. Escribe una opción y pulsa Enter para agregarla; toca la × para quitarla.</p><div class="form-grid"><label class="field full">Necesidades de uso<div class="tag-input" id="setNeeds" data-placeholder="Agregar necesidad y Enter"></div></label><label class="field">Estilos<div class="tag-input" id="setStyles" data-placeholder="Agregar estilo y Enter"></div></label><label class="field">Gamas de color<div class="tag-input" id="setColors" data-placeholder="Agregar gama y Enter"></div></label><label class="field">Cortes de presupuesto por metro<div class="tag-input" id="setBudgets" data-type="number" data-placeholder="120000 y Enter"></div></label><label class="field">Cantidad máxima ofrecida<input id="setMaxQty" type="number" min="2" max="20"></label><p class="modal-hint full" id="coverageScope"></p><label class="field">Solo asiento y respaldo (% mín / máx)<span class="pair"><input id="setCovSeatsMin" type="number" min="1" max="100"><input id="setCovSeatsMax" type="number" min="1" max="100"></span></label><label class="field">Una parte específica (% mín / máx)<span class="pair"><input id="setCovPartMin" type="number" min="1" max="100"><input id="setCovPartMax" type="number" min="1" max="100"></span></label><p class="modal-hint full" id="coveragePieces"></p></div></article>
           <article class="settings-card wide"><h2>Mensajes y contacto</h2><p>Textos que verá el cliente al finalizar su solicitud.</p><div class="form-grid"><label class="field full">Mensaje de confirmación<textarea id="setMessage"></textarea></label><label class="field">Correo remitente<input type="email" id="setSender"></label><label class="field">Tiempo prometido de respuesta<select id="setResponse"><option>Durante el mismo día hábil</option><option>En menos de 24 horas</option><option>En menos de 48 horas</option></select></label></div></article></div>
+      </section>
+      <section class="page" id="upgrade">
+        <div class="page-head"><div><span class="eyebrow">PLANES</span><h1>Upgrade</h1><p>Elige el plan que mejor se ajusta al tamaño de tu operación.</p></div></div>
+        <div class="plans-grid" id="plansGrid"></div>
+        <p class="plans-note" id="plansNote"></p>
       </section>
     </main>
   </div>
@@ -180,7 +226,12 @@
     const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
     const safeColor=c=>/^#[0-9a-f]{3,8}$/i.test(String(c||''))?c:'#cccccc';
     function toast(msg){const el=$('#toast');el.textContent=msg;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2400)}
-    function go(id){$$('.page').forEach(p=>p.classList.toggle('active',p.id===id));$$('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));$('#sidebar').classList.remove('open');window.scrollTo({top:0,behavior:'smooth'})}
+    // A hidden nav button keeps its click handler, so a role that cannot see a
+    // section must not be able to reach its content by forcing that click
+    // some other way (devtools, a stale bookmark) either — same demo-gate
+    // spirit as Auth itself: cheap to bypass in the console, but the UI never
+    // hands a disallowed page to the wrong role on its own.
+    function go(id){if(me&&!Auth.can(me,id))id=Auth.sections(me)[0]||'dashboard';$$('.page').forEach(p=>p.classList.toggle('active',p.id===id));$$('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));$('#sidebar').classList.remove('open');window.scrollTo({top:0,behavior:'smooth'})}
     $$('.nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));$$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));$('#menuBtn').onclick=()=>$('#sidebar').classList.toggle('open');
     const money=n=>Store.money(n);
     /* Una fecha sin hora ('2026-09-06') el estándar la lee como medianoche UTC,
@@ -708,9 +759,131 @@
       if(!confirm('Se borrarán las telas, vendedores, cotizaciones y ajustes guardados en este navegador. ¿Continuar?'))return;
       Store.reset();renderAll();loadSettings();toast('Datos de demo restablecidos');
     };
+
+    /* ----------------------------------------------------------------- upgrade --
+     *
+     * Static product copy for CARDYRAM's own subscription plans — the same for
+     * every client pack, so it is a plain constant here rather than something
+     * seeded from a client pack's seed.json (which holds only THIS client's
+     * data). Prices render through Store.money so the currency matches the
+     * rest of the backoffice; the number itself is never hand-formatted. */
+    const PLANS=[
+      {name:'Essential',price:299000,
+       audience:'Para tapiceros independientes y talleres pequeños con bajo volumen de cotizaciones.',
+       features:[
+         'Página de cotización con tu marca, alojada en un subdominio de CARDYRAM.',
+         'Logo, colores e información de tu negocio.',
+         'Una categoría de servicio: tapicería de muebles.',
+         'Tipos de mueble y preguntas de medidas estándar.',
+         'Carga de fotografías del cliente.',
+         'Fórmulas estándar de cálculo de materiales y precios.',
+         'Validación y recomendaciones asistidas por IA, con uso limitado.',
+         'Captura de datos de contacto del cliente.',
+         'Cotizaciones enviadas a un correo comercial.',
+         'PDF de la estimación o cotización.',
+         'Enlace de aceptación para el cliente.',
+         'Estados básicos de cotización.',
+         'Valor de las cotizaciones aceptadas.',
+         'Analítica mensual básica.',
+         'Notificaciones por correo electrónico.',
+         'Actualizaciones estándar del producto.',
+         'Soporte por correo electrónico.'
+       ],
+       limits:[
+         '1 usuario interno.',
+         '1 sede.',
+         '30 cotizaciones completadas al mes.',
+         '75 créditos de IA al mes.',
+         '1 GB de almacenamiento de imágenes y documentos.',
+         '3 meses de historial de analítica.',
+         'Una plantilla estándar de cotización.',
+         'Mención de CARDYRAM en el pie de página.',
+         'Sin dominio propio.',
+         'Sin reglas de asignación de vendedores.',
+         'Sin exportación de datos por cuenta propia.',
+         'Sin integraciones.',
+         'Sin desarrollos a la medida.'
+       ]},
+      {name:'Professional',price:699000,
+       audience:'Para talleres consolidados y pequeñas empresas de muebles.',
+       intro:'Incluye todo lo de Essential, y además:',
+       features:[
+         'Dominio propio o subdominio del cliente.',
+         'Hasta 3 usuarios internos.',
+         'Hasta 3 sedes.',
+         'Hasta 90 cotizaciones completadas al mes.',
+         'Hasta 300 créditos de IA al mes.',
+         '5 GB de almacenamiento.',
+         '12 meses de historial de analítica.',
+         'Varias categorías de servicio configurables.',
+         'Preguntas y reglas de cálculo condicionales.',
+         'Asignación de vendedores.',
+         'Analítica del embudo comercial.',
+         'Reportes de desempeño por vendedor.',
+         'Gestión de catálogo y telas.',
+         'Sin mención de CARDYRAM.',
+         'Soporte con prioridad sobre el plan Essential.'
+       ]},
+      {name:'Business',price:1290000,
+       audience:'Para distribuidores, fábricas y empresas con varias sedes.',
+       intro:'Incluye todo lo de Professional, y además:',
+       features:[
+         'Hasta 10 usuarios internos.',
+         'Hasta 10 sedes.',
+         'Hasta 300 cotizaciones completadas al mes.',
+         'Hasta 1.000 créditos de IA al mes.',
+         '15 GB de almacenamiento.',
+         'Reglas avanzadas de asignación de vendedores.',
+         'Analítica por sede y por vendedor.',
+         'Varias plantillas de cotización.',
+         'Exportación CSV de clientes y cotizaciones.',
+         'Acceso a las integraciones estandarizadas disponibles.',
+         'Soporte prioritario.'
+       ]}
+    ];
+    const UPGRADE_NOTE='La activación de integraciones, los cargos de proveedores externos y los costos de uso no están incluidos en la licencia mensual, salvo que se indique expresamente en la propuesta comercial.';
+    /* The client's current plan lives in settings (Store.settings().plan,
+     * default 'Essential' — see DEFAULT_SETTINGS in store.js), same field for
+     * every client pack. PLANS' own array order (Essential < Professional <
+     * Business) is what decides "higher" vs "lower" for each card's CTA —
+     * there is no separate rank field to keep in sync. */
+    function renderUpgrade(){
+      const currentName=Store.settings().plan||'Essential';
+      const currentIdx=Math.max(0,PLANS.findIndex(p=>p.name===currentName));
+      $('#plansGrid').innerHTML=PLANS.map((p,i)=>{
+        const isCurrent=i===currentIdx;
+        const intro=p.intro?`<p class="plan-intro">${esc(p.intro)}</p>`:'';
+        const features=`<p class="plan-section-title first">Incluye</p>${intro}<ul class="plan-list incluye">${p.features.map(f=>`<li>${esc(f)}</li>`).join('')}</ul>`;
+        const limits=p.limits?`<p class="plan-section-title">Límites</p><ul class="plan-list limits">${p.limits.map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`:'';
+        const label=isCurrent?'<p class="plan-current-label">Plan actual</p>':'';
+        const cta=isCurrent?{cls:'button primary',text:'Tu plan actual',disabled:true}
+          :i>currentIdx?{cls:'button primary',text:`Mejorar a ${p.name}`,disabled:false}
+          :{cls:'button secondary',text:`Cambiar a ${p.name}`,disabled:false};
+        return `<article class="plan-card${isCurrent?' current':''}">${label}<h2>${esc(p.name)}</h2>`+
+          `<p class="plan-price">${esc(Store.money(p.price))} <span class="plan-price-period">COP / mes</span></p>`+
+          `<p class="plan-audience">${esc(p.audience)}</p><hr class="plan-divider">`+
+          `${features}${limits}`+
+          `<div class="plan-cta"><button type="button" class="${cta.cls}" data-plan="${esc(p.name)}"${cta.disabled?' disabled':''}>${esc(cta.text)}</button></div>`+
+          `</article>`;
+      }).join('');
+      $('#plansNote').textContent=UPGRADE_NOTE;
+    }
+    // El cambio de plan pide confirmación con el precio, igual que cerrar una
+    // cotización: es una decisión comercial, no un toggle casual.
+    $('#plansGrid').addEventListener('click',e=>{
+      const btn=e.target.closest('[data-plan]');
+      if(!btn||btn.disabled)return;
+      const name=btn.dataset.plan,plan=PLANS.find(p=>p.name===name);
+      if(!plan)return;
+      if(!confirm(`¿Confirmas el cambio al plan ${name} por ${Store.money(plan.price)} COP / mes?`))return;
+      try{Store.saveSettings({plan:name})}catch(err){return toast(err.message)}
+      renderUpgrade();
+      toast(`Listo, tu plan ahora es ${name}.`);
+    });
+
     // renderCoverageScope va aquí y no solo en loadSettings: crear un mueble
     // nuevo lo suma a la lista de los que sí usan estos porcentajes.
-    function renderAll(){renderDashboard();renderQuotes();renderFabrics();renderFurniture();renderSellers();renderPoints();renderCoverageScope()}
+    function renderAll(){renderDashboard();renderQuotes();renderFabrics();renderFurniture();renderSellers();renderPoints();renderCoverageScope();renderUpgrade()}
     // The cotizador writes to the same store; keep an open backoffice tab current.
     Store.onChange(()=>{renderAll();loadSettings()});
 

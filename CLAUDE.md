@@ -74,8 +74,19 @@ rendered. Do not bundle, split into modules, or add a framework unless asked.
     `sessionStorage`, role → visible sections).
 - `index.html` — the 6-step public wizard. Reads catalogue, furniture types,
   questionnaire options and settings from `Store`; submitting writes a quote + photos.
-- `admin.html` — the backoffice. Admins manage everything; sellers see only dashboard
-  and their own quotes.
+- `admin.html` — the backoffice. Admins manage everything, including "Upgrade" (the
+  `upgrade` section/page id) — CARDYRAM's own three subscription-plan cards for the
+  quoter product, admin-only via the same `Auth.sections`/nav-hiding mechanism as
+  every other admin section, with `go()` also refusing to switch to a page a role
+  can't see even if something forces the click. That plan copy is static product
+  copy (a `PLANS` constant inside `admin.html`), identical for every client — it is
+  NOT client data, so it does not live in `clients/*/seed.json` or `Store`. What
+  DOES belong in `Store` is which plan the client is currently on
+  (`Store.settings().plan`, default `'Essential'` in `DEFAULT_SETTINGS` — same
+  default for every client): each card's "Plan actual" label/CTA is derived from
+  it, changing plan asks for confirmation naming the plan and its price, and the
+  choice is saved through the normal settings API, so it persists like any other
+  setting. Sellers see only dashboard and their own quotes.
 
 `index.html` and `admin.html` also carry `{{PLACEHOLDER}}` tokens (brand text, theme
 colors, logo) — `tools/generate.mjs` is what turns all three templates into an

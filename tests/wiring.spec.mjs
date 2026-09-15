@@ -519,6 +519,69 @@ check('and the bytes are gone from IndexedDB',
   await page.waitForFunction(() => Photos.get('fabric-1').then(u => !u), null, { timeout: 5000 })
     .then(() => true).catch(() => false), true);
 
+console.log('\nUPGRADE — los tres planes, en orden, con precios y conteos exactos');
+await openAdmin(page, D);
+await page.click('button[data-page="upgrade"]');
+check('exactamente tres planes, en orden Essential/Professional/Business',
+  await page.$$eval('#plansGrid .plan-card h2', els => els.map(e => e.textContent)),
+  ['Essential', 'Professional', 'Business']);
+check('cada precio se arma con Store.money, no a mano',
+  await page.$$eval('#plansGrid .plan-price', els => els.map(e => e.textContent)),
+  await page.evaluate(() => [299000, 699000, 1290000].map(n => Store.money(n) + ' COP / mes')));
+check('conteo de ítems — Essential: 17 incluye + 13 límites, Professional: 15, Business: 11',
+  await page.$$eval('#plansGrid .plan-card', cards => cards.map(c => {
+    const lists = c.querySelectorAll('.plan-list');
+    return { incluye: lists[0].children.length, limites: lists[1] ? lists[1].children.length : 0 };
+  })),
+  [{ incluye: 17, limites: 13 }, { incluye: 15, limites: 0 }, { incluye: 11, limites: 0 }]);
+check('el aviso de integraciones aparece bajo las tarjetas',
+  await page.textContent('#plansNote'),
+  'La activación de integraciones, los cargos de proveedores externos y los costos de uso no están incluidos en la licencia mensual, salvo que se indique expresamente en la propuesta comercial.');
+
+const planStates = () => page.evaluate(() => [...document.querySelectorAll('#plansGrid .plan-card')].map(c => {
+  const btn = c.querySelector('.plan-cta button');
+  const label = c.querySelector('.plan-current-label');
+  return { name: c.querySelector('h2').textContent, current: c.classList.contains('current'),
+    label: label ? label.textContent : null, cta: btn.textContent, disabled: btn.disabled };
+}));
+
+console.log('\nUPGRADE — por defecto Essential es el plan actual');
+check('Essential: etiqueta "Plan actual" y botón deshabilitado; Professional/Business ofrecen mejorar',
+  await planStates(),
+  [
+    { name: 'Essential', current: true, label: 'Plan actual', cta: 'Tu plan actual', disabled: true },
+    { name: 'Professional', current: false, label: null, cta: 'Mejorar a Professional', disabled: false },
+    { name: 'Business', current: false, label: null, cta: 'Mejorar a Business', disabled: false }
+  ]);
+
+console.log('\nUPGRADE — cambiar de plan pide confirmación con el precio, y cancelar no cambia nada');
+let dialogMsg = '';
+page.once('dialog', d => { dialogMsg = d.message(); d.dismiss(); });
+await page.click('#plansGrid [data-plan="Business"]');
+await page.waitForTimeout(150);
+check('el diálogo menciona el plan y el precio',
+  dialogMsg, `¿Confirmas el cambio al plan Business por ${await page.evaluate(() => Store.money(1290000))} COP / mes?`);
+check('cancelar deja a Essential como plan actual',
+  await page.evaluate(() => Store.settings().plan), 'Essential');
+
+console.log('\nUPGRADE — confirmar el cambio actualiza el plan, avisa con el toast y persiste tras recargar');
+page.once('dialog', d => d.accept());
+await page.click('#plansGrid [data-plan="Business"]');
+await page.waitForTimeout(150);
+check('el toast confirma el nuevo plan', await page.textContent('#toast'), 'Listo, tu plan ahora es Business.');
+check('Business queda como plan actual; Essential y Professional ahora ofrecen cambiar',
+  await planStates(),
+  [
+    { name: 'Essential', current: false, label: null, cta: 'Cambiar a Essential', disabled: false },
+    { name: 'Professional', current: false, label: null, cta: 'Cambiar a Professional', disabled: false },
+    { name: 'Business', current: true, label: 'Plan actual', cta: 'Tu plan actual', disabled: true }
+  ]);
+await page.reload();
+await page.waitForSelector('#appShell:not([hidden])');
+await page.click('button[data-page="upgrade"]');
+check('el plan elegido sobrevive a un recargo de página',
+  await page.evaluate(() => Store.settings().plan), 'Business');
+
 console.log('\npage errors: ' + (errs.length ? errs.join(' | ') : 'none'));
 console.log(fails ? `\n${fails} FAILING` : '\nALL PASS');
 await browser.close();
