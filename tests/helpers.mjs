@@ -1,9 +1,9 @@
 /* The backoffice now sits behind a login, so tests have to sign in first. */
-export async function openAdmin(page, D, email = 'maria@mediterraneacol.com') {
+export async function openAdmin(page, D, email = 'maria@upholster-prototype-quoter.com') {
   await page.goto(D + 'admin.html');
   if (await page.isVisible('#loginScreen')) {
     await page.fill('#loginEmail', email);
-    await page.fill('#loginPassword', 'mediterranea');
+    await page.fill('#loginPassword', 'upholster-prototype-quoter');
     await page.click('#loginSubmit');
     await page.waitForSelector('#appShell:not([hidden])');
   }

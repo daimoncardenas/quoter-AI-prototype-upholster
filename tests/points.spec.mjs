@@ -1,5 +1,5 @@
 /* El catálogo de puntos de atención que alimenta el "Punto de atención" del
- * cotizador: las cuatro tiendas reales de Mediterránea, agrupadas por ciudad
+ * cotizador: las cuatro tiendas reales de upholster-prototype-quoter, agrupadas por ciudad
  * en el desplegable. Antes cada vendedor escribía sus zonas como texto libre
  * y el selector salía de la unión de esos textos; ahora el backoffice
  * administra los puntos y los vendedores los cubren por id, igual que ya
@@ -199,9 +199,9 @@ await page.evaluate(() => {
   //    vendedor esos nombres son lugares reales que escribió, así que ambos
   //    deben sobrevivir como puntos nuevos y NO desaparecer en silencio.
   localStorage.setItem('med.v1.sellers', JSON.stringify([
-    { id: 1, name: 'Laura Méndez', email: 'laura@mediterraneacol.com',
+    { id: 1, name: 'Laura Méndez', email: 'laura@upholster-prototype-quoter.com',
       zones: ['bogota norte'], active: true, quotes: 0 },
-    { id: 103, name: 'Vendedor Custom', email: 'custom@mediterraneacol.com',
+    { id: 103, name: 'Vendedor Custom', email: 'custom@upholster-prototype-quoter.com',
       zones: ['Chía', 'Medellín'], active: true, quotes: 0 }
   ]));
 });

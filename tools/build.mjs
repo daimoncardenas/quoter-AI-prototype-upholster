@@ -82,7 +82,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 </head>
 <body>
   <div class="stack">
-    <img src="${logo}" alt="Mediterránea Insumos" class="logo">
+    <img src="${logo}" alt="upholster-prototype-quoter" class="logo">
     <form class="card" id="form">
       <span class="eyebrow">${eyebrow}</span>
       <h1>Vista previa privada</h1>
@@ -93,7 +93,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
       <p class="error" id="error" hidden></p>
       <button type="submit" id="submit">Abrir prototipo</button>
     </form>
-    <p class="foot">Prototipo de trabajo, no es el sitio de Mediterránea Insumos.
+    <p class="foot">Prototipo de trabajo, no es el sitio de upholster-prototype-quoter.
       Sin la llave este archivo no contiene nada legible.</p>
   </div>
 <script>
@@ -232,9 +232,9 @@ if (store.includes('</script>')) throw new Error('store.js contiene </script> y 
 
 const PAGES = [
   { file: 'index.html', eyebrow: 'Propuesta',
-    lead: 'Este prototipo se comparte solo con Mediterránea Insumos. Escribe la llave que enviamos por correo.' },
+    lead: 'Este prototipo se comparte solo con upholster-prototype-quoter. Escribe la llave que enviamos por correo.' },
   { file: 'admin.html', eyebrow: 'Backoffice',
-    lead: 'El backoffice del prototipo se comparte solo con Mediterránea Insumos. Escribe la llave que enviamos por correo.' }
+    lead: 'El backoffice del prototipo se comparte solo con upholster-prototype-quoter. Escribe la llave que enviamos por correo.' }
 ];
 
 mkdirSync('dist', { recursive: true });

@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Client prototype for **Mediterránea Insumos** (Colombian upholstery fabric): a public
+Client prototype for **upholster-prototype-quoter** (Colombian upholstery fabric): a public
 fabric quote wizard ("cotizador") plus the backoffice that configures it. It is a
 proposal piece opened by the client with a double-click, not a deployed app.
 
@@ -21,7 +21,7 @@ npm run build                                     # writes dist/index.html + dis
   failure. There is no way to run a single check — run its file.
 - No linter, no bundler, no dev server. To look at the app, open `index.html` or
   `admin.html` directly in Chromium. Backoffice demo password for every seeded account
-  is `mediterranea` (e.g. `maria@mediterraneacol.com` = admin).
+  is `upholster-prototype-quoter` (e.g. `maria@upholster-prototype-quoter.com` = admin).
 - `tests/README.md` describes only 7 of the 10 suites; `billing`, `components` and
   `sealed` are missing from it.
 
@@ -58,7 +58,7 @@ Couplings that are easy to break:
 - Quotes link to sellers by `sellerId`; the seller name on a quote is a refreshable
   label (`retagQuotes`). Editing a seller must also move their login account
   (`Auth.syncSellerAccount`).
-- Sellers link to the wizard's "Punto de atención" catalogue (Mediterránea's real
+- Sellers link to the wizard's "Punto de atención" catalogue (upholster-prototype-quoter's real
   stores, grouped by city) by `servicePointIds`, never by text; the `city` on a
   quote is a refreshable `"{city} · {name}"` label (`retagQuotePoints`, resolved
   for display via `Store.pointName`). A browser with pre-`servicePoints` data

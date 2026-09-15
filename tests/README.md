@@ -38,7 +38,7 @@ npm test
   type with a cutting template packs its pieces against the chosen fabric's
   roll width, and that types without a template still fall back to the
   furniture's baseline range.
-- `points.spec.mjs` — the "Puntos de atención" catalogue (Mediterránea's real
+- `points.spec.mjs` — the "Puntos de atención" catalogue (upholster-prototype-quoter's real
   stores) behind the wizard's "Punto de atención": the dropdown grouped into
   city optgroups, "Otra ciudad" last and outside any group, and a submitted
   quote freezing the "{city} · {name}" label; creating, pausing and reordering
