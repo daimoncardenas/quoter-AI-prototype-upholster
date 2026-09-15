@@ -115,9 +115,9 @@ client they're for.
 
 | File | Contents |
 |------|----------|
-| `client.json` | Brand strings (`displayName`, `shortName`, `assistantName`, `meta.*` titles/descriptions, `copy.*` consent/disclaimer text), `theme` (CSS custom property values, plus `theme.tints`/`theme.rgb` — see below), `fonts` (`{href, headingName, headingFallback, body}` — see below), `logo` (`{file, alt}`), `storageNamespace`, `photosDbName` |
+| `client.json` | Brand strings (`displayName`, `shortName`, `assistantName`, `meta.*` titles/descriptions, `copy.*` consent/disclaimer text), `theme` (CSS custom property values, plus `theme.tints`/`theme.rgb` — see below), `fonts` (`{href, headingName, headingFallback, body}` — see below), `logo` (`{file, alt, fileOnLight?}` — see Color modes), `colorMode` (`"normal"` \| `"inverted"`, optional, defaults to `"normal"` — see Color modes), `storageNamespace`, `photosDbName` |
 | `seed.json` | Client-specific demo data: `fabrics`, `servicePoints`, `sellers` (`id`, `servicePointIds`, `quotes` count only — identity comes from `shared/demo-users.json`, see below), `quotes`, `settings` (overrides onto `DEFAULT_SETTINGS`, at minimum `senderEmail` and `budgets`) |
-| `logo.png` / `logo.svg` | Referenced by `client.json` → `logo.file`; either extension works (`tools/client-pack.mjs` → `MIME_BY_EXT`) |
+| `logo.png` / `logo.svg` | Referenced by `client.json` → `logo.file`; either extension works (`tools/client-pack.mjs` → `MIME_BY_EXT`). A second logo variant can be added for `colorMode: "inverted"` — see Color modes |
 | `README.md` | Only for placeholder/incomplete packs (see `clients/macizo/README.md`) — notes what's invented and needs replacing |
 
 **Shared demo logins** — `shared/demo-users.json` (repo root, deliberately *outside* `clients/`,
@@ -139,6 +139,44 @@ committed as **templates** containing `{{PLACEHOLDER}}` tokens (brand text, them
 custom properties, logo data URI; `store.js` additionally has `{{FABRICS_JSON}}`,
 `{{USERS_JSON}}`, `{{SERVICE_POINTS_JSON}}`, `{{SELLERS_JSON}}`, `{{QUOTES_JSON}}`,
 `{{SENDER_EMAIL_JSON}}`, `{{BUDGETS_JSON}}`, `{{DEMO_PASSWORD_JSON}}`, `{{STORAGE_NS}}`).
+
+**Color modes** — a client-agnostic layer between a pack's palette and the page
+surfaces, picked per-pack via `client.json` → `colorMode`. Every mode file lives at
+`modes/<mode>.css` (repo root) and is appended verbatim right before each page's
+main `</style>` via the `{{MODE_CSS}}` token — same specificity, later in the
+cascade, so mode rules win over the base stylesheet without `!important` (except
+where a rule collides with an inline `style=""`, which always wins on specificity
+regardless of source order).
+  - **`normal`** (default, `colorMode` omitted or `"normal"`) — today's look,
+    unchanged. There is no `modes/normal.css` file; a missing mode file resolves
+    `{{MODE_CSS}}` to `''`, reproducing the exact original bytes (this is how
+    Mediterránea/Macizo's generated output stays byte-for-byte identical).
+  - **`inverted`** (`modes/inverted.css`) — swaps the light/dark relationship:
+    surfaces normally painted with the pack's dark brand color (header, sidebars,
+    primary buttons, chat bubbles...) become white with brand-colored text/icons;
+    surfaces normally white (main content panel, cards, inputs, chat bubbles...)
+    become brand-colored with white text/icons. It is **client-agnostic** — only
+    the palette custom properties every template already defines in `:root`
+    (`var(--ink)`, `var(--accent)`, `var(--line)`, `var(--muted)`...) are used, no
+    client's hex is hardcoded. It defines its own role variables at the top
+    (`--mode-frame-bg`, `--mode-canvas-bg`, `--mode-card-bg` — the last a
+    `color-mix()` of `--accent`/`--ink` chosen to keep white text ≥4.5:1, so
+    nested cards stay visually distinguishable from the big ink-colored panels
+    behind them — `--mode-on-color`, etc.) and maps them onto the same selectors
+    the base stylesheet already paints. `clients/intertelas/` is the first (and so
+    far only) pack using it.
+  - **Logo**: `logo.file` is the logo for dark/brand surfaces (used in `normal`
+    mode, and still used for anything `inverted` mode doesn't touch). `inverted`
+    mode paints the header/sidebar/login screen white, so it additionally
+    **requires** `logo.fileOnLight` — a logo variant that reads on a white
+    background; `tools/client-pack.mjs` throws if `colorMode: "inverted"` and
+    `logo.fileOnLight` is missing.
+  - **Adding a new mode**: drop `modes/<name>.css` using only the palette
+    variables already in `:root` (no client hex), set `colorMode: "<name>"` in a
+    pack's `client.json`, and `tools/client-pack.mjs`'s validation (`Available
+    modes: ...` on an unknown value) picks it up automatically — no other code
+    change needed. `tools/generate.mjs`'s `loadModeCss()` throws if a mode file
+    contains `</style` (would break the page).
 
 **Fonts are pack-driven too** — `{{FONTS_HREF}}` (the Google Fonts `<link href>`, full
 URL), `{{FONT_BODY}}` (a ready-to-use `font-family` value, e.g. `Montserrat,Arial,sans-serif`)

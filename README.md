@@ -33,13 +33,14 @@ Un `CLIENT` que no exista falla explicando qué clientes hay disponibles bajo
 |------|--------|
 | `clients/mediterranea/` | Real — reproduce la marca y los datos originales de Mediterránea Insumos tal cual |
 | `clients/macizo/` | **Diseño real, datos placeholder** — marca, colores, tipografía y logo tomados de macizocolombia.com (2026-09-14); los datos de demo (telas, puntos de atención, cotizaciones) siguen inventados; los usuarios son los compartidos; ver `clients/macizo/README.md` |
-| `clients/intertelas/` | **Diseño real, datos placeholder** — marca, colores, tipografía y logo tomados de intertelas.com (2026-09-15); prospecto de CARDYRAM, prototipo privado de demostración; los datos de demo (telas, puntos de atención, cotizaciones) siguen inventados; los usuarios son los compartidos; ver `clients/intertelas/README.md` |
+| `clients/intertelas/` | **Diseño real, datos placeholder** — marca, colores, tipografía y logo tomados de intertelas.com (2026-09-15); prospecto de CARDYRAM, prototipo privado de demostración; los datos de demo (telas, puntos de atención, cotizaciones) siguen inventados; los usuarios son los compartidos; usa `colorMode: "inverted"` (ver más abajo); ver `clients/intertelas/README.md` |
 
 ## Agregar un cliente nuevo
 
 Copiar `clients/mediterranea/` a `clients/<slug>/` y reemplazar cada valor:
 
-- `client.json` — nombre, textos, `theme` (colores), `fonts` (tipografía), `logo`
+- `client.json` — nombre, textos, `theme` (colores), `fonts` (tipografía), `logo`,
+  y opcionalmente `colorMode` (ver abajo)
 - `seed.json` — telas, vendedores (solo `servicePointIds` y cantidad de cotizaciones;
   el nombre y el correo son compartidos, ver abajo), puntos de atención, cotizaciones
 - `logo.png` o `logo.svg`
@@ -48,6 +49,23 @@ Los usuarios de demo del backoffice (correos y contraseña) **son los mismos par
 todos los clientes** — viven en `shared/demo-users.json`, no en cada pack. No hace
 falta tocar ninguna plantilla ni herramienta para un cliente nuevo — `CLAUDE.md` tiene
 el contrato completo del pack.
+
+## Modos de color
+
+`client.json` → `colorMode` elige, por cliente, entre `"normal"` (por defecto —
+el look de siempre) e `"inverted"` (invierte claro/oscuro: lo que antes era
+oscuro/marca queda blanco con texto de marca, y lo que antes era blanco queda
+del color de marca con texto blanco). Cada modo es un CSS en `modes/<modo>.css`
+que se inyecta al final de la hoja de estilos de cada página — no hace falta
+tocar las plantillas. `modes/inverted.css` no tiene ningún color de ningún
+cliente hardcodeado, solo usa las variables de paleta que ya define cada
+plantilla (`--ink`, `--accent`, `--line`, ...), así que sirve para cualquier
+cliente que active ese modo. `colorMode: "inverted"` además requiere
+`logo.fileOnLight` en `client.json` → `logo`: una variante del logo que se lea
+sobre fondo blanco (el header/sidebar quedan blancos en ese modo). Agregar un
+modo nuevo es soltar `modes/<nombre>.css` (solo con variables de paleta) y
+poner `colorMode: "<nombre>"` en el pack — `tools/client-pack.mjs` valida el
+valor solo y avisa qué modos existen si el nombre está mal escrito.
 
 ## Entregar el prototipo
 

@@ -41,6 +41,13 @@ for (const slug of ALL_SLUGS) {
   markersBySlug[slug] = [client.displayName, `'${client.storageNamespace}'`, seed.settings.senderEmail].filter(Boolean);
 }
 
+// #rrggbb -> "rgb(r, g, b)", to compare against getComputedStyle()'s format.
+const hexToRgbCss = hex => {
+  const h = hex.replace('#', '');
+  const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);
+  return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
+};
+
 const b = await chromium.launch();
 
 for (const slug of SLUGS) {
@@ -88,7 +95,31 @@ for (const slug of SLUGS) {
   check('ve su propio nombre en el topbar', await page.textContent('#meName'), admin.name);
   console.log('page errors: ' + (errs.length ? errs.join(' | ') : 'none'));
   if (errs.length) fails++;
+
+  console.log(`\nEL COLOR MODE "${client.colorMode}" DE ${CLIENT} SE APLICÓ (topbar/header vs. panel principal)`);
+  const topbarBg = await page.evaluate(() => getComputedStyle(document.querySelector('.topbar')).backgroundColor);
+  const panelBg = await page.evaluate(() => getComputedStyle(document.querySelector('.panel')).backgroundColor);
+  if (client.colorMode === 'inverted') {
+    check('admin: el topbar es blanco (modo inverted)', topbarBg, hexToRgbCss('#ffffff'));
+    check('admin: el panel principal ya no es blanco (usa el color de marca)', panelBg !== hexToRgbCss('#ffffff'), true);
+  } else {
+    check('admin: el topbar usa theme.ink (modo normal)', topbarBg, hexToRgbCss(client.theme.ink));
+    check('admin: el panel principal es blanco (modo normal)', panelBg, hexToRgbCss('#ffffff'));
+  }
   await page.close();
+
+  const indexPage = await b.newPage();
+  await indexPage.goto(D + 'index.html');
+  const headerBg = await indexPage.evaluate(() => getComputedStyle(document.querySelector('.site-header')).backgroundColor);
+  const shellBg = await indexPage.evaluate(() => getComputedStyle(document.querySelector('.app-shell')).backgroundColor);
+  if (client.colorMode === 'inverted') {
+    check('cotizador: el header es blanco (modo inverted)', headerBg, hexToRgbCss('#ffffff'));
+    check('cotizador: el panel principal usa theme.ink (modo inverted)', shellBg, hexToRgbCss(client.theme.ink));
+  } else {
+    check('cotizador: el header usa theme.ink (modo normal)', headerBg, hexToRgbCss(client.theme.ink));
+    check('cotizador: el panel principal es blanco (modo normal)', shellBg, hexToRgbCss('#ffffff'));
+  }
+  await indexPage.close();
 }
 
 await b.close();

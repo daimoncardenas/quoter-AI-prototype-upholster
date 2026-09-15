@@ -18,8 +18,10 @@
     "notOfficialIndex": "Esta no es la página oficial de Intertelas. Diseño conceptual para evaluación privada.",
     "notOfficialAdmin": "Esta no es la página oficial de Intertelas. Diseño conceptual para evaluación privada. Ilustra los roles; no protege información: toda la verificación ocurre en el navegador del visitante."
   },
+  "colorMode": "inverted",
   "logo": {
     "file": "logo-light.png",
+    "fileOnLight": "logo.png",
     "alt": "Intertelas"
   },
   "fonts": {
@@ -29,8 +31,8 @@
     "body": "Montserrat,Arial,sans-serif"
   },
   "theme": {
-    "ink": "#2b2b2b",
-    "inkSecondary": "#1c1c1c",
+    "ink": "#aa1424",
+    "inkSecondary": "#7f0f1b",
     "accent": "#dd363a",
     "gold": "#ffffff",
     "goldLight": "#d9d9d9",

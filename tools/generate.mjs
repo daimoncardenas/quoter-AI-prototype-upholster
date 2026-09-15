@@ -11,9 +11,12 @@
  *   node tools/generate.mjs             -> uses CLIENT from .env / env var
  *   CLIENT=MACIZO node tools/generate.mjs
  */
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import path from 'node:path';
 import { resolveClient } from './env.mjs';
 import { loadClientPack } from './client-pack.mjs';
+
+const MODES_DIR = 'modes';
 
 function render(template, values) {
   return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
@@ -61,6 +64,21 @@ function validateTheme(theme, slug) {
   if (bad.length) throw new Error(`clients/${slug}/client.json has invalid colors:\n  ${bad.join('\n  ')}`);
 }
 
+/* Color mode CSS, appended right before the main stylesheet's closing
+ * </style> so its rules land last in the cascade and win over the base
+ * styles above without needing !important everywhere. "normal" has no file
+ * (or an empty one), in which case {{MODE_CSS}} resolves to '' and the page
+ * comes out byte-identical to having no hook at all — see modes/ for the
+ * available modes (client-pack.mjs already validated client.colorMode is
+ * one of them). */
+function loadModeCss(colorMode) {
+  const cssPath = path.join(MODES_DIR, `${colorMode}.css`);
+  if (!existsSync(cssPath)) return '';
+  const css = readFileSync(cssPath, 'utf8');
+  if (css.includes('</style')) throw new Error(`modes/${colorMode}.css must not contain "</style" (would break the page's HTML)`);
+  return css;
+}
+
 export function generate(clientEnvValue = resolveClient(), outDir = 'generated') {
   const { slug, client, seed, logoDataUri } = loadClientPack(clientEnvValue);
 
@@ -74,6 +92,7 @@ export function generate(clientEnvValue = resolveClient(), outDir = 'generated')
     TITLE_ADMIN: client.meta.titleAdmin,
     LOGO_SRC: logoDataUri,
     LOGO_ALT: client.logo.alt,
+    MODE_CSS: loadModeCss(client.colorMode),
     ASSISTANT_NAME: client.assistantName,
     CONSENT_TEXT: client.copy.consent,
     NOT_OFFICIAL_INDEX: client.copy.notOfficialIndex,

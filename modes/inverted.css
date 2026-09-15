@@ -1,0 +1,269 @@
+/* Color mode: inverted.
+ *
+ * Swaps the light/dark relationship of the page: surfaces that are normally
+ * painted with the client's dark brand color (header, sidebars, primary
+ * buttons, chat bubbles...) become white with brand-colored text/icons, and
+ * surfaces that are normally white (the main content panel, cards, inputs,
+ * chat bubbles...) become brand-colored with white text/icons.
+ *
+ * CLIENT-AGNOSTIC: only the palette custom properties the pages already
+ * define in :root are used here (var(--ink), var(--accent), var(--line)...),
+ * plus white/rgba(255,255,255,...) for "on-color" text and translucent
+ * borders. No client's hex colors are hardcoded. index.html and admin.html
+ * spell a couple of these variables differently (--ink-2 vs --ink2,
+ * --gold-light vs --gold2) — the var() fallback chains below cover both.
+ *
+ * This file is appended verbatim after each page's own stylesheet (see the
+ * mode-css hook in index.html/admin.html and tools/generate.mjs), so same-
+ * specificity rules here win by cascade order alone; no !important needed.
+ */
+
+:root{
+  /* Mode-level role variables: what a "surface that flips" resolves to. */
+  --mode-frame-bg:#fff;                       /* was var(--ink) -> now white */
+  --mode-frame-text:var(--ink);                /* text/icons on a frame surface */
+  --mode-frame-text-muted:var(--muted);        /* secondary text on a frame surface (greys stay unchanged) */
+  --mode-line-on-light:var(--line);            /* borders on a frame surface (unchanged) */
+
+  --mode-canvas-bg:var(--ink);                 /* big content areas: was white -> now brand ink */
+  --mode-card-bg:color-mix(in srgb, var(--accent) 60%, var(--ink) 40%); /* nested cards: a distinguishable accent-leaning shade, kept >=4.5:1 with white text */
+  --mode-on-color:#fff;                        /* text/icons on a canvas/card surface */
+  --mode-on-color-muted:rgba(255,255,255,.78); /* secondary text on a canvas/card surface */
+  --mode-line-on-color:rgba(255,255,255,.28);  /* borders on a canvas/card surface */
+}
+
+/* ============================== index.html ============================== */
+
+/* --- dark brand surfaces -> white with brand text --- */
+.site-header{background:var(--mode-frame-bg);color:var(--mode-frame-text);border-bottom:1px solid var(--mode-line-on-light)}
+.site-header .eyebrow{color:var(--mode-frame-text-muted)}
+.site-header .secure{color:var(--mode-frame-text-muted)}
+.site-header .secure span{color:var(--mode-frame-text)}
+
+.journey{background:var(--mode-frame-bg);color:var(--mode-frame-text)}
+.journey .gold{color:var(--mode-frame-text)}
+.journey-intro p{color:var(--mode-frame-text-muted)}
+.step-list:before{background:var(--mode-line-on-light)}
+.step-list li{color:var(--mode-frame-text-muted)}
+.step-list li.active,.step-list li.done{color:var(--mode-frame-text)}
+.step-list li>span{background:var(--mode-frame-bg);border-color:var(--line);color:var(--mode-frame-text)}
+.step-list li.active>span{background:var(--mode-canvas-bg);border-color:var(--mode-canvas-bg);color:var(--mode-on-color)}
+.step-list li.done>span{background:var(--mode-card-bg);border-color:var(--mode-card-bg);color:var(--mode-on-color)}
+.help-card{border-top-color:var(--mode-line-on-light)}
+.help-icon{border-color:var(--mode-frame-text);color:var(--mode-frame-text)}
+.help-card small{color:var(--mode-frame-text-muted)}
+.text-button{color:var(--mode-frame-text)}
+
+.photo-thumb button{background:var(--mode-frame-bg);color:var(--mode-frame-text);border:1px solid var(--line)}
+.photo-thumb button:hover{background:var(--cream)}
+
+.measure-visual{background:var(--mode-frame-bg);color:var(--mode-frame-text);border:1px solid var(--line)}
+.measure-visual .drawing-shape svg{color:var(--mode-frame-text-muted)}
+.measure-visual .furniture-drawing>span{color:var(--mode-frame-text-muted)}
+.measure-visual p{color:var(--mode-frame-text-muted)}
+
+.chip-grid input:checked+span{background:var(--mode-frame-bg);border-color:var(--mode-frame-text);color:var(--mode-frame-text)}
+
+.quote-preview{background:var(--mode-frame-bg);color:var(--mode-frame-text)}
+.quote-preview p{color:var(--mode-frame-text-muted)}
+.price-block small,.price-block span{color:var(--mode-frame-text-muted)}
+.price-block strong{color:var(--mode-frame-text)}
+
+.summary-card{background:var(--mode-frame-bg);color:var(--mode-frame-text)}
+.summary-card dl{border-top-color:var(--mode-line-on-light)}
+.summary-card dl div{border-bottom-color:var(--mode-line-on-light)}
+.summary-card dt{color:var(--mode-frame-text-muted)}
+.summary-card dd{color:var(--mode-frame-text)}
+.summary-card>p{color:var(--mode-frame-text-muted)}
+
+.chat-fab{background:var(--mode-frame-bg);color:var(--mode-frame-text)}
+.chat-panel{background:var(--mode-card-bg)}
+.chat-panel header{background:var(--mode-frame-bg);color:var(--mode-frame-text);border-bottom:1px solid var(--line)}
+.chat-panel header small{color:var(--mode-frame-text-muted)}
+.chat-panel header button{color:var(--mode-frame-text)}
+.ai-orb{background:var(--mode-canvas-bg);color:var(--mode-on-color)}
+.message.user{background:var(--mode-canvas-bg);color:var(--mode-on-color)}
+.chat-panel form{border-top:1px solid var(--mode-line-on-color)}
+.chat-panel form input{color:var(--mode-on-color)}
+.chat-panel form input::placeholder{color:var(--mode-on-color-muted)}
+.chat-panel form button{background:var(--mode-canvas-bg);color:var(--mode-on-color)}
+
+.primary-button{background:var(--mode-canvas-bg);color:var(--mode-on-color)}
+.primary-button:hover{background:var(--mode-card-bg)}
+
+/* --- white surfaces -> brand-colored with white text --- */
+.app-shell{background:var(--mode-canvas-bg);color:var(--mode-on-color)}
+.step-heading h2,.success-state h2{color:var(--mode-on-color)}
+.step-heading p{color:var(--mode-on-color-muted)}
+.wizard-actions{background:var(--mode-canvas-bg);border-top-color:var(--mode-line-on-color)}
+
+.furniture-card{background:var(--mode-card-bg);color:var(--mode-on-color);border-color:var(--mode-line-on-color)}
+.furniture-card:hover{border-color:var(--mode-on-color)}
+.furniture-card.selected{background:var(--mode-canvas-bg);border-color:var(--accent)}
+.furniture-card b,.furniture-card small,.furniture-icon{color:var(--mode-on-color)}
+
+.upload-zone{background:var(--mode-card-bg);border-color:var(--mode-line-on-color)}
+.upload-zone.dragging{background:var(--mode-canvas-bg)}
+.upload-copy b{color:var(--mode-on-color)}
+.upload-copy p{color:var(--mode-on-color-muted)}
+.upload-icon{background:rgba(255,255,255,.18);color:var(--mode-on-color)}
+.photo-count{color:var(--mode-on-color-muted)}
+
+.secondary-button{background:var(--mode-card-bg);color:var(--mode-on-color);border-color:var(--mode-line-on-color)}
+
+.fabric-card{background:var(--mode-card-bg);color:var(--mode-on-color);border-color:var(--mode-line-on-color)}
+.fabric-card b,.fabric-card small{color:var(--mode-on-color)}
+.fabric-tags span{background:rgba(255,255,255,.18);color:var(--mode-on-color)}
+.why{color:var(--mode-on-color-muted)}
+.why b{color:var(--mode-on-color)}
+/* .why.over and .field-error keep their semantic role (warning / invalid)
+ * but their literal amber/red hex is unreadable against the new colored
+ * card/canvas surfaces (contrast ~1:1) — inverted to white so the warning
+ * itself stays legible; the amber/red tokens are untouched everywhere else. */
+.why.over{color:var(--mode-on-color)}
+.field-error{color:var(--mode-on-color)}
+
+.measure-fields input,.measure-fields select,.select-grid select,.contact-fields input{background:var(--mode-card-bg);color:var(--mode-on-color);border-color:var(--mode-line-on-color)}
+.measure-fields input::placeholder,.contact-fields input::placeholder{color:var(--mode-on-color-muted)}
+.measure-fields label,.select-grid label,.contact-fields label{color:var(--mode-on-color)}
+.field-note{color:var(--mode-on-color-muted)}
+.measure-fields label>span.unit{color:var(--mode-on-color-muted)}
+.choice-group h3{color:var(--mode-on-color)}
+.chip-grid span{color:var(--mode-on-color);border-color:var(--mode-line-on-color)}
+
+.ai-card{background:var(--mode-card-bg);color:var(--mode-on-color)}
+.ai-summary{border-right-color:var(--mode-line-on-color)}
+.ai-summary h4,.ai-summary dd{color:var(--mode-on-color)}
+.ai-summary dt{color:var(--mode-on-color-muted)}
+.ai-badge,.ai-analysis h3{color:var(--mode-on-color)}
+.ai-analysis>p{color:var(--mode-on-color-muted)}
+.analysis-checks b{color:var(--mode-on-color)}
+.analysis-checks small{color:var(--mode-on-color-muted)}
+
+.message.bot{background:var(--mode-card-bg);color:var(--mode-on-color)}
+.messages{background:var(--mode-canvas-bg)}
+.quick-questions button{background:var(--mode-card-bg);color:var(--mode-on-color);border-color:var(--mode-line-on-color)}
+
+/* Small labels and hints that default to the brand ink: on the colored
+ * canvas they would be brand-on-brand, so they read as white instead. The
+ * journey sidebar stays a frame surface, so its eyebrow keeps brand text. */
+.app-shell .eyebrow{color:var(--mode-on-color-muted)}
+.journey .eyebrow{color:var(--mode-frame-text)}
+.back-button{color:var(--mode-on-color)}
+#stepHint{color:var(--mode-on-color-muted)}
+
+/* ============================== admin.html ============================== */
+
+/* --- dark brand surfaces -> white with brand text --- */
+.topbar{background:var(--mode-frame-bg);color:var(--mode-frame-text);border-bottom:1px solid var(--mode-line-on-light)}
+.env{color:var(--mode-frame-text-muted)}
+.avatar{background:var(--mode-canvas-bg);color:var(--mode-on-color)}
+.profile small{color:var(--mode-frame-text-muted)}
+
+.login-screen{background:var(--mode-frame-bg)}
+.login-card{background:var(--mode-card-bg);color:var(--mode-on-color)}
+.login-card h1{color:var(--mode-on-color)}
+.login-lead{color:var(--mode-on-color-muted)}
+.login-card .field{color:var(--mode-on-color)}
+.login-card .field input{background:var(--mode-frame-bg);color:var(--mode-frame-text);border-color:var(--line)}
+.login-error{background:rgba(255,255,255,.15);border-left-color:#fff;color:#fff}
+.login-card .eyebrow{color:var(--mode-on-color-muted)}
+/* Legend dots are painted with brand colors; a white ring keeps them visible
+ * on the colored panel. */
+.panel .legend span:before{box-shadow:0 0 0 1.5px var(--mode-on-color)}
+
+.button.primary{background:var(--mode-frame-bg);color:var(--mode-frame-text)}
+.button.primary:hover{background:var(--cream)}
+
+.sidebar{background:var(--mode-frame-bg);color:var(--mode-frame-text);border-right:1px solid var(--line)}
+.side-label{color:var(--mode-frame-text)}
+.nav button{color:var(--mode-frame-text-muted)}
+.nav button:hover{background:var(--cream);color:var(--mode-frame-text)}
+.nav button.active{background:var(--mode-card-bg);color:var(--mode-on-color);box-shadow:none}
+.nav-icon{color:var(--mode-frame-text)}
+.side-foot{border-top-color:var(--line)}
+.side-foot p{color:var(--mode-frame-text-muted)}
+.public-link{color:var(--mode-frame-text)}
+
+.modal-head{background:var(--mode-frame-bg);color:var(--mode-frame-text);border-bottom:1px solid var(--line)}
+.modal-head h2{color:var(--mode-frame-text)}
+.close{color:var(--mode-frame-text)}
+
+.toast{background:var(--mode-frame-bg);color:var(--mode-frame-text);border-left-color:var(--accent)}
+
+/* --- white surfaces -> brand-colored with white text --- */
+.stat{background:var(--mode-card-bg);color:var(--mode-on-color)}
+.stat span{color:var(--mode-on-color-muted)}
+.stat strong{color:var(--mode-on-color)}
+/* .stat small's literal green/amber is unreadable on the new card bg
+ * (~1:1) — inverted to muted white like the other captions on this card;
+ * those tokens are untouched everywhere else. One instance sets its amber
+ * via an inline style="", which beats a plain selector on specificity, so
+ * !important is the only way to still win here. */
+.stat small{color:var(--mode-on-color-muted)!important}
+.stat:after{background:rgba(255,255,255,.55)}
+
+.panel{background:var(--mode-card-bg);color:var(--mode-on-color)}
+.panel-head{border-bottom-color:var(--mode-line-on-color)}
+.panel-head h2{color:var(--mode-on-color)}
+.panel-head a,.link-button{color:var(--mode-on-color)}
+.activity li{border-bottom-color:var(--mode-line-on-color)}
+.activity-icon{background:rgba(255,255,255,.18);color:var(--mode-on-color)}
+.activity b{color:var(--mode-on-color)}
+.activity small{color:var(--mode-on-color-muted)}
+.activity time{color:var(--mode-on-color-muted)}
+.donut:after{background:#fff;color:var(--ink)}
+
+.toolbar select{background:var(--mode-card-bg);color:var(--mode-on-color);border-color:var(--mode-line-on-color)}
+.search input{background:var(--mode-card-bg);color:var(--mode-on-color);border-color:var(--mode-line-on-color)}
+.search input::placeholder{color:var(--mode-on-color-muted)}
+.search span{color:var(--mode-on-color-muted)}
+
+.table-wrap{background:var(--mode-card-bg)}
+.data-table th{background:rgba(255,255,255,.12);color:var(--mode-on-color-muted)}
+.data-table td{border-top-color:var(--mode-line-on-color);color:var(--mode-on-color)}
+.data-table strong{color:var(--mode-on-color)}
+.mini-avatar{background:rgba(255,255,255,.2);color:var(--mode-on-color)}
+.row-action{color:var(--mode-on-color-muted)}
+
+.fabric{background:var(--mode-card-bg);color:var(--mode-on-color)}
+.fabric h3{color:var(--mode-on-color)}
+.fabric p{color:var(--mode-on-color-muted)}
+.tags span{background:rgba(255,255,255,.18);color:var(--mode-on-color)}
+.fabric-actions{border-top-color:var(--mode-line-on-color)}
+.fabric-actions button{color:var(--mode-on-color)}
+.reco{color:var(--mode-on-color-muted)}
+.reco.none{color:var(--mode-on-color)} /* literal amber unreadable on the card bg (~1:1) */
+
+.seller{background:var(--mode-card-bg);color:var(--mode-on-color)}
+.seller h3{color:var(--mode-on-color)}
+.seller p{color:var(--mode-on-color-muted)}
+.seller .avatar{background:rgba(255,255,255,.25);color:var(--mode-on-color)}
+.seller-actions{border-top-color:var(--mode-line-on-color)}
+.seller-actions button{color:var(--mode-on-color)}
+.seller-meta{border-top-color:var(--mode-line-on-color)}
+.seller-meta span{color:var(--mode-on-color-muted)}
+.seller-meta strong{color:var(--mode-on-color)}
+.zones span{border-color:var(--mode-line-on-color);color:var(--mode-on-color)}
+
+.settings-card{background:var(--mode-card-bg);color:var(--mode-on-color)}
+.settings-card h2{color:var(--mode-on-color)}
+.settings-card>p{color:var(--mode-on-color-muted)}
+.field{color:var(--mode-on-color)}
+.field input,.field select,.field textarea{background:rgba(255,255,255,.12);color:var(--mode-on-color);border-color:var(--mode-line-on-color)}
+.field input::placeholder,.field textarea::placeholder{color:var(--mode-on-color-muted)}
+.tag-input{background:rgba(255,255,255,.12);border-color:var(--mode-line-on-color)}
+.tag-input .tag{background:rgba(255,255,255,.2);color:var(--mode-on-color)}
+.tag-input input{color:var(--mode-on-color)}
+.setting-row{border-bottom-color:var(--mode-line-on-color)}
+.setting-row b{color:var(--mode-on-color)}
+.setting-row small{color:var(--mode-on-color-muted)}
+
+.modal{background:var(--mode-card-bg);color:var(--mode-on-color)}
+.modal-hint{color:var(--mode-on-color-muted)}
+.modal-section{color:var(--mode-on-color);border-top-color:var(--mode-line-on-color)}
+.check{color:var(--mode-on-color)}
+.photo-thumb{background:rgba(255,255,255,.12);border-color:var(--mode-line-on-color);color:var(--mode-on-color-muted)}
+.photo-actions p{color:var(--mode-on-color-muted)}
+.quote-gallery img{border-color:var(--mode-line-on-color)}
+.color-field input[type=color]{border:1px solid var(--mode-line-on-color)}

@@ -1,5 +1,6 @@
 {
   "slug": "macizo",
+  "colorMode": "normal",
   "_todo": "Design/brand taken from macizocolombia.com (2026-09-14): displayName, logo and theme below are real. Demo data (seed.json's fabrics/servicePoints/quotes, storageNamespace) is still PLACEHOLDER — nobody gave us real fabrics/sellers/quotes yet. Backoffice logins are the shared demo set every client uses (shared/demo-users.json), not a per-client TODO. Replace seed.json before this client ships to anyone.",
   "displayName": "Macizo Colombia",
   "shortName": "Macizo",

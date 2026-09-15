@@ -9,6 +9,7 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 
 const CLIENTS_DIR = 'clients';
+const MODES_DIR = 'modes';
 /* Every client shares the SAME backoffice demo logins (same emails, same
  * password, same seller identities) — see shared/demo-users.json. It lives
  * outside clients/ on purpose: loadClientPack() enumerates clients/*'s
@@ -23,6 +24,18 @@ const MIME_BY_EXT = {
   '.jpeg': 'image/jpeg',
   '.webp': 'image/webp'
 };
+
+/* Color modes are the shared, client-agnostic layer between a client's
+ * palette and the page surfaces: "normal" (today's look, no CSS needed) and
+ * any file dropped in modes/ (e.g. "inverted"). "normal" is always valid
+ * even with no modes/normal.css on disk. */
+export function listAvailableModes() {
+  if (!existsSync(MODES_DIR)) return ['normal'];
+  const files = readdirSync(MODES_DIR, { withFileTypes: true })
+    .filter(e => e.isFile() && e.name.endsWith('.css'))
+    .map(e => e.name.slice(0, -'.css'.length));
+  return Array.from(new Set(['normal', ...files])).sort();
+}
 
 export function listAvailableClients() {
   if (!existsSync(CLIENTS_DIR)) return [];
@@ -52,8 +65,24 @@ export function loadClientPack(clientEnvValue) {
   const seed = JSON.parse(readFileSync(path.join(dir, 'seed.json'), 'utf8'));
   const shared = JSON.parse(readFileSync(SHARED_USERS_FILE, 'utf8'));
 
-  const logoPath = path.join(dir, client.logo.file);
-  const ext = path.extname(client.logo.file).toLowerCase();
+  /* colorMode picks which modes/*.css gets appended to the pages (see
+   * tools/generate.mjs). Missing means "normal" — today's look, unchanged. */
+  const colorMode = client.colorMode || 'normal';
+  const availableModes = listAvailableModes();
+  if (!availableModes.includes(colorMode)) {
+    throw new Error(`clients/${slug}/client.json has unknown colorMode "${colorMode}". Available modes: ${availableModes.join(', ')}`);
+  }
+
+  /* Inverted mode paints the header/sidebar/etc. white, so the brand logo
+   * needs a variant that reads on a light background — logo.fileOnLight.
+   * Normal mode keeps using logo.file (the logo made for the dark/brand
+   * surfaces), same as before color modes existed. */
+  const logoFile = colorMode === 'inverted' ? client.logo.fileOnLight : client.logo.file;
+  if (colorMode === 'inverted' && !logoFile) {
+    throw new Error(`clients/${slug}/client.json: colorMode "inverted" requires logo.fileOnLight (a logo variant that reads on a white background)`);
+  }
+  const logoPath = path.join(dir, logoFile);
+  const ext = path.extname(logoFile).toLowerCase();
   const mime = MIME_BY_EXT[ext];
   if (!mime) throw new Error(`${dir}: unsupported logo extension "${ext}" (add it to MIME_BY_EXT in tools/client-pack.mjs)`);
   const logoDataUri = `data:${mime};base64,${readFileSync(logoPath).toString('base64')}`;
@@ -100,6 +129,7 @@ export function loadClientPack(clientEnvValue) {
   const emailDomain = shared.emailDomain;
   const mergedClient = {
     ...client,
+    colorMode,
     demoPassword,
     emailDomain,
     copy: { ...client.copy, loginEmailPlaceholder: `nombre@${emailDomain}` }
