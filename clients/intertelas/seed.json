@@ -24,8 +24,14 @@
     { "id": "COT-3041", "date": "2026-09-09", "customer": { "name": "Felipe Cárdenas", "email": "", "phone": "" }, "furniture": "Poltrona", "quantityLabel": "", "city": "Bogotá · Usaquén", "servicePointId": "sp-usaquen", "seller": "Laura Méndez", "sellerId": 1, "status": "En gestión", "fabricName": "Chenille Usaquén", "photoIds": [] },
     { "id": "COT-3040", "date": "2026-09-08", "customer": { "name": "Natalia Prada", "email": "", "phone": "" }, "furniture": "Sofá en L", "quantityLabel": "4 módulos", "city": "Bogotá · Kennedy", "servicePointId": "sp-kennedy", "seller": "Paula Gómez", "sellerId": 3, "status": "Nueva", "fabricName": "Bouclé Chapinero", "photoIds": [] },
     { "id": "COT-3039", "date": "2026-09-07", "customer": { "name": "Santiago Beltrán", "email": "", "phone": "" }, "furniture": "Cabecero", "quantityLabel": "", "city": "Bogotá · Usaquén", "servicePointId": "sp-usaquen", "seller": "Andrés Rojas", "sellerId": 2, "status": "En gestión", "fabricName": "Terciopelo Teusaquillo", "photoIds": [] },
-    { "id": "COT-3038", "date": "2026-09-06", "customer": { "name": "Valentina Quiroga", "email": "", "phone": "" }, "furniture": "Poltrona", "quantityLabel": "", "city": "Medellín · Medellín", "servicePointId": "sp-medellin", "seller": "Daniel Ortiz", "sellerId": 4, "status": "Cotizada", "fabricName": "Náutica Suba", "photoIds": [] },
-    { "id": "COT-3037", "date": "2026-09-05", "customer": { "name": "Julián Escobar", "email": "", "phone": "" }, "furniture": "Silla", "quantityLabel": "6 sillas", "city": "Medellín · Medellín", "servicePointId": "sp-medellin", "seller": "Paula Gómez", "sellerId": 3, "status": "Cotizada", "fabricName": "Lino Fontibón", "photoIds": [] }
+    { "id": "COT-3038", "date": "2026-09-06", "customer": { "name": "Valentina Quiroga", "email": "", "phone": "" }, "furniture": "Poltrona", "quantityLabel": "", "city": "Medellín · Medellín", "servicePointId": "sp-medellin", "seller": "Daniel Ortiz", "sellerId": 4, "status": "Aceptada", "fabricName": "Náutica Suba", "photoIds": [], "closedAt": "2026-09-09T16:45:00-05:00", "comments": [
+      { "author": "Daniel Ortiz", "date": "2026-09-07T09:15:00-05:00", "text": "Cliente confirmó medidas por WhatsApp, quedó pendiente el color definitivo." },
+      { "author": "Daniel Ortiz", "date": "2026-09-09T16:40:00-05:00", "text": "Cliente aprobó la cotización y realizó el anticipo. Cierro el caso como aceptada." }
+    ] },
+    { "id": "COT-3037", "date": "2026-09-05", "customer": { "name": "Julián Escobar", "email": "", "phone": "" }, "furniture": "Silla", "quantityLabel": "6 sillas", "city": "Medellín · Medellín", "servicePointId": "sp-medellin", "seller": "Paula Gómez", "sellerId": 3, "status": "Rechazada", "fabricName": "Lino Fontibón", "photoIds": [], "closedAt": "2026-09-08T10:10:00-05:00", "comments": [
+      { "author": "Paula Gómez", "date": "2026-09-06T11:00:00-05:00", "text": "Cliente pidió comparar con otro proveedor antes de decidir." },
+      { "author": "Paula Gómez", "date": "2026-09-08T10:05:00-05:00", "text": "Cliente decidió no continuar: el presupuesto no le alcanzaba. Cierro el caso como rechazada." }
+    ] }
   ],
   "settings": {
     "senderEmail": "cotizaciones@intertelas.example",

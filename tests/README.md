@@ -25,7 +25,14 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   have recognised the furniture in the image.
 - `wiring.spec.mjs` — the loop between the two pages: a tela created in the
   backoffice reaching the cotizador, a submitted quote (with its photo) reaching
-  the backoffice, and the backoffice settings driving the estimate.
+  the backoffice, and the backoffice settings driving the estimate. Also covers
+  the quote status cycle: the three non-final statuses moving freely in either
+  direction, closing (Aceptada/Rechazada) only offered from Cotizada and only
+  after a confirmation that a dismiss leaves untouched, the status lock holding
+  once closed (no controls in the UI, and a direct `Store.put` refused), comments
+  allowed at any status including closed and never editable/deletable, and the
+  dashboard's funnel/closed/acceptance-rate/average-days/per-seller metrics
+  matching what `Store` actually holds.
 
 - `entities.spec.mjs` — that every option the cotizador shows comes from the
   store: furniture types with their consumption rules and measurement ranges,
@@ -75,4 +82,8 @@ admin can log in, none of the OTHER packs' distinctive strings (display name,
 storage namespace, sender email) leak into its output, and the product loop holds
 on that pack's own demo data: a fabric, furniture type and budget brackets created
 in the backoffice show up in the cotizador, a submitted quote lands in the
-backoffice, and deactivating the fabric removes it. Self-documented at its top.
+backoffice, deactivating the fabric removes it, and that same submitted quote can be
+moved to Cotizada, closed as Aceptada (asking for confirmation, then locking) and
+carry a visible comment — a short per-pack guard that the status cycle and its
+color-mode styling (`modes/inverted.css`, exercised by `clients/intertelas/`) hold
+on every pack's own seed, not only Mediterránea's. Self-documented at its top.

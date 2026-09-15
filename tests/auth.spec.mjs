@@ -69,6 +69,9 @@ check('la tabla trae solo sus solicitudes', await p2.evaluate(()=>document.query
 check('y son las asignadas a ella', rows.includes('Laura Méndez') && !rows.includes('Paula Gómez'), true);
 check('el contador del resumen también está filtrado', await p2.textContent('#statTotal'), '1');
 check('no puede exportar', await p2.isVisible('#exportBtn'), false);
+await p2.click('button[data-page="dashboard"]');
+check('la tabla por vendedor no tiene sentido para quien solo ve lo suyo, así que se oculta',
+  await p2.isVisible('#sellerCycleTablePanel'), false);
 
 console.log('\nSALIR CIERRA LA SESIÓN');
 await p2.click('#logoutBtn');

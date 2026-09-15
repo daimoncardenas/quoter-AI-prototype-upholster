@@ -131,11 +131,198 @@ await page.click('button[data-page="dashboard"]');
 check('total reflects real quotes (6 seed + 1 new)', await page.textContent('#statTotal'), '7');
 await page.click('button[data-page="quotes"]');
 await page.click(`[data-quote="${quoteId}"]`);
-await page.click('#advanceQuote');
+await page.click('[data-set-status="En gestión"]');
+check('a non-final status moves forward',
+  await page.evaluate(id => Store.get('quotes', id.trim()).status, quoteId), 'En gestión');
+await page.click('#quoteModal [data-close]');
 await page.click('button[data-page="dashboard"]');
 check('advancing a quote moves the donut legend',
   await page.evaluate(() => [+document.getElementById('legNew').textContent, +document.getElementById('legProgress').textContent]),
   [2, 3]);
+
+console.log('\nQUOTE CYCLE — non-final statuses move freely, closing needs confirmation and locks');
+await page.click('button[data-page="quotes"]');
+await page.click(`[data-quote="${quoteId}"]`);
+await page.click('[data-set-status="Nueva"]');
+check('and back',
+  await page.evaluate(id => Store.get('quotes', id.trim()).status, quoteId), 'Nueva');
+await page.click('[data-set-status="Cotizada"]');
+check('reaches Cotizada — the only status closing is offered from',
+  await page.evaluate(id => Store.get('quotes', id.trim()).status, quoteId), 'Cotizada');
+await page.waitForSelector('#quoteStatusControl [data-close-status]');
+check('closing buttons only appear once Cotizada',
+  await page.$$eval('#quoteStatusControl [data-close-status]', els => els.map(e => e.dataset.closeStatus).sort()),
+  ['Aceptada', 'Rechazada']);
+
+// Dismissing the confirmation must leave the case exactly as it was.
+page.once('dialog', d => d.dismiss());
+await page.click('[data-close-status="Aceptada"]');
+check('dismissing the close confirmation keeps the case open, unchanged',
+  await page.evaluate(id => { const q = Store.get('quotes', id.trim()); return [q.status, !!q.closedAt]; }, quoteId),
+  ['Cotizada', false]);
+
+// Confirming closes it for good.
+page.once('dialog', d => d.accept());
+await page.click('[data-close-status="Rechazada"]');
+check('confirming stamps status and closedAt',
+  await page.evaluate(id => { const q = Store.get('quotes', id.trim()); return [q.status, typeof q.closedAt]; }, quoteId),
+  ['Rechazada', 'string']);
+await page.waitForSelector('#quoteStatusControl [data-set-status]', { state: 'detached' });
+check('the status control disappears once closed — no buttons left, admin included',
+  await page.evaluate(() => !document.querySelector('#quoteStatusControl [data-set-status],#quoteStatusControl [data-close-status]')),
+  true);
+check('a Store-level attempt to change the status is refused, not just hidden in the UI',
+  await page.evaluate(id => { const q = Store.get('quotes', id.trim()); q.status = 'Nueva';
+    try { Store.put('quotes', q); return 'did not throw'; } catch (err) { return err.message; } }, quoteId),
+  'Esta cotización ya está cerrada; el estado no se puede modificar.');
+check('and the stored status really did not change',
+  await page.evaluate(id => Store.get('quotes', id.trim()).status, quoteId), 'Rechazada');
+
+console.log('\nCOMMENTS — allowed at any status (closed included), append-only, never editable');
+check('an empty comment is refused from the UI',
+  await page.evaluate(id => (Store.get('quotes', id.trim()).comments || []).length, quoteId), 0);
+await page.click('#commentForm button[type=submit]');
+check('and nothing was added',
+  await page.evaluate(id => (Store.get('quotes', id.trim()).comments || []).length, quoteId), 0);
+const meName = await page.evaluate(() => me.name);
+await page.fill('#commentText', 'Nota de seguimiento tras el cierre.');
+await page.click('#commentForm button[type=submit]');
+await page.waitForFunction(id => (Store.get('quotes', id.trim()).comments || []).length === 1, quoteId);
+await page.waitForSelector('#quoteComments .activity li');
+check('the comment carries author, date and text, oldest first',
+  await page.evaluate(id => Store.get('quotes', id.trim()).comments[0].text, quoteId),
+  'Nota de seguimiento tras el cierre.');
+const commentBlock = await page.textContent('#quoteComments');
+check('the author shows on a closed quote too',
+  commentBlock.includes(meName) && commentBlock.includes('Nota de seguimiento'), true);
+check('there is no edit or delete control for a comment',
+  await page.evaluate(() => !document.querySelector('#quoteComments [data-edit-comment],#quoteComments [data-delete-comment]')),
+  true);
+check('Store.addComment itself refuses an empty/whitespace comment',
+  await page.evaluate(id => { try { Store.addComment(id.trim(), { author: 'x', text: '   ' }); return 'did not throw'; }
+    catch (err) { return err.message; } }, quoteId),
+  'El comentario no puede quedar vacío');
+
+console.log('\nTHE LOCK HOLDS EVEN WITHOUT closedAt — a status-final row that never got the timestamp');
+// Simulates a row that reached a final status some other way (a hand-edited
+// pack, an import) and never went through setQuoteStatus, so it never got
+// closedAt — isQuoteClosed() must still treat it as closed from the status
+// alone. A fresh context keeps this from disturbing quoteId's own state above.
+const lockCtx = await browser.newContext();
+const lockPage = await lockCtx.newPage();
+await openAdmin(lockPage, D);
+const lockResult = await lockPage.evaluate(() => {
+  const q = Store.all('quotes')[0]; // any fresh seed row
+  const forced = { ...q, status: 'Aceptada' };
+  delete forced.closedAt;
+  Store.put('quotes', forced); // allowed: the row was not closed before this write
+  const results = {};
+  try { Store.put('quotes', { ...forced, status: 'Nueva' }); results.put = 'did not throw'; }
+  catch (err) { results.put = err.message; }
+  try { Store.setQuoteStatus(forced.id, 'Nueva'); results.setQuoteStatus = 'did not throw'; }
+  catch (err) { results.setQuoteStatus = err.message; }
+  return { id: String(forced.id), stillNoClosedAt: !Store.get('quotes', forced.id).closedAt, results };
+});
+check('the row really has no closedAt (this is the case under test)', lockResult.stillNoClosedAt, true);
+check('Store.put refuses a status change on a status-final row with no closedAt',
+  lockResult.results.put, 'Esta cotización ya está cerrada; el estado no se puede modificar.');
+check('Store.setQuoteStatus refuses it too',
+  lockResult.results.setQuoteStatus, 'Esta cotización ya está cerrada; el estado no se puede modificar.');
+await lockPage.click('button[data-page="quotes"]');
+await lockPage.click(`[data-quote="${lockResult.id}"]`);
+await lockPage.waitForSelector('#quoteModal.open');
+await lockPage.waitForSelector('#quoteStatusControl .modal-hint');
+check('the detail modal renders no status pills for it either, closedAt or not',
+  await lockPage.evaluate(() => !document.querySelector('#quoteStatusControl [data-set-status],#quoteStatusControl [data-close-status]')),
+  true);
+check('and the locked message does not print "el undefined" when closedAt is missing',
+  (await lockPage.textContent('#quoteStatusControl')).includes('undefined'), false);
+await lockCtx.close();
+
+console.log('\nDASHBOARD METRICS — match what Store actually holds, per statusClass/funnel/cycle');
+await page.click('#quoteModal [data-close]');
+await page.click('button[data-page="dashboard"]');
+const expected = await page.evaluate(() => {
+  const qs = Store.all('quotes');
+  const by = s => qs.filter(q => q.status === s).length;
+  const cerradas = by('Aceptada') + by('Rechazada');
+  const conCotizacion = by('Cotizada') + cerradas;
+  const cerradasConFecha = qs.filter(q => q.closedAt);
+  // q.date is a local calendar day; parse it as local midnight (matching
+  // admin.html), not UTC midnight, or this expectation drifts from what the
+  // page actually shows outside UTC.
+  const avgDays = cerradasConFecha.length
+    ? cerradasConFecha.reduce((s, q) => s + Math.max(0, (new Date(q.closedAt) - new Date(q.date + 'T00:00:00')) / 86400000), 0) / cerradasConFecha.length
+    : null;
+  return {
+    funnel: [by('Nueva'), by('En gestión'), by('Cotizada'), by('Aceptada'), by('Rechazada')],
+    closed: cerradas,
+    closedPct: qs.length ? Math.round(cerradas / qs.length * 100) : 0,
+    acceptRate: conCotizacion ? Math.round(by('Aceptada') / conCotizacion * 100) : null,
+    avgDays
+  };
+});
+check('the funnel legend matches Store for all five statuses',
+  await page.evaluate(() => ['legNew', 'legProgress', 'legSent', 'legAccepted', 'legRejected'].map(id => +document.getElementById(id).textContent)),
+  expected.funnel);
+check('closed cases and their % match Store',
+  await page.evaluate(() => [+document.getElementById('metricClosed').textContent, document.getElementById('metricClosedPct').textContent]),
+  [expected.closed, `${expected.closedPct}% del total`]);
+check('acceptance rate matches Store (over Cotizada+Aceptada+Rechazada)',
+  await page.textContent('#metricAcceptRate'),
+  expected.acceptRate === null ? '—' : `${expected.acceptRate}%`);
+check('average days to close matches Store',
+  await page.textContent('#metricAvgDays'),
+  expected.avgDays === null ? '—' : `${expected.avgDays.toFixed(1).replace('.', ',')} días`);
+
+console.log('\nDASHBOARD METRICS — hand-computed from Mediterránea\'s seed, pinned to Bogotá');
+// The check above trusts the same formula the page uses, so it cannot catch
+// a wrong formula. This one is arithmetic done by hand against
+// clients/mediterranea/seed.json's 6 seeded quotes, in a FRESH context (pure
+// seed, nothing this suite created) pinned to America/Bogota so the
+// local-midnight parsing of q.date is deterministic regardless of the host's
+// own timezone.
+//   statuses: Nueva x2, En gestión x2, Cotizada x0, Aceptada x1 (COT-1038),
+//             Rechazada x1 (COT-1037)
+//   cerradas = 1 + 1 = 2 of 6            -> round(2/6*100)  = 33% del total
+//   conCotizacion = 0 Cotizada + 2 cerradas = 2
+//   acceptRate = round(1/2*100)          = 50%
+//   avgDays:
+//     COT-1038: 2026-09-02T00:00-05:00 -> 2026-09-05T16:45:00-05:00
+//               = 3d 16h45m = 3 + 16.75/24 = 3.6979166... days
+//     COT-1037: 2026-09-01T00:00-05:00 -> 2026-09-04T10:10:00-05:00
+//               = 3d 10h10m = 3 + 10.1666.../24 = 3.4236111... days
+//     mean = (3.6979166... + 3.4236111...) / 2 = 3.5607638... -> toFixed(1) = "3,6"
+const bogotaMetrics = await browser.newContext({ timezoneId: 'America/Bogota', locale: 'es-CO' });
+const metricsPage = await bogotaMetrics.newPage();
+await openAdmin(metricsPage, D);
+await metricsPage.click('button[data-page="dashboard"]');
+check('closed cases and % — hand-computed from the seed, not the formula',
+  await metricsPage.evaluate(() => [+document.getElementById('metricClosed').textContent, document.getElementById('metricClosedPct').textContent]),
+  [2, '33% del total']);
+check('acceptance rate — hand-computed from the seed',
+  await metricsPage.textContent('#metricAcceptRate'), '50%');
+check('average days to close — hand-computed from the seed, Bogotá timezone',
+  await metricsPage.textContent('#metricAvgDays'), '3,6 días');
+await bogotaMetrics.close();
+
+console.log('\nPER-SELLER CYCLE TABLE — matches Store for a seller with a closed case');
+const sellerExpected = await page.evaluate(() => {
+  const s = Store.get('sellers', 3); // Paula Gómez — has the seeded rejected quote
+  const mine = quotesAll().filter(q => quoteIsFor(q, { sellerId: s.id, name: s.name }));
+  const cot = mine.filter(q => ['Cotizada', 'Aceptada', 'Rechazada'].includes(q.status)).length;
+  const cer = mine.filter(q => Store.isQuoteClosed(q)).length;
+  const ace = mine.filter(q => q.status === 'Aceptada').length;
+  return [s.name, String(mine.length), String(cot), String(cer), String(ace)];
+});
+check('the row for that seller matches, cell by cell',
+  await page.$eval(`#sellerCycleRows tr:has-text("${sellerExpected[0]}")`, tr => [...tr.querySelectorAll('td')].map(td => td.textContent.trim())),
+  sellerExpected);
+check('the per-seller table is visible for this admin session',
+  await page.isVisible('#sellerCycleTablePanel'), true);
+// A seller's own dashboard hides the per-seller table entirely — see
+// auth.spec.mjs's role-scoping section for that check with a real seller
+// session (this suite only ever runs as the admin).
 
 console.log('\nDEACTIVATE A TELA -> IT LEAVES THE COTIZADOR');
 await page.click('button[data-page="fabrics"]');

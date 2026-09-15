@@ -172,7 +172,10 @@ check('changing the rule afterwards does not rewrite what the client was told',
 await page.click('button[data-page="quotes"]');
 await page.click(`#quoteRows tr:has(strong:text-is("${quoteId}")) [data-quote]`);
 await page.waitForSelector('#quoteModal.open');
-const detalle = await page.$$eval('#quoteModal .field',
+// Scoped to #quoteDetail, not the whole #quoteModal: the modal also carries
+// the status control and the comment form now, and the comment field is a
+// textarea, not an input.
+const detalle = await page.$$eval('#quoteDetail .field',
   els => els.map(e => [e.childNodes[0].textContent.trim(), e.querySelector('input').value]));
 const fila = k => (detalle.find(([label]) => label === k) || [])[1];
 // El sobrante decrece cuando el consumo sube, así que el par llega [1,0].

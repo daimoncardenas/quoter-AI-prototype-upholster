@@ -24,8 +24,14 @@
     { "id": "COT-2041", "date": "2026-09-04", "customer": { "name": "Tomás Herrera", "email": "", "phone": "" }, "furniture": "Poltrona", "quantityLabel": "", "city": "Medellín · Belén", "servicePointId": "sp-belen", "seller": "Sofía Ramírez", "sellerId": 1, "status": "En gestión", "fabricName": "Chenille Roble", "photoIds": [] },
     { "id": "COT-2040", "date": "2026-09-03", "customer": { "name": "Manuela Ospina", "email": "", "phone": "" }, "furniture": "Sofá en L", "quantityLabel": "4 módulos", "city": "Medellín · Laureles", "servicePointId": "sp-laureles", "seller": "Valentina Duarte", "sellerId": 3, "status": "Nueva", "fabricName": "Bouclé Sierra", "photoIds": [] },
     { "id": "COT-2039", "date": "2026-09-03", "customer": { "name": "Simón Peláez", "email": "", "phone": "" }, "furniture": "Cabecero", "quantityLabel": "", "city": "Medellín · Belén", "servicePointId": "sp-belen", "seller": "Mateo Salcedo", "sellerId": 2, "status": "En gestión", "fabricName": "Terciopelo Cedro", "photoIds": [] },
-    { "id": "COT-2038", "date": "2026-09-02", "customer": { "name": "Lucía Vanegas", "email": "", "phone": "" }, "furniture": "Poltrona", "quantityLabel": "", "city": "Bucaramanga · Bucaramanga", "servicePointId": "sp-bucaramanga", "seller": "Esteban Prieto", "sellerId": 4, "status": "Cotizada", "fabricName": "Náutica Macizo", "photoIds": [] },
-    { "id": "COT-2037", "date": "2026-09-01", "customer": { "name": "Julián Correa", "email": "", "phone": "" }, "furniture": "Silla", "quantityLabel": "6 sillas", "city": "Bucaramanga · Bucaramanga", "servicePointId": "sp-bucaramanga", "seller": "Valentina Duarte", "sellerId": 3, "status": "Cotizada", "fabricName": "Lino Salinas", "photoIds": [] }
+    { "id": "COT-2038", "date": "2026-09-02", "customer": { "name": "Lucía Vanegas", "email": "", "phone": "" }, "furniture": "Poltrona", "quantityLabel": "", "city": "Bucaramanga · Bucaramanga", "servicePointId": "sp-bucaramanga", "seller": "Esteban Prieto", "sellerId": 4, "status": "Aceptada", "fabricName": "Náutica Macizo", "photoIds": [], "closedAt": "2026-09-05T16:45:00-05:00", "comments": [
+      { "author": "Esteban Prieto", "date": "2026-09-03T09:15:00-05:00", "text": "Cliente confirmó medidas por WhatsApp, quedó pendiente el color definitivo." },
+      { "author": "Esteban Prieto", "date": "2026-09-05T16:40:00-05:00", "text": "Cliente aprobó la cotización y realizó el anticipo. Cierro el caso como aceptada." }
+    ] },
+    { "id": "COT-2037", "date": "2026-09-01", "customer": { "name": "Julián Correa", "email": "", "phone": "" }, "furniture": "Silla", "quantityLabel": "6 sillas", "city": "Bucaramanga · Bucaramanga", "servicePointId": "sp-bucaramanga", "seller": "Valentina Duarte", "sellerId": 3, "status": "Rechazada", "fabricName": "Lino Salinas", "photoIds": [], "closedAt": "2026-09-04T10:10:00-05:00", "comments": [
+      { "author": "Valentina Duarte", "date": "2026-09-02T11:00:00-05:00", "text": "Cliente pidió comparar con otro proveedor antes de decidir." },
+      { "author": "Valentina Duarte", "date": "2026-09-04T10:05:00-05:00", "text": "Cliente decidió no continuar: el presupuesto no le alcanzaba. Cierro el caso como rechazada." }
+    ] }
   ],
   "settings": {
     "senderEmail": "cotizaciones@macizo.example",

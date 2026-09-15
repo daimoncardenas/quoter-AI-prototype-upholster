@@ -102,6 +102,23 @@ Couplings that are easy to break:
   over budget.
 - Backoffice list fields are chip/tag editors, not comma text. In tests use
   `setTags()` from `tests/helpers.mjs` (and `openAdmin()` to get past the login).
+- A quote's status cycle is 5 values: `Nueva`, `En gestión`, `Cotizada` (non-final —
+  `Store.QUOTE_NON_FINAL_STATUSES`, move freely in either direction) and `Aceptada`,
+  `Rechazada` (final — `Store.QUOTE_FINAL_STATUSES`, only reachable from `Cotizada`,
+  via `Store.setQuoteStatus`, which also stamps `closedAt` as an ISO timestamp). Once
+  `closedAt` is set the status is locked for everyone, admin included — enforced in
+  `Store.put` itself (it throws if a quote's `status` differs from what's stored and
+  `closedAt` is already set), not only by the admin UI hiding the controls, so a
+  closed quote can't be reopened through the one write path both pages share. The
+  quote detail modal in `admin.html` (`renderQuoteStatus`) asks for confirmation
+  before closing and renders no status control at all once closed. Comments
+  (`Store.addComment`/`Store.quoteComments`, `{author, authorId, date, text}`) are
+  append-only and allowed at any status, closed included, writing straight to
+  storage rather than through `Store.put` since they never touch `status`; a quote
+  from before comments existed has no `comments` field, which reads as `[]`. The
+  dashboard's cycle metrics (funnel, closed %, acceptance rate, average days to
+  close, the admin-only per-seller table) are all derived from these two fields —
+  see `renderDashboard()`.
 
 ## White-label (multi-client) architecture
 

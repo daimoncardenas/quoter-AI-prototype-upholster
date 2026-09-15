@@ -206,6 +206,27 @@ for (const slug of SLUGS) {
   await toFabricStep();
   check('desactivar la tela en el backoffice la saca del cotizador',
     (await fabricNames()).some(n => n.includes('Tela Prueba Loop')), false);
+
+  console.log(`\nEL CICLO DE LA COTIZACIÓN CIERRA EN ${CLIENT} (estado final bloqueado + comentario visible)`);
+  await openAdmin(loop, D);
+  await loop.click('button[data-page="quotes"]');
+  await loop.click(`[data-quote="${quoteId}"]`);
+  await loop.waitForSelector('#quoteModal.open');
+  await loop.click('[data-set-status="Cotizada"]');
+  await loop.waitForSelector('#quoteStatusControl [data-close-status="Aceptada"]');
+  loop.once('dialog', d => d.accept());
+  await loop.click('[data-close-status="Aceptada"]');
+  await loop.waitForSelector('#quoteStatusControl [data-set-status]', { state: 'detached' });
+  check('el estado queda en Aceptada, cerrado, y sin controles para volver a cambiarlo',
+    await loop.evaluate(id => { const q = Store.get('quotes', id.trim()); return [q.status, !!q.closedAt]; }, quoteId),
+    ['Aceptada', true]);
+  await loop.fill('#commentText', 'Cierre validado en la prueba de blanqueo.');
+  await loop.click('#commentForm button[type=submit]');
+  await loop.waitForFunction(id => (Store.get('quotes', id.trim()).comments || []).length === 1, quoteId);
+  await loop.waitForSelector('#quoteComments .activity li');
+  check('el comentario agregado tras el cierre es visible, con autor y fecha',
+    (await loop.textContent('#quoteComments')).includes('Cierre validado en la prueba de blanqueo.'), true);
+
   console.log('page errors: ' + (loopErrs.length ? loopErrs.join(' | ') : 'none'));
   if (loopErrs.length) fails++;
   await loop.close();

@@ -184,6 +184,30 @@
     return rows;
   }
 
+  /* --------------------------------------------------------- quote cycle --
+   *
+   * The sales-demo cycle: a request arrives (Nueva), a seller works it (En
+   * gestión), a formal quotation goes out (Cotizada) — these three move
+   * freely, forward or back, because a seller regularly has to walk one back
+   * (e.g. a client asks for changes after being quoted). Only from Cotizada
+   * can the case be CLOSED, as Aceptada or Rechazada; once closed the status
+   * is locked for everyone, admin included — see Store.put's guard below,
+   * which is what actually enforces the lock (setQuoteStatus is a UI
+   * convenience on top of it, not the only door). */
+  var QUOTE_NON_FINAL_STATUSES = ['Nueva', 'En gestión', 'Cotizada'];
+  var QUOTE_FINAL_STATUSES = ['Aceptada', 'Rechazada'];
+
+  /* A quote counts as closed if its status is final OR it carries closedAt —
+   * either is enough, so a row that got a final status without the
+   * timestamp (a hand-edited pack, an import, a future migration) still
+   * locks. Nothing in this codebase writes that shape today, but every
+   * caller that decides "is this closed" goes through here instead of
+   * checking `status` or `closedAt` alone, so that stays true even if one of
+   * the two is ever missing. */
+  function isQuoteClosed(q) {
+    return !!q && (QUOTE_FINAL_STATUSES.indexOf(q.status) >= 0 || !!q.closedAt);
+  }
+
   /* ----------------------------------------------------------------- store -- */
 
   var Store = {
@@ -195,15 +219,79 @@
       return null;
     },
 
-    /* Upsert by id. Returns the stored record. */
+    QUOTE_NON_FINAL_STATUSES: QUOTE_NON_FINAL_STATUSES.slice(),
+    QUOTE_FINAL_STATUSES: QUOTE_FINAL_STATUSES.slice(),
+
+    /* Shared by Store.put's guard, setQuoteStatus and the admin UI — see
+     * isQuoteClosed() above for why it checks both status and closedAt. */
+    isQuoteClosed: isQuoteClosed,
+
+    /* Upsert by id. Returns the stored record.
+     *
+     * THE DATA-LAYER LOCK: once a quote is closed (isQuoteClosed on the
+     * STORED row), its status can never change again through this path — the
+     * only path both pages use to write a quote. This is a demo gate, same
+     * spirit as Auth (see below): cheap to bypass in devtools, but enough to
+     * demonstrate that a closed case really is final, not just hidden in the
+     * UI. */
     put: function (entity, record) {
       var rows = read(entity);
       if (record.id === undefined || record.id === null || record.id === '') record.id = Date.now();
       var i = rows.findIndex(function (r) { return String(r.id) === String(record.id); });
+      if (entity === 'quotes' && i >= 0 && isQuoteClosed(rows[i]) && record.status !== rows[i].status) {
+        throw new Error('Esta cotización ya está cerrada; el estado no se puede modificar.');
+      }
       if (i >= 0) rows[i] = record; else rows.unshift(record);
       write(entity, rows);
       return record;
     },
+
+    /* The one place that decides whether a status change is legal: non-final
+     * statuses move freely, a final one only lands from Cotizada, and
+     * nothing moves at all once the quote isQuoteClosed (Store.put enforces
+     * that last part even if a caller skips this function entirely). Stamps
+     * closedAt (ISO timestamp) the moment a case closes. */
+    setQuoteStatus: function (id, status) {
+      var q = Store.get('quotes', id);
+      if (!q) throw new Error('Cotización no encontrada');
+      if (isQuoteClosed(q)) throw new Error('Esta cotización ya está cerrada; el estado no se puede modificar.');
+      var isFinal = QUOTE_FINAL_STATUSES.indexOf(status) >= 0;
+      if (isFinal) {
+        if (q.status !== 'Cotizada') throw new Error('Solo se puede cerrar un caso desde "Cotizada".');
+        q.closedAt = new Date().toISOString();
+      } else if (QUOTE_NON_FINAL_STATUSES.indexOf(status) < 0) {
+        throw new Error('Estado desconocido: ' + status);
+      }
+      q.status = status;
+      return Store.put('quotes', q);
+    },
+
+    /* Comments are append-only and allowed at ANY status, closed included —
+     * a closed case still gets follow-up notes. Writes straight to storage
+     * instead of going through Store.put, which is deliberate: put's lock is
+     * about the STATUS field, not the record, and a comment never touches
+     * status. */
+    addComment: function (id, comment) {
+      var rows = read('quotes');
+      var i = rows.findIndex(function (r) { return String(r.id) === String(id); });
+      if (i < 0) throw new Error('Cotización no encontrada');
+      var text = String((comment && comment.text) || '').trim();
+      if (!text) throw new Error('El comentario no puede quedar vacío');
+      var entry = {
+        author: (comment && comment.author) || 'Desconocido',
+        authorId: comment && comment.authorId,
+        date: new Date().toISOString(),
+        text: text
+      };
+      var q = rows[i];
+      q.comments = (q.comments || []).concat([entry]);
+      write('quotes', rows);
+      return entry;
+    },
+
+    /* Old quotes predate comments entirely, so their field is missing, not
+     * empty — this is the one place that decides "missing" means "none". */
+    quoteComments: function (quote) { return (quote && quote.comments) || []; },
 
     remove: function (entity, id) {
       write(entity, read(entity).filter(function (r) { return String(r.id) !== String(id); }));
