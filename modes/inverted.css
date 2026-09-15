@@ -126,15 +126,21 @@
 .measure-fields input,.measure-fields select,.select-grid select,.contact-fields input{background:var(--mode-card-bg);color:var(--mode-on-color);border-color:var(--mode-line-on-color)}
 .measure-fields input::placeholder,.contact-fields input::placeholder{color:var(--mode-on-color-muted)}
 .measure-fields label,.select-grid label,.contact-fields label{color:var(--mode-on-color)}
+.contact-fields .consent{color:var(--mode-on-color-muted)}
 .field-note{color:var(--mode-on-color-muted)}
 .measure-fields label>span.unit{color:var(--mode-on-color-muted)}
 .choice-group h3{color:var(--mode-on-color)}
 .chip-grid span{color:var(--mode-on-color);border-color:var(--mode-line-on-color)}
 
 .ai-card{background:var(--mode-card-bg);color:var(--mode-on-color)}
-.ai-summary{border-right-color:var(--mode-line-on-color)}
+/* The summary sits on a light wash inside the card: it flips to the canvas
+ * shade, darker than the card around it, so its white text stays legible. */
+.ai-summary{background:var(--mode-canvas-bg);border-right-color:var(--mode-line-on-color)}
 .ai-summary h4,.ai-summary dd{color:var(--mode-on-color)}
 .ai-summary dt{color:var(--mode-on-color-muted)}
+/* The step-4 notice sits straight on the canvas, so it takes the card shade. */
+.notice{background:var(--mode-card-bg);color:var(--mode-on-color)}
+.notice>span{border-color:var(--mode-line-on-color)}
 .ai-badge,.ai-analysis h3{color:var(--mode-on-color)}
 .ai-analysis>p{color:var(--mode-on-color-muted)}
 .analysis-checks b{color:var(--mode-on-color)}
@@ -149,6 +155,9 @@
  * journey sidebar stays a frame surface, so its eyebrow keeps brand text. */
 .app-shell .eyebrow{color:var(--mode-on-color-muted)}
 .journey .eyebrow{color:var(--mode-frame-text)}
+/* Same for the estimate and summary cards, which flipped to white frames. */
+.quote-preview .eyebrow,.summary-card .eyebrow{color:var(--mode-frame-text)}
+.summary-title small{color:var(--mode-frame-text-muted)}
 .back-button{color:var(--mode-on-color)}
 #stepHint{color:var(--mode-on-color-muted)}
 
