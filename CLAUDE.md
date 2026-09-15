@@ -14,6 +14,7 @@ anything about branding, colors, emails, or demo data is fixed — almost none o
 
 ```
 npm install && npx playwright install chromium   # tests only; the prototype has no deps
+npm run dev                                       # dev server on 127.0.0.1:3000, re-renders + live reload
 npm run generate                                  # renders generated/ for CLIENT (.env / env var)
 npm test                                          # generates, then all suites (CLIENT=MEDITERRANEA only, see below)
 npm run test:wiring                               # one suite (also: node tests/wiring.spec.mjs)
@@ -30,8 +31,12 @@ npm run build                                     # generates, then writes dist/
   end with `CLIENT=MEDITERRANEA` (the `.env.example` default). It reads brand-specific
   values (emails, demo password, storage keys) from the active pack via
   `tests/client.mjs` instead of hardcoding them — see `tests/README.md`.
-- No linter, no bundler, no dev server. To look at the app, `npm run generate` then
-  open `generated/index.html` or `generated/admin.html` directly in Chromium — do
+- No linter, no bundler. To look at the app, `npm run dev` (`tools/dev.mjs`: serves
+  `generated/` on `127.0.0.1:$PORT`, default 3000, watches templates, `clients/` and
+  `.env`, re-renders and live-reloads; the reload script and a "DEV · CLIENT=…" badge
+  are injected into HTTP responses only, never written to `generated/`). Without a
+  server, `npm run generate` then open `generated/index.html` or
+  `generated/admin.html` directly in Chromium — do
   **not** open the root `index.html`/`admin.html`/`store.js` directly, they are
   templates full of `{{PLACEHOLDER}}` tokens, not renderable pages. Backoffice demo
   password and every seeded email are per-client (`clients/<slug>/client.json` +
@@ -124,7 +129,8 @@ hash is `sha256hex(storageNamespace + userId + ':' + password)`, exactly what
 `Auth.hash()` computes in the browser, so it can never drift from a pack's
 `storageNamespace`/`demoPassword`.
 
-**Scripts**: `npm run generate` (alias `npm run dev`) renders `generated/` — a
+**Scripts**: `npm run dev` serves and live-reloads the render (see Commands).
+`npm run generate` renders `generated/` — a
 self-contained, still `file://`-openable set of pages, gitignored, for whichever
 `CLIENT` resolves. `npm test`'s `pretest` hook runs it first. `npm run build` re-runs
 generate, then `tools/build.mjs` inlines `generated/store.js` into each `generated/*.html`

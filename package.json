@@ -4,7 +4,7 @@
   "description": "Prototypes for the upholster-prototype-quoter fabric quoting flow. The prototypes themselves have no dependencies — these are only for the tests.",
   "scripts": {
     "generate": "node tools/generate.mjs",
-    "dev": "node tools/generate.mjs",
+    "dev": "node tools/dev.mjs",
     "pretest": "node tools/generate.mjs",
     "test": "node tests/wizard.spec.mjs && node tests/photos.spec.mjs && node tests/wiring.spec.mjs && node tests/review.spec.mjs && node tests/entities.spec.mjs && node tests/recommend.spec.mjs && node tests/auth.spec.mjs && node tests/billing.spec.mjs && node tests/components.spec.mjs && node tests/points.spec.mjs && node tests/sealed.spec.mjs",
     "test:wizard": "node tests/wizard.spec.mjs",

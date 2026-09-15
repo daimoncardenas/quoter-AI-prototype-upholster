@@ -6,13 +6,23 @@ clientes. Qué cliente se renderiza lo decide `CLIENT`.
 ## Elegir cliente
 
     cp .env.example .env     # ya trae CLIENT=MEDITERRANEA
-    npm run generate         # escribe generated/index.html, admin.html, store.js
+    npm run dev              # servidor local en http://localhost:3000
 
-`generated/` queda listo para abrir con doble clic (`generated/index.html`,
-`generated/admin.html`) y es lo que usan los tests. Se ignora en git: se
-regenera, no se versiona. Para probar otro cliente sin tocar `.env`:
+`npm run dev` renderiza el cliente activo, lo sirve en
+`http://localhost:3000/` (cotizador) y `http://localhost:3000/admin.html`
+(backoffice), y muestra abajo a la izquierda qué `CLIENT` está corriendo. Al
+guardar un cambio en las plantillas, en `clients/` o en `.env`, vuelve a
+renderizar y recarga el navegador. Cambiar `CLIENT` en `.env` cambia de cliente
+sin reiniciar, salvo que se haya arrancado con `CLIENT=...` en la terminal: ese
+valor manda y los cambios en `.env` se ignoran. `PORT=4000 npm run dev` usa otro
+puerto.
 
-    CLIENT=MACIZO npm run generate
+Sin servidor, `npm run generate` solo escribe `generated/index.html`,
+`admin.html` y `store.js`, listos para abrir con doble clic; es lo que usan los
+tests. `generated/` se ignora en git: se regenera, no se versiona. Para probar
+otro cliente sin tocar `.env`:
+
+    CLIENT=MACIZO npm run dev
 
 Un `CLIENT` que no exista falla explicando qué clientes hay disponibles bajo
 `clients/`.
