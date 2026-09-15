@@ -28,7 +28,7 @@
   --mode-canvas-bg:var(--ink);                 /* big content areas: was white -> now brand ink */
   --mode-card-bg:color-mix(in srgb, var(--accent) 60%, var(--ink) 40%); /* nested cards: a distinguishable accent-leaning shade, kept >=4.5:1 with white text */
   --mode-on-color:#fff;                        /* text/icons on a canvas/card surface */
-  --mode-on-color-muted:rgba(255,255,255,.78); /* secondary text on a canvas/card surface */
+  --mode-on-color-muted:rgba(255,255,255,.9);  /* secondary text on a canvas/card surface (>=4.5:1 on --mode-card-bg) */
   --mode-line-on-color:rgba(255,255,255,.28);  /* borders on a canvas/card surface */
 }
 
@@ -165,6 +165,7 @@
 
 /* --- dark brand surfaces -> white with brand text --- */
 .topbar{background:var(--mode-frame-bg);color:var(--mode-frame-text);border-bottom:1px solid var(--mode-line-on-light)}
+.mobile-menu{color:var(--mode-frame-text)}
 .env{color:var(--mode-frame-text-muted)}
 .avatar{background:var(--mode-canvas-bg);color:var(--mode-on-color)}
 .profile small{color:var(--mode-frame-text-muted)}
