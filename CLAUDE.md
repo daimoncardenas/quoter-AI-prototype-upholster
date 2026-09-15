@@ -86,7 +86,13 @@ rendered. Do not bundle, split into modules, or add a framework unless asked.
   default for every client): each card's "Plan actual" label/CTA is derived from
   it, changing plan asks for confirmation naming the plan and its price, and the
   choice is saved through the normal settings API, so it persists like any other
-  setting. Sellers see only dashboard and their own quotes.
+  setting. The page has two ARIA tabs (`#tabPlanes`/`#tabPaquetes`, roving
+  tabindex, arrow keys switch): "Planes" is the plan cards above; "Paquetes" is a
+  second static constant, `PACKAGES` — one-off/recurring add-ons ("recarga
+  funciones sin cambiar de plan") — with its own `Store.settings().packages`
+  ({id: count} map, default `{}`), incremented (never reset or toggled) each time
+  "Comprar" is confirmed, so a package can be bought more than once. Sellers see
+  only dashboard and their own quotes.
 
 `index.html` and `admin.html` also carry `{{PLACEHOLDER}}` tokens (brand text, theme
 colors, logo) — `tools/generate.mjs` is what turns all three templates into an

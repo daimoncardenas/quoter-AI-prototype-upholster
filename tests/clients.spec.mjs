@@ -117,6 +117,20 @@ for (const slug of SLUGS) {
     }),
     { current: true, cta: 'Tu plan actual', disabled: true });
 
+  console.log(`\nEL ADMIN DE ${CLIENT} COMPRA UN PAQUETE DESDE LA PESTAÑA PAQUETES`);
+  await page.click('#tabPaquetes');
+  await page.waitForTimeout(150);
+  check('ve los cinco paquetes', await page.evaluate(() => document.querySelectorAll('#packagesGrid .package-card').length), 5);
+  page.once('dialog', d => d.accept());
+  await page.click('#packagesGrid [data-package="extra-site"]');
+  await page.waitForTimeout(200);
+  check('comprar una Sede adicional suma "Comprados: 1"',
+    await page.evaluate(() => {
+      const c = [...document.querySelectorAll('#packagesGrid .package-card')].find(x => x.querySelector('h2').textContent === 'Sede adicional');
+      return c.querySelector('.package-bought') ? c.querySelector('.package-bought').textContent : null;
+    }),
+    'Comprados: 1');
+
   console.log('page errors: ' + (errs.length ? errs.join(' | ') : 'none'));
   if (errs.length) fails++;
 

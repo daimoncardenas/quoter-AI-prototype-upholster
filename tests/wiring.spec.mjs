@@ -522,6 +522,13 @@ check('and the bytes are gone from IndexedDB',
 console.log('\nUPGRADE — los tres planes, en orden, con precios y conteos exactos');
 await openAdmin(page, D);
 await page.click('button[data-page="upgrade"]');
+check('Planes es la pestaña activa por defecto, con sus tarjetas visibles y Paquetes oculto',
+  await page.evaluate(() => ({
+    selected: document.getElementById('tabPlanes').getAttribute('aria-selected'),
+    planesHidden: document.getElementById('panelPlanes').hidden,
+    paquetesHidden: document.getElementById('panelPaquetes').hidden
+  })),
+  { selected: 'true', planesHidden: false, paquetesHidden: true });
 check('exactamente tres planes, en orden Essential/Professional/Business',
   await page.$$eval('#plansGrid .plan-card h2', els => els.map(e => e.textContent)),
   ['Essential', 'Professional', 'Business']);
@@ -581,6 +588,85 @@ await page.waitForSelector('#appShell:not([hidden])');
 await page.click('button[data-page="upgrade"]');
 check('el plan elegido sobrevive a un recargo de página',
   await page.evaluate(() => Store.settings().plan), 'Business');
+
+console.log('\nUPGRADE — Paquetes: los cinco, en orden, con los precios exactos');
+await page.click('#tabPaquetes');
+await page.waitForTimeout(150);
+check('el tab Paquetes queda seleccionado y su panel visible; Planes se oculta',
+  await page.evaluate(() => ({
+    paquetesSel: document.getElementById('tabPaquetes').getAttribute('aria-selected'),
+    planesHidden: document.getElementById('panelPlanes').hidden,
+    paquetesHidden: document.getElementById('panelPaquetes').hidden
+  })),
+  { paquetesSel: 'true', planesHidden: true, paquetesHidden: false });
+check('el lead cambia al de Paquetes',
+  await page.textContent('#upgradeLead'), 'Recarga funciones específicas sin cambiar de plan.');
+check('los cinco paquetes, en orden, con el precio exacto construido con Store.money',
+  await page.$$eval('#packagesGrid .package-card', cards => cards.map(c => ({
+    name: c.querySelector('h2').textContent, price: c.querySelector('.package-price').textContent
+  }))),
+  await page.evaluate(() => [
+    ['25 cotizaciones adicionales', `${Store.money(90000)} COP`],
+    ['100 créditos de IA adicionales', `${Store.money(70000)} – ${Store.money(100000)} COP`],
+    ['5 GB de almacenamiento adicional', `${Store.money(40000)} COP / mes`],
+    ['Usuario adicional', `${Store.money(50000)} COP / mes`],
+    ['Sede adicional', `${Store.money(80000)} – ${Store.money(120000)} COP / mes`]
+  ].map(([name, price]) => ({ name, price }))));
+
+console.log('\nUPGRADE — las pestañas se navegan con el teclado (flechas activan, no solo mueven el foco)');
+await page.focus('#tabPlanes');
+await page.keyboard.press('ArrowRight');
+await page.waitForTimeout(100);
+check('flecha derecha activa Paquetes y mueve el foco',
+  await page.evaluate(() => ({ active: document.activeElement.id, selected: document.querySelector('[aria-selected="true"]').id })),
+  { active: 'tabPaquetes', selected: 'tabPaquetes' });
+await page.keyboard.press('ArrowLeft');
+await page.waitForTimeout(100);
+check('flecha izquierda vuelve a Planes',
+  await page.evaluate(() => ({ active: document.activeElement.id, selected: document.querySelector('[aria-selected="true"]').id })),
+  { active: 'tabPlanes', selected: 'tabPlanes' });
+await page.click('#tabPaquetes');
+await page.waitForTimeout(100);
+
+console.log('\nUPGRADE — comprar un paquete pide confirmación, y cancelar no suma nada');
+page.once('dialog', d => d.dismiss());
+await page.click('#packagesGrid [data-package="extra-user"]');
+await page.waitForTimeout(150);
+check('sin confirmar, no aparece "Comprados" y el conteo sigue en 0',
+  await page.evaluate(() => {
+    const c = [...document.querySelectorAll('#packagesGrid .package-card')].find(x => x.querySelector('h2').textContent === 'Usuario adicional');
+    return { bought: c.querySelector('.package-bought') ? c.querySelector('.package-bought').textContent : null, count: (Store.settings().packages || {})['extra-user'] || 0 };
+  }),
+  { bought: null, count: 0 });
+
+console.log('\nUPGRADE — confirmar la compra dos veces suma "Comprados: 2", avisa con el toast y persiste');
+let pkgDialogMsg = '';
+page.once('dialog', d => { pkgDialogMsg = d.message(); d.accept(); });
+await page.click('#packagesGrid [data-package="extra-user"]');
+await page.waitForTimeout(150);
+check('el diálogo menciona el paquete y su precio exacto',
+  pkgDialogMsg, `¿Confirmas la compra de Usuario adicional por ${await page.evaluate(() => Store.money(50000))} COP / mes?`);
+check('el toast confirma la compra', await page.textContent('#toast'), 'Listo, agregamos Usuario adicional a tu cuenta.');
+page.once('dialog', d => d.accept());
+await page.click('#packagesGrid [data-package="extra-user"]');
+await page.waitForTimeout(150);
+check('"Comprados: 2" aparece y el botón sigue activo — es una recarga, no un toggle',
+  await page.evaluate(() => {
+    const c = [...document.querySelectorAll('#packagesGrid .package-card')].find(x => x.querySelector('h2').textContent === 'Usuario adicional');
+    return { bought: c.querySelector('.package-bought').textContent, disabled: c.querySelector('[data-package]').disabled };
+  }),
+  { bought: 'Comprados: 2', disabled: false });
+await page.reload();
+await page.waitForSelector('#appShell:not([hidden])');
+await page.click('button[data-page="upgrade"]');
+await page.click('#tabPaquetes');
+await page.waitForTimeout(150);
+check('el conteo de compras sobrevive a un recargo de página',
+  await page.evaluate(() => {
+    const c = [...document.querySelectorAll('#packagesGrid .package-card')].find(x => x.querySelector('h2').textContent === 'Usuario adicional');
+    return c.querySelector('.package-bought').textContent;
+  }),
+  'Comprados: 2');
 
 console.log('\npage errors: ' + (errs.length ? errs.join(' | ') : 'none'));
 console.log(fails ? `\n${fails} FAILING` : '\nALL PASS');

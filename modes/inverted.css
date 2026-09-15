@@ -296,6 +296,16 @@
  * (var(--soft), untouched by this mode) in both color modes — see admin.html
  * — so it needs no override here. */
 
+/* Upgrade -> Paquetes cards. Same reasoning as the plan cards above: every
+ * text sits on --mode-card-bg, so it takes the full --mode-on-color. The
+ * tabs above both panels are not a card surface (see admin.html's own
+ * comment on .tabs) and need no override here. */
+.package-card{background:var(--mode-card-bg);color:var(--mode-on-color)}
+.package-card h2{color:var(--mode-on-color)}
+.package-bought{color:var(--mode-on-color)}
+.package-price{color:var(--mode-on-color)}
+.package-price-period{color:var(--mode-on-color)}
+
 .modal{background:var(--mode-card-bg);color:var(--mode-on-color)}
 .modal-hint{color:var(--mode-on-color-muted)}
 .modal-section{color:var(--mode-on-color);border-top-color:var(--mode-line-on-color)}

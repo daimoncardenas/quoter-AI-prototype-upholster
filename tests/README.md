@@ -40,7 +40,14 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   each card's label/CTA, a change asks for confirmation naming the plan and
   its price, dismissing leaves the plan untouched, and confirming saves the
   new plan, re-renders every card's state, shows a toast, and survives a
-  reload.
+  reload. Also covers Upgrade's two tabs: Planes is selected by default with
+  its cards visible and Paquetes hidden, arrow keys switch tabs (and move
+  focus), and the Paquetes panel — exactly five package cards in order with
+  the exact price text built from `Store.money` (single/range, one-time/`/
+  mes`), buying one asks for confirmation naming the package and its price,
+  dismissing leaves its count at 0 (no "Comprados" label), and confirming
+  increments the count (a purchase is a recharge — the button never disables),
+  shows a toast, and survives a reload.
 
 - `entities.spec.mjs` — that every option the cotizador shows comes from the
   store: furniture types with their consumption rules and measurement ranges,
@@ -98,7 +105,9 @@ carry a visible comment — a short per-pack guard that the status cycle and its
 color-mode styling (`modes/inverted.css`, exercised by `clients/intertelas/`) hold
 on every pack's own seed, not only Mediterránea's. Also opens the admin-only
 "Upgrade" plans page on each pack and upgrades from Essential to Professional
-(accepting the confirmation dialog), a short guard that both its styling (same
-`modes/inverted.css` rules, reading correctly under `clients/intertelas/`'s
-inverted color mode) and its plan-change flow hold on every pack. Self-
-documented at its top.
+(accepting the confirmation dialog), then switches to the Paquetes tab and buys
+one Sede adicional (accepting the confirmation dialog too), asserting
+`Comprados: 1` — a short guard that both its styling (same `modes/inverted.css`
+rules, reading correctly under `clients/intertelas/`'s inverted color mode) and
+its plan-change/package-purchase flows hold on every pack. Self-documented at
+its top.

@@ -58,6 +58,10 @@
     // "Upgrade" page) — same default for every client, so it belongs here and
     // not in a client pack's seed.json, which holds only THAT client's data.
     plan: 'Essential',
+    // How many of each add-on package (Upgrade -> Paquetes) the client has
+    // bought, keyed by package id — {} for nobody having bought anything yet.
+    // A purchase only ever increments this, it never resets or toggles.
+    packages: {},
     autoAssignByZone: true,
     emailClientCopy: true,
     aiPhotoCheck: true,
