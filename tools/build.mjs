@@ -59,10 +59,31 @@ async function encrypt(plaintext, passphrase) {
   return { salt: b64(salt), iv: b64(iv), cipher: b64(new Uint8Array(cipher)) };
 }
 
+/* Color mode "inverted" en la cáscara. La cáscara no pasa por modes/*.css (es
+ * su propio HTML, sin las variables de :root), así que replica aquí las reglas
+ * de la pantalla de login de modes/inverted.css: fondo blanco, tarjeta del
+ * color de marca con texto blanco, input y botón blancos. Sin esto, en modo
+ * inverted el logo (logo.fileOnLight, pensado para fondo blanco) quedaba sobre
+ * theme.ink. En modo normal devuelve '' y la cáscara no cambia ni un byte. */
+function shellModeCss(colorMode, theme) {
+  if (colorMode !== 'inverted') return '';
+  return `
+body{background:#fff}
+.card{background:color-mix(in srgb, ${theme.accent} 60%, ${theme.ink} 40%);color:#fff}
+.eyebrow,.lead{color:rgba(255,255,255,.78)}
+h1{color:#fff}
+input{background:#fff;color:${theme.ink};border-color:${theme.line}}
+input:focus-visible{outline-color:rgba(255,255,255,.6)}
+.error{color:#fff}
+button{background:#fff;color:${theme.ink}}
+button:hover{background:${theme.cream}}
+.foot{color:${theme.muted}}`;
+}
+
 /* --------------------------------------------------------------- la cáscara --
  * Lo único que se entrega en claro: el formulario, el descifrador y el bulto
  * cifrado. Ni una línea del prototipo. */
-function shell({ title, logo, logoAlt, brandName, eyebrow, lead, storageKey, payload, fonts, theme }) {
+function shell({ title, logo, logoAlt, brandName, eyebrow, lead, storageKey, payload, fonts, theme, colorMode }) {
   return `<!doctype html>
 <html lang="es">
 <head>
@@ -90,7 +111,7 @@ button{margin-top:18px;width:100%;border:0;border-radius:2px;background:${theme.
 button:hover{background:${theme.accent}}
 button:disabled{opacity:.5;cursor:not-allowed}
 .foot{font-size:.62rem;line-height:1.55;color:${theme.tints.shellFootText};margin:0;text-align:center;max-width:44ch}
-@media(max-width:560px){.card{padding:26px 22px 24px}}
+@media(max-width:560px){.card{padding:26px 22px 24px}}${shellModeCss(colorMode, theme)}
 </style>
 </head>
 <body>
@@ -285,7 +306,7 @@ for (const page of PAGES) {
   //   eyebrow: page.eyebrow, lead: page.lead,
   //   storageKey: client.storageNamespace + 'llave',
   //   payload: await encrypt(inlined, passphrase),
-  //   fonts: client.fonts, theme: client.theme
+  //   fonts: client.fonts, theme: client.theme, colorMode: client.colorMode
   // }));
   writeFileSync(`dist/${page.file}`, inlined);
 
