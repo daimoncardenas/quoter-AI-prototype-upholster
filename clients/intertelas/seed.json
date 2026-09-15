@@ -1,0 +1,34 @@
+{
+  "fabrics": [
+    { "id": 1, "name": "Lino Fontibón", "collection": "Naturales", "price": 89000, "color": "#b39875", "colorName": "Beige Cálido", "use": "Uso residencial", "tags": ["Textura natural", "Lavable"], "active": true, "needs": ["Fácil limpieza"], "styles": ["Natural", "Minimalista"], "colorFamily": "Neutros y arena", "rollWidthCm": 140, "rollLengthM": 30, "saleUnit": "metro", "incrementM": 0.1, "minOrderM": 1, "supplierMinM": 0, "reusableRemainder": true },
+    { "id": 2, "name": "Chenille Usaquén", "collection": "Esenciales", "price": 118000, "color": "#5b4636", "colorName": "Café Tostado", "use": "Alto tráfico", "tags": ["Suave", "Antimanchas"], "active": true, "needs": ["Alto tráfico", "Fácil limpieza", "Suave"], "styles": ["Clásico", "Moderno"], "colorFamily": "Tonos cálidos", "rollWidthCm": 140, "rollLengthM": 30, "saleUnit": "metro", "incrementM": 0.5, "minOrderM": 2, "supplierMinM": 0, "reusableRemainder": true },
+    { "id": 3, "name": "Bouclé Chapinero", "collection": "Texturas", "price": 132000, "color": "#cdbfa5", "colorName": "Hueso", "use": "Uso residencial", "tags": ["Tendencia", "Acogedora"], "active": true, "needs": ["Suave"], "styles": ["Moderno", "Minimalista"], "colorFamily": "Neutros y arena", "rollWidthCm": 150, "rollLengthM": 25, "saleUnit": "metro", "incrementM": 0.25, "minOrderM": 1, "supplierMinM": 0, "reusableRemainder": true },
+    { "id": 4, "name": "Náutica Suba", "collection": "Performance", "price": 105000, "color": "#4c5b63", "colorName": "Gris Grafito", "use": "Exterior", "tags": ["UV", "Repelente al agua"], "active": true, "needs": ["Resistente al agua", "Sol", "Alto tráfico"], "styles": ["Moderno"], "colorFamily": "Grises", "rollWidthCm": 160, "rollLengthM": 40, "saleUnit": "metro", "incrementM": 0.5, "minOrderM": 1, "supplierMinM": 0, "reusableRemainder": true },
+    { "id": 5, "name": "Terciopelo Teusaquillo", "collection": "Esenciales", "price": 124000, "color": "#7c2f38", "colorName": "Vino Tinto", "use": "Uso residencial", "tags": ["Elegante", "Fácil limpieza"], "active": true, "needs": ["Fácil limpieza", "Suave"], "styles": ["Clásico"], "colorFamily": "Tonos cálidos", "rollWidthCm": 140, "rollLengthM": 20, "saleUnit": "metro", "incrementM": 0.1, "minOrderM": 1, "supplierMinM": 25, "reusableRemainder": false },
+    { "id": 6, "name": "Jacquard Kennedy", "collection": "Performance", "price": 141000, "color": "#3f4a3f", "colorName": "Verde Oliva", "use": "Pet friendly", "tags": ["Pet friendly", "Alta resistencia"], "active": false, "needs": ["Mascotas", "Alto tráfico"], "styles": ["Natural"], "colorFamily": "Verdes", "rollWidthCm": 140, "rollLengthM": 30, "saleUnit": "rollo", "incrementM": 0.1, "minOrderM": 1, "supplierMinM": 0, "reusableRemainder": false }
+  ],
+  "servicePoints": [
+    { "id": "sp-chapinero", "name": "Chapinero", "city": "Bogotá", "address": "Dirección por confirmar", "phone": "+57 300 000 0001", "active": true, "order": 1 },
+    { "id": "sp-usaquen", "name": "Usaquén", "city": "Bogotá", "address": "Dirección por confirmar", "phone": "+57 300 000 0002", "active": true, "order": 2 },
+    { "id": "sp-kennedy", "name": "Kennedy", "city": "Bogotá", "address": "Dirección por confirmar", "phone": "+57 300 000 0003", "active": true, "order": 3 },
+    { "id": "sp-medellin", "name": "Medellín", "city": "Medellín", "address": "Dirección por confirmar", "phone": "+57 300 000 0004", "active": true, "order": 4 }
+  ],
+  "sellers": [
+    { "id": 1, "servicePointIds": ["sp-chapinero"], "quotes": 12 },
+    { "id": 2, "servicePointIds": ["sp-usaquen"], "quotes": 9 },
+    { "id": 3, "servicePointIds": ["sp-kennedy", "sp-medellin"], "quotes": 7 },
+    { "id": 4, "servicePointIds": ["sp-medellin"], "quotes": 5 }
+  ],
+  "quotes": [
+    { "id": "COT-3042", "date": "2026-09-10", "customer": { "name": "Camila Restrepo", "email": "", "phone": "" }, "furniture": "Sofá", "quantityLabel": "3 puestos", "city": "Bogotá · Chapinero", "servicePointId": "sp-chapinero", "seller": "", "sellerId": "", "status": "Nueva", "fabricName": "Lino Fontibón", "photoIds": [] },
+    { "id": "COT-3041", "date": "2026-09-09", "customer": { "name": "Felipe Cárdenas", "email": "", "phone": "" }, "furniture": "Poltrona", "quantityLabel": "", "city": "Bogotá · Usaquén", "servicePointId": "sp-usaquen", "seller": "Laura Méndez", "sellerId": 1, "status": "En gestión", "fabricName": "Chenille Usaquén", "photoIds": [] },
+    { "id": "COT-3040", "date": "2026-09-08", "customer": { "name": "Natalia Prada", "email": "", "phone": "" }, "furniture": "Sofá en L", "quantityLabel": "4 módulos", "city": "Bogotá · Kennedy", "servicePointId": "sp-kennedy", "seller": "Paula Gómez", "sellerId": 3, "status": "Nueva", "fabricName": "Bouclé Chapinero", "photoIds": [] },
+    { "id": "COT-3039", "date": "2026-09-07", "customer": { "name": "Santiago Beltrán", "email": "", "phone": "" }, "furniture": "Cabecero", "quantityLabel": "", "city": "Bogotá · Usaquén", "servicePointId": "sp-usaquen", "seller": "Andrés Rojas", "sellerId": 2, "status": "En gestión", "fabricName": "Terciopelo Teusaquillo", "photoIds": [] },
+    { "id": "COT-3038", "date": "2026-09-06", "customer": { "name": "Valentina Quiroga", "email": "", "phone": "" }, "furniture": "Poltrona", "quantityLabel": "", "city": "Medellín · Medellín", "servicePointId": "sp-medellin", "seller": "Daniel Ortiz", "sellerId": 4, "status": "Cotizada", "fabricName": "Náutica Suba", "photoIds": [] },
+    { "id": "COT-3037", "date": "2026-09-05", "customer": { "name": "Julián Escobar", "email": "", "phone": "" }, "furniture": "Silla", "quantityLabel": "6 sillas", "city": "Medellín · Medellín", "servicePointId": "sp-medellin", "seller": "Paula Gómez", "sellerId": 3, "status": "Cotizada", "fabricName": "Lino Fontibón", "photoIds": [] }
+  ],
+  "settings": {
+    "senderEmail": "cotizaciones@intertelas.example",
+    "budgets": [90000, 120000, 140000, 160000]
+  }
+}

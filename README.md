@@ -33,6 +33,7 @@ Un `CLIENT` que no exista falla explicando qué clientes hay disponibles bajo
 |------|--------|
 | `clients/mediterranea/` | Real — reproduce la marca y los datos originales de Mediterránea Insumos tal cual |
 | `clients/macizo/` | **Diseño real, datos placeholder** — marca, colores, tipografía y logo tomados de macizocolombia.com (2026-09-14); los datos de demo (telas, puntos de atención, cotizaciones) siguen inventados; los usuarios son los compartidos; ver `clients/macizo/README.md` |
+| `clients/intertelas/` | **Diseño real, datos placeholder** — marca, colores, tipografía y logo tomados de intertelas.com (2026-09-15); prospecto de CARDYRAM, prototipo privado de demostración; los datos de demo (telas, puntos de atención, cotizaciones) siguen inventados; los usuarios son los compartidos; ver `clients/intertelas/README.md` |
 
 ## Agregar un cliente nuevo
 

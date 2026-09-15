@@ -63,3 +63,13 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
 
 All drive the real pages over `file://` from `generated/`, which is how the
 prototypes are opened.
+
+## `clients.spec.mjs` — white-label pipeline (`npm run test:clients`)
+
+Outside the chain above (and outside `npm test`) because it isn't written against
+Mediterránea's fixtures at all: it loops over every pack under `clients/` except
+`mediterranea` (currently `macizo`, `intertelas`), generating each into its own
+`generated-<slug>/` and checking generation succeeds with no leftover
+`{{PLACEHOLDER}}` tokens, that pack's own brand/theme/logo show up, its shared demo
+admin can log in, and none of the OTHER packs' distinctive strings (display name,
+storage namespace, sender email) leak into its output. Self-documented at its top.

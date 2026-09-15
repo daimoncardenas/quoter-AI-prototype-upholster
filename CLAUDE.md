@@ -18,7 +18,7 @@ npm run dev                                       # dev server on 127.0.0.1:3000
 npm run generate                                  # renders generated/ for CLIENT (.env / env var)
 npm test                                          # generates, then all suites (CLIENT=MEDITERRANEA only, see below)
 npm run test:wiring                               # one suite (also: node tests/wiring.spec.mjs)
-npm run test:macizo                               # white-label pipeline smoke test, any CLIENT
+npm run test:clients                              # white-label pipeline smoke test, every non-Mediterránea pack
 npm run build                                     # generates, then writes dist/index.html + dist/admin.html
 ```
 
@@ -43,7 +43,7 @@ npm run build                                     # generates, then writes dist/
   logins are **shared across every client** (`shared/demo-users.json`, merged into
   each pack by `tools/client-pack.mjs`) — the admin is always `admin@demo.com` /
   `demo`, whichever `CLIENT` is active.
-- `npm test` chains 11 suites, all described in `tests/README.md`. `macizo.spec.mjs`
+- `npm test` chains 11 suites, all described in `tests/README.md`. `clients.spec.mjs`
   is intentionally outside `npm test` (see White-label section) and self-documented
   at its top.
 
@@ -199,17 +199,18 @@ needed for a new client — only a new pack directory. Backoffice logins come fr
 each shared seller `id` its own `servicePointIds` (and starting `quotes` count) — see
 "Shared demo logins" above.
 
-**Mediterránea vs. Macizo**: `clients/mediterranea/` reproduces the *original*
+**Mediterránea vs. everyone else**: `clients/mediterranea/` reproduces the *original*
 pre-white-label product (brand, colors, logo, catalog, service points) exactly — it's
 what the whole `npm test` suite is written against; its backoffice logins are the same
 shared demo set every client uses, not part of that original reproduction.
-`clients/macizo/`'s **design** (`displayName`, `theme`, `fonts`, `logo`) was taken from
-macizocolombia.com on 2026-09-14; its **demo data** (`seed.json`'s fabrics/service
-points/quotes assignments, `storageNamespace`) is still an invented placeholder — see
-its `README.md` before treating anything else in it as real. `tests/macizo.spec.mjs`
-(`npm run test:macizo`)
-checks that pack in isolation, generating into `generated-macizo/` so it never
-collides with the main suite's `generated/`.
+Every other pack (`clients/macizo/`, `clients/intertelas/`, ...) has a **real design**
+(`displayName`, `theme`, `fonts`, `logo`) sourced from that client's own live site with
+Playwright, but **invented demo data** (`seed.json`'s fabrics/service points/quotes
+assignments, `storageNamespace`) — see each pack's own `README.md` before treating
+anything else in it as real. `tests/clients.spec.mjs` (`npm run test:clients`) checks
+every one of these packs in isolation (looping over `clients/*` minus `mediterranea`),
+generating each into its own `generated-<slug>/` so none of them collides with the
+main suite's `generated/` or with each other.
 
 ## Delivery build
 

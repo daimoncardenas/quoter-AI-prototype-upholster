@@ -10,7 +10,7 @@ dist/
 # demand, and shipping every client's output in one place defeats the point
 # of white-labeling.
 generated/
-generated-macizo/
+generated-*/
 
 # Selects which client CLIENT resolves to locally; see .env.example.
 .env
