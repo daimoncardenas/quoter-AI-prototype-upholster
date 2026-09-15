@@ -131,6 +131,17 @@ for (const slug of SLUGS) {
     }),
     'Comprados: 1');
 
+  console.log(`\nEL ADMIN DE ${CLIENT} ABRE USAGE: CINCO MEDIDORES Y EL HISTORIAL`);
+  await page.click('button[data-page="usage"]');
+  await page.waitForFunction(() => document.querySelectorAll('#usageGrid [role=progressbar]').length === 5, null, { timeout: 5000 }).catch(() => {});
+  check('cinco barras de progreso', await page.evaluate(() => document.querySelectorAll('#usageGrid [role=progressbar]').length), 5);
+  check('y la tarjeta de historial de analítica', await page.isVisible('#usageGrid [data-metric="historyMonths"]'), true);
+  const usageValues = await page.$$eval('#usageGrid .usage-card:has([role=progressbar]) .usage-value', els => els.map(e => e.textContent));
+  check('cada valor tiene la forma "<x> de <y>" (sin valores mal formados)',
+    usageValues.filter(v => !/^\d+(,\d)?( MB| GB)? de \d+( GB)?$/.test(v)), []);
+  check('Sedes suma la Sede adicional comprada al límite de Professional (3 + 1)',
+    await page.$eval('#usageGrid [data-metric="locations"] .usage-value', e => e.textContent.endsWith(' de 4')), true);
+
   console.log('page errors: ' + (errs.length ? errs.join(' | ') : 'none'));
   if (errs.length) fails++;
 

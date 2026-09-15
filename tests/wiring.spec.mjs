@@ -668,6 +668,140 @@ check('el conteo de compras sobrevive a un recargo de página',
   }),
   'Comprados: 2');
 
+/* USAGE — a fresh context, so the plan is the default Essential and nothing
+ * has been bought: the section above left this page on Business with packages. */
+console.log('\nUSAGE — el consumo real contra el plan por defecto (Essential)');
+const usageCtx = await browser.newContext();
+const up = await usageCtx.newPage();
+up.on('pageerror', e => errs.push(String(e)));
+await openAdmin(up, D);
+const openUsage = async () => {
+  await up.click('button[data-page="usage"]');
+  await up.waitForFunction(() => document.querySelectorAll('#usageGrid [role=progressbar]').length === 5);
+};
+const meter = key => up.evaluate(k => {
+  const c = document.querySelector(`#usageGrid [data-metric="${k}"]`);
+  if (!c) return null;
+  const bar = c.querySelector('[role=progressbar]');
+  const txt = s => { const e = c.querySelector(s); return e ? e.textContent : null; };
+  return { value: txt('.usage-value'), pct: txt('.usage-pct'), status: txt('.usage-status'), extra: txt('.usage-extra'), cta: txt('[data-usage-buy]'),
+    aria: bar ? ['aria-label', 'aria-valuemin', 'aria-valuemax', 'aria-valuenow'].map(a => bar.getAttribute(a)) : null };
+}, key);
+await openUsage();
+check('five meters in order, then the analytics history card',
+  await up.$$eval('#usageGrid .usage-card', cs => cs.map(c => [c.dataset.metric, c.querySelector('.usage-label').textContent])),
+  [['quotes', 'Cotizaciones completadas'], ['aiCredits', 'Créditos de IA'], ['storageGB', 'Almacenamiento'],
+   ['users', 'Usuarios internos'], ['locations', 'Sedes'], ['historyMonths', 'Historial de analítica']]);
+check('the default limits are Essential\'s, read from the one effectiveLimits() helper',
+  await up.evaluate(() => { const s = Store.settings(); return [s.plan, effectiveLimits(s.plan, s.packages).limits]; }),
+  ['Essential', { quotes: 30, aiCredits: 75, storageGB: 1, users: 1, locations: 1, historyMonths: 3 }]);
+// Computed here with the LOCAL calendar month, independently of Store's helpers.
+const usageStore = await up.evaluate(() => {
+  const d = new Date(), key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  return { quotes: Store.all('quotes').filter(q => String(q.date).slice(0, 7) === key).length,
+    ai: Store.aiCreditsUsed(), users: Store.all('users').filter(u => u.active).length,
+    points: Store.all('servicePoints').filter(p => p.active).length };
+});
+check('a month with no tracked AI credits starts from this month\'s quotes (each went through one analysis)',
+  usageStore.ai, usageStore.quotes);
+check('each meter\'s value matches Store (this-month quotes, credits, active users, active points)',
+  await Promise.all(['quotes', 'aiCredits', 'users', 'locations'].map(k => meter(k).then(m => m.value))),
+  [`${usageStore.quotes} de 30`, `${usageStore.ai} de 75`, `${usageStore.users} de 1`, `${usageStore.points} de 1`]);
+check('storage reads MB with a decimal comma against 1 GB', /^\d+,\d MB de 1 GB$/.test((await meter('storageGB')).value), true);
+check('the history card is info only, no meter', await meter('historyMonths'),
+  { value: '3 meses incluidos en tu plan', pct: null, status: null, extra: null, cta: null, aria: null });
+check('the users bar is an accessible progressbar',
+  (await meter('users')).aria, ['Usuarios internos', '0', '1', String(usageStore.users)]);
+check('Mediterránea\'s seed has more active users than Essential allows (precondition)', usageStore.users > 1, true);
+check('an over-limit meter says by how much and offers a package',
+  await meter('users').then(m => [m.pct, m.status, m.cta]),
+  [`${usageStore.users * 100}%`, `Excedido por ${usageStore.users - 1}`, 'Comprar paquete']);
+check('a meter well within its limit says so and offers nothing',
+  await meter('quotes').then(m => [m.status, m.cta]), ['Dentro del plan', null]);
+
+await up.click('#usageGrid [data-metric="users"] [data-usage-buy]');
+check('"Comprar paquete" lands on Upgrade with the Paquetes tab selected',
+  await up.evaluate(() => [document.querySelector('.page.active').id, document.getElementById('tabPaquetes').getAttribute('aria-selected'), document.getElementById('panelPaquetes').hidden]),
+  ['upgrade', 'true', false]);
+await openUsage();
+await up.click('#usageSeePlans');
+check('"Ver planes" lands on Upgrade with the Planes tab selected',
+  await up.evaluate(() => [document.querySelector('.page.active').id, document.getElementById('tabPlanes').getAttribute('aria-selected'), document.getElementById('panelPlanes').hidden]),
+  ['upgrade', 'true', false]);
+
+console.log('\nUSAGE — Professional + un Usuario adicional se reflejan al volver a abrir la página');
+up.once('dialog', d => d.accept());
+await up.click('#plansGrid [data-plan="Professional"]');
+await up.waitForTimeout(150);
+await up.click('#tabPaquetes');
+up.once('dialog', d => d.accept());
+await up.click('#packagesGrid [data-package="extra-user"]');
+await up.waitForTimeout(150);
+await openUsage();
+await up.waitForFunction(() => document.getElementById('usageLead').textContent.includes('Professional'));
+check('the header and summary name the new plan and its price',
+  await up.evaluate(() => [document.getElementById('usageLead').textContent, document.getElementById('usagePlanName').textContent, document.getElementById('usagePlanPrice').textContent]),
+  ['Así va el uso de tu plan Professional este mes.', 'Plan Professional', await up.evaluate(() => Store.money(699000) + ' COP / mes')]);
+check('users limit = Professional 3 + 1 purchased, and the card says where the extra comes from',
+  await meter('users').then(m => [m.value, m.extra]), [`${usageStore.users} de 4`, 'Incluye 1 de paquetes']);
+check('a meter no package touched says nothing about packages', (await meter('locations')).extra, null);
+check('effectiveLimits() adds the package on top of the plan',
+  await up.evaluate(() => effectiveLimits('Professional', { 'extra-user': 1 }).limits.users), 4);
+
+console.log('\nUSAGE — una revisión con IA gasta exactamente un crédito, y las fotos ocupan almacenamiento');
+await up.goto(D + 'index.html');
+const creditsBefore = await up.evaluate(() => Store.aiCreditsUsed());
+await up.setInputFiles('#furniturePhoto', png);
+await up.waitForFunction(() => state.photos.length >= 3);
+await up.click('#nextButton');
+await up.fill('#width', '210'); await up.fill('#height', '85'); await up.fill('#depth', '90');
+await up.click('#nextButton');
+await up.click('#nextButton');
+await up.click('#analyzeButton');
+await up.waitForFunction(() => state.analyzed);
+check('one completed analysis spends exactly one AI credit',
+  await up.evaluate(() => Store.aiCreditsUsed()) - creditsBefore, 1);
+await up.click('#nextButton');
+await up.click('#fabricGrid .fabric-card:nth-child(1)');
+await up.click('#nextButton');
+await up.fill('#fullName', 'Cliente Usage');
+await up.fill('#email', 'usage@example.com');
+await up.fill('#phone', '3001234567');
+await up.check('#consent');
+await up.click('#nextButton');
+await up.waitForSelector('#successState:not([hidden])');
+check('a submitted quote with photos takes real bytes in IndexedDB',
+  await up.evaluate(() => Photos.totalBytes()) > 0, true);
+await openAdmin(up, D);
+await openUsage();
+check('and the backoffice storage meter shows those bytes, not 0,0 MB',
+  // The fixture photos weigh a few KB: anything stored but under 0,1 MB shows
+  // as 0,1 MB so the meter never reads empty.
+  await up.evaluate(() => Photos.totalBytes().then(b => {
+    const MB = 1024 * 1024, text = document.querySelector('#usageGrid [data-metric="storageGB"] .usage-value').textContent;
+    return text === `${Math.max(0.1, b / MB).toFixed(1).replace('.', ',')} MB de 5 GB` && text !== '0,0 MB de 5 GB'
+      && +document.querySelector('#usageGrid [data-metric="storageGB"] [role=progressbar]').getAttribute('aria-valuenow') > 0;
+  })), true);
+check('the credits meter picked up the analysis too',
+  (await meter('aiCredits')).value, `${creditsBefore + 1} de 300`);
+await usageCtx.close();
+
+/* The month is the LOCAL calendar month. At 21:30 on Sept 30 in Bogotá it is
+ * already Oct 1 in UTC: a UTC month key would count 0 of the seed's September
+ * quotes, and parsing q.date with new Date('YYYY-MM-DD') (UTC midnight) would
+ * push COT-1037 (2026-09-01) into August. Both bugs miss the 6 by hand-count. */
+console.log('\nUSAGE — cuenta el mes calendario local, no el de UTC');
+const monthEdge = await browser.newContext({ timezoneId: 'America/Bogota', locale: 'es-CO' });
+const edge = await monthEdge.newPage();
+await edge.clock.setFixedTime(new Date('2026-09-30T21:30:00-05:00'));
+await openAdmin(edge, D);
+await edge.click('button[data-page="usage"]');
+await edge.waitForFunction(() => document.querySelectorAll('#usageGrid [role=progressbar]').length === 5);
+check('the local month key is still September', await edge.evaluate(() => Store.monthKey()), '2026-09');
+check('all six seeded September quotes count, the Sept 1 one included',
+  await edge.$eval('#usageGrid [data-metric="quotes"] .usage-value', e => e.textContent), '6 de 30');
+await monthEdge.close();
+
 console.log('\npage errors: ' + (errs.length ? errs.join(' | ') : 'none'));
 console.log(fails ? `\n${fails} FAILING` : '\nALL PASS');
 await browser.close();

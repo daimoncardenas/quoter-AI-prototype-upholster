@@ -62,6 +62,10 @@
     // bought, keyed by package id — {} for nobody having bought anything yet.
     // A purchase only ever increments this, it never resets or toggles.
     packages: {},
+    // Per-month consumption the prototype has no record to derive from,
+    // keyed by LOCAL calendar month ('YYYY-MM') — today only
+    // { aiCredits: n }. See Store.spendAiCredit() for the tracking rule.
+    usage: {},
     autoAssignByZone: true,
     emailClientCopy: true,
     aiPhotoCheck: true,
@@ -317,6 +321,42 @@
       var next = Store.settings();
       Object.keys(patch).forEach(function (k) { next[k] = patch[k]; });
       write('settings', next);
+      return next;
+    },
+
+    /* ------------------------------------------------------------- usage --
+     *
+     * What the backoffice "Usage" page measures against the plan's limits.
+     * Months are LOCAL calendar months: q.date is a local 'YYYY-MM-DD' day
+     * (index.html writes it with getFullYear/getMonth/getDate), so it is
+     * compared by its 'YYYY-MM' prefix against a locally built key — never
+     * parsed with new Date('YYYY-MM-DD'), which is UTC midnight and would
+     * push the first/last evening of a month into the wrong one. */
+    monthKey: function (date) { return monthKey(date); },
+
+    quotesThisMonth: function () {
+      var key = monthKey();
+      return read('quotes').filter(function (q) { return String((q && q.date) || '').slice(0, 7) === key; }).length;
+    },
+
+    /* AI-credit tracking rule: every completed "Revisar mi información"
+     * analysis in the wizard spends exactly one credit, stored per month in
+     * settings.usage['YYYY-MM'].aiCredits. A month with no entry yet starts
+     * from the number of quotes already submitted this month — each one went
+     * through one analysis to get there — so the demo never reads 0 while
+     * there are quotes on the board. Reading applies the same starting
+     * point without writing it. */
+    aiCreditsUsed: function () {
+      var month = (Store.settings().usage || {})[monthKey()];
+      return month && isFinite(+month.aiCredits) && month.aiCredits !== null ? +month.aiCredits : Store.quotesThisMonth();
+    },
+
+    spendAiCredit: function () {
+      var usage = clone(Store.settings().usage || {});
+      var key = monthKey();
+      var next = Store.aiCreditsUsed() + 1;
+      usage[key] = Object.assign({}, usage[key], { aiCredits: next });
+      Store.saveSettings({ usage: usage });
       return next;
     },
 
@@ -641,6 +681,12 @@
     return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
   }
 
+  /* 'YYYY-MM' of the LOCAL calendar month (see the usage block in Store). */
+  function monthKey(date) {
+    var d = date || new Date();
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2);
+  }
+
   /* ------------------------------------------------------- despiece -- */
 
   /* Rectangular pieces per furniture type, in metres, from what the wizard
@@ -745,7 +791,13 @@
       Photos._db = new Promise(function (resolve, reject) {
         var req = indexedDB.open('med-photos', 1);
         req.onupgradeneeded = function () { req.result.createObjectStore('photos'); };
-        req.onsuccess = function () { resolve(req.result); };
+        req.onsuccess = function () {
+          // The backoffice now keeps a connection open just to measure storage,
+          // so let a reset/deleteDatabase through instead of blocking it; the
+          // next call simply reopens.
+          req.result.onversionchange = function () { req.result.close(); Photos._db = null; };
+          resolve(req.result);
+        };
         req.onerror = function () { reject(req.error); };
       });
       return Photos._db;
@@ -779,8 +831,27 @@
     getAll: function (ids) {
       return Promise.all((ids || []).map(function (id) { return Photos.get(id); }))
         .then(function (list) { return list.filter(Boolean); });
+    },
+
+    /* Real bytes held in the photo store, for the backoffice "Usage" page.
+     * Records are base64 data URLs, so each counts the bytes it decodes to —
+     * the image itself, not its text encoding; a Blob counts its own size. */
+    totalBytes: function () {
+      return Photos._tx('readonly', function (s) { return s.getAll(); }).then(function (rows) {
+        return (rows || []).reduce(function (sum, v) { return sum + storedBytes(v); }, 0);
+      }).catch(function () { return 0; });
     }
   };
+
+  function storedBytes(v) {
+    if (typeof Blob !== 'undefined' && v instanceof Blob) return v.size;
+    if (typeof v !== 'string') return 0;
+    var m = /^data:[^,]*;base64,(.*)$/.exec(v);
+    if (!m) return new Blob([v]).size;
+    var b64 = m[1].replace(/\s/g, '');
+    var pad = b64.slice(-2) === '==' ? 2 : b64.slice(-1) === '=' ? 1 : 0;
+    return Math.max(0, Math.floor(b64.length * 3 / 4) - pad);
+  }
 
   /* ------------------------------------------------------------------ auth --
    *
@@ -902,7 +973,7 @@
     sections: function (user) {
       if (!user) return [];
       return user.role === 'admin'
-        ? ['dashboard', 'quotes', 'fabrics', 'furniture', 'sellers', 'points', 'settings', 'upgrade']
+        ? ['dashboard', 'quotes', 'fabrics', 'furniture', 'sellers', 'points', 'settings', 'upgrade', 'usage']
         : ['dashboard', 'quotes'];
     },
 

@@ -566,6 +566,9 @@ document.getElementById('analyzeButton').addEventListener('click',()=>{
   document.getElementById('analysisText').textContent='Comprobando la fotografía y las medidas que registraste.';
   setTimeout(()=>{
     state.analyzed=true;
+    // Cada análisis completado consume un crédito de IA del mes (lo muestra
+    // la sección Usage del backoffice); no poder guardarlo no frena al cliente.
+    try{Store.spendAiCredit()}catch(err){console.warn('[wizard] crédito de IA no registrado',err)}
     document.getElementById('analysisError').hidden=true;
     btn.remove();
     const checks=runReview();

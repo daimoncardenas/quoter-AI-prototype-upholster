@@ -47,7 +47,17 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   mes`), buying one asks for confirmation naming the package and its price,
   dismissing leaves its count at 0 (no "Comprados" label), and confirming
   increments the count (a purchase is a recharge — the button never disables),
-  shows a toast, and survives a reload.
+  shows a toast, and survives a reload. Also covers the "Usage" page in a fresh
+  context: five meters in order plus the analytics-history card, default limits
+  equal to Essential's through `effectiveLimits()`, each value matching `Store`
+  (this month's quotes counted in the test with local dates, AI credits starting
+  from that count, active users and points), an over-limit meter showing
+  "Excedido por <n>" and "Comprar paquete" (which lands on Upgrade with Paquetes
+  selected), "Ver planes" landing on Planes, Professional + one Usuario adicional
+  reading `<used> de 4` with "Incluye 1 de paquetes", one wizard analysis spending
+  exactly one AI credit, a submitted quote's photos showing up as real IndexedDB
+  bytes on the storage meter, and — pinned to 21:30 on Sept 30 in Bogotá, already
+  October in UTC — all six seeded September quotes still counting.
 
 - `entities.spec.mjs` — that every option the cotizador shows comes from the
   store: furniture types with their consumption rules and measurement ranges,
@@ -57,8 +67,9 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   never overrides an explicit pick.
 - `auth.spec.mjs` — the backoffice login: that the gate actually blocks, that an
   adviser sees only their own requests and none of the administration sections
-  (including the admin-only "Upgrade" plans page — hidden from the nav and
-  unreachable even by forcing a click on the hidden nav button), and that
+  (including the admin-only "Upgrade" plans page and "Usage" consumption page —
+  both hidden from the nav and unreachable even by forcing a click on the hidden
+  nav button), and that
   passwords are never stored in the clear.
 - `photos.spec.mjs` — the 3-to-7 attachment range: that the wizard refuses to
   advance below the minimum, caps at the maximum, lets photos be removed, and
@@ -109,5 +120,7 @@ on every pack's own seed, not only Mediterránea's. Also opens the admin-only
 one Sede adicional (accepting the confirmation dialog too), asserting
 `Comprados: 1` — a short guard that both its styling (same `modes/inverted.css`
 rules, reading correctly under `clients/intertelas/`'s inverted color mode) and
-its plan-change/package-purchase flows hold on every pack. Self-documented at
-its top.
+its plan-change/package-purchase flows hold on every pack. Then opens "Usage" and
+asserts five progressbars plus the history card, every value well-formed
+(`<x> de <y>`), and Sedes reading `de 4` (Professional's 3 + the Sede bought).
+Self-documented at its top.

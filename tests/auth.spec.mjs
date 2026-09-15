@@ -46,9 +46,9 @@ console.log('\nADMIN VE TODO');
 await signIn(p, ADMIN_EMAIL);
 check('entra', await p.isVisible('#appShell'), true);
 check('el login desaparece', await p.isVisible('#loginScreen'), false);
-check('ve las ocho secciones',
+check('ve las nueve secciones',
   await p.$$eval('.nav button', bs => bs.filter(x=>!x.hidden).map(x=>x.dataset.page)),
-  ['dashboard','quotes','fabrics','furniture','sellers','points','settings','upgrade']);
+  ['dashboard','quotes','fabrics','furniture','sellers','points','settings','upgrade','usage']);
 check('el topbar muestra quién es', await p.textContent('#meName'), ADMIN_NAME);
 check('y su rol', await p.textContent('#meRole'), 'Administradora');
 check('ve todas las cotizaciones', await p.evaluate(()=>document.querySelectorAll('#quoteRows tr').length), 6);
@@ -60,9 +60,9 @@ check('entra', await p2.isVisible('#appShell'), true);
 check('solo ve resumen y cotizaciones',
   await p2.$$eval('.nav button', bs => bs.filter(x=>!x.hidden).map(x=>x.dataset.page)),
   ['dashboard','quotes']);
-check('catálogo, muebles, vendedores, puntos, configuración y upgrade quedan fuera',
+check('catálogo, muebles, vendedores, puntos, configuración, upgrade y usage quedan fuera',
   await p2.$$eval('.nav button', bs => bs.filter(x=>x.hidden).map(x=>x.dataset.page)),
-  ['fabrics','furniture','sellers','points','settings','upgrade']);
+  ['fabrics','furniture','sellers','points','settings','upgrade','usage']);
 await p2.click('button[data-page="quotes"]');
 const rows = await p2.textContent('#quoteRows');
 check('la tabla trae solo sus solicitudes', await p2.evaluate(()=>document.querySelectorAll('#quoteRows tr').length), 1);
@@ -86,7 +86,26 @@ check('forzar el clic sobre el botón oculto no abre la página',
   await p2.evaluate(()=>document.getElementById('upgrade').classList.contains('active')), false);
 check('se queda en una sección que sí puede ver',
   await p2.evaluate(()=>document.querySelector('.page.active').id !== 'upgrade'), true);
+
+console.log('\nUSAGE TAMBIÉN ES SOLO PARA ADMINISTRADORAS');
+check('el nav item de usage no se le muestra a la vendedora',
+  await p2.isVisible('button[data-page="usage"]'), false);
+await p2.evaluate(()=>document.querySelector('[data-page="usage"]').click());
+await p2.waitForTimeout(150);
+check('forzar el clic sobre usage no abre la página',
+  await p2.evaluate(()=>document.getElementById('usage').classList.contains('active')), false);
+check('y tampoco pinta sus medidores',
+  await p2.evaluate(()=>document.querySelectorAll('#usageGrid .usage-card').length), 0);
+check('se queda en una sección que sí puede ver',
+  await p2.evaluate(()=>document.querySelector('.page.active').id !== 'usage'), true);
 await p2.click('button[data-page="dashboard"]');
+check('la administradora sí ve usage',
+  await p.isVisible('button[data-page="usage"]'), true);
+await p.click('button[data-page="usage"]');
+await p.waitForFunction(()=>document.querySelectorAll('#usageGrid [role=progressbar]').length===5,null,{timeout:5000}).catch(()=>{});
+check('y abre la página con sus cinco medidores',
+  await p.evaluate(()=>document.querySelectorAll('#usageGrid [role=progressbar]').length), 5);
+await p.click('button[data-page="dashboard"]');
 check('la administradora sí ve el nav item',
   await p.isVisible('button[data-page="upgrade"]'), true);
 await p.click('button[data-page="upgrade"]');

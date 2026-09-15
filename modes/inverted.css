@@ -191,6 +191,8 @@
 .nav button:hover{background:var(--cream);color:var(--mode-frame-text)}
 .nav button.active{background:var(--mode-card-bg);color:var(--mode-on-color);box-shadow:none}
 .nav-icon{color:var(--mode-frame-text)}
+/* The active item sits on --mode-card-bg: a brand-colored icon would vanish. */
+.nav button.active .nav-icon{color:var(--mode-on-color)}
 .side-foot{border-top-color:var(--line)}
 .side-foot p{color:var(--mode-frame-text-muted)}
 .public-link{color:var(--mode-frame-text)}
@@ -305,6 +307,24 @@
 .package-bought{color:var(--mode-on-color)}
 .package-price{color:var(--mode-on-color)}
 .package-price-period{color:var(--mode-on-color)}
+
+/* Usage summary strip and meter cards. Same reasoning as the Upgrade cards:
+ * every text on --mode-card-bg takes the full --mode-on-color. The status
+ * pill keeps its own white background (see admin.html), so its semantic
+ * accent/amber/red text needs no override. Bars: the track drops to the
+ * canvas shade (darker than the card) so a white fill clears 3:1 against it;
+ * amber/red fills are lightened toward white for the same reason, which keeps
+ * their hue while staying visible on a brand-colored card. */
+.usage-summary{background:var(--mode-card-bg);color:var(--mode-on-color);border-color:var(--mode-line-on-color)}
+.usage-plan-name,.usage-plan-price{color:var(--mode-on-color)}
+.usage-card{background:var(--mode-card-bg);color:var(--mode-on-color);border-color:var(--mode-line-on-color)}
+.usage-label,.usage-value,.usage-unit,.usage-pct,.usage-extra{color:var(--mode-on-color)}
+.usage-bar{background:var(--mode-canvas-bg)}
+.usage-fill{background:var(--mode-on-color)}
+.usage-card.is-near{--usage-strip:color-mix(in srgb, var(--amber) 45%, #fff)}
+.usage-card.is-over{--usage-strip:color-mix(in srgb, var(--red) 35%, #fff)}
+.usage-card.is-near .usage-fill{background:color-mix(in srgb, var(--amber) 45%, #fff)}
+.usage-card.is-over .usage-fill{background:color-mix(in srgb, var(--red) 35%, #fff)}
 
 .modal{background:var(--mode-card-bg);color:var(--mode-on-color)}
 .modal-hint{color:var(--mode-on-color-muted)}

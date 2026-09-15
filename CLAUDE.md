@@ -91,8 +91,28 @@ rendered. Do not bundle, split into modules, or add a framework unless asked.
   second static constant, `PACKAGES` — one-off/recurring add-ons ("recarga
   funciones sin cambiar de plan") — with its own `Store.settings().packages`
   ({id: count} map, default `{}`), incremented (never reset or toggled) each time
-  "Comprar" is confirmed, so a package can be bought more than once. Sellers see
-  only dashboard and their own quotes.
+  "Comprar" is confirmed, so a package can be bought more than once. Right after
+  it, "Usage" (`usage` section/page id, admin-only through the same `Auth.sections`
+  + `go()` gate) shows the company's CURRENT consumption against its current plan +
+  purchased packages, re-rendered on every `go('usage')` so a change made in
+  Upgrade shows immediately. Limits have ONE source of truth: numeric
+  `PLANS[].quota` (`quotes`, `aiCredits`, `storageGB`, `users`, `locations`,
+  `historyMonths`; the plan copy text is never parsed) and per-unit
+  `PACKAGES[].adds`, combined only by `effectiveLimits(plan, packages)` (plan quota
+  + Σ units × contribution), which the page and `tests/wiring.spec.mjs` both call.
+  Usage values are real where the prototype has data: this month's quotes
+  (`Store.quotesThisMonth()`), AI credits (`Store.aiCreditsUsed()`), real bytes in
+  the photo IndexedDB (`Photos.totalBytes()`, async; base64 records count their
+  decoded bytes), active users and active service points. Months are the LOCAL
+  calendar month (`Store.monthKey()`): `q.date` is a local `YYYY-MM-DD`, compared by
+  its `YYYY-MM` prefix, never `new Date('YYYY-MM-DD')` (UTC midnight). AI-credit
+  rule: each completed "Revisar mi información" analysis in `index.html` calls
+  `Store.spendAiCredit()`, stored in `settings.usage['YYYY-MM'].aiCredits`; a month
+  with no entry starts from that month's quote count (each quote went through one
+  analysis). Meter states: under 80% "Dentro del plan", 80–100% "Cerca del límite"
+  (`--amber`), over 100% "Excedido por <n>" (`--red`); near/over offer "Comprar
+  paquete" (→ Upgrade, Paquetes tab), and "Ver planes" opens the Planes tab.
+  Sellers see only dashboard and their own quotes.
 
 `index.html` and `admin.html` also carry `{{PLACEHOLDER}}` tokens (brand text, theme
 colors, logo) — `tools/generate.mjs` is what turns all three templates into an
