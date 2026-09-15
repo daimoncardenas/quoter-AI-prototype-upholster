@@ -52,7 +52,7 @@ async function encrypt(plaintext, passphrase) {
 /* --------------------------------------------------------------- la cáscara --
  * Lo único que se entrega en claro: el formulario, el descifrador y el bulto
  * cifrado. Ni una línea del prototipo. */
-function shell({ title, logo, logoAlt, brandName, eyebrow, lead, payload }) {
+function shell({ title, logo, logoAlt, brandName, eyebrow, lead, storageKey, payload }) {
   return `<!doctype html>
 <html lang="es">
 <head>
@@ -116,8 +116,11 @@ var ITERATIONS = ${ITERATIONS};
  * reabrir, así que son ${TTL_HOURS} h de reloj, no de uso. Limita cuánto tiempo
  * queda abierto un portátil prestado; a quien tenga el correo no le quita nada,
  * solo le pide escribir la llave otra vez. Un reloj del sistema movido hacia
- * atrás alarga el permiso: no es una licencia, es una cortesía con fecha. */
-var GUARDADA = 'med.v1.llave';
+ * atrás alarga el permiso: no es una licencia, es una cortesía con fecha.
+ *
+ * La clave va bajo el namespace del cliente: si dos clientes compartieran una,
+ * la llave guardada de uno se probaría contra la entrega del otro. */
+var GUARDADA = ${JSON.stringify(storageKey)};
 var TTL = ${Math.round(TTL_HOURS * 3600 * 1000)};
 var TTL_TEXTO = ${JSON.stringify(TTL_HOURS === 1 ? 'una hora' : TTL_HOURS + ' horas')};
 
@@ -270,6 +273,7 @@ for (const page of PAGES) {
   // writeFileSync(`dist/${page.file}`, shell({
   //   title, logo, logoAlt: client.logo.alt, brandName: client.displayName,
   //   eyebrow: page.eyebrow, lead: page.lead,
+  //   storageKey: client.storageNamespace + 'llave',
   //   payload: await encrypt(inlined, passphrase)
   // }));
   writeFileSync(`dist/${page.file}`, inlined);
