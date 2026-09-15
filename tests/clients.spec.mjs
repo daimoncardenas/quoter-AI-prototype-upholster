@@ -6,7 +6,8 @@
  * and only makes sense under CLIENT=MEDITERRANEA. This spec instead proves
  * the white-label pipeline itself, for EVERY other pack under clients/:
  * generation succeeds, that client's own branding shows up, its demo admin
- * can log in, and nothing from any OTHER client's pack leaks into its output.
+ * can log in, nothing from any OTHER client's pack leaks into its output, and
+ * the backoffice -> cotizador loop works on that pack's own demo data.
  *
  * Generates each pack into generated-<slug>/ (not generated/) so it never
  * collides with whatever the main suite has generated for CLIENT=MEDITERRANEA.
@@ -15,6 +16,9 @@ import { chromium } from 'playwright';
 import { readFileSync } from 'node:fs';
 import { generate } from '../tools/generate.mjs';
 import { loadClientPack, listAvailableClients } from '../tools/client-pack.mjs';
+import { openAdmin, setTags } from './helpers.mjs';
+
+const PHOTOS = ['1', '2', '3'].map(n => new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
 
 let fails = 0;
 const check = (n, got, want) => {
@@ -120,6 +124,91 @@ for (const slug of SLUGS) {
     check('cotizador: el panel principal es blanco (modo normal)', shellBg, hexToRgbCss('#ffffff'));
   }
   await indexPage.close();
+
+  /* The product claim, per pack: what is typed in the backoffice is what the
+   * cotizador shows, and what the customer submits lands in the backoffice.
+   * wiring.spec/entities.spec prove it only against Mediterránea's fixtures;
+   * this loop uses nothing but names the test itself creates, so it holds for
+   * any pack's demo data. */
+  console.log(`\nEL BACKOFFICE DE ${CLIENT} ALIMENTA SU COTIZADOR (Y AL REVÉS)`);
+  const loop = await b.newPage();
+  const loopErrs = [];
+  loop.on('pageerror', e => loopErrs.push(String(e)));
+  await loop.goto(D + 'index.html');
+  await loop.evaluate(db => { localStorage.clear(); indexedDB.deleteDatabase(db); }, client.photosDbName);
+  const fabricNames = () => loop.$$eval('.fabric-card-body > b', els => els.map(e => e.textContent));
+  const toFabricStep = async () => {
+    await loop.goto(D + 'index.html');
+    await loop.setInputFiles('#furniturePhoto', PHOTOS);
+    await loop.waitForFunction(() => state.photos.length >= 3);
+    await loop.click('#nextButton');
+    await loop.fill('#width', '210'); await loop.fill('#height', '85'); await loop.fill('#depth', '90');
+    await loop.click('#nextButton');
+    await loop.click('#nextButton');
+    await loop.click('#analyzeButton'); await loop.waitForFunction(() => state.analyzed);
+    await loop.click('#nextButton');
+  };
+
+  await openAdmin(loop, D);
+  await loop.click('button[data-page="fabrics"]');
+  await loop.click('#newFabric');
+  await loop.fill('#fabricForm [name=name]', 'Tela Prueba Loop');
+  await loop.fill('#fabricForm [name=collection]', 'Colección Prueba');
+  await loop.fill('#fabricForm [name=price]', '97000');
+  await loop.fill('#fabricForm [name=colorName]', 'Humo');
+  await loop.click('#fabricForm button.primary');
+  await toFabricStep();
+  check('una tela creada en el backoffice aparece en el cotizador',
+    (await fabricNames()).some(n => n.includes('Tela Prueba Loop')), true);
+  await loop.click('.fabric-card:has-text("Tela Prueba Loop")');
+  check('y el cotizador la cotiza al precio del backoffice',
+    (await loop.textContent('.fabric-card.selected .fabric-card-body small')).includes(await loop.evaluate(() => Store.money(97000))), true);
+
+  await openAdmin(loop, D);
+  await loop.click('button[data-page="furniture"]');
+  await loop.click('#newFurniture');
+  const F = '#furnitureForm ';
+  for (const [name, value] of Object.entries({ name: 'Puf Prueba', icon: '●', hint: 'Individual', metersMin: '2', metersMax: '3',
+    quantityLabel: 'Cantidad de pufs', unitOne: 'puf', unitMany: 'pufs', wMin: '40', wMax: '90', hMin: '30', hMax: '60', dMin: '40', dMax: '90', order: '7' })) {
+    await loop.fill(`${F}[name=${name}]`, value);
+  }
+  await loop.click(F + 'button.primary');
+  await loop.goto(D + 'index.html');
+  check('un mueble creado en el backoffice aparece en el cotizador',
+    await loop.$$eval('.furniture-card', els => els.map(c => c.dataset.furniture).includes('Puf Prueba')), true);
+
+  await openAdmin(loop, D);
+  await loop.click('button[data-page="settings"]');
+  await setTags(loop, '#setBudgets', ['30000', '40000', '50000']);
+  await loop.click('#saveSettings');
+  await loop.goto(D + 'index.html');
+  check('los rangos de presupuesto del backoffice son los del cotizador',
+    await loop.$$eval('#budget option', els => els.map(e => e.value)), ['30000', '40000', '50000', '']);
+
+  await toFabricStep();
+  await loop.click('.fabric-card:has-text("Tela Prueba Loop")');
+  await loop.click('#nextButton');
+  await loop.fill('#fullName', 'Cliente Prueba Loop');
+  await loop.fill('#email', 'loop@example.com');
+  await loop.fill('#phone', '3001234567');
+  await loop.check('#consent');
+  await loop.click('#nextButton');
+  await loop.waitForSelector('#successState:not([hidden])');
+  const quoteId = (await loop.textContent('#requestNumber')).trim();
+  await openAdmin(loop, D);
+  await loop.click('button[data-page="quotes"]');
+  const rows = await loop.textContent('#quoteRows');
+  check('una cotización enviada desde el cotizador llega al backoffice', rows.includes(quoteId), true);
+  check('con el cliente y la tela elegida', rows.includes('Cliente Prueba Loop') && rows.includes('Tela Prueba Loop'), true);
+
+  await loop.click('button[data-page="fabrics"]');
+  await loop.click('article:has-text("Tela Prueba Loop") [data-toggle-fabric]');
+  await toFabricStep();
+  check('desactivar la tela en el backoffice la saca del cotizador',
+    (await fabricNames()).some(n => n.includes('Tela Prueba Loop')), false);
+  console.log('page errors: ' + (loopErrs.length ? loopErrs.join(' | ') : 'none'));
+  if (loopErrs.length) fails++;
+  await loop.close();
 }
 
 await b.close();

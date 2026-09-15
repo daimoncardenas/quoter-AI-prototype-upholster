@@ -71,5 +71,8 @@ Mediterránea's fixtures at all: it loops over every pack under `clients/` excep
 `mediterranea` (currently `macizo`, `intertelas`), generating each into its own
 `generated-<slug>/` and checking generation succeeds with no leftover
 `{{PLACEHOLDER}}` tokens, that pack's own brand/theme/logo show up, its shared demo
-admin can log in, and none of the OTHER packs' distinctive strings (display name,
-storage namespace, sender email) leak into its output. Self-documented at its top.
+admin can log in, none of the OTHER packs' distinctive strings (display name,
+storage namespace, sender email) leak into its output, and the product loop holds
+on that pack's own demo data: a fabric, furniture type and budget brackets created
+in the backoffice show up in the cotizador, a submitted quote lands in the
+backoffice, and deactivating the fabric removes it. Self-documented at its top.
