@@ -7,13 +7,6 @@
     { "id": 5, "name": "Terciopelo Cedro", "collection": "Esenciales", "price": 128000, "color": "#7c3f2e", "colorName": "Terracota Cedro", "use": "Uso residencial", "tags": ["Elegante", "Fácil limpieza"], "active": true, "needs": ["Fácil limpieza", "Suave"], "styles": ["Clásico"], "colorFamily": "Tonos cálidos", "rollWidthCm": 140, "rollLengthM": 20, "saleUnit": "metro", "incrementM": 0.1, "minOrderM": 1, "supplierMinM": 25, "reusableRemainder": false },
     { "id": 6, "name": "Milo Robusto", "collection": "Performance", "price": 147000, "color": "#5c6b4e", "colorName": "Verde Musgo", "use": "Pet friendly", "tags": ["Pet friendly", "Alta resistencia"], "active": false, "needs": ["Mascotas", "Alto tráfico"], "styles": ["Natural"], "colorFamily": "Verdes", "rollWidthCm": 140, "rollLengthM": 30, "saleUnit": "rollo", "incrementM": 0.1, "minOrderM": 1, "supplierMinM": 0, "reusableRemainder": false }
   ],
-  "users": [
-    { "id": "u-admin", "name": "Camila Torres Salazar", "email": "camila@macizo.example", "role": "admin", "sellerId": null, "active": true },
-    { "id": "u-sofia", "name": "Sofía Ramírez", "email": "sofia@macizo.example", "role": "seller", "sellerId": 1, "active": true },
-    { "id": "u-mateo", "name": "Mateo Salcedo", "email": "mateo@macizo.example", "role": "seller", "sellerId": 2, "active": true },
-    { "id": "u-valentina", "name": "Valentina Duarte", "email": "valentina@macizo.example", "role": "seller", "sellerId": 3, "active": true },
-    { "id": "u-esteban", "name": "Esteban Prieto", "email": "esteban@macizo.example", "role": "seller", "sellerId": 4, "active": false }
-  ],
   "servicePoints": [
     { "id": "sp-poblado", "name": "El Poblado", "city": "Medellín", "address": "Carrera 35 # 8-40", "phone": "+57 300 4471182", "active": true, "order": 1 },
     { "id": "sp-belen", "name": "Belén", "city": "Medellín", "address": "Calle 30A # 76-15", "phone": "+57 301 5528834", "active": true, "order": 2 },
@@ -21,10 +14,10 @@
     { "id": "sp-bucaramanga", "name": "Bucaramanga", "city": "Bucaramanga", "address": "Carrera 27 # 42-18", "phone": "+57 316 2207739", "active": true, "order": 4 }
   ],
   "sellers": [
-    { "id": 1, "name": "Sofía Ramírez", "email": "sofia@macizo.example", "servicePointIds": ["sp-poblado"], "active": true, "quotes": 12 },
-    { "id": 2, "name": "Mateo Salcedo", "email": "mateo@macizo.example", "servicePointIds": ["sp-belen"], "active": true, "quotes": 10 },
-    { "id": 3, "name": "Valentina Duarte", "email": "valentina@macizo.example", "servicePointIds": ["sp-laureles", "sp-bucaramanga"], "active": true, "quotes": 8 },
-    { "id": 4, "name": "Esteban Prieto", "email": "esteban@macizo.example", "servicePointIds": ["sp-bucaramanga"], "active": false, "quotes": 6 }
+    { "id": 1, "servicePointIds": ["sp-poblado"], "quotes": 12 },
+    { "id": 2, "servicePointIds": ["sp-belen"], "quotes": 10 },
+    { "id": 3, "servicePointIds": ["sp-laureles", "sp-bucaramanga"], "quotes": 8 },
+    { "id": 4, "servicePointIds": ["sp-bucaramanga"], "quotes": 6 }
   ],
   "quotes": [
     { "id": "COT-2042", "date": "2026-09-04", "customer": { "name": "Isabela Ruiz", "email": "", "phone": "" }, "furniture": "Sofá", "quantityLabel": "3 puestos", "city": "Medellín · El Poblado", "servicePointId": "sp-poblado", "seller": "", "sellerId": "", "status": "Nueva", "fabricName": "Lino Salinas", "photoIds": [] },

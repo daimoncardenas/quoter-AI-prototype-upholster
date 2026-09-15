@@ -4,10 +4,12 @@ Design/brand taken from macizocolombia.com (2026-09-14): `displayName`, `theme`,
 `fonts` and `logo` in `client.json` are real, sourced from the live site with
 Playwright (computed styles, loaded fonts, and the actual logo asset).
 
-`seed.json` and the rest of the operational fields (`emailDomain`, `demoPassword`,
-`storageNamespace`) are still **invented placeholders** — nobody has provided
-Macizo's real users, fabric catalog, sellers, service points or quotes yet.
-Everything below that's still open only concerns that demo data.
+`seed.json` and `storageNamespace` are still **invented placeholders** — nobody has
+provided Macizo's real fabric catalog, service points or quotes yet. Backoffice
+logins (emails, password) are **not** Macizo's to invent: every client shares the
+same demo users from `shared/demo-users.json`, so there is nothing to replace there.
+Everything below that's still open only concerns the fabric/service-point/quote
+demo data.
 
 ## TODO before this client ships
 
@@ -39,11 +41,13 @@ Everything below that's still open only concerns that demo data.
       pack-driven. The print-watermark SVG fill comes from the core
       `theme.inkSecondary`, not from tints. See CLAUDE.md's white-label section for
       the full breakdown.
-- [ ] Real email domain and sender email (`client.json` → `copy.loginEmailPlaceholder`,
-      `seed.json` → `settings.senderEmail`, and every user/seller email)
-- [ ] Real demo password (`client.json` → `demoPassword`)
-- [ ] Real fabric catalog, users, sellers, service points, and quotes
-      (`seed.json`)
+- [ ] Real sender email (`seed.json` → `settings.senderEmail`) — the backoffice login
+      domain/password stay the shared demo ones on purpose, this is only the "from"
+      address on quote emails
+- [ ] Real fabric catalog, service points, and quotes (`seed.json`) — sellers'
+      identity (name/email/active) is shared across all clients
+      (`shared/demo-users.json`); only their `servicePointIds`/`quotes` count in
+      `seed.json` is Macizo's to set
 
 See `../mediterranea/` for a fully populated reference pack, and
 `README.md` / `CLAUDE.md` at the repo root for the pack file contract.

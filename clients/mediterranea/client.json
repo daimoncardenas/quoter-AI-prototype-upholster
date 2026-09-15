@@ -5,8 +5,6 @@
   "assistantName": "Asistente Mediterránea",
   "storageNamespace": "med.v1.",
   "photosDbName": "med-photos",
-  "demoPassword": "mediterranea",
-  "emailDomain": "mediterraneacol.com",
   "meta": {
     "copyright": "Diseño conceptual de Daimon Cardenas. Prototipo de demostración, no afiliado a Mediterránea Insumos.",
     "titleIndex": "Cotiza tu proyecto | Mediterránea Insumos",
@@ -17,8 +15,7 @@
   "copy": {
     "consent": "Autorizo el tratamiento de mis datos para recibir esta cotización y ser contactado por Mediterránea Insumos.",
     "notOfficialIndex": "Esta no es la página oficial de Mediterránea. Diseño conceptual para evaluación privada.",
-    "notOfficialAdmin": "Esta no es la página oficial de Mediterránea. Diseño conceptual para evaluación privada. Ilustra los roles; no protege información: toda la verificación ocurre en el navegador del visitante.",
-    "loginEmailPlaceholder": "nombre@mediterraneacol.com"
+    "notOfficialAdmin": "Esta no es la página oficial de Mediterránea. Diseño conceptual para evaluación privada. Ilustra los roles; no protege información: toda la verificación ocurre en el navegador del visitante."
   },
   "logo": {
     "file": "logo.png",

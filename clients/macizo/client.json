@@ -1,13 +1,11 @@
 {
   "slug": "macizo",
-  "_todo": "Design/brand taken from macizocolombia.com (2026-09-14): displayName, logo and theme below are real. Demo data (seed.json, emailDomain, demoPassword, storageNamespace) is still PLACEHOLDER — nobody gave us real users/fabrics/sellers yet. Replace seed.json before this client ships to anyone.",
+  "_todo": "Design/brand taken from macizocolombia.com (2026-09-14): displayName, logo and theme below are real. Demo data (seed.json's fabrics/servicePoints/quotes, storageNamespace) is still PLACEHOLDER — nobody gave us real fabrics/sellers/quotes yet. Backoffice logins are the shared demo set every client uses (shared/demo-users.json), not a per-client TODO. Replace seed.json before this client ships to anyone.",
   "displayName": "Macizo Colombia",
   "shortName": "Macizo",
   "assistantName": "Asistente Macizo",
   "storageNamespace": "mcz.v1.",
   "photosDbName": "mcz-photos",
-  "demoPassword": "macizo",
-  "emailDomain": "macizo.example",
   "meta": {
     "copyright": "Diseño conceptual de Daimon Cardenas. Prototipo de demostración, no afiliado a Macizo Colombia.",
     "titleIndex": "Cotiza tu proyecto | Macizo Colombia",
@@ -18,8 +16,7 @@
   "copy": {
     "consent": "Autorizo el tratamiento de mis datos para recibir esta cotización y ser contactado por Macizo Colombia.",
     "notOfficialIndex": "Esta no es la página oficial de Macizo. Diseño conceptual para evaluación privada.",
-    "notOfficialAdmin": "Esta no es la página oficial de Macizo. Diseño conceptual para evaluación privada. Ilustra los roles; no protege información: toda la verificación ocurre en el navegador del visitante.",
-    "loginEmailPlaceholder": "nombre@macizo.example"
+    "notOfficialAdmin": "Esta no es la página oficial de Macizo. Diseño conceptual para evaluación privada. Ilustra los roles; no protege información: toda la verificación ocurre en el navegador del visitante."
   },
   "logo": {
     "file": "logo-light.png",

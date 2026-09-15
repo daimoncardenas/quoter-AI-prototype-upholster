@@ -40,9 +40,9 @@ npm run build                                     # generates, then writes dist/
   `generated/admin.html` directly in Chromium — do
   **not** open the root `index.html`/`admin.html`/`store.js` directly, they are
   templates full of `{{PLACEHOLDER}}` tokens, not renderable pages. Backoffice demo
-  password and every seeded email are per-client (`clients/<slug>/client.json` +
-  `seed.json`) — for `CLIENT=MEDITERRANEA` it's `mediterranea` /
-  `maria@mediterraneacol.com` for the admin.
+  logins are **shared across every client** (`shared/demo-users.json`, merged into
+  each pack by `tools/client-pack.mjs`) — the admin is always `admin@demo.com` /
+  `demo`, whichever `CLIENT` is active.
 - `npm test` chains 11 suites, all described in `tests/README.md`. `macizo.spec.mjs`
   is intentionally outside `npm test` (see White-label section) and self-documented
   at its top.
@@ -61,9 +61,11 @@ rendered. Do not bundle, split into modules, or add a framework unless asked.
     `DEFAULT_SETTINGS`. It also holds the domain logic: the fabric estimate
     (`estimateByComponents`, `quantities`), recommendation ranking (`recommend`),
     seller assignment by service point, and quote ids. `furniture` and most of
-    `DEFAULT_SETTINGS` are shared domain config, not client data; `fabrics`, `users`,
-    `sellers`, `servicePoints`, `quotes`, `senderEmail`, `budgets` and the demo password
-    come from the active client pack (see below) — in the committed *template*
+    `DEFAULT_SETTINGS` are shared domain config, not client data; `fabrics`,
+    `servicePoints`, `quotes`, `senderEmail` and `budgets` come from the active client
+    pack (see below); `users` and the demo password come from `shared/demo-users.json`,
+    the same for every client; `sellers` merges the two (shared name/email, per-client
+    `servicePointIds`) — in the committed *template*
     `store.js` these are still `{{PLACEHOLDER}}` tokens, not literal arrays.
   - `Photos` — image blobs in IndexedDB (client's `photosDbName`, `med-photos` for
     Mediterránea). Records store photo **ids**, never data URLs, because a handful of
@@ -113,10 +115,24 @@ client they're for.
 
 | File | Contents |
 |------|----------|
-| `client.json` | Brand strings (`displayName`, `shortName`, `assistantName`, `meta.*` titles/descriptions, `copy.*` consent/disclaimer text), `theme` (CSS custom property values, plus `theme.tints`/`theme.rgb` — see below), `fonts` (`{href, headingName, headingFallback, body}` — see below), `logo` (`{file, alt}`), `storageNamespace`, `photosDbName`, `demoPassword`, `emailDomain` |
-| `seed.json` | Client-specific demo data: `fabrics`, `users` (no `hash` — computed at generate time), `servicePoints`, `sellers`, `quotes`, `settings` (overrides onto `DEFAULT_SETTINGS`, at minimum `senderEmail` and `budgets`) |
+| `client.json` | Brand strings (`displayName`, `shortName`, `assistantName`, `meta.*` titles/descriptions, `copy.*` consent/disclaimer text), `theme` (CSS custom property values, plus `theme.tints`/`theme.rgb` — see below), `fonts` (`{href, headingName, headingFallback, body}` — see below), `logo` (`{file, alt}`), `storageNamespace`, `photosDbName` |
+| `seed.json` | Client-specific demo data: `fabrics`, `servicePoints`, `sellers` (`id`, `servicePointIds`, `quotes` count only — identity comes from `shared/demo-users.json`, see below), `quotes`, `settings` (overrides onto `DEFAULT_SETTINGS`, at minimum `senderEmail` and `budgets`) |
 | `logo.png` / `logo.svg` | Referenced by `client.json` → `logo.file`; either extension works (`tools/client-pack.mjs` → `MIME_BY_EXT`) |
 | `README.md` | Only for placeholder/incomplete packs (see `clients/macizo/README.md`) — notes what's invented and needs replacing |
+
+**Shared demo logins** — `shared/demo-users.json` (repo root, deliberately *outside* `clients/`,
+since `loadClientPack()` enumerates `clients/*`'s subdirectories as client slugs) holds the ONE
+set of backoffice demo users every client shares: `demoPassword`, `emailDomain` and `users`
+(`{id, name, email, role, sellerId, active}`, no `hash`) plus `sellers` identity
+(`{id, name, email, active}`). `tools/client-pack.mjs` merges this into each pack at load time:
+`client.demoPassword`, `client.emailDomain` and `client.copy.loginEmailPlaceholder`
+(`nombre@<emailDomain>`) are injected onto the returned `client`, and `seed.sellers` becomes
+shared identity + the client's own `servicePointIds`/`quotes` count, keyed by seller `id` — both
+sides' seller ids must match exactly, or `loadClientPack()` throws listing the mismatches. A
+seeded quote's `seller` label is likewise derived from `sellerId` against the merged sellers, so
+a client pack's `quotes` never has to hand-type (and can never drift from) the shared seller
+name. Login emails and the password are therefore identical for every `CLIENT` — always
+`admin@demo.com` / `demo` for the admin, same seller emails (`laura@demo.com`, etc.) everywhere.
 
 **Injection mechanism**: `index.html`, `admin.html` and `store.js` at the repo root are
 committed as **templates** containing `{{PLACEHOLDER}}` tokens (brand text, theme CSS
@@ -178,15 +194,20 @@ unknown or missing `CLIENT` fails loudly and lists the available `clients/*/` sl
 **Adding a client**: copy `clients/mediterranea/` (fully populated reference) to
 `clients/<slug>/`, replace every value, run `CLIENT=<SLUG> npm run generate` and open
 `generated/index.html`/`admin.html` to eyeball it. No template or tooling change
-needed for a new client — only a new pack directory.
+needed for a new client — only a new pack directory. Backoffice logins come from
+`shared/demo-users.json` automatically; a new client's `seed.json` only needs to assign
+each shared seller `id` its own `servicePointIds` (and starting `quotes` count) — see
+"Shared demo logins" above.
 
 **Mediterránea vs. Macizo**: `clients/mediterranea/` reproduces the *original*
-pre-white-label product (brand, colors, logo, catalog, users, service points) exactly
-— it's what the whole `npm test` suite is written against. `clients/macizo/`'s
-**design** (`displayName`, `theme`, `fonts`, `logo`) was taken from macizocolombia.com
-on 2026-09-14; its **demo data** (`seed.json`, `emailDomain`, `demoPassword`,
-`storageNamespace`) is still an invented placeholder — see its `README.md` before
-treating anything else in it as real. `tests/macizo.spec.mjs` (`npm run test:macizo`)
+pre-white-label product (brand, colors, logo, catalog, service points) exactly — it's
+what the whole `npm test` suite is written against; its backoffice logins are the same
+shared demo set every client uses, not part of that original reproduction.
+`clients/macizo/`'s **design** (`displayName`, `theme`, `fonts`, `logo`) was taken from
+macizocolombia.com on 2026-09-14; its **demo data** (`seed.json`'s fabrics/service
+points/quotes assignments, `storageNamespace`) is still an invented placeholder — see
+its `README.md` before treating anything else in it as real. `tests/macizo.spec.mjs`
+(`npm run test:macizo`)
 checks that pack in isolation, generating into `generated-macizo/` so it never
 collides with the main suite's `generated/`.
 

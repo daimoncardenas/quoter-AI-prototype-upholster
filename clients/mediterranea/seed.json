@@ -178,48 +178,6 @@
       "reusableRemainder": false
     }
   ],
-  "users": [
-    {
-      "id": "u-admin",
-      "name": "María Camila Restrepo",
-      "email": "maria@mediterraneacol.com",
-      "role": "admin",
-      "sellerId": null,
-      "active": true
-    },
-    {
-      "id": "u-laura",
-      "name": "Laura Méndez",
-      "email": "laura@mediterraneacol.com",
-      "role": "seller",
-      "sellerId": 1,
-      "active": true
-    },
-    {
-      "id": "u-andres",
-      "name": "Andrés Rojas",
-      "email": "andres@mediterraneacol.com",
-      "role": "seller",
-      "sellerId": 2,
-      "active": true
-    },
-    {
-      "id": "u-paula",
-      "name": "Paula Gómez",
-      "email": "paula@mediterraneacol.com",
-      "role": "seller",
-      "sellerId": 3,
-      "active": true
-    },
-    {
-      "id": "u-daniel",
-      "name": "Daniel Ortiz",
-      "email": "daniel@mediterraneacol.com",
-      "role": "seller",
-      "sellerId": 4,
-      "active": false
-    }
-  ],
   "servicePoints": [
     {
       "id": "sp-12-de-octubre",
@@ -261,43 +219,31 @@
   "sellers": [
     {
       "id": 1,
-      "name": "Laura Méndez",
-      "email": "laura@mediterraneacol.com",
       "servicePointIds": [
         "sp-12-de-octubre"
       ],
-      "active": true,
       "quotes": 14
     },
     {
       "id": 2,
-      "name": "Andrés Rojas",
-      "email": "andres@mediterraneacol.com",
       "servicePointIds": [
         "sp-patio-bonito"
       ],
-      "active": true,
       "quotes": 11
     },
     {
       "id": 3,
-      "name": "Paula Gómez",
-      "email": "paula@mediterraneacol.com",
       "servicePointIds": [
         "sp-primera-de-mayo",
         "sp-cali"
       ],
-      "active": true,
       "quotes": 9
     },
     {
       "id": 4,
-      "name": "Daniel Ortiz",
-      "email": "daniel@mediterraneacol.com",
       "servicePointIds": [
         "sp-cali"
       ],
-      "active": false,
       "quotes": 8
     }
   ],

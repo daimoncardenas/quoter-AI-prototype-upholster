@@ -32,20 +32,21 @@ Un `CLIENT` que no exista falla explicando qué clientes hay disponibles bajo
 | Slug | Estado |
 |------|--------|
 | `clients/mediterranea/` | Real — reproduce la marca y los datos originales de Mediterránea Insumos tal cual |
-| `clients/macizo/` | **Diseño real, datos placeholder** — marca, colores, tipografía y logo tomados de macizocolombia.com (2026-09-14); los datos de demo (usuarios, telas, vendedores) siguen inventados; ver `clients/macizo/README.md` |
+| `clients/macizo/` | **Diseño real, datos placeholder** — marca, colores, tipografía y logo tomados de macizocolombia.com (2026-09-14); los datos de demo (telas, puntos de atención, cotizaciones) siguen inventados; los usuarios son los compartidos; ver `clients/macizo/README.md` |
 
 ## Agregar un cliente nuevo
 
 Copiar `clients/mediterranea/` a `clients/<slug>/` y reemplazar cada valor:
 
-- `client.json` — nombre, textos, `theme` (colores), `fonts` (tipografía), `logo`,
-  contraseña de demo, dominio de correo
-- `seed.json` — telas, usuarios (sin `hash`, se calcula solo), vendedores,
-  puntos de atención, cotizaciones
+- `client.json` — nombre, textos, `theme` (colores), `fonts` (tipografía), `logo`
+- `seed.json` — telas, vendedores (solo `servicePointIds` y cantidad de cotizaciones;
+  el nombre y el correo son compartidos, ver abajo), puntos de atención, cotizaciones
 - `logo.png` o `logo.svg`
 
-No hace falta tocar ninguna plantilla ni herramienta — `CLAUDE.md` tiene el
-contrato completo del pack.
+Los usuarios de demo del backoffice (correos y contraseña) **son los mismos para
+todos los clientes** — viven en `shared/demo-users.json`, no en cada pack. No hace
+falta tocar ninguna plantilla ni herramienta para un cliente nuevo — `CLAUDE.md` tiene
+el contrato completo del pack.
 
 ## Entregar el prototipo
 

@@ -154,7 +154,13 @@ check('la marca de agua NO aparece en pantalla',
   await p.evaluate(()=>getComputedStyle(document.body,'::after').backgroundImage), 'none');
 check('y no expone credenciales: se envían aparte con la propuesta', await (async()=>{
   const t=await p.textContent('#demoBanner');
-  return !emailDomainRe.test(t) && !t.includes(await p.evaluate(()=>Auth.DEMO_PASSWORD));})(), true);
+  const pw=await p.evaluate(()=>Auth.DEMO_PASSWORD);
+  // Word-boundary match, not substring: the shared demo password is the plain
+  // word "demo" (see shared/demo-users.json), which also occurs as a harmless
+  // prefix inside unrelated copy like "Prototipo demostrativo" — a bare
+  // .includes() would flag that false positive instead of an actual leak.
+  const pwRe=new RegExp('\\b'+pw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i');
+  return !emailDomainRe.test(t) && !pwRe.test(t);})(), true);
 check('su alto real alimenta los desplazamientos', await p.evaluate(()=>{
   const h=getComputedStyle(document.documentElement).getPropertyValue('--banner-h').trim();
   return h===document.getElementById('demoBanner').offsetHeight+'px';}), true);
