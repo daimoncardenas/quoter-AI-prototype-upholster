@@ -1,5 +1,5 @@
 {
-  "name": "mediterranea-prototypes",
+  "name": "upholster-prototype-quoter",
   "private": true,
   "description": "Prototypes for the Mediterránea Insumos fabric quoting flow. The prototypes themselves have no dependencies — these are only for the tests.",
   "scripts": {

@@ -1,4 +1,4 @@
-# quoter-AI-prototype-upholster
+# upholster-prototype-quoter
 
 ## Entregar el prototipo
 
