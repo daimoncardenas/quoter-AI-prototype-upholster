@@ -300,7 +300,7 @@
       $('#quoteDetail').innerHTML=
         (fotos.length
           ? `<div class="quote-gallery">${fotos.map((f,i)=>`<img src="${f}" alt="Fotografía ${i+1} enviada por el cliente">`).join('')}</div>`
-          : `<p style="color:var(--muted);font-size:.7rem">Esta solicitud no incluye fotografías.</p>`)+
+          : `<p class="modal-hint">Esta solicitud no incluye fotografías.</p>`)+
         `<div class="form-grid">`+
         [['Solicitud',q.id],['Fecha',fmtDate(q.date)],['Cliente',(q.customer&&q.customer.name)||'—'],
          ['Correo',(q.customer&&q.customer.email)||'—'],['Celular',(q.customer&&q.customer.phone)||'—'],
