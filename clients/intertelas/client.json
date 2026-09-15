@@ -29,11 +29,11 @@
     "body": "Montserrat,Arial,sans-serif"
   },
   "theme": {
-    "ink": "#aa1424",
-    "inkSecondary": "#770e19",
+    "ink": "#2b2b2b",
+    "inkSecondary": "#1c1c1c",
     "accent": "#dd363a",
     "gold": "#ffffff",
-    "goldLight": "#eac4c8",
+    "goldLight": "#d9d9d9",
     "cream": "#ede8d0",
     "paper": "#ffffff",
     "text": "#242424",
@@ -51,7 +51,7 @@
       "modalBackdrop": "0,0,0"
     },
     "tints": {
-      "bannerBg": "#4c0910",
+      "bannerBg": "#161616",
       "demoCaption": "#cfcfcf",
       "bannerTextAdmin": "#cfcfcf",
       "panelWash": "#f5f5f5",
@@ -78,8 +78,8 @@
       "photoPlaceholderBg": "#484848",
       "uploadZoneBg": "#f9f9f9",
       "iconCircleBg": "#ebebeb",
-      "stepBorder": "#5f5f5f",
-      "stepLabel": "#8d8d8d",
+      "stepBorder": "#7a7a7a",
+      "stepLabel": "#a3a3a3",
       "successIconBg": "#e5efe0",
       "successBorder": "#e5efe0",
       "profileCaption": "#b5b5b5",
