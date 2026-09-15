@@ -144,10 +144,10 @@ check('queda fija al pie', await p.evaluate(()=>{
 check('aclara que no es el sitio oficial y de quién es el diseño', await (async()=>{
   const t=await p.textContent('#demoBanner');
   return ['Prototipo demostrativo', notOfficialFragment,
-          'evaluación privada','no protege información','Hecho por Daimon Cardenas']
+          'evaluación privada','no protege información','Hecho por CARDYRAM']
     .every(x=>t.includes(x));})(), true);
 check('la autoría va en su propio bloque, no enterrada en la frase',
-  (await p.textContent('.demo-author')).trim(), 'Hecho por Daimon Cardenas');
+  (await p.textContent('.demo-author')).trim(), 'Hecho por CARDYRAM');
 check('y también en los metadatos del archivo',
   await p.evaluate(()=>document.querySelector('meta[name=author]').content), 'Daimon Cardenas');
 check('la marca de agua NO aparece en pantalla',
