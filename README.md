@@ -32,14 +32,14 @@ Un `CLIENT` que no exista falla explicando qué clientes hay disponibles bajo
 | Slug | Estado |
 |------|--------|
 | `clients/mediterranea/` | Real — reproduce la marca y los datos originales de Mediterránea Insumos tal cual |
-| `clients/macizo/` | **Placeholder** — nadie dio la marca ni los datos reales de Macizo todavía; ver `clients/macizo/README.md` |
+| `clients/macizo/` | **Diseño real, datos placeholder** — marca, colores, tipografía y logo tomados de macizocolombia.com (2026-09-14); los datos de demo (usuarios, telas, vendedores) siguen inventados; ver `clients/macizo/README.md` |
 
 ## Agregar un cliente nuevo
 
 Copiar `clients/mediterranea/` a `clients/<slug>/` y reemplazar cada valor:
 
-- `client.json` — nombre, textos, `theme` (colores), `logo`, contraseña de
-  demo, dominio de correo
+- `client.json` — nombre, textos, `theme` (colores), `fonts` (tipografía), `logo`,
+  contraseña de demo, dominio de correo
 - `seed.json` — telas, usuarios (sin `hash`, se calcula solo), vendedores,
   puntos de atención, cotizaciones
 - `logo.png` o `logo.svg`

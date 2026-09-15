@@ -112,7 +112,7 @@ client they're for.
 
 | File | Contents |
 |------|----------|
-| `client.json` | Brand strings (`displayName`, `shortName`, `assistantName`, `meta.*` titles/descriptions, `copy.*` consent/disclaimer text), `theme` (CSS custom property values), `logo` (`{file, alt}`), `storageNamespace`, `photosDbName`, `demoPassword`, `emailDomain` |
+| `client.json` | Brand strings (`displayName`, `shortName`, `assistantName`, `meta.*` titles/descriptions, `copy.*` consent/disclaimer text), `theme` (CSS custom property values, plus `theme.tints`/`theme.rgb` — see below), `fonts` (`{href, headingName, headingFallback, body}` — see below), `logo` (`{file, alt}`), `storageNamespace`, `photosDbName`, `demoPassword`, `emailDomain` |
 | `seed.json` | Client-specific demo data: `fabrics`, `users` (no `hash` — computed at generate time), `servicePoints`, `sellers`, `quotes`, `settings` (overrides onto `DEFAULT_SETTINGS`, at minimum `senderEmail` and `budgets`) |
 | `logo.png` / `logo.svg` | Referenced by `client.json` → `logo.file`; either extension works (`tools/client-pack.mjs` → `MIME_BY_EXT`) |
 | `README.md` | Only for placeholder/incomplete packs (see `clients/macizo/README.md`) — notes what's invented and needs replacing |
@@ -122,6 +122,38 @@ committed as **templates** containing `{{PLACEHOLDER}}` tokens (brand text, them
 custom properties, logo data URI; `store.js` additionally has `{{FABRICS_JSON}}`,
 `{{USERS_JSON}}`, `{{SERVICE_POINTS_JSON}}`, `{{SELLERS_JSON}}`, `{{QUOTES_JSON}}`,
 `{{SENDER_EMAIL_JSON}}`, `{{BUDGETS_JSON}}`, `{{DEMO_PASSWORD_JSON}}`, `{{STORAGE_NS}}`).
+
+**Fonts are pack-driven too** — `{{FONTS_HREF}}` (the Google Fonts `<link href>`, full
+URL), `{{FONT_BODY}}` (a ready-to-use `font-family` value, e.g. `Montserrat,Arial,sans-serif`)
+and `{{FONT_HEADING_NAME}}` / `{{FONT_HEADING_FALLBACK}}` (kept as two separate tokens,
+not one, because `admin.html`'s heading declarations pre-date this change and mix
+`'quoted'`/`"quoted"`/unquoted family-name styles across call sites — one shared token
+would have had to pick a single quoting style and silently rewrite the others, breaking
+`clients/mediterranea/`'s byte-for-byte output). `tools/build.mjs`'s `shell()` (the
+sealed-delivery gate page, currently disabled) also takes `fonts`/`theme` from the pack
+instead of hardcoding Cormorant Garamond/Montserrat and Mediterránea's old teal, so a
+re-enabled sealed delivery matches whichever client is active.
+**`theme.tints` / `theme.rgb`** — beyond the 14 core palette colors, both templates had
+~45 more colors hardcoded ad hoc (panel washes, captions on dark surfaces, borders,
+status-pill backgrounds, shadow tints, an SVG data-URI watermark fill...), almost all
+of them a stale teal/green-blue drifted from Mediterránea's original ink/accent design
+that never got swept into the core token set. `theme.tints.<name>` (hex colors,
+`{{TINT_SCREAMING_SNAKE_NAME}}`) and `theme.rgb.<name>` (bare `"r,g,b"` strings for use
+inside `rgba(...)`, `{{RGB_SCREAMING_SNAKE_NAME}}`) cover every one of them — see
+`tools/generate.mjs` for the camelCase→`{{TOKEN}}` conversion. Each is an **explicit**
+per-pack value rather than derived from the core palette (e.g. via `color-mix()`),
+because the original literals don't line up with any single current theme color closely
+enough to derive losslessly — Mediterránea's `tints`/`rgb` values are the exact original
+literals (so its generated output stays byte-for-byte identical), and Macizo's are
+contrast-checked neutrals (chrome roles) or gold/green tints (accent- or
+success-signaling roles). Two similarly hardcoded colors — `theme.rgb.shadowDeep` and
+`theme.tints.shellLeadText`/`shellFootText` — are also used directly (as plain JS field
+access, no `{{TOKEN}}`) by `tools/build.mjs`'s `shell()`. `theme.amber`/`theme.red`/
+`theme.success` (the pre-existing core semantic colors) were left alone — they're
+warning/error/success semantics shared across clients, not part of the ink/accent brand
+hue, though a couple of pale washes tied to them (e.g. `statusSentBg`) still needed
+their own explicit `tints` entry since the wash itself was never wired to the token.
+
 `tools/generate.mjs` does one `String.replace(/\{\{(\w+)\}\}/g, ...)` pass per file,
 throwing on any `{{TOKEN}}` left unresolved. User-seed **password hashes are computed
 at generate time** (`tools/client-pack.mjs`, Node's `crypto`), never hand-copied — a
@@ -145,10 +177,11 @@ needed for a new client — only a new pack directory.
 
 **Mediterránea vs. Macizo**: `clients/mediterranea/` reproduces the *original*
 pre-white-label product (brand, colors, logo, catalog, users, service points) exactly
-— it's what the whole `npm test` suite is written against. `clients/macizo/` is an
-**invented placeholder** (no real Macizo brand/data was ever provided) that only
-exists to prove the pipeline works for a second client; see its `README.md` before
-treating anything in it as real. `tests/macizo.spec.mjs` (`npm run test:macizo`)
+— it's what the whole `npm test` suite is written against. `clients/macizo/`'s
+**design** (`displayName`, `theme`, `fonts`, `logo`) was taken from macizocolombia.com
+on 2026-09-14; its **demo data** (`seed.json`, `emailDomain`, `demoPassword`,
+`storageNamespace`) is still an invented placeholder — see its `README.md` before
+treating anything else in it as real. `tests/macizo.spec.mjs` (`npm run test:macizo`)
 checks that pack in isolation, generating into `generated-macizo/` so it never
 collides with the main suite's `generated/`.
 

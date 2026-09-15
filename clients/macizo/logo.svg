@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="620" viewBox="0 0 1024 620">
-  <!-- PLACEHOLDER wordmark — see clients/macizo/README.md. Not a real brand mark. -->
-  <rect width="1024" height="620" fill="none"/>
-  <text x="512" y="330" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif"
-        font-size="150" font-weight="600" fill="#3c2415" letter-spacing="6">MACIZO</text>
-  <rect x="352" y="360" width="320" height="6" fill="#c1662b"/>
-</svg>

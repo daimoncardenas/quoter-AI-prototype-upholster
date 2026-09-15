@@ -35,7 +35,10 @@ check('store.js no menciona a Mediterránea', /mediterr/i.test(storeJs), false);
 
 console.log('\nLA MARCA Y EL TEMA DE MACIZO APARECEN EN LA SALIDA');
 check('el título usa el nombre de Macizo', indexHtml.includes(client.meta.titleIndex), true);
-check('el logo de Macizo está embebido', indexHtml.includes('data:image/svg+xml;base64,'), true);
+// Macizo's real logo is a raster (logo-light.png, derived from the site's
+// own asset), not svg+xml — check any embedded data-URI image, not one
+// specific mime type.
+check('el logo de Macizo está embebido', /data:image\/(svg\+xml|png|jpeg|webp);base64,/.test(indexHtml), true);
 check('el color de acento de Macizo está en el tema', indexHtml.includes(`--accent:${client.theme.accent}`), true);
 check('el color de acento de Macizo difiere del de Mediterránea', client.theme.accent === '#00a19a', false);
 

@@ -23,6 +23,15 @@ const { subtle } = webcrypto;
 // getRandomValues exige su propio `this`, así que no se desestructura.
 const rand = n => webcrypto.getRandomValues(new Uint8Array(n));
 
+/* #rrggbb -> "r,g,b", para meter un color del pack dentro de un literal
+ * rgba(...). Mismo helper que tools/generate.mjs (sin import compartido a
+ * propósito: build.mjs no depende de generate.mjs más que por generate()). */
+function hexToRgbList(hex) {
+  const h = hex.replace('#', '');
+  const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);
+  return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`;
+}
+
 /* PBKDF2-HMAC-SHA256. La llave es lo único que separa el archivo del texto
  * claro, así que encarecemos cada intento: sin esto, un diccionario de llaves
  * "bonitas" cae en milisegundos. */
@@ -52,7 +61,7 @@ async function encrypt(plaintext, passphrase) {
 /* --------------------------------------------------------------- la cáscara --
  * Lo único que se entrega en claro: el formulario, el descifrador y el bulto
  * cifrado. Ni una línea del prototipo. */
-function shell({ title, logo, logoAlt, brandName, eyebrow, lead, storageKey, payload }) {
+function shell({ title, logo, logoAlt, brandName, eyebrow, lead, storageKey, payload, fonts, theme }) {
   return `<!doctype html>
 <html lang="es">
 <head>
@@ -61,25 +70,25 @@ function shell({ title, logo, logoAlt, brandName, eyebrow, lead, storageKey, pay
 <title>${title}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="${fonts.href}">
 <style>
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:#07383b;color:#07383b;font-family:Montserrat,Arial,sans-serif;display:grid;place-items:center;padding:32px 24px}
+body{margin:0;min-height:100vh;background:${theme.ink};color:${theme.ink};font-family:${fonts.body};display:grid;place-items:center;padding:32px 24px}
 button,input{font:inherit}button{cursor:pointer}
 .stack{width:100%;max-width:420px;display:grid;justify-items:center;gap:26px}
 .logo{display:block;width:auto;height:58px}
-.card{width:100%;background:#fff;padding:34px 36px 30px;box-shadow:0 30px 80px rgba(0,25,28,.35)}
-.eyebrow{text-transform:uppercase;font-size:.62rem;letter-spacing:.14em;font-weight:700;color:#0f5c60}
-h1{font:600 1.9rem/1.1 Cormorant Garamond,serif;color:#07383b;margin:9px 0 10px}
-.lead{font-size:.76rem;line-height:1.6;color:#5f736f;margin:0 0 20px}
+.card{width:100%;background:#fff;padding:34px 36px 30px;box-shadow:0 30px 80px rgba(${theme.rgb.shadowDeep},.35)}
+.eyebrow{text-transform:uppercase;font-size:.62rem;letter-spacing:.14em;font-weight:700;color:${theme.accent}}
+h1{font:600 1.9rem/1.1 ${fonts.headingName},${fonts.headingFallback};color:${theme.ink};margin:9px 0 10px}
+.lead{font-size:.76rem;line-height:1.6;color:${theme.tints.shellLeadText};margin:0 0 20px}
 label{display:block;font-size:.7rem;font-weight:700}
-input{width:100%;margin-top:8px;border:1px solid #d3ded9;border-radius:2px;padding:14px;font-size:.85rem;letter-spacing:.1em;min-height:47px;text-transform:uppercase}
-input:focus-visible{outline:3px solid rgba(0,161,154,.45);outline-offset:2px}
-.error{color:#a64040;font-size:.72rem;margin:10px 0 0}
-button{margin-top:18px;width:100%;border:0;border-radius:2px;background:#07383b;color:#fff;padding:14px;font-weight:700;font-size:.75rem}
-button:hover{background:#0f5c60}
+input{width:100%;margin-top:8px;border:1px solid ${theme.line};border-radius:2px;padding:14px;font-size:.85rem;letter-spacing:.1em;min-height:47px;text-transform:uppercase}
+input:focus-visible{outline:3px solid rgba(${hexToRgbList(theme.accent)},.45);outline-offset:2px}
+.error{color:${theme.red};font-size:.72rem;margin:10px 0 0}
+button{margin-top:18px;width:100%;border:0;border-radius:2px;background:${theme.ink};color:#fff;padding:14px;font-weight:700;font-size:.75rem}
+button:hover{background:${theme.accent}}
 button:disabled{opacity:.5;cursor:not-allowed}
-.foot{font-size:.62rem;line-height:1.55;color:#8fa9a6;margin:0;text-align:center;max-width:44ch}
+.foot{font-size:.62rem;line-height:1.55;color:${theme.tints.shellFootText};margin:0;text-align:center;max-width:44ch}
 @media(max-width:560px){.card{padding:26px 22px 24px}}
 </style>
 </head>
@@ -274,7 +283,8 @@ for (const page of PAGES) {
   //   title, logo, logoAlt: client.logo.alt, brandName: client.displayName,
   //   eyebrow: page.eyebrow, lead: page.lead,
   //   storageKey: client.storageNamespace + 'llave',
-  //   payload: await encrypt(inlined, passphrase)
+  //   payload: await encrypt(inlined, passphrase),
+  //   fonts: client.fonts, theme: client.theme
   // }));
   writeFileSync(`dist/${page.file}`, inlined);
 
