@@ -49,14 +49,18 @@ cliente se genera:
 
 `build` primero renderiza `generated/` para el `CLIENT` activo y después
 empaqueta. Salen `dist/index.html` y `dist/admin.html`: autocontenidos
-(store.js va dentro), de doble clic, y con el prototipo cifrado con
-AES-256-GCM. La llave se deriva con PBKDF2-SHA256 a 310.000 iteraciones y
-**no está en los archivos** — se manda por correo, aparte. Si se pierde, se
-vuelve a construir con una nueva.
+(store.js va dentro) y de doble clic.
 
-Una llave abre las dos páginas: queda guardada en el navegador del cliente, así
-que se escribe una sola vez. El login del backoffice sigue siendo aparte.
+> **Cifrado desactivado por ahora.** `dist/` sale **sin cifrar**: se abre directo,
+> sin llave, y no es la entrega final. `build` lo avisa con el mensaje
+> `SIN CIFRAR`. Las llamadas de cifrado están comentadas en `tools/build.mjs`.
+
+Con el cifrado activado, el prototipo va cifrado con AES-256-GCM. La llave se
+deriva con PBKDF2-SHA256 a 310.000 iteraciones y **no está en los archivos**: se
+manda por correo, aparte. Si se pierde, se vuelve a construir con una nueva. Una
+llave abre las dos páginas: queda guardada en el navegador del cliente, así que
+se escribe una sola vez. El login del backoffice sigue siendo aparte.
 
 `npm test` incluye `tests/sealed.spec.mjs`, que comprueba sobre los bytes del
 paquete que ni el catálogo, ni los precios, ni los vendedores, ni la llave viajan
-en claro.
+en claro. Mientras el cifrado esté desactivado, esa prueba se salta.

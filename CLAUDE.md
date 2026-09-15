@@ -37,9 +37,9 @@ npm run build                                     # generates, then writes dist/
   password and every seeded email are per-client (`clients/<slug>/client.json` +
   `seed.json`) — for `CLIENT=MEDITERRANEA` it's `mediterranea` /
   `maria@mediterraneacol.com` for the admin.
-- `tests/README.md` describes only 7 of the 10 `npm test` suites; `billing`,
-  `components` and `sealed` are missing from it. `macizo.spec.mjs` is intentionally
-  outside `npm test` (see White-label section) and self-documented at its top.
+- `npm test` chains 11 suites, all described in `tests/README.md`. `macizo.spec.mjs`
+  is intentionally outside `npm test` (see White-label section) and self-documented
+  at its top.
 
 ## Architecture
 
