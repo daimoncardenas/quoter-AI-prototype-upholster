@@ -81,11 +81,20 @@ export function loadClientPack(clientEnvValue) {
   if (colorMode === 'inverted' && !logoFile) {
     throw new Error(`clients/${slug}/client.json: colorMode "inverted" requires logo.fileOnLight (a logo variant that reads on a white background)`);
   }
-  const logoPath = path.join(dir, logoFile);
-  const ext = path.extname(logoFile).toLowerCase();
-  const mime = MIME_BY_EXT[ext];
-  if (!mime) throw new Error(`${dir}: unsupported logo extension "${ext}" (add it to MIME_BY_EXT in tools/client-pack.mjs)`);
-  const logoDataUri = `data:${mime};base64,${readFileSync(logoPath).toString('base64')}`;
+  const toDataUri = file => {
+    const ext = path.extname(file).toLowerCase();
+    const mime = MIME_BY_EXT[ext];
+    if (!mime) throw new Error(`${dir}: unsupported logo extension "${ext}" (add it to MIME_BY_EXT in tools/client-pack.mjs)`);
+    return `data:${mime};base64,${readFileSync(path.join(dir, file)).toString('base64')}`;
+  };
+  // The logo the pack's own color mode paints (what the pages embed today)...
+  const logoDataUri = toDataUri(logoFile);
+  /* ...and both variants, which become the runtime brand's DEFAULT logos
+   * (store.js Store.brandDefaults().logos): onDark for normal mode's dark
+   * surfaces, onLight for inverted mode's white ones (null when the pack
+   * has none — an admin switching to "Invertido" must then upload one). */
+  const logoOnDarkDataUri = client.logo.file ? toDataUri(client.logo.file) : null;
+  const logoOnLightDataUri = client.logo.fileOnLight ? toDataUri(client.logo.fileOnLight) : null;
 
   const ns = client.storageNamespace;
   const demoPassword = shared.demoPassword;
@@ -135,5 +144,5 @@ export function loadClientPack(clientEnvValue) {
     copy: { ...client.copy, loginEmailPlaceholder: `nombre@${emailDomain}` }
   };
 
-  return { slug, client: mergedClient, seed: { ...seed, users, sellers, quotes }, logoDataUri };
+  return { slug, client: mergedClient, seed: { ...seed, users, sellers, quotes }, logoDataUri, logoOnDarkDataUri, logoOnLightDataUri };
 }

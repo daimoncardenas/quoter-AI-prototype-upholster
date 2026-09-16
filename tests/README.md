@@ -92,6 +92,18 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   old free-text seller zones into points by id — including the case where a
   seed seller's zones were all demo placeholders, which must not be
   resurrected as fake points.
+- `styles.spec.mjs` — "Configuración de estilos", the runtime brand layer: that
+  an untouched pack renders with nothing applied (no inline properties, no stored
+  key), that saved colors repaint the backoffice AND the cotizador (with the rest
+  of the palette derived by `Store.derivePalette`), that the contrast guard blocks
+  the save and names the failing pair, that an uploaded logo is re-encoded to
+  `data:image/png` (an SVG carrying a `<script>` included — it never runs) and
+  reaches both headers, that fonts and the header variant are locked on Essential
+  behind "Mejorar plan" and unlocked on Professional, that "Invertido" needs a
+  light-background logo, that a downgrade ignores those overrides without deleting
+  them, that both "Restablecer estilos por defecto" and "Restablecer datos de demo"
+  restore the pack's look, that the nav reads "Configuraciones de cotizador", and
+  that a seller can neither see nor reach the section.
 - `sealed.spec.mjs` — the encrypted delivery build: since that gate is
   currently disabled at the owner's request, this checks that `dist/` ships in
   the clear rather than encrypted. It tests the packaging, not the prototype.
@@ -123,4 +135,8 @@ rules, reading correctly under `clients/intertelas/`'s inverted color mode) and
 its plan-change/package-purchase flows hold on every pack. Then opens "Usage" and
 asserts five progressbars plus the history card, every value well-formed
 (`<x> de <y>`), and Sedes reading `de 4` (Professional's 3 + the Sede bought).
+Then, per pack, it checks the brand layer end to end on that pack's own
+design: with nothing saved there is nothing applied, the pack's own defaults pass
+their own contrast checks, and a color saved in "Configuración de estilos" reaches
+that pack's cotizador (the header in normal mode, the brand canvas in inverted).
 Self-documented at its top.

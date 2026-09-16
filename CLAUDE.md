@@ -43,7 +43,7 @@ npm run build                                     # generates, then writes dist/
   logins are **shared across every client** (`shared/demo-users.json`, merged into
   each pack by `tools/client-pack.mjs`) — the admin is always `admin@demo.com` /
   `demo`, whichever `CLIENT` is active.
-- `npm test` chains 11 suites, all described in `tests/README.md`. `clients.spec.mjs`
+- `npm test` chains 12 suites, all described in `tests/README.md`. `clients.spec.mjs`
   is intentionally outside `npm test` (see White-label section) and self-documented
   at its top.
 
@@ -72,9 +72,19 @@ rendered. Do not bundle, split into modules, or add a framework unless asked.
     photos would exhaust `localStorage`.
   - `Auth` — the demo backoffice login (salted SHA-256 hashes, session in
     `sessionStorage`, role → visible sections).
+  - `Store.brand*` + the `Brand` global — the **runtime brand**: the client pack
+    is only the DEFAULT look, and the backoffice's "Configuración de estilos"
+    saves overrides (company name, logos, the two brand colors, fonts, header
+    variant) under `<storageNamespace>brand`. `Brand.apply()` runs from each
+    page's `<head>` and repaints both pages with no regeneration. See
+    "Runtime brand layer" below.
 - `index.html` — the 6-step public wizard. Reads catalogue, furniture types,
   questionnaire options and settings from `Store`; submitting writes a quote + photos.
-- `admin.html` — the backoffice. Admins manage everything, including "Upgrade" (the
+- `admin.html` — the backoffice. Admins manage everything. The nav's
+  "Configuraciones de cotizador" (`data-page="settings"`, renamed from
+  "Configuración") holds the quoter's rules, and "Configuración de estilos"
+  (`data-page="styles"`, right after it) edits the runtime brand — see the
+  white-label section. Admin-only sections also include "Upgrade" (the
   `upgrade` section/page id) — CARDYRAM's own three subscription-plan cards for the
   quoter product, admin-only via the same `Auth.sections`/nav-hiding mechanism as
   every other admin section, with `go()` also refusing to switch to a page a role
@@ -192,19 +202,76 @@ name. Login emails and the password are therefore identical for every `CLIENT` �
 committed as **templates** containing `{{PLACEHOLDER}}` tokens (brand text, theme CSS
 custom properties, logo data URI; `store.js` additionally has `{{FABRICS_JSON}}`,
 `{{USERS_JSON}}`, `{{SERVICE_POINTS_JSON}}`, `{{SELLERS_JSON}}`, `{{QUOTES_JSON}}`,
-`{{SENDER_EMAIL_JSON}}`, `{{BUDGETS_JSON}}`, `{{DEMO_PASSWORD_JSON}}`, `{{STORAGE_NS}}`).
+`{{SENDER_EMAIL_JSON}}`, `{{BUDGETS_JSON}}`, `{{DEMO_PASSWORD_JSON}}`, `{{STORAGE_NS}}`,
+`{{BRAND_DEFAULTS_JSON}}`).
+
+**Runtime brand layer (a pack is the DEFAULT look, not a fixed one)** — the
+backoffice's admin-only "Configuración de estilos" (`data-page="styles"`) edits the
+brand at runtime, and the change applies to BOTH pages with no regeneration. In
+production this would be a tenant row plus cloud storage; here it is one
+localStorage key, `<storageNamespace>brand`, holding **only what differs** from the
+pack. With nothing saved, `Brand.apply()` is a no-op and both pages render exactly
+what `tools/generate.mjs` wrote.
+
+- **Tokens are CSS custom properties, never literals.** Every core theme color, all
+  49 `theme.tints`, all 5 `theme.rgb` triples and both fonts reach the pages as one
+  generated `:root{...}` block per page (`{{THEME_VARS}}`), and the rules read them
+  through `var()`: `var(--tint-panel-wash)`, `rgba(var(--rgb-shadow),.15)`,
+  `var(--font-heading)`. `theme.tints.<x>` becomes `--tint-<x>`, `theme.rgb.<x>`
+  becomes `--rgb-<x>`; three core keys keep both historical spellings
+  (`--ink-2`/`--ink2`, `--gold-light`/`--gold2`, `--success`/`--green`) because the
+  two pages spell them differently. Never paste a theme literal into a rule again —
+  it would be invisible to the runtime brand. The one place `var()` cannot reach is
+  the print watermark's SVG data URI, so it lives in `--print-watermark` and
+  `Brand.apply()` rewrites its `%23rrggbb` fill.
+- **Where it is applied.** `store.js` is loaded from each page's `<head>` (not before
+  `</body>`) followed by `<script>Brand.apply()</script>`, so CSS variables, the fonts
+  `<link>`, the enabled color mode and `document.title` are correct before first
+  paint. Logos and names live in the body, so they are swapped on `DOMContentLoaded`
+  while `html[data-brand-pending]` keeps them `visibility:hidden` — no flash of the
+  pack's default.
+- **Mode embedding.** Every `modes/*.css` is now embedded in both pages
+  (`{{MODE_STYLES}}`) as `<style data-color-mode="<name>" media="not all">`, with the
+  pack's own mode enabled (`media="all"`); `Brand.apply()` switches the header variant
+  by flipping `media`. `normal` has no file, so it means "none enabled". The
+  `</style` guard still applies.
+- **`data-brand-name`.** Visible brand copy that contains the company name is
+  generated with that name wrapped in `<span data-brand-name>` (assistant name,
+  consent text), and `alt`/`aria-label`/`<title>` are swapped in JS. **Exception:** the
+  demo banner's legal disclaimer stays bound to the PACK name — an admin renaming the
+  company must not make "Esta no es la página oficial de …" untruthful. Each template
+  carries a comment saying so.
+- **What is editable, and gating.** Company name, both logos (`onDark`/`onLight`) and
+  the two brand colors on any plan; fonts (an approved Google Fonts list) and the
+  header variant from Professional up (`Store.settings().plan`). A downgrade *ignores*
+  gated overrides without deleting them. Overriding a color **derives** the rest of the
+  palette with one documented sRGB function (`Store.derivePalette`); pack defaults are
+  never derived, and `amber`/`red`/`success` never change. The **WCAG contrast guard is a
+  UI gate**: the "Configuración de estilos" save button enforces it, while
+  `Store.saveBrand()` validates only format (`#rrggbb`, PNG data URI, approved font,
+  known variant) — a write from elsewhere (the console, a future caller) renders
+  unchecked, unlike plan gating, which `Store.brand()` re-enforces on read. A check that
+  fails on a value the admin did NOT touch warns instead of blocking, because some packs
+  ship a failing default (Mediterránea's accent is 3.19:1 as text on white). Logos are
+  re-encoded through a canvas to PNG (max 800 px —
+  which is also what neutralises a script inside an uploaded SVG), and colors must be
+  `#rrggbb`. "Restablecer datos de demo" clears the brand overrides too.
+
 
 **Color modes** — a client-agnostic layer between a pack's palette and the page
 surfaces, picked per-pack via `client.json` → `colorMode`. Every mode file lives at
-`modes/<mode>.css` (repo root) and is appended verbatim right before each page's
-main `</style>` via the `{{MODE_CSS}}` token — same specificity, later in the
+`modes/<mode>.css` (repo root) and EVERY one of them is embedded in both pages via
+the `{{MODE_STYLES}}` token, each in its own `<style data-color-mode="<name>">`
+right after the main stylesheet, with only the pack's own mode enabled
+(`media="all"`; the rest ship inert as `media="not all"`, which is what lets
+`Brand.apply()` switch the header variant at runtime) — same specificity, later in the
 cascade, so mode rules win over the base stylesheet without `!important` (except
 where a rule collides with an inline `style=""`, which always wins on specificity
 regardless of source order).
   - **`normal`** (default, `colorMode` omitted or `"normal"`) — today's look,
-    unchanged. There is no `modes/normal.css` file; a missing mode file resolves
-    `{{MODE_CSS}}` to `''`, reproducing the exact original bytes (this is how
-    Mediterránea/Macizo's generated output stays byte-for-byte identical).
+    unchanged. There is no `modes/normal.css` file; every mode file is still embedded (see the runtime brand layer below), but
+    none of them is enabled, so the page renders exactly as it did before color
+    modes existed.
   - **`inverted`** (`modes/inverted.css`) — swaps the light/dark relationship:
     surfaces normally painted with the pack's dark brand color (header, sidebars,
     primary buttons, chat bubbles...) become white with brand-colored text/icons;
@@ -237,8 +304,9 @@ URL), `{{FONT_BODY}}` (a ready-to-use `font-family` value, e.g. `Montserrat,Aria
 and `{{FONT_HEADING_NAME}}` / `{{FONT_HEADING_FALLBACK}}` (kept as two separate tokens,
 not one, because `admin.html`'s heading declarations pre-date this change and mix
 `'quoted'`/`"quoted"`/unquoted family-name styles across call sites — one shared token
-would have had to pick a single quoting style and silently rewrite the others, breaking
-`clients/mediterranea/`'s byte-for-byte output). `tools/build.mjs`'s `shell()` (the
+would have had to pick a single quoting style and silently rewrite the others). Both
+now resolve to the single `--font-heading` custom property, whose DEFAULT value comes
+from the pack. `tools/build.mjs`'s `shell()` (the
 sealed-delivery gate page, currently disabled) also takes `fonts`/`theme` from the pack
 instead of hardcoding Cormorant Garamond/Montserrat and Mediterránea's old teal, so a
 re-enabled sealed delivery matches whichever client is active.
@@ -257,7 +325,9 @@ each invalid one. Each is an **explicit**
 per-pack value rather than derived from the core palette (e.g. via `color-mix()`),
 because the original literals don't line up with any single current theme color closely
 enough to derive losslessly — Mediterránea's `tints`/`rgb` values are the exact original
-literals (so its generated output stays byte-for-byte identical), and Macizo's are
+literals (so its rendering is unchanged — the generated bytes now differ, since these
+values are emitted as `--tint-*`/`--rgb-*` custom properties instead of being pasted
+into rules), and Macizo's are
 contrast-checked neutrals (chrome roles) or gold/green tints (accent- or
 success-signaling roles). Two similarly hardcoded colors — `theme.rgb.shadowDeep` and
 `theme.tints.shellLeadText`/`shellFootText` — are also used directly (as plain JS field

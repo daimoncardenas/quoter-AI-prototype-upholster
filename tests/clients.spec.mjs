@@ -170,6 +170,33 @@ for (const slug of SLUGS) {
   }
   await indexPage.close();
 
+  /* The pack is the brand's DEFAULT: with nothing saved both pages render it
+   * untouched, and a color saved in "Configuración de estilos" reaches this
+   * pack's own cotizador (header in normal mode, the brand canvas in
+   * inverted mode, where the header is white). */
+  console.log(`\nLA MARCA POR DEFECTO DE ${CLIENT} SE VE Y UN COLOR GUARDADO LLEGA A SU COTIZADOR`);
+  const brandPage = await b.newPage();
+  const brandErrs = [];
+  brandPage.on('pageerror', e => brandErrs.push(String(e)));
+  await openAdmin(brandPage, D);
+  // --banner-h lo escribe la propia página; lo que importa es que no haya ninguna variable de marca en línea.
+  check('sin estilos guardados no hay nada que aplicar', await brandPage.evaluate(() => [Object.values(Store.brand().overridden).some(Boolean), document.documentElement.style.getPropertyValue('--ink')]), [false, '']);
+  await brandPage.click('button[data-page="styles"]');
+  await brandPage.waitForSelector('#styles.active #brandContrast .contrast-row');
+  check('los defaults del pack se pueden guardar (ningún chequeo propio bloquea)', await brandPage.isDisabled('#saveBrand'), false);
+  const BRAND_INK = '#1f3a5f';
+  await brandPage.fill('#brandInk', BRAND_INK);
+  await brandPage.click('#saveBrand');
+  await brandPage.waitForFunction(() => document.getElementById('toast').classList.contains('show'));
+  check('el color queda guardado como override', await brandPage.evaluate(() => Store.brandOverrides().colors), { ink: BRAND_INK });
+  await brandPage.goto(D + 'index.html');
+  const brandSurface = client.colorMode === 'inverted' ? '.app-shell' : '.site-header';
+  check(`cotizador: ${brandSurface} toma el color guardado`,
+    await brandPage.evaluate(s => getComputedStyle(document.querySelector(s)).backgroundColor, brandSurface), hexToRgbCss(BRAND_INK));
+  console.log('page errors: ' + (brandErrs.length ? brandErrs.join(' | ') : 'none'));
+  if (brandErrs.length) fails++;
+  await brandPage.close();
+
   /* The product claim, per pack: what is typed in the backoffice is what the
    * cotizador shows, and what the customer submits lands in the backoffice.
    * wiring.spec/entities.spec prove it only against Mediterránea's fixtures;

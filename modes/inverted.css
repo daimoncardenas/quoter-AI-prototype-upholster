@@ -326,6 +326,23 @@
 .usage-card.is-near .usage-fill{background:color-mix(in srgb, var(--amber) 45%, #fff)}
 .usage-card.is-over .usage-fill{background:color-mix(in srgb, var(--red) 35%, #fff)}
 
+/* Configuración de estilos. Its cards are .settings-card (flipped above) and
+ * their new text sets no color, inheriting --mode-on-color from the card;
+ * only the borders and rims drawn with the light-surface tokens need the
+ * on-color treatment. The locked note, contrast pills and alerts keep their
+ * own white/--soft backgrounds, and the live preview (.pv) paints its own
+ * draft palette, so none of them are overridden here. */
+/* admin.html pins these to --text for contrast on white; on this mode's
+ * brand-colored card they take the on-color token instead (same specificity,
+ * later in the cascade). */
+/* Scoped to the cards on purpose: the preview's own caption sits on the plain
+ * page background (never flipped), so it keeps --text from admin.html. */
+#styles .settings-card>p,#styles .settings-card .styles-hint{color:var(--mode-on-color)}
+.contrast-row{border-top-color:var(--mode-line-on-color)}
+.contrast-pair,.logo-thumb,.variant-option{border-color:var(--mode-line-on-color)}
+.brand-swatch{border-color:rgba(255,255,255,.6)}
+.variant-option:has(input:checked){box-shadow:inset 0 0 0 2px var(--mode-on-color)}
+
 .modal{background:var(--mode-card-bg);color:var(--mode-on-color)}
 .modal-hint{color:var(--mode-on-color-muted)}
 .modal-section{color:var(--mode-on-color);border-top-color:var(--mode-line-on-color)}

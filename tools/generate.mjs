@@ -8,13 +8,20 @@
  * branding and demo data into a file meant for just one of them. Only the
  * SELECTED client's resolved values ever land in generated/ or dist/.
  *
+ * A client pack is the brand's DEFAULT look, not a fixed one: every theme
+ * color, tint, rgb triple and font reaches the pages as a CSS custom property
+ * (one generated :root block per page, {{THEME_VARS}}), never as a literal
+ * pasted into a rule, so store.js's Brand.apply() can override any of them
+ * at runtime from the backoffice's "Configuración de estilos" without
+ * regenerating anything.
+ *
  *   node tools/generate.mjs             -> uses CLIENT from .env / env var
  *   CLIENT=MACIZO node tools/generate.mjs
  */
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { resolveClient } from './env.mjs';
-import { loadClientPack } from './client-pack.mjs';
+import { loadClientPack, listAvailableModes } from './client-pack.mjs';
 
 const MODES_DIR = 'modes';
 
@@ -31,9 +38,23 @@ function render(template, values) {
  * emails — anything a client pack might contain). */
 const json = v => JSON.stringify(v);
 
-/* camelCase -> SCREAMING_SNAKE_CASE, for turning client.theme.tints/rgb keys
- * into {{TOKEN}} names without hand-maintaining a second copy of every key. */
-const screamingSnake = s => s.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toUpperCase();
+/* camelCase -> kebab-case, for turning client.theme keys into CSS custom
+ * property names (theme.tints.panelWash -> --tint-panel-wash). store.js's
+ * Brand.apply() derives the SAME names with the same rule — keep both in sync. */
+const kebab = s => s.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+
+/* Three core palette keys predate this naming rule and are spelled
+ * differently in each page (index.html says --ink-2/--gold-light/--success,
+ * admin.html says --ink2/--gold2/--green); both spellings are emitted so
+ * neither stylesheet (nor modes/*.css's fallback chains) has to change.
+ * Mirrored in store.js (BRAND_VAR_ALIASES). */
+const CORE_VAR_ALIASES = {
+  inkSecondary: ['--ink-2', '--ink2'],
+  goldLight: ['--gold-light', '--gold2'],
+  success: ['--success', '--green']
+};
+
+const escHtml = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 /* #rrggbb -> "r,g,b", for feeding a hex color into an rgba(...) literal. */
 const HEX_COLOR = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
@@ -64,23 +85,59 @@ function validateTheme(theme, slug) {
   if (bad.length) throw new Error(`clients/${slug}/client.json has invalid colors:\n  ${bad.join('\n  ')}`);
 }
 
-/* Color mode CSS, appended right before the main stylesheet's closing
- * </style> so its rules land last in the cascade and win over the base
- * styles above without needing !important everywhere. "normal" has no file
- * (or an empty one), in which case {{MODE_CSS}} resolves to '' and the page
- * comes out byte-identical to having no hook at all — see modes/ for the
- * available modes (client-pack.mjs already validated client.colorMode is
- * one of them). */
-function loadModeCss(colorMode) {
-  const cssPath = path.join(MODES_DIR, `${colorMode}.css`);
+/* The pack's palette and fonts as custom property declarations — the
+ * DEFAULT values every page rule reads through var(). Core colors keep their
+ * historical names (see CORE_VAR_ALIASES), theme.tints.<x> becomes
+ * --tint-<x>, theme.rgb.<x> becomes --rgb-<x> (bare "r,g,b", used as
+ * rgba(var(--rgb-x),.35)), and the accent also gets --rgb-accent. */
+function themeCssVars(theme, fonts) {
+  const decl = [];
+  for (const [key, value] of Object.entries(theme)) {
+    if (key === 'tints' || key === 'rgb') continue;
+    for (const name of CORE_VAR_ALIASES[key] || [`--${kebab(key)}`]) decl.push(`${name}:${value}`);
+  }
+  decl.push(`--rgb-accent:${hexToRgbList(theme.accent)}`);
+  for (const [key, value] of Object.entries(theme.tints || {})) decl.push(`--tint-${kebab(key)}:${value}`);
+  for (const [key, value] of Object.entries(theme.rgb || {})) decl.push(`--rgb-${kebab(key)}:${value}`);
+  decl.push(`--font-body:${fonts.body}`, `--font-heading:"${fonts.headingName}",${fonts.headingFallback}`);
+  return decl.join(';') + ';';
+}
+
+function loadModeCss(mode) {
+  const cssPath = path.join(MODES_DIR, `${mode}.css`);
   if (!existsSync(cssPath)) return '';
   const css = readFileSync(cssPath, 'utf8');
-  if (css.includes('</style')) throw new Error(`modes/${colorMode}.css must not contain "</style" (would break the page's HTML)`);
+  if (css.includes('</style')) throw new Error(`modes/${mode}.css must not contain "</style" (would break the page's HTML)`);
   return css;
 }
 
+/* EVERY color mode file is embedded in both pages, each in its own
+ * <style data-color-mode="<name>">, right after the main stylesheet so its
+ * rules land last in the cascade and win over the base styles without
+ * !important. Only the pack's own mode is enabled (media="all"); the rest
+ * ship inert (media="not all") so Brand.apply() can switch the header
+ * variant at runtime by flipping media. "normal" has no file: it means
+ * "none enabled". */
+function modeStyleTags(activeMode) {
+  return listAvailableModes()
+    .filter(mode => existsSync(path.join(MODES_DIR, `${mode}.css`)))
+    .map(mode => `<style data-color-mode="${mode}" media="${mode === activeMode ? 'all' : 'not all'}">\n${loadModeCss(mode)}\n</style>`)
+    .join('\n  ');
+}
+
+/* Visible brand copy that contains the company name gets that name wrapped
+ * in <span data-brand-name>, so Brand.apply() can swap in the name saved in
+ * the backoffice. displayName is tried first, then shortName (e.g. Macizo's
+ * "Asistente Macizo"). The demo banner's legal disclaimer deliberately does
+ * NOT go through here — see the comment next to it in each template. */
+function brandNameHtml(text, client) {
+  const name = [client.displayName, client.shortName].find(n => n && text.includes(n));
+  if (!name) return escHtml(text);
+  return text.split(name).map(escHtml).join(`<span data-brand-name>${escHtml(name)}</span>`);
+}
+
 export function generate(clientEnvValue = resolveClient(), outDir = 'generated') {
-  const { slug, client, seed, logoDataUri } = loadClientPack(clientEnvValue);
+  const { slug, client, seed, logoDataUri, logoOnDarkDataUri, logoOnLightDataUri } = loadClientPack(clientEnvValue);
 
   const theme = client.theme;
   validateTheme(theme, slug);
@@ -91,46 +148,36 @@ export function generate(clientEnvValue = resolveClient(), outDir = 'generated')
     META_DESCRIPTION_ADMIN: client.meta.descriptionAdmin,
     TITLE_ADMIN: client.meta.titleAdmin,
     LOGO_SRC: logoDataUri,
+    /* Which Store.brand().logos slot the embedded logo is: inverted mode
+     * paints the header white, so it shows the on-light variant. */
+    LOGO_SLOT: client.colorMode === 'inverted' ? 'onLight' : 'onDark',
     LOGO_ALT: client.logo.alt,
-    MODE_CSS: loadModeCss(client.colorMode),
+    MODE_STYLES: modeStyleTags(client.colorMode),
     ASSISTANT_NAME: client.assistantName,
-    CONSENT_TEXT: client.copy.consent,
+    ASSISTANT_NAME_HTML: brandNameHtml(client.assistantName, client),
+    CONSENT_HTML: brandNameHtml(client.copy.consent, client),
     NOT_OFFICIAL_INDEX: client.copy.notOfficialIndex,
     NOT_OFFICIAL_ADMIN: client.copy.notOfficialAdmin,
     LOGIN_EMAIL_PLACEHOLDER: client.copy.loginEmailPlaceholder,
     FONTS_HREF: client.fonts.href,
-    FONT_HEADING_NAME: client.fonts.headingName,
-    FONT_HEADING_FALLBACK: client.fonts.headingFallback,
-    FONT_BODY: client.fonts.body,
-    THEME_INK: theme.ink,
-    THEME_INK_2: theme.inkSecondary,
-    THEME_ACCENT: theme.accent,
-    THEME_GOLD: theme.gold,
-    THEME_GOLD_LIGHT: theme.goldLight,
-    THEME_CREAM: theme.cream,
-    THEME_PAPER: theme.paper,
-    THEME_TEXT: theme.text,
-    THEME_MUTED: theme.muted,
-    THEME_LINE: theme.line,
-    THEME_SUCCESS: theme.success,
-    THEME_SOFT: theme.soft,
-    THEME_AMBER: theme.amber,
-    THEME_RED: theme.red,
-    /* Colors used only inside rgba(...) literals (box-shadows, focus rings,
-     * overlays): the accent and ink-secondary ones are derived here so a
-     * pack only ever states its hex color once; the rest (theme.rgb.*) are
-     * explicit per-pack "r,g,b" strings — see clients/mediterranea/client.json
-     * for why (the original hand-authored shadow tints don't line up with
-     * any single current theme color, so deriving them would drift Mediterránea's
-     * generated bytes away from the pre-existing design). */
-    ACCENT_RGB: hexToRgbList(theme.accent),
-    THEME_INK_2_HEX: theme.inkSecondary.replace('#', ''),
-    ...Object.fromEntries(Object.entries(theme.rgb).map(([k, v]) => [`RGB_${screamingSnake(k)}`, v])),
-    /* Small ad-hoc chrome tints (panel washes, captions on dark surfaces,
-     * borders, status pills...) that were hardcoded ad hoc throughout the
-     * original design instead of reusing the core palette above — see
-     * CLAUDE.md's white-label section for the full rationale. */
-    ...Object.fromEntries(Object.entries(theme.tints).map(([k, v]) => [`TINT_${screamingSnake(k)}`, v]))
+    THEME_VARS: themeCssVars(theme, client.fonts),
+    /* The print watermark is an SVG data URI, where var() cannot reach, so
+     * its fill is still a generate-time literal (inside --print-watermark in
+     * each page's :root); Brand.apply() rewrites that property when an
+     * override changes inkSecondary. */
+    THEME_INK_2_HEX: theme.inkSecondary.replace('#', '')
+  };
+
+  /* The pack's look as the runtime brand's defaults (Store.brandDefaults()).
+   * Overrides saved in the backoffice are merged over these in the browser;
+   * with none saved the pages render exactly as the pack describes. */
+  const brandDefaults = {
+    companyName: client.displayName,
+    shortName: client.shortName,
+    colors: theme,
+    fonts: client.fonts,
+    logos: { onDark: logoOnDarkDataUri, onLight: logoOnLightDataUri },
+    headerVariant: client.colorMode
   };
 
   const storeValues = {
@@ -142,7 +189,8 @@ export function generate(clientEnvValue = resolveClient(), outDir = 'generated')
     QUOTES_JSON: json(seed.quotes),
     SENDER_EMAIL_JSON: json(seed.settings.senderEmail),
     BUDGETS_JSON: json(seed.settings.budgets),
-    DEMO_PASSWORD_JSON: json(client.demoPassword)
+    DEMO_PASSWORD_JSON: json(client.demoPassword),
+    BRAND_DEFAULTS_JSON: json(brandDefaults)
   };
 
   mkdirSync(outDir, { recursive: true });

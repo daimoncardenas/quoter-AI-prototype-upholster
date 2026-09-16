@@ -291,7 +291,9 @@ for (const page of PAGES) {
   if (!src.includes(tag)) throw new Error(`${page.file} no enlaza store.js como se esperaba`);
   const inlined = src.replace(tag, '<script>\n' + store + '\n</script>');
 
-  const logo = src.split('src="')[1].split('"')[0];
+  /* El logo es el primer <img data-brand-logo>: store.js se carga ahora en el
+   * <head> (ver Brand.apply), así que el primer src="..." ya no es el logo. */
+  const logo = (src.match(/<img\b[^>]*\bdata-brand-logo="[^"]*"[^>]*\bsrc="([^"]+)"/) || [])[1] || '';
   if (!logo.startsWith('data:image/')) throw new Error(`${page.file}: no encontré el logo embebido`);
 
   const title = (src.match(/<title>([^<]*)<\/title>/) || [, page.file])[1];

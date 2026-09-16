@@ -360,9 +360,157 @@
       return next;
     },
 
-    /* Wipe everything back to seed state. Used by the reset control. */
+    /* ------------------------------------------------------------- brand --
+     *
+     * The client's look (company name, logos, colors, fonts, header variant)
+     * as the backoffice's "Configuración de estilos" edits it. In production
+     * this lives in a tenant row plus cloud storage; in this prototype it is
+     * one localStorage key, <NS>brand, holding ONLY the fields that differ
+     * from the pack defaults (BRAND_DEFAULTS, rendered from clients/<slug>/
+     * by tools/generate.mjs). With nothing saved, Store.brand() equals the
+     * defaults and Brand.apply() leaves the page exactly as generated. */
+    brandDefaults: function () { return clone(BRAND_DEFAULTS); },
+
+    brandOverrides: function () {
+      try {
+        var o = JSON.parse(localStorage.getItem(NS + BRAND_KEY) || '{}');
+        return o && typeof o === 'object' && !Array.isArray(o) ? o : {};
+      } catch (err) { return {}; }
+    },
+
+    /* Approved Google Fonts, plus the pack's own fonts if they are not in it. */
+    brandFonts: function () { return brandFontList(); },
+
+    /* Essential edits name, logos and the two brand colors; fonts and the
+     * header variant start at Professional. */
+    brandFeatureAllowed: function (feature, plan) { return planAllows(plan === undefined ? Store.settings().plan : plan, feature); },
+    BRAND_GATED_PLAN: 'Professional',
+
+    /* The effective brand: defaults, then every VALID override the plan
+     * allows. Saved overrides the plan does not allow are reported in
+     * `ignored` (never deleted), so a downgrade falls back to the defaults
+     * and an upgrade brings them back. `overridden` says which groups differ
+     * from the defaults. opts.overrides/opts.plan evaluate a draft (the
+     * backoffice's live preview) without saving it. */
+    brand: function (opts) {
+      opts = opts || {};
+      var d = BRAND_DEFAULTS;
+      var ov = opts.overrides || Store.brandOverrides();
+      var plan = opts.plan !== undefined ? opts.plan : Store.settings().plan;
+      var out = clone(d);
+      var o = { companyName: false, colors: false, logos: false, fonts: false, headerVariant: false };
+      var ignored = [];
+
+      var name = typeof ov.companyName === 'string' ? ov.companyName.trim() : '';
+      if (name && name !== d.companyName) { out.companyName = name; o.companyName = true; }
+
+      var ovc = ov.colors || {};
+      var ink = isHex6(ovc.ink) ? ovc.ink.toLowerCase() : normHex(d.colors.ink);
+      var accent = isHex6(ovc.accent) ? ovc.accent.toLowerCase() : normHex(d.colors.accent);
+      // Defaults are never derived: the pack's hand-picked literals stay as they are.
+      if (ink !== normHex(d.colors.ink) || accent !== normHex(d.colors.accent)) {
+        out.colors = derivePalette(d.colors, ink, accent);
+        o.colors = true;
+      }
+
+      var ovl = ov.logos || {};
+      ['onDark', 'onLight'].forEach(function (slot) {
+        if (isPngDataUrl(ovl[slot])) { out.logos[slot] = ovl[slot]; o.logos = true; }
+      });
+
+      var ovf = ov.fonts || {};
+      var heading = fontInfo(ovf.heading) ? ovf.heading : d.fonts.headingName;
+      var body = fontInfo(ovf.body) ? ovf.body : firstFamily(d.fonts.body);
+      if (heading !== d.fonts.headingName || body !== firstFamily(d.fonts.body)) {
+        if (planAllows(plan, 'fonts')) { out.fonts = fontsFor(heading, body); o.fonts = true; }
+        else ignored.push('fonts');
+      }
+
+      if (BRAND_HEADER_VARIANTS.indexOf(ov.headerVariant) >= 0 && ov.headerVariant !== d.headerVariant) {
+        if (planAllows(plan, 'headerVariant')) { out.headerVariant = ov.headerVariant; o.headerVariant = true; }
+        else ignored.push('headerVariant');
+      }
+
+      out.overridden = o;
+      out.ignored = ignored;
+      return out;
+    },
+
+    /* Merges a patch into the stored overrides. A field equal to its default
+     * (or null) is REMOVED rather than stored, so the key only ever holds
+     * real overrides; fields absent from the patch are left untouched (that
+     * is how plan-gated fields survive a save made on a lower plan). Only
+     * controlled tokens are accepted: #rrggbb colors, PNG data URLs, fonts
+     * from the approved list and the known header variants. */
+    saveBrand: function (patch) {
+      patch = patch || {};
+      var d = BRAND_DEFAULTS;
+      var next = Store.brandOverrides();
+      if ('companyName' in patch) {
+        var n = String(patch.companyName == null ? '' : patch.companyName).trim();
+        if (n.length > BRAND_NAME_MAX) throw new Error('El nombre de la empresa no puede superar ' + BRAND_NAME_MAX + ' caracteres.');
+        if (!n || n === d.companyName) delete next.companyName; else next.companyName = n;
+      }
+      if (patch.colors) {
+        next.colors = next.colors || {};
+        ['ink', 'accent'].forEach(function (k) {
+          if (!(k in patch.colors)) return;
+          var v = patch.colors[k];
+          if (v == null || (isHex6(v) && v.toLowerCase() === normHex(d.colors[k]))) { delete next.colors[k]; return; }
+          if (!isHex6(v)) throw new Error('Los colores deben tener el formato #rrggbb.');
+          next.colors[k] = v.toLowerCase();
+        });
+      }
+      if (patch.logos) {
+        next.logos = next.logos || {};
+        ['onDark', 'onLight'].forEach(function (slot) {
+          if (!(slot in patch.logos)) return;
+          var v = patch.logos[slot];
+          if (v == null) { delete next.logos[slot]; return; }
+          if (!isPngDataUrl(v)) throw new Error('Los logos deben guardarse como imagen PNG.');
+          next.logos[slot] = v;
+        });
+      }
+      if (patch.fonts) {
+        next.fonts = next.fonts || {};
+        [['heading', d.fonts.headingName], ['body', firstFamily(d.fonts.body)]].forEach(function (pair) {
+          var k = pair[0];
+          if (!(k in patch.fonts)) return;
+          var v = patch.fonts[k];
+          if (v == null || v === pair[1]) { delete next.fonts[k]; return; }
+          if (!fontInfo(v)) throw new Error('Esa fuente no está en la lista aprobada.');
+          next.fonts[k] = v;
+        });
+      }
+      if ('headerVariant' in patch) {
+        var hv = patch.headerVariant;
+        if (hv == null || hv === d.headerVariant) delete next.headerVariant;
+        else if (BRAND_HEADER_VARIANTS.indexOf(hv) < 0) throw new Error('Estilo de encabezado desconocido.');
+        else next.headerVariant = hv;
+      }
+      ['colors', 'logos', 'fonts'].forEach(function (k) {
+        if (next[k] && !Object.keys(next[k]).length) delete next[k];
+      });
+      if (!Object.keys(next).length) { Store.resetBrand(); return {}; }
+      write(BRAND_KEY, next);
+      return next;
+    },
+
+    resetBrand: function () {
+      try { localStorage.removeItem(NS + BRAND_KEY); } catch (err) { /* ignore */ }
+    },
+
+    /* The single palette-derivation rule, exposed for the backoffice preview
+     * (see derivePalette below for how and why). */
+    derivePalette: function (ink, accent) { return derivePalette(BRAND_DEFAULTS.colors, ink, accent); },
+
+    /* WCAG 2.x contrast ratio between two #rrggbb colors. */
+    contrastRatio: function (a, b) { return contrastRatio(a, b); },
+
+    /* Wipe everything back to seed state. Used by the reset control. Brand
+     * overrides go too: "Restablecer datos de demo" means the pack's look. */
     reset: function () {
-      ['fabrics', 'sellers', 'quotes', 'furniture', 'users', 'settings', 'servicePoints'].forEach(function (e) {
+      ['fabrics', 'sellers', 'quotes', 'furniture', 'users', 'settings', 'servicePoints', BRAND_KEY].forEach(function (e) {
         try { localStorage.removeItem(NS + e); } catch (err) { /* ignore */ }
       });
       try { indexedDB.deleteDatabase('med-photos'); } catch (err) { /* ignore */ }
@@ -781,6 +929,227 @@
     return out;
   }
 
+  /* ------------------------------------------------------------ brand data -- */
+
+  // The pack's look (clients/<slug>/client.json), rendered by tools/generate.mjs.
+  var BRAND_DEFAULTS = {{BRAND_DEFAULTS_JSON}};
+  var BRAND_KEY = 'brand';
+  var BRAND_NAME_MAX = 60;
+  var BRAND_HEADER_VARIANTS = ['normal', 'inverted'];
+  /* Same names tools/generate.mjs emits in each page's :root (see
+   * CORE_VAR_ALIASES there): three core keys are spelled differently per page. */
+  var BRAND_VAR_ALIASES = {
+    inkSecondary: ['--ink-2', '--ink2'],
+    goldLight: ['--gold-light', '--gold2'],
+    success: ['--success', '--green']
+  };
+  var PLAN_ORDER = ['Essential', 'Professional', 'Business'];
+  var BRAND_GATED = { fonts: 'Professional', headerVariant: 'Professional' };
+  /* Approved Google Fonts. `weights` only lists weights each family really
+   * ships (the css2 API rejects the whole request over one missing weight —
+   * Lato has no 500/600). */
+  var BRAND_FONTS = [
+    { name: 'Montserrat', category: 'sans-serif', weights: '400;500;600;700' },
+    { name: 'Roboto', category: 'sans-serif', weights: '400;500;600;700' },
+    { name: 'Inter', category: 'sans-serif', weights: '400;500;600;700' },
+    { name: 'Lato', category: 'sans-serif', weights: '400;700' },
+    { name: 'Open Sans', category: 'sans-serif', weights: '400;500;600;700' },
+    { name: 'Poppins', category: 'sans-serif', weights: '400;500;600;700' },
+    { name: 'Playfair Display', category: 'serif', weights: '400;500;600;700' },
+    { name: 'Cormorant Garamond', category: 'serif', weights: '400;500;600;700' }
+  ];
+
+  function planAllows(plan, feature) {
+    var need = BRAND_GATED[feature];
+    if (!need) return true;
+    return Math.max(0, PLAN_ORDER.indexOf(plan)) >= PLAN_ORDER.indexOf(need);
+  }
+
+  function kebab(s) { return String(s).replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase(); }
+
+  function firstFamily(stack) { return String(stack || '').split(',')[0].trim().replace(/^["']|["']$/g, ''); }
+
+  function brandFontList() {
+    var list = BRAND_FONTS.map(function (f) { return clone(f); });
+    var d = BRAND_DEFAULTS.fonts;
+    var bodyCategory = /(^|,)\s*serif\s*$/.test(d.body) ? 'serif' : 'sans-serif';
+    [[d.headingName, d.headingFallback === 'serif' ? 'serif' : 'sans-serif'], [firstFamily(d.body), bodyCategory]].forEach(function (pair) {
+      if (pair[0] && !list.some(function (f) { return f.name === pair[0]; })) {
+        list.push({ name: pair[0], category: pair[1], weights: '400;500;600;700' });
+      }
+    });
+    return list;
+  }
+
+  function fontInfo(name) {
+    return brandFontList().filter(function (f) { return f.name === name; })[0] || null;
+  }
+
+  /* Fonts for a heading/body pair. Both at their defaults gives back the
+   * pack's own fonts untouched (its hand-written href included). */
+  function fontsFor(headingName, bodyName) {
+    var d = BRAND_DEFAULTS.fonts;
+    if (headingName === d.headingName && bodyName === firstFamily(d.body)) return clone(d);
+    var h = fontInfo(headingName), b = fontInfo(bodyName);
+    var families = [h];
+    if (b.name !== h.name) families.push(b);
+    return {
+      href: 'https://fonts.googleapis.com/css2?' + families.map(function (f) {
+        return 'family=' + f.name.replace(/ /g, '+') + ':wght@' + f.weights;
+      }).join('&') + '&display=swap',
+      headingName: h.name,
+      headingFallback: h.category,
+      body: '"' + b.name + '",' + (b.category === 'serif' ? 'Georgia,serif' : 'Arial,sans-serif')
+    };
+  }
+
+  function isHex6(v) { return typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v); }
+  function isPngDataUrl(v) { return typeof v === 'string' && /^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(v); }
+
+  function hexToRgb(hex) {
+    var h = String(hex).replace('#', '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    var n = parseInt(h, 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  function rgbToHex(rgb) {
+    return '#' + rgb.map(function (v) { return ('0' + Math.round(Math.max(0, Math.min(255, v))).toString(16)).slice(-2); }).join('');
+  }
+  function normHex(hex) { return rgbToHex(hexToRgb(hex)); }
+
+  /* Linear interpolation in sRGB, t=0 -> a, t=1 -> b. Same space the pages'
+   * own color-mix(in srgb, ...) uses (modes/inverted.css, admin.html), so a
+   * derived tint and a CSS-mixed one agree. */
+  function mixHex(a, b, t) {
+    var x = hexToRgb(a), y = hexToRgb(b);
+    return rgbToHex([0, 1, 2].map(function (i) { return x[i] + (y[i] - x[i]) * t; }));
+  }
+
+  function luminance(hex) {
+    var c = hexToRgb(hex).map(function (v) {
+      v /= 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  }
+
+  function contrastRatio(a, b) {
+    var la = luminance(a), lb = luminance(b);
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+  }
+
+  /* Nudges fg toward black (on a light bg) or white (on a dark one) in 5%
+   * steps until it reaches `min` contrast against bg. */
+  function readableOn(fg, bg, min) {
+    if (contrastRatio(fg, bg) >= min) return fg;
+    var target = luminance(bg) > 0.18 ? '#000000' : '#ffffff';
+    for (var t = 0.05; t <= 1.0001; t += 0.05) {
+      var c = mixHex(fg, target, t);
+      if (contrastRatio(c, bg) >= min) return c;
+    }
+    return target;
+  }
+
+  /* THE palette derivation rule. Only runs when an admin overrides the
+   * primary (ink) and/or accent color; pack defaults are never derived.
+   *
+   * Every other brand color is a mix of ink (or accent, for the one
+   * accent-tinted wash) toward white (tints: washes, lines, borders) or
+   * toward black (shades: secondary ink, shadows, the demo banner), in sRGB
+   * — the space the pages' own color-mix() already uses, so results are
+   * predictable and match the CSS. sRGB is not perceptually uniform, which
+   * is why readable roles are not trusted to the mix alone: every tint used
+   * as TEXT is then pushed by readableOn() until it clears 4.5:1 against the
+   * surface it sits on (captions on ink, hints on white...). Semantic colors
+   * (amber, red, success) keep the pack's values; the success washes are
+   * mixed from that unchanged success color. */
+  function derivePalette(base, ink, accent) {
+    var W = '#ffffff', K = '#000000';
+    var P = normHex(ink), A = normHex(accent);
+    var tint = function (t) { return mixHex(P, W, t); };
+    var shade = function (t) { return mixHex(P, K, t); };
+    var onInk = function (t) { return readableOn(tint(t), P, 4.5); };
+    var onWhite = function (t) { return readableOn(tint(t), W, 4.5); };
+    var cream = tint(0.94);
+    var bannerBg = shade(0.82);
+    var successWash = mixHex(normHex(base.success), W, 0.85);
+    var core = {
+      ink: P,
+      inkSecondary: shade(0.25),
+      accent: A,
+      gold: W,
+      goldLight: onInk(0.8),
+      cream: cream,
+      paper: W,
+      text: readableOn(shade(0.78), cream, 7),
+      muted: readableOn(mixHex(shade(0.5), W, 0.3), cream, 4.5),
+      line: tint(0.8),
+      success: base.success,
+      soft: tint(0.92),
+      amber: base.amber,
+      red: base.red
+    };
+    var tints = {
+      bannerBg: bannerBg,
+      demoCaption: readableOn(tint(0.8), bannerBg, 4.5),
+      bannerTextAdmin: readableOn(tint(0.8), bannerBg, 4.5),
+      panelWash: tint(0.96),
+      selectedTint: mixHex(A, W, 0.9),
+      messagesBg: tint(0.95),
+      tagBg: tint(0.93),
+      requestNumberBg: tint(0.95),
+      secureText: onInk(0.78),
+      journeyIntroText: onInk(0.75),
+      helpCardText: onInk(0.7),
+      dashedBorder: tint(0.6),
+      secondaryBorder: tint(0.55),
+      measureVisualText: onInk(0.75),
+      unitLabel: onWhite(0.45),
+      noticeText: readableOn(shade(0.4), tint(0.96), 4.5),
+      noticeIconBorder: tint(0.5),
+      quotePreviewCaption: onInk(0.7),
+      summaryCaption: onInk(0.7),
+      summaryFoot: onInk(0.65),
+      wizardHint: onWhite(0.45),
+      chatHeaderCaption: onInk(0.7),
+      quickQuestionBorder: tint(0.72),
+      progressTrackBg: tint(0.86),
+      photoPlaceholderBg: tint(0.25),
+      uploadZoneBg: tint(0.97),
+      iconCircleBg: tint(0.9),
+      stepBorder: tint(0.45),
+      stepLabel: onInk(0.65),
+      successIconBg: successWash,
+      successBorder: successWash,
+      profileCaption: onInk(0.7),
+      sideFootText: onInk(0.65),
+      buttonSecondaryBorder: tint(0.6),
+      navInactiveText: onInk(0.7),
+      activityTimeText: onWhite(0.45),
+      donutThird: tint(0.55),
+      tableHeadText: readableOn(shade(0.3), tint(0.95), 4.5),
+      availabilityRing: successWash,
+      availabilityOffBg: tint(0.6),
+      availabilityOffRing: tint(0.92),
+      zoneBorder: tint(0.7),
+      toggleOffBg: tint(0.65),
+      tableHeadBg: tint(0.95),
+      statusNewBg: tint(0.9),
+      statusSentBg: successWash,
+      activityBorder: tint(0.92),
+      shellLeadText: onWhite(0.4),
+      shellFootText: onInk(0.65)
+    };
+    var shadow = hexToRgb(shade(0.6)).join(','), backdrop = hexToRgb(shade(0.75)).join(',');
+    var out = clone(base);
+    Object.keys(core).forEach(function (k) { out[k] = core[k]; });
+    out.tints = {};
+    Object.keys(base.tints || {}).forEach(function (k) { out.tints[k] = tints[k] || base.tints[k]; });
+    out.rgb = {};
+    Object.keys(base.rgb || {}).forEach(function (k) { out.rgb[k] = k === 'modalBackdrop' ? backdrop : shadow; });
+    return out;
+  }
+
   /* ---------------------------------------------------------------- photos -- */
 
   var Photos = {
@@ -973,14 +1342,161 @@
     sections: function (user) {
       if (!user) return [];
       return user.role === 'admin'
-        ? ['dashboard', 'quotes', 'fabrics', 'furniture', 'sellers', 'points', 'settings', 'upgrade', 'usage']
+        ? ['dashboard', 'quotes', 'fabrics', 'furniture', 'sellers', 'points', 'settings', 'styles', 'upgrade', 'usage']
         : ['dashboard', 'quotes'];
     },
 
     can: function (user, section) { return Auth.sections(user).indexOf(section) >= 0; }
   };
 
+  /* ---------------------------------------------------------------- Brand --
+   *
+   * Paints Store.brand() onto the current page. Called synchronously from
+   * each page's <head>, right after this file, so CSS variables, the fonts
+   * <link>, the enabled color-mode <style> and document.title are already
+   * right before first paint. Logos and [data-brand-name] text live in the
+   * body, which is not parsed yet at that point: they are swapped on
+   * DOMContentLoaded, and while an override would change them the page keeps
+   * them visibility:hidden (data-brand-pending) so the pack's default never
+   * flashes first.
+   *
+   * With no effective override this is a no-op: nothing is touched and the
+   * page is exactly what tools/generate.mjs rendered. Once something was
+   * applied, a later call with no overrides (reset) restores the defaults by
+   * removing the inline properties again. */
+  var Brand = {
+    _active: false,
+    _base: null,
+    _domHooked: false,
+
+    apply: function (brand) {
+      var doc = global.document;
+      if (!doc) return false;
+      var b = brand || Store.brand();
+      var o = b.overridden;
+      var active = o.companyName || o.colors || o.logos || o.fonts || o.headerVariant;
+      if (!active && !Brand._active) return false;
+      Brand._active = !!active;
+      var root = doc.documentElement;
+      if (!Brand._base) {
+        Brand._base = { title: doc.title, watermark: global.getComputedStyle(root).getPropertyValue('--print-watermark').trim() };
+      }
+      applyBrandColors(b, root);
+      applyBrandFonts(b, doc, root);
+      each(doc.querySelectorAll('style[data-color-mode]'), function (s) {
+        var media = s.getAttribute('data-color-mode') === b.headerVariant ? 'all' : 'not all';
+        if (s.getAttribute('media') !== media) s.setAttribute('media', media);
+      });
+      doc.title = o.companyName ? swapBrandName(Brand._base.title, b.companyName) : Brand._base.title;
+
+      if (doc.readyState === 'loading') {
+        if (o.companyName || o.logos || o.headerVariant) {
+          if (!doc.getElementById('brandPendingStyle')) {
+            var st = doc.createElement('style');
+            st.id = 'brandPendingStyle';
+            st.textContent = 'html[data-brand-pending] [data-brand-logo],html[data-brand-pending] [data-brand-name]{visibility:hidden}';
+            (doc.head || root).appendChild(st);
+          }
+          root.setAttribute('data-brand-pending', '');
+        }
+        if (!Brand._domHooked) {
+          Brand._domHooked = true;
+          doc.addEventListener('DOMContentLoaded', function () {
+            /* El finally no es decorativo: data-brand-pending esconde el logo y
+             * el nombre para que no parpadee el valor del pack. Si applyBrandDom
+             * fallara, sin esto quedarían ocultos para siempre. */
+            try { applyBrandDom(Store.brand()); }
+            finally { root.removeAttribute('data-brand-pending'); }
+          });
+        }
+      } else {
+        applyBrandDom(b);
+      }
+      return true;
+    }
+  };
+
+  function each(list, fn) { Array.prototype.forEach.call(list || [], fn); }
+
+  function brandVarEntries(colors) {
+    var out = [];
+    Object.keys(colors).forEach(function (k) {
+      if (k === 'tints' || k === 'rgb') return;
+      (BRAND_VAR_ALIASES[k] || ['--' + kebab(k)]).forEach(function (n) { out.push([n, colors[k]]); });
+    });
+    out.push(['--rgb-accent', hexToRgb(colors.accent).join(',')]);
+    Object.keys(colors.tints || {}).forEach(function (k) { out.push(['--tint-' + kebab(k), colors.tints[k]]); });
+    Object.keys(colors.rgb || {}).forEach(function (k) { out.push(['--rgb-' + kebab(k), colors.rgb[k]]); });
+    return out;
+  }
+
+  function applyBrandColors(b, root) {
+    var on = b.overridden.colors;
+    brandVarEntries(on ? b.colors : BRAND_DEFAULTS.colors).forEach(function (e) {
+      if (on) root.style.setProperty(e[0], e[1]); else root.style.removeProperty(e[0]);
+    });
+    /* The watermark is an SVG data URI (var() cannot reach inside it): its
+     * only color is the %23rrggbb fill, rebuilt from the default value. */
+    if (on && Brand._base.watermark) {
+      root.style.setProperty('--print-watermark', Brand._base.watermark.replace(/%23[0-9a-fA-F]{3,6}/, '%23' + normHex(b.colors.inkSecondary).slice(1)));
+    } else {
+      root.style.removeProperty('--print-watermark');
+    }
+  }
+
+  function applyBrandFonts(b, doc, root) {
+    var link = doc.querySelector('link[data-brand-fonts]');
+    if (link && link.getAttribute('href') !== b.fonts.href) link.setAttribute('href', b.fonts.href);
+    if (b.overridden.fonts) {
+      root.style.setProperty('--font-body', b.fonts.body);
+      root.style.setProperty('--font-heading', '"' + b.fonts.headingName + '",' + b.fonts.headingFallback);
+    } else {
+      root.style.removeProperty('--font-body');
+      root.style.removeProperty('--font-heading');
+    }
+  }
+
+  function applyBrandDom(b) {
+    var doc = global.document;
+    var slot = b.headerVariant === 'inverted' ? 'onLight' : 'onDark';
+    each(doc.querySelectorAll('img[data-brand-logo]'), function (img) {
+      if (!img.hasAttribute('data-brand-alt')) img.setAttribute('data-brand-alt', img.getAttribute('alt') || '');
+      var src = b.logos[slot] || b.logos.onDark || b.logos.onLight;
+      if (src && img.getAttribute('src') !== src) img.setAttribute('src', src);
+      if (img.getAttribute('data-brand-logo') !== slot) img.setAttribute('data-brand-logo', slot);
+      var base = img.getAttribute('data-brand-alt');
+      var alt = b.overridden.companyName ? swapBrandName(base, b.companyName) : base;
+      if (img.getAttribute('alt') !== alt) img.setAttribute('alt', alt);
+    });
+    each(doc.querySelectorAll('[data-brand-name]'), function (el) {
+      if (!el.hasAttribute('data-brand-base')) el.setAttribute('data-brand-base', el.textContent);
+      var t = b.overridden.companyName ? b.companyName : el.getAttribute('data-brand-base');
+      if (el.textContent !== t) el.textContent = t;
+    });
+    each(doc.querySelectorAll('[data-brand-label]'), function (el) {
+      if (!el.hasAttribute('data-brand-label-base')) el.setAttribute('data-brand-label-base', el.getAttribute('aria-label') || '');
+      var base = el.getAttribute('data-brand-label-base');
+      el.setAttribute('aria-label', b.overridden.companyName ? swapBrandName(base, b.companyName) : base);
+    });
+  }
+
+  /* Replaces the pack's name inside a generated string (title, alt text,
+   * aria-label): displayName first, then shortName ("Asistente Macizo"). */
+  function swapBrandName(str, name) {
+    var s = String(str || '');
+    var from = [BRAND_DEFAULTS.companyName, BRAND_DEFAULTS.shortName].filter(function (n) { return n && s.indexOf(n) >= 0; })[0];
+    return from ? s.split(from).join(name) : s;
+  }
+
+  /* Another tab saving (or resetting) the brand or the plan repaints this one. */
+  if (global.addEventListener) {
+    global.addEventListener('storage', function (e) {
+      if (e.key === null || e.key === NS + BRAND_KEY || e.key === NS + 'settings') Brand.apply();
+    });
+  }
+
   global.Auth = Auth;
   global.Store = Store;
   global.Photos = Photos;
+  global.Brand = Brand;
 })(window);

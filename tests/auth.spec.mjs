@@ -46,9 +46,9 @@ console.log('\nADMIN VE TODO');
 await signIn(p, ADMIN_EMAIL);
 check('entra', await p.isVisible('#appShell'), true);
 check('el login desaparece', await p.isVisible('#loginScreen'), false);
-check('ve las nueve secciones',
+check('ve las diez secciones',
   await p.$$eval('.nav button', bs => bs.filter(x=>!x.hidden).map(x=>x.dataset.page)),
-  ['dashboard','quotes','fabrics','furniture','sellers','points','settings','upgrade','usage']);
+  ['dashboard','quotes','fabrics','furniture','sellers','points','settings','styles','upgrade','usage']);
 check('el topbar muestra quién es', await p.textContent('#meName'), ADMIN_NAME);
 check('y su rol', await p.textContent('#meRole'), 'Administradora');
 check('ve todas las cotizaciones', await p.evaluate(()=>document.querySelectorAll('#quoteRows tr').length), 6);
@@ -60,9 +60,9 @@ check('entra', await p2.isVisible('#appShell'), true);
 check('solo ve resumen y cotizaciones',
   await p2.$$eval('.nav button', bs => bs.filter(x=>!x.hidden).map(x=>x.dataset.page)),
   ['dashboard','quotes']);
-check('catálogo, muebles, vendedores, puntos, configuración, upgrade y usage quedan fuera',
+check('catálogo, muebles, vendedores, puntos, configuraciones, estilos, upgrade y usage quedan fuera',
   await p2.$$eval('.nav button', bs => bs.filter(x=>x.hidden).map(x=>x.dataset.page)),
-  ['fabrics','furniture','sellers','points','settings','upgrade','usage']);
+  ['fabrics','furniture','sellers','points','settings','styles','upgrade','usage']);
 await p2.click('button[data-page="quotes"]');
 const rows = await p2.textContent('#quoteRows');
 check('la tabla trae solo sus solicitudes', await p2.evaluate(()=>document.querySelectorAll('#quoteRows tr').length), 1);

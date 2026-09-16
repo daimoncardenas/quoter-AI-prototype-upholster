@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="80" viewBox="0 0 240 80">
+  <script>window.__pwned = true; try { window.parent.__pwned = true; window.top.__pwned = true; } catch (e) {}</script>
+  <rect width="240" height="80" rx="8" fill="#1d4ed8"/>
+  <text x="120" y="50" font-family="Arial" font-size="28" fill="#ffffff" text-anchor="middle" onload="window.top.__pwned = true">LOGO</text>
+</svg>
