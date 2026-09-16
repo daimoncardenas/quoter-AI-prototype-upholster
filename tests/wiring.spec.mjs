@@ -154,16 +154,43 @@ check('closing buttons only appear once Cotizada',
   await page.$$eval('#quoteStatusControl [data-close-status]', els => els.map(e => e.dataset.closeStatus).sort()),
   ['Aceptada', 'Rechazada']);
 
-// Dismissing the confirmation must leave the case exactly as it was.
-page.once('dialog', d => d.dismiss());
+/* Closing a quote asks through the in-app confirm (askConfirm), not a native
+ * confirm() — this is the FIRST site in the suite that opens it, so its
+ * accessibility behaviors (focus-on-open, Esc-cancels, backdrop-cancels,
+ * focus-returns-to-trigger) are verified right here; every later site in this
+ * file reuses the exact same component. */
+console.log('\nCONFIRM MODAL (askConfirm) — accesibilidad: se abre con foco en la acción, Esc y el fondo cancelan, y el foco vuelve al disparador');
+await page.focus('[data-close-status="Aceptada"]');
 await page.click('[data-close-status="Aceptada"]');
-check('dismissing the close confirmation keeps the case open, unchanged',
+check('se abre con el foco en el botón de acción',
+  await page.evaluate(() => ({ open: document.getElementById('confirmModal').classList.contains('open'), focused: document.activeElement.id })),
+  { open: true, focused: 'confirmOk' });
+check('el mensaje es exactamente el mismo texto que usaba el confirm() nativo',
+  await page.textContent('#confirmModalBody'), 'Esto cierra el caso y no se puede deshacer. ¿Marcar esta solicitud como "Aceptada"?');
+check('el botón de acción es el destructivo "Sí, continuar"', await page.textContent('#confirmOk'), 'Sí, continuar');
+await page.keyboard.press('Escape');
+check('Esc cierra el modal sin tocar el estado',
+  await page.evaluate(id => ({ open: document.getElementById('confirmModal').classList.contains('open'), status: Store.get('quotes', id.trim()).status }), quoteId),
+  { open: false, status: 'Cotizada' });
+check('el foco vuelve al botón que abrió el modal',
+  await page.evaluate(() => document.activeElement.dataset.closeStatus), 'Aceptada');
+
+await page.click('[data-close-status="Rechazada"]');
+await page.click('#confirmModal', { position: { x: 5, y: 5 } }); // outside the centered .modal box
+check('un clic en el fondo también cancela, sin tocar el estado',
+  await page.evaluate(id => ({ open: document.getElementById('confirmModal').classList.contains('open'), status: Store.get('quotes', id.trim()).status }), quoteId),
+  { open: false, status: 'Cotizada' });
+
+// Dismissing via "Cancelar" must also leave the case exactly as it was.
+await page.click('[data-close-status="Aceptada"]');
+await page.click('#confirmCancel');
+check('cancelar la confirmación de cierre deja el caso abierto, sin cambios',
   await page.evaluate(id => { const q = Store.get('quotes', id.trim()); return [q.status, !!q.closedAt]; }, quoteId),
   ['Cotizada', false]);
 
 // Confirming closes it for good.
-page.once('dialog', d => d.accept());
 await page.click('[data-close-status="Rechazada"]');
+await page.click('#confirmOk');
 check('confirming stamps status and closedAt',
   await page.evaluate(id => { const q = Store.get('quotes', id.trim()); return [q.status, typeof q.closedAt]; }, quoteId),
   ['Rechazada', 'string']);
@@ -590,15 +617,16 @@ check('el periodo elegido (Mes) sobrevive a un recargo de página',
 check('el radiogroup del switch se llama "Modalidad de contratación"',
   await page.getAttribute('#billingSwitch', 'aria-label'), 'Modalidad de contratación');
 
-console.log('\nUPGRADE — el diálogo de cambio de plan cita el precio del periodo seleccionado (Mes)');
-let mesDialogMsg = '';
-page.once('dialog', d => { mesDialogMsg = d.message(); d.dismiss(); });
+console.log('\nUPGRADE — el modal de cambio de plan (askConfirm) cita el precio del periodo seleccionado (Mes)');
+const invoicesBeforeMes = await page.evaluate(() => Store.all('invoices').length);
 await page.click('#plansGrid [data-plan="Business"]');
-await page.waitForTimeout(150);
-check('el diálogo cita el precio mensual de Business, no el anual, y la modalidad mes a mes',
+const mesDialogMsg = await page.textContent('#confirmModalBody');
+check('el modal cita el precio mensual de Business, no el anual, y la modalidad mes a mes',
   mesDialogMsg, `¿Confirmas el cambio al plan Business por ${await page.evaluate(() => Store.money(1490000))} COP / mes, mes a mes y sin contrato?`);
-check('cancelar deja el plan sin cambios, y cambiar el periodo tampoco lo cambió',
-  await page.evaluate(() => Store.settings().plan), 'Essential');
+await page.click('#confirmCancel');
+check('cancelar deja el plan sin cambios, y cambiar el periodo tampoco lo cambió, y no crea factura',
+  [await page.evaluate(() => Store.settings().plan), await page.evaluate(() => Store.all('invoices').length)],
+  ['Essential', invoicesBeforeMes]);
 
 console.log('\nUPGRADE — el switch de periodo se navega con el teclado (flechas activan)');
 await page.focus('#billingSwitch [data-billing="mensual"]');
@@ -628,21 +656,40 @@ check('Essential: etiqueta "Plan actual" y botón deshabilitado; Professional/Bu
     { name: 'Business', current: false, label: null, cta: 'Mejorar a Business', disabled: false }
   ]);
 
-console.log('\nUPGRADE — cambiar de plan pide confirmación con el precio, y cancelar no cambia nada');
-let dialogMsg = '';
-page.once('dialog', d => { dialogMsg = d.message(); d.dismiss(); });
+console.log('\nUPGRADE — cambiar de plan pide confirmación (askConfirm) con el precio, y cancelar no cambia nada ni crea factura');
+const invoicesBeforePlan = await page.evaluate(() => Store.all('invoices').length);
 await page.click('#plansGrid [data-plan="Business"]');
-await page.waitForTimeout(150);
-check('el diálogo menciona el plan, el precio y la modalidad de arrendamiento anual',
+const dialogMsg = await page.textContent('#confirmModalBody');
+check('el modal menciona el plan, el precio y la modalidad de arrendamiento anual',
   dialogMsg, `¿Confirmas el cambio al plan Business por ${await page.evaluate(() => Store.money(1290000))} COP / mes, con contrato de arrendamiento a 12 meses?`);
-check('cancelar deja a Essential como plan actual',
-  await page.evaluate(() => Store.settings().plan), 'Essential');
+await page.click('#confirmCancel');
+check('cancelar deja a Essential como plan actual, y no crea ninguna factura',
+  [await page.evaluate(() => Store.settings().plan), await page.evaluate(() => Store.all('invoices').length)],
+  ['Essential', invoicesBeforePlan]);
 
-console.log('\nUPGRADE — confirmar el cambio actualiza el plan, avisa con el toast y persiste tras recargar');
-page.once('dialog', d => d.accept());
+console.log('\nUPGRADE — confirmar el cambio crea una factura Pendiente y abre el pago simulado, SIN aplicar el cambio todavía (Bold real: el backend crea el link y confirma por webhook — acá no hay red)');
 await page.click('#plansGrid [data-plan="Business"]');
-await page.waitForTimeout(150);
-check('el toast confirma el nuevo plan', await page.textContent('#toast'), 'Listo, tu plan ahora es Business.');
+await page.click('#confirmOk');
+await page.waitForSelector('#payModal.open');
+check('el plan sigue en Essential mientras la factura está Pendiente',
+  await page.evaluate(() => Store.settings().plan), 'Essential');
+const planInvoice = await page.evaluate(() => Store.all('invoices')[0]);
+check('la factura queda Pendiente, con el monto de PLANS/planPrice() (nunca algo tecleado), la modalidad y el proveedor simulado',
+  { status: planInvoice.status, amount: planInvoice.amount, kind: planInvoice.kind, target: planInvoice.target, billing: planInvoice.billing, provider: planInvoice.provider, paidAt: planInvoice.paidAt },
+  { status: 'Pendiente', amount: 1290000, kind: 'plan', target: 'Business', billing: 'anual', provider: 'BOLD (simulado)', paidAt: null });
+check('la referencia y la URL de pago son obviamente falsas: simulado://, nunca checkout.bold.co ni ningún dominio real',
+  /^simulado:\/\/pago\//.test(planInvoice.checkoutUrl) && planInvoice.reference.startsWith(`QAI-${planInvoice.id}-`), true);
+const planPayBody = await page.textContent('#payModalBody');
+check('el modal trae el concepto, el monto, la modalidad anual y la referencia',
+  [planPayBody.includes('Plan Business'), planPayBody.includes(await page.evaluate(() => Store.money(1290000))), planPayBody.includes('Año'), planPayBody.includes(planInvoice.reference)],
+  [true, true, true, true]);
+check('el modal muestra la etiqueta obligatoria de simulación, tal cual',
+  planPayBody.includes('Simulación de pago · este prototipo no procesa pagos reales.'), true);
+
+console.log('\nUPGRADE — aprobar el pago simulado paga la factura y RECIÉN AHÍ aplica el cambio de plan, con su propio toast');
+await page.click('#payApprove');
+check('el toast del pago aprobado nombra el concepto', await page.textContent('#toast'), 'Pago aprobado. Plan Business activado.');
+check('el modal se cierra', await page.evaluate(() => document.getElementById('payModal').classList.contains('open')), false);
 check('Business queda como plan actual; Essential y Professional ahora ofrecen cambiar',
   await planStates(),
   [
@@ -650,11 +697,66 @@ check('Business queda como plan actual; Essential y Professional ahora ofrecen c
     { name: 'Professional', current: false, label: null, cta: 'Cambiar a Professional', disabled: false },
     { name: 'Business', current: true, label: 'Plan actual', cta: 'Tu plan actual', disabled: true }
   ]);
+check('la factura queda Pagada con paidAt',
+  await page.evaluate(id => { const inv = Store.get('invoices', id); return { status: inv.status, hasPaidAt: !!inv.paidAt }; }, planInvoice.id),
+  { status: 'Pagada', hasPaidAt: true });
 await page.reload();
 await page.waitForSelector('#appShell:not([hidden])');
 await page.click('button[data-page="upgrade"]');
 check('el plan elegido sobrevive a un recargo de página',
   await page.evaluate(() => Store.settings().plan), 'Business');
+
+console.log('\nUPGRADE — rechazar el pago en el modal: la factura queda Rechazada y el plan NO cambia');
+await page.click('#plansGrid [data-plan="Professional"]');
+await page.click('#confirmOk');
+await page.waitForSelector('#payModal.open');
+const rejectedInvoice = await page.evaluate(() => Store.all('invoices')[0]);
+await page.click('#payReject');
+check('el toast de rechazo', await page.textContent('#toast'), 'Pago rechazado. No se aplicó ningún cambio.');
+check('el plan sigue siendo Business — el cambio a Professional no se aplicó',
+  await page.evaluate(() => Store.settings().plan), 'Business');
+check('la factura rechazada queda Rechazada, sin paidAt',
+  await page.evaluate(id => { const inv = Store.get('invoices', id); return { status: inv.status, paidAt: inv.paidAt }; }, rejectedInvoice.id),
+  { status: 'Rechazada', paidAt: null });
+
+console.log('\nSTORE — settleInvoice se niega a tocar una factura ya procesada, sea cual sea el estado pedido');
+check('pagar de nuevo una factura ya Rechazada lanza error y no la cambia',
+  await page.evaluate(id => { try { Store.settleInvoice(id, 'Pagada'); return 'no-error'; } catch (e) { return e.message; } }, rejectedInvoice.id),
+  'Esta factura ya fue procesada; no se puede modificar.');
+check('la misma factura sigue Rechazada tras el intento',
+  await page.evaluate(id => Store.get('invoices', id).status, rejectedInvoice.id), 'Rechazada');
+
+console.log('\nUPGRADE — cancelar el modal deja la factura Pendiente, sin tocar nada; se puede pagar después desde Facturación');
+await page.click('#plansGrid [data-plan="Professional"]');
+await page.click('#confirmOk');
+await page.waitForSelector('#payModal.open');
+const laterInvoice = await page.evaluate(() => Store.all('invoices')[0]);
+await page.click('#payModal [data-close]');
+check('el modal se cierra sin cambiar el plan', await page.evaluate(() => Store.settings().plan), 'Business');
+check('la factura sigue Pendiente', await page.evaluate(id => Store.get('invoices', id).status, laterInvoice.id), 'Pendiente');
+
+await page.click('#tabFacturacion');
+check('Facturación queda seleccionada y su panel visible; Paquetes se oculta',
+  await page.evaluate(() => ({
+    facturacionSel: document.getElementById('tabFacturacion').getAttribute('aria-selected'),
+    facturacionHidden: document.getElementById('panelFacturacion').hidden
+  })),
+  { facturacionSel: 'true', facturacionHidden: false });
+check('la factura Pendiente aparece primero (más reciente), con botón Pagar',
+  await page.$eval('#invoiceRows tr:first-child', tr => ({ text: tr.textContent, hasPay: !!tr.querySelector('[data-pay-invoice]') })),
+  { text: (await page.$eval('#invoiceRows tr:first-child', tr => tr.textContent)), hasPay: true });
+check('la fila trae fecha, concepto, monto, modalidad, estado y referencia de esa factura',
+  await page.$eval('#invoiceRows tr:first-child', tr => tr.textContent.includes('Pendiente') && tr.textContent.includes('Professional')), true);
+
+await page.click(`#invoiceRows [data-pay-invoice="${laterInvoice.id}"]`);
+await page.waitForSelector('#payModal.open');
+await page.click('#payApprove');
+check('pagar una factura pendiente desde la lista aplica el cambio que esa factura guardaba (Professional), con su toast',
+  [await page.evaluate(() => Store.settings().plan), await page.textContent('#toast')],
+  ['Professional', 'Pago aprobado. Plan Professional activado.']);
+check('esa factura ya no puede pagarse otra vez',
+  await page.evaluate(id => { try { Store.settleInvoice(id, 'Pagada'); return 'no-error'; } catch (e) { return e.message; } }, laterInvoice.id),
+  'Esta factura ya fue procesada; no se puede modificar.');
 
 console.log('\nUPGRADE — Paquetes: los cinco, en orden, con los precios exactos');
 await page.click('#tabPaquetes');
@@ -695,29 +797,45 @@ check('flecha izquierda vuelve a Planes',
 await page.click('#tabPaquetes');
 await page.waitForTimeout(100);
 
-console.log('\nUPGRADE — comprar un paquete pide confirmación, y cancelar no suma nada');
-page.once('dialog', d => d.dismiss());
+console.log('\nUPGRADE — comprar un paquete pide confirmación (askConfirm), y cancelar no suma nada ni crea factura');
+const invoicesBeforePkg = await page.evaluate(() => Store.all('invoices').length);
 await page.click('#packagesGrid [data-package="extra-user"]');
-await page.waitForTimeout(150);
-check('sin confirmar, no aparece "Comprados" y el conteo sigue en 0',
+await page.click('#confirmCancel');
+check('sin confirmar, no aparece "Comprados", el conteo sigue en 0 y no se creó factura',
+  await page.evaluate(pkgBefore => {
+    const c = [...document.querySelectorAll('#packagesGrid .package-card')].find(x => x.querySelector('h2').textContent === 'Usuario adicional');
+    return { bought: c.querySelector('.package-bought') ? c.querySelector('.package-bought').textContent : null, count: (Store.settings().packages || {})['extra-user'] || 0, invoices: Store.all('invoices').length };
+  }, invoicesBeforePkg),
+  { bought: null, count: 0, invoices: invoicesBeforePkg });
+
+console.log('\nUPGRADE — confirmar la compra crea una factura Pendiente y abre el pago; el conteo NO sube hasta aprobar');
+await page.click('#packagesGrid [data-package="extra-user"]');
+const pkgDialogMsg = await page.textContent('#confirmModalBody');
+check('el modal menciona el paquete y su precio exacto',
+  pkgDialogMsg, `¿Confirmas la compra de Usuario adicional por ${await page.evaluate(() => Store.money(50000))} COP / mes?`);
+await page.click('#confirmOk');
+await page.waitForSelector('#payModal.open');
+check('el conteo sigue en 0 mientras la factura está Pendiente',
+  await page.evaluate(() => (Store.settings().packages || {})['extra-user'] || 0), 0);
+const pkgInvoice1 = await page.evaluate(() => Store.all('invoices')[0]);
+check('la factura del paquete usa pkg.min como monto — nunca el texto del rango ni algo tecleado',
+  { kind: pkgInvoice1.kind, target: pkgInvoice1.target, amount: pkgInvoice1.amount, concept: pkgInvoice1.concept, billing: pkgInvoice1.billing },
+  { kind: 'package', target: 'extra-user', amount: 50000, concept: 'Paquete · Usuario adicional', billing: undefined });
+await page.click('#payApprove');
+check('el toast confirma la compra tras aprobar el pago', await page.textContent('#toast'), 'Pago aprobado. Paquete · Usuario adicional activado.');
+check('"Comprados: 1" aparece recién ahora',
   await page.evaluate(() => {
     const c = [...document.querySelectorAll('#packagesGrid .package-card')].find(x => x.querySelector('h2').textContent === 'Usuario adicional');
-    return { bought: c.querySelector('.package-bought') ? c.querySelector('.package-bought').textContent : null, count: (Store.settings().packages || {})['extra-user'] || 0 };
+    return c.querySelector('.package-bought').textContent;
   }),
-  { bought: null, count: 0 });
+  'Comprados: 1');
 
-console.log('\nUPGRADE — confirmar la compra dos veces suma "Comprados: 2", avisa con el toast y persiste');
-let pkgDialogMsg = '';
-page.once('dialog', d => { pkgDialogMsg = d.message(); d.accept(); });
+console.log('\nUPGRADE — una segunda compra aprobada suma "Comprados: 2" — una recarga, no un toggle — y persiste');
 await page.click('#packagesGrid [data-package="extra-user"]');
-await page.waitForTimeout(150);
-check('el diálogo menciona el paquete y su precio exacto',
-  pkgDialogMsg, `¿Confirmas la compra de Usuario adicional por ${await page.evaluate(() => Store.money(50000))} COP / mes?`);
-check('el toast confirma la compra', await page.textContent('#toast'), 'Listo, agregamos Usuario adicional a tu cuenta.');
-page.once('dialog', d => d.accept());
-await page.click('#packagesGrid [data-package="extra-user"]');
-await page.waitForTimeout(150);
-check('"Comprados: 2" aparece y el botón sigue activo — es una recarga, no un toggle',
+await page.click('#confirmOk');
+await page.waitForSelector('#payModal.open');
+await page.click('#payApprove');
+check('"Comprados: 2" aparece y el botón sigue activo',
   await page.evaluate(() => {
     const c = [...document.querySelectorAll('#packagesGrid .package-card')].find(x => x.querySelector('h2').textContent === 'Usuario adicional');
     return { bought: c.querySelector('.package-bought').textContent, disabled: c.querySelector('[data-package]').disabled };
@@ -734,6 +852,12 @@ check('el conteo de compras sobrevive a un recargo de página',
     return c.querySelector('.package-bought').textContent;
   }),
   'Comprados: 2');
+
+console.log('\nFACTURACIÓN — lista las facturas más recientes primero, con la fila esperada');
+await page.click('#tabFacturacion');
+check('al menos las dos facturas Pagadas del paquete, más recientes primero',
+  await page.$$eval('#invoiceRows tr', trs => trs.slice(0, 2).map(tr => tr.textContent.includes('Pagada') && tr.textContent.includes('Usuario adicional'))),
+  [true, true]);
 
 /* USAGE — a fresh context, so the plan is the default Essential and nothing
  * has been bought: the section above left this page on Business with packages. */
@@ -796,13 +920,24 @@ check('"Ver planes" lands on Upgrade with the Planes tab selected',
   await up.evaluate(() => [document.querySelector('.page.active').id, document.getElementById('tabPlanes').getAttribute('aria-selected'), document.getElementById('panelPlanes').hidden]),
   ['upgrade', 'true', false]);
 
-console.log('\nUSAGE — Professional + un Usuario adicional se reflejan al volver a abrir la página');
-up.once('dialog', d => d.accept());
+console.log('\nFACTURACIÓN — sin facturas todavía, la pestaña muestra el estado vacío');
+await up.click('button[data-page="upgrade"]');
+await up.click('#tabFacturacion');
+check('estado vacío exacto, sin filas', [await up.textContent('#invoicesEmpty'), await up.$$eval('#invoiceRows tr', rows => rows.length)],
+  ['Todavía no hay facturas.', 0]);
+
+console.log('\nUSAGE — Professional + un Usuario adicional se reflejan al volver a abrir la página, tras aprobar los pagos simulados');
+await up.click('#tabPlanes');
 await up.click('#plansGrid [data-plan="Professional"]');
+await up.click('#confirmOk');
+await up.waitForSelector('#payModal.open');
+await up.click('#payApprove');
 await up.waitForTimeout(150);
 await up.click('#tabPaquetes');
-up.once('dialog', d => d.accept());
 await up.click('#packagesGrid [data-package="extra-user"]');
+await up.click('#confirmOk');
+await up.waitForSelector('#payModal.open');
+await up.click('#payApprove');
 await up.waitForTimeout(150);
 await openUsage();
 await up.waitForFunction(() => document.getElementById('usageLead').textContent.includes('Professional'));

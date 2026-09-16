@@ -20,9 +20,6 @@ const check = (name, got, want) => {
 const browser = await chromium.launch();
 const page = await browser.newPage();
 const errs = []; page.on('pageerror', e => errs.push(String(e)));
-// Los puntos se borran con confirm(); sin aceptarlo el diálogo se queda
-// colgado y la prueba nunca avanza.
-page.on('dialog', d => d.accept());
 
 async function fresh(file) {
   await page.goto(D + file);
@@ -180,6 +177,9 @@ check('Andrés queda cubriendo el punto antes de borrarlo',
 await page.click('button[data-page="points"]');
 await page.click(`[data-edit-point="${borrarId}"]`);
 await page.click('#deletePoint');
+// Deleting now opens the in-app confirm modal (askConfirm) instead of a
+// native confirm() — click its "Sí, continuar" button.
+await page.click('#confirmOk');
 check('la ficha del vendedor pierde esa cobertura',
   await page.evaluate(id => Store.get('sellers', 2).servicePointIds.includes(id), borrarId), false);
 await page.goto(D + 'index.html');

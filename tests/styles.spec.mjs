@@ -161,8 +161,13 @@ await save(page); // guarda el logo claro (permitido en Essential)
 await page.click('#brandFontsCard [data-upgrade-plans]');
 check('"Mejorar plan" abre Upgrade en la pestaña Planes',
   await page.evaluate(() => [document.querySelector('.page.active').id, document.getElementById('tabPlanes').getAttribute('aria-selected')]), ['upgrade', 'true']);
-page.once('dialog', d => d.accept());
+// Plan changes now go through an in-app confirm (askConfirm) and a
+// simulated-payment invoice instead of a native confirm(): click the
+// confirm modal's action, then approve the payment modal it opens.
 await page.click('#plansGrid [data-plan="Professional"]');
+await page.click('#confirmOk');
+await page.waitForSelector('#payModal.open');
+await page.click('#payApprove');
 await page.waitForFunction(() => Store.settings().plan === 'Professional');
 await page.click('button[data-page="styles"]');
 await page.waitForSelector('#styles.active #brandContrast .contrast-row');
@@ -205,8 +210,10 @@ check('cotizador: ningún script de SVG corrió aquí tampoco', await page.evalu
 console.log('\nBAJAR A ESSENTIAL IGNORA FUENTES Y ENCABEZADO, SIN BORRARLOS');
 await openAdmin(page, D);
 await page.click('button[data-page="upgrade"]');
-page.once('dialog', d => d.accept());
 await page.click('#plansGrid [data-plan="Essential"]');
+await page.click('#confirmOk');
+await page.waitForSelector('#payModal.open');
+await page.click('#payApprove');
 await page.waitForFunction(() => Store.settings().plan === 'Essential');
 await page.click('button[data-page="styles"]');
 await page.waitForSelector('#styles.active #brandContrast .contrast-row');
@@ -221,8 +228,8 @@ check('cotizador: los colores (Essential) se mantienen', await bgOf(page, INVERT
 
 console.log('\nRESTABLECER ESTILOS VUELVE A LA MARCA DEL PAQUETE EN AMBAS PÁGINAS');
 await openStyles(page);
-page.once('dialog', d => d.accept());
 await page.click('#resetBrand');
+await page.click('#confirmOk');
 await page.waitForFunction(() => document.getElementById('toast').classList.contains('show'));
 check('no quedan overrides', await page.evaluate(key => localStorage.getItem(key), BRAND_KEY), null);
 check('backoffice: no queda ninguna variable de marca en línea',
@@ -240,8 +247,8 @@ check('cotizador: el título vuelve al del paquete', await page.title(), client.
 console.log('\n"RESTABLECER DATOS DE DEMO" TAMBIÉN BORRA LOS ESTILOS');
 await page.evaluate(() => Store.saveBrand({ companyName: 'Otra Marca', colors: { ink: '#1f3a5f' } }));
 await openAdmin(page, D);
-page.once('dialog', d => d.accept());
 await page.click('#resetData');
+await page.click('#confirmOk');
 await page.waitForFunction(() => document.getElementById('toast').textContent === 'Datos de demo restablecidos');
 check('la clave de marca desaparece', await page.evaluate(key => localStorage.getItem(key), BRAND_KEY), null);
 check('y el topbar vuelve al paquete sin recargar', await bgOf(page, '.topbar'), INVERTED ? WHITE : rgb(client.theme.ink));

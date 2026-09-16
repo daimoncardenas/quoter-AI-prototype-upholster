@@ -224,6 +224,22 @@
     return !!q && (QUOTE_FINAL_STATUSES.indexOf(q.status) >= 0 || !!q.closedAt);
   }
 
+  /* ------------------------------------------------------- invoice cycle --
+   *
+   * SIMULATED payment (Upgrade -> Facturación). The real product charges
+   * through Bold's Payment Link API: the BACKEND creates the link from the
+   * amount stored server-side and confirms payment through a signed webhook;
+   * the frontend only redirects. This prototype has no backend and no
+   * network, so a plan change or package purchase creates a 'Pendiente'
+   * invoice here instead of applying instantly, and admin.html's payment
+   * modal simulates approval/rejection without contacting anything real —
+   * see CLAUDE.md. Same lock spirit as quotes above: once an invoice is
+   * settled (Pagada/Rechazada) it can never change again. */
+  var INVOICE_STATUSES = ['Pendiente', 'Pagada', 'Rechazada'];
+  function isInvoiceSettled(inv) {
+    return !!inv && inv.status !== 'Pendiente';
+  }
+
   /* ----------------------------------------------------------------- store -- */
 
   var Store = {
@@ -514,7 +530,7 @@
     /* Wipe everything back to seed state. Used by the reset control. Brand
      * overrides go too: "Restablecer datos de demo" means the pack's look. */
     reset: function () {
-      ['fabrics', 'sellers', 'quotes', 'furniture', 'users', 'settings', 'servicePoints', BRAND_KEY].forEach(function (e) {
+      ['fabrics', 'sellers', 'quotes', 'furniture', 'users', 'settings', 'servicePoints', 'invoices', BRAND_KEY].forEach(function (e) {
         try { localStorage.removeItem(NS + e); } catch (err) { /* ignore */ }
       });
       try { indexedDB.deleteDatabase('med-photos'); } catch (err) { /* ignore */ }
@@ -826,6 +842,73 @@
         if (!isNaN(n) && n > max) max = n;
       });
       return 'COT-' + (max + 1);
+    },
+
+    /* Same id style as nextQuoteId, its own numbering (a 'FAC-' prefix, not
+     * shared with 'COT-'). */
+    nextInvoiceId: function () {
+      var max = 1042;
+      read('invoices').forEach(function (inv) {
+        var n = parseInt(String(inv.id).replace(/\D/g, ''), 10);
+        if (!isNaN(n) && n > max) max = n;
+      });
+      return 'FAC-' + (max + 1);
+    },
+
+    /* Creates a 'Pendiente' invoice for a plan change or a package purchase.
+     * data: {kind:'plan'|'package', target, concept, amount, billing?}.
+     *
+     * `amount` MUST be the caller's PLANS/PACKAGES-sourced number (see
+     * admin.html's planPrice()/packagePriceParts()), never anything read from
+     * the DOM or typed by the user: in the real integration the browser must
+     * not be able to change what the backend charges — the backend reads the
+     * price from its own stored plan/package catalog, not from the request. */
+    createInvoice: function (data) {
+      data = data || {};
+      if (!data.kind || !data.target || !data.concept || !(+data.amount > 0)) {
+        throw new Error('Datos de factura incompletos');
+      }
+      var id = Store.nextInvoiceId();
+      var now = new Date(), pad = function (n) { return ('0' + n).slice(-2); };
+      // Local calendar day, same convention as quotes (see index.html) — never
+      // new Date('YYYY-MM-DD'), which parses as UTC midnight.
+      var date = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+      var reference = 'QAI-' + id + '-' + Date.now();
+      var invoice = {
+        id: id,
+        date: date,
+        concept: data.concept,
+        kind: data.kind,
+        target: data.target,
+        amount: +data.amount,
+        billing: data.kind === 'plan' ? data.billing : undefined,
+        provider: 'BOLD (simulado)',
+        reference: reference,
+        // Obviously fake: never checkout.bold.co or any real domain/scheme.
+        checkoutUrl: 'simulado://pago/' + reference,
+        status: 'Pendiente',
+        paidAt: null
+      };
+      return Store.put('invoices', invoice);
+    },
+
+    /* The only door that settles an invoice: only a 'Pendiente' one can
+     * become 'Pagada' or 'Rechazada', and a settled one is locked forever —
+     * same spirit as setQuoteStatus's lock on quotes above. Applying the
+     * underlying plan/package change is the CALLER's job (admin.html), once
+     * this returns 'Pagada' — this function only owns the invoice's own
+     * status. */
+    isInvoiceSettled: isInvoiceSettled,
+    settleInvoice: function (id, status) {
+      if (INVOICE_STATUSES.indexOf(status) < 0 || status === 'Pendiente') {
+        throw new Error('Estado de factura desconocido: ' + status);
+      }
+      var inv = Store.get('invoices', id);
+      if (!inv) throw new Error('Factura no encontrada');
+      if (isInvoiceSettled(inv)) throw new Error('Esta factura ya fue procesada; no se puede modificar.');
+      inv.status = status;
+      if (status === 'Pagada') inv.paidAt = new Date().toISOString();
+      return Store.put('invoices', inv);
     }
   };
 

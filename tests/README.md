@@ -37,10 +37,18 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   through `Store.money` rather than hand-typed, the exact Incluye/Límites item
   counts per plan, the integrations note below the cards, and the plan-change
   flow — the current plan (`Store.settings().plan`, default Essential) drives
-  each card's label/CTA, a change asks for confirmation naming the plan and
-  its price, dismissing leaves the plan untouched, and confirming saves the
-  new plan, re-renders every card's state, shows a toast, and survives a
-  reload. Also covers the Planes billing-modality switch ("Año"/"Mes",
+  each card's label/CTA, a change asks for confirmation (an in-app `askConfirm()`
+  modal, not a native `confirm()` — see below) naming the plan and its price.
+  Confirming does NOT change the plan directly any more: it creates a
+  `Pendiente` invoice (amount sourced from `PLANS`/`planPrice()`, never typed)
+  and opens the SIMULATED payment modal (`#payModal`) — see "Simulated
+  payment (Bold)" in the root `CLAUDE.md`. The plan only changes once that
+  payment is approved (`#payApprove`), with its own toast
+  (`Pago aprobado. <concepto> activado.`) and re-rendered card state,
+  surviving a reload; rejecting (`#payReject`) leaves the plan untouched and
+  marks the invoice `Rechazada`; cancelling the payment modal (or the confirm
+  itself) leaves the invoice `Pendiente` and the plan untouched, payable
+  later from the new "Facturación" tab. Also covers the Planes billing-modality switch ("Año"/"Mes",
   radiogroup accessible name "Modalidad de contratación",
   `settings.billing`, default `'anual'`): Año selected by default with the
   three annual prices and "con contrato de arrendamiento a 12 meses",
@@ -54,9 +62,25 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   focus), and the Paquetes panel — exactly five package cards in order with
   the exact price text built from `Store.money` (single/range, one-time/`/
   mes`), buying one asks for confirmation naming the package and its price,
-  dismissing leaves its count at 0 (no "Comprados" label), and confirming
-  increments the count (a purchase is a recharge — the button never disables),
-  shows a toast, and survives a reload. Also covers the "Usage" page in a fresh
+  dismissing the confirm creates no invoice and leaves its count at 0 (no
+  "Comprados" label). Confirming creates a `Pendiente` invoice (amount =
+  `pkg.min`, the same source `packagePriceParts()` reads — never the range
+  text or anything typed) and opens the payment modal; the count only
+  increments once that payment is approved (a purchase is a recharge — the
+  button never disables), with its own toast, and survives a reload. Also
+  covers a third tab, "Facturación": invoices listed newest-first with date,
+  concept, amount, modality, status pill and reference, a "Pagar" button on
+  pending ones re-opening the same payment modal for that invoice (applying
+  whichever plan/package it was created for), and the empty state
+  ("Todavía no hay facturas.") in a fresh context. Also covers
+  `Store.settleInvoice`: refusing to touch an invoice that isn't `Pendiente`,
+  whichever status is requested. Separately, `askConfirm()` (the in-app modal
+  replacing every native `confirm()` in `admin.html`, exercised here through
+  the quote-closing flow, the first site in the suite to use it) is checked
+  for opening with focus on the action button, the exact message text
+  matching what the old `confirm()` used to say, Esc cancelling, a backdrop
+  click cancelling, and focus returning to whatever triggered it — all
+  without touching the underlying state. Also covers the "Usage" page in a fresh
   context: five meters in order plus the analytics-history card, default limits
   equal to Essential's through `effectiveLimits()`, each value matching `Store`
   (this month's quotes counted in the test with local dates, AI credits starting
@@ -142,11 +166,14 @@ on every pack's own seed, not only Mediterránea's. Also opens the admin-only
 and back (asserting at least one price and the caption actually change — a
 short guard that the switch's styling holds under `clients/intertelas/`'s
 inverted color mode too), then upgrades from Essential to Professional
-(accepting the confirmation dialog), then switches to the Paquetes tab and buys
-one Sede adicional (accepting the confirmation dialog too), asserting
-`Comprados: 1` — a short guard that both its styling (same `modes/inverted.css`
-rules, reading correctly under `clients/intertelas/`'s inverted color mode) and
-its plan-change/package-purchase flows hold on every pack. Then opens "Usage" and
+(accepting the in-app confirm modal, then approving the simulated-payment
+modal it opens), then switches to the Paquetes tab and buys one Sede
+adicional (same confirm-then-approve path), asserting `Comprados: 1` — a
+short guard that both its styling (same `modes/inverted.css` rules, reading
+correctly under `clients/intertelas/`'s inverted color mode, now including the
+payment modal too) and its plan-change/package-purchase/payment-approval
+flows hold on every pack. Closing a quote as Aceptada also goes through the
+same in-app confirm modal here. Then opens "Usage" and
 asserts five progressbars plus the history card, every value well-formed
 (`<x> de <y>`), and Sedes reading `de 4` (Professional's 3 + the Sede bought).
 Then, per pack, it checks the brand layer end to end on that pack's own

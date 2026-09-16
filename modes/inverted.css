@@ -352,3 +352,16 @@
 .photo-actions p{color:var(--mode-on-color-muted)}
 .quote-gallery img{border-color:var(--mode-line-on-color)}
 .color-field input[type=color]{border:1px solid var(--mode-line-on-color)}
+
+/* Simulated payment modal (admin.html): same --mode-card-bg surface as any
+ * other .modal, so its price text takes the full on-color, same reasoning as
+ * the Upgrade plan/package cards above. .pay-sim-note needs no override: it
+ * pairs --soft (background) with --ink (text), neither of which this mode
+ * ever reassigns, so the same disclosure chip is already legible unchanged
+ * — same reasoning as .plan-cta .button[disabled] above. */
+.pay-amount,.pay-period,.pay-detail{color:var(--mode-on-color)}
+
+/* In-app confirm (askConfirm(), admin.html): same --mode-card-bg surface as
+ * any other .modal, so the confirmation question takes the full on-color
+ * instead of the --ink it uses on the normal white modal. */
+.confirm-message{color:var(--mode-on-color)}

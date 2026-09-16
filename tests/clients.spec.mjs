@@ -117,8 +117,14 @@ for (const slug of SLUGS) {
   await page.click('#billingSwitch [data-billing="anual"]');
   await page.waitForTimeout(150);
 
-  page.once('dialog', d => d.accept());
+  // Plan changes go through an in-app confirm (askConfirm, not a native
+  // confirm()) and a simulated-payment invoice — click the confirm, then
+  // approve the payment modal, which also exercises both under this pack's
+  // color mode (modes/inverted.css for Intertelas).
   await page.click('#plansGrid [data-plan="Professional"]');
+  await page.click('#confirmOk');
+  await page.waitForSelector('#payModal.open');
+  await page.click('#payApprove');
   await page.waitForTimeout(200);
   check('mejorar a Professional lo deja como plan actual', await page.evaluate(() => Store.settings().plan), 'Professional');
   check('la tarjeta de Professional queda marcada como actual, con botón deshabilitado',
@@ -133,8 +139,10 @@ for (const slug of SLUGS) {
   await page.click('#tabPaquetes');
   await page.waitForTimeout(150);
   check('ve los cinco paquetes', await page.evaluate(() => document.querySelectorAll('#packagesGrid .package-card').length), 5);
-  page.once('dialog', d => d.accept());
   await page.click('#packagesGrid [data-package="extra-site"]');
+  await page.click('#confirmOk');
+  await page.waitForSelector('#payModal.open');
+  await page.click('#payApprove');
   await page.waitForTimeout(200);
   check('comprar una Sede adicional suma "Comprados: 1"',
     await page.evaluate(() => {
@@ -298,8 +306,10 @@ for (const slug of SLUGS) {
   await loop.waitForSelector('#quoteModal.open');
   await loop.click('[data-set-status="Cotizada"]');
   await loop.waitForSelector('#quoteStatusControl [data-close-status="Aceptada"]');
-  loop.once('dialog', d => d.accept());
+  // Closing a quote now goes through the in-app confirm (askConfirm), not a
+  // native confirm() — click its "Sí, continuar" button.
   await loop.click('[data-close-status="Aceptada"]');
+  await loop.click('#confirmOk');
   await loop.waitForSelector('#quoteStatusControl [data-set-status]', { state: 'detached' });
   check('el estado queda en Aceptada, cerrado, y sin controles para volver a cambiarlo',
     await loop.evaluate(id => { const q = Store.get('quotes', id.trim()); return [q.status, !!q.closedAt]; }, quoteId),

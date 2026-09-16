@@ -110,6 +110,40 @@
     @media(prefers-reduced-motion:reduce){.package-card{transition:none}.package-card:hover{transform:none}}
     @media(max-width:1050px){.packages-grid{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:760px){.packages-grid{grid-template-columns:1fr}}
+    /* Simulated payment modal (Facturación / plan+package purchases). Reuses
+     * .modal/.modal-head/.modal-body/.modal-actions, already flipped by
+     * modes/inverted.css, so only the content-specific bits below need their
+     * own rule (and their own inverted override, right next to .modal's). */
+    .pay-amount{font:600 1.5rem var(--font-heading);color:var(--ink);margin:4px 0 2px}
+    .pay-period{font-size:.68rem;font-weight:600;color:var(--text);margin-left:2px}
+    /* Modality/pasarela/reference/checkout-url lines: NOT .modal-hint (its
+     * var(--muted) measures 4.35:1 here, under 4.5:1) — var(--text), the same
+     * token .plan-audience/.plans-note already use for exactly this reason. */
+    .pay-detail{font-size:.64rem;color:var(--text);line-height:1.5;margin:0 0 10px}
+    /* Mandatory simulation disclosure — never omitted, never styled to look
+     * like a real gateway brand. --soft/--muted are generic neutral tokens,
+     * not this (or any) client's brand hue. */
+    .pay-sim-note{background:var(--soft);border-left:3px solid var(--muted);padding:11px 14px;font-size:.62rem;font-weight:700;color:var(--ink);line-height:1.5;margin:16px 0 0}
+    /* Facturación tab: same table language as every other admin list. Status
+     * pill deliberately does NOT reuse .status (the quotes pill): its pale
+     * color-mix() wash + plain --green/--red text measures as low as 3.67:1
+     * on this pack's own theme — under 4.5:1. Same white-chip +
+     * currentColor-border shape .usage-status already uses (right above),
+     * which does clear 4.5:1, including for the exact same --amber/--green/
+     * --red tokens used directly as text on white. */
+    #invoiceRows .button.primary{padding:8px 14px}
+    .invoice-status{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid currentColor;border-radius:20px;padding:4px 10px;font-size:.58rem;font-weight:700}
+    .invoice-status:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+    .invoice-status.pendiente{color:var(--amber)}
+    .invoice-status.pagada{color:var(--green)}
+    .invoice-status.rechazada{color:var(--red)}
+    /* In-app confirm (askConfirm(), replaces every native confirm()). --ink on
+     * the modal's white background (or --mode-on-color on the inverted card,
+     * see modes/inverted.css) is the darkest text token, well over 4.5:1 in
+     * every pack's theme — this is the confirmation QUESTION itself, so it
+     * gets the same contrast floor as any other critical text, not the
+     * lighter --muted .modal-hint uses for secondary captions. */
+    .confirm-message{font-size:.72rem;color:var(--ink);line-height:1.6;margin:0}
     /* Usage: same card language as Upgrade (fonts, spacing, shadow, hover
      * lift). The page-head lead takes --text for the same contrast reason as
      * #upgrade's. A near/over card gets an inset accent strip through
@@ -343,6 +377,7 @@
         <div class="tabs" role="tablist" aria-label="Secciones de Upgrade">
           <button type="button" class="tab" id="tabPlanes" role="tab" aria-selected="true" aria-controls="panelPlanes" data-tab="planes">Planes</button>
           <button type="button" class="tab" id="tabPaquetes" role="tab" aria-selected="false" aria-controls="panelPaquetes" tabindex="-1" data-tab="paquetes">Paquetes</button>
+          <button type="button" class="tab" id="tabFacturacion" role="tab" aria-selected="false" aria-controls="panelFacturacion" tabindex="-1" data-tab="facturacion">Facturación</button>
         </div>
         <div class="tabpanel" id="panelPlanes" role="tabpanel" aria-labelledby="tabPlanes">
           <div class="billing-switch" id="billingSwitch" role="radiogroup" aria-label="Modalidad de contratación">
@@ -354,6 +389,10 @@
         </div>
         <div class="tabpanel" id="panelPaquetes" role="tabpanel" aria-labelledby="tabPaquetes" hidden>
           <div class="packages-grid" id="packagesGrid"></div>
+        </div>
+        <div class="tabpanel" id="panelFacturacion" role="tabpanel" aria-labelledby="tabFacturacion" hidden>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>Factura</th><th>Fecha</th><th>Concepto</th><th>Monto</th><th>Modalidad</th><th>Estado</th><th>Referencia</th><th></th></tr></thead><tbody id="invoiceRows"></tbody></table></div>
+          <p class="plans-note" id="invoicesEmpty" hidden>Todavía no hay facturas.</p>
         </div>
       </section>
       <section class="page" id="usage">
@@ -466,6 +505,13 @@
   <div class="modal-backdrop" id="sellerModal" role="dialog" aria-modal="true" aria-labelledby="sellerModalTitle"><form class="modal" id="sellerForm"><div class="modal-head"><h2 id="sellerModalTitle">Nuevo vendedor</h2><button type="button" class="close" data-close>×</button></div><div class="modal-body"><input type="hidden" name="id"><div class="form-grid"><label class="field">Nombre completo<input required name="name"></label><label class="field">Correo<input required type="email" name="email"></label><label class="field full">Estado<select name="active"><option value="true">Recibe asignaciones</option><option value="false">Pausado · sin acceso</option></select></label></div><h3 class="modal-section">Puntos de atención que cubre</h3><p class="modal-hint">Elige al menos uno. El cotizador asigna automáticamente al vendedor cuyo punto coincide con la ciudad de la solicitud.</p><div class="point-checks" id="sellerPointChecks"></div><p class="modal-hint" id="sellerPointsHint" hidden>Todavía no hay puntos de atención creados. Crea uno primero en "Puntos de atención".</p><p class="modal-hint" id="sellerAccountHint" hidden>El correo es también su usuario para entrar al backoffice: si lo cambias, cambia con qué correo inicia sesión. La contraseña no se toca.</p></div><div class="modal-actions"><button type="button" class="button secondary" data-close>Cancelar</button><button class="button primary">Guardar vendedor</button></div></form></div>
   <div class="modal-backdrop" id="pointModal" role="dialog" aria-modal="true" aria-labelledby="pointModalTitle"><form class="modal" id="pointForm"><div class="modal-head"><h2 id="pointModalTitle">Nuevo punto</h2><button type="button" class="close" data-close>×</button></div><div class="modal-body"><input type="hidden" name="id"><div class="form-grid"><label class="field">Nombre<input required name="name" placeholder="Ej. Patio Bonito"></label><label class="field">Ciudad<input required name="city" placeholder="Ej. Bogotá"></label><label class="field full">Dirección<input name="address" placeholder="Ej. Calle 40 # 86A-15"></label><label class="field">Teléfono<input name="phone" placeholder="Ej. +57 313 7173625"></label><label class="field">Orden<input name="order" type="number" min="1"></label><label class="field">Estado<select name="active"><option value="true">Activo</option><option value="false">Pausado</option></select></label></div></div><div class="modal-actions"><button type="button" class="button danger" id="deletePoint">Eliminar</button><button type="button" class="button secondary" data-close>Cancelar</button><button class="button primary">Guardar punto</button></div></form></div>
   <div class="modal-backdrop" id="quoteModal" role="dialog" aria-modal="true" aria-labelledby="quoteModalTitle"><div class="modal"><div class="modal-head"><h2 id="quoteModalTitle">Detalle de la solicitud</h2><button type="button" class="close" data-close>×</button></div><div class="modal-body"><div id="quoteDetail"></div><div id="quoteStatusControl"></div><div id="quoteComments"></div></div><div class="modal-actions"><button type="button" class="button secondary" data-close>Cerrar</button></div></div></div>
+  <!-- One reusable in-app confirm, replacing every native confirm() in this
+       page — see askConfirm() in the script below. -->
+  <div class="modal-backdrop" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle"><div class="modal confirm-modal"><div class="modal-head"><h2 id="confirmModalTitle">Confirmar</h2><button type="button" class="close" data-close aria-label="Cerrar">×</button></div><div class="modal-body"><p class="confirm-message" id="confirmModalBody"></p></div><div class="modal-actions"><button type="button" class="button secondary" id="confirmCancel" data-close>Cancelar</button><button type="button" class="button primary" id="confirmOk">Confirmar</button></div></div></div>
+  <!-- Simulated Bold payment: no real API call, no key, no lookalike checkout
+       domain — see the SIMULATED PAYMENT block in the script below and
+       CLAUDE.md's "Simulated payment (Bold)" section. -->
+  <div class="modal-backdrop" id="payModal" role="dialog" aria-modal="true" aria-labelledby="payModalTitle"><div class="modal"><div class="modal-head"><h2 id="payModalTitle">Pago</h2><button type="button" class="close" data-close>×</button></div><div class="modal-body" id="payModalBody"></div><div class="modal-actions"><button type="button" class="button secondary" data-close>Cancelar</button><button type="button" class="button danger" id="payReject">Simular rechazo</button><button type="button" class="button primary" id="payApprove">Pagar (simular aprobación)</button></div></div></div>
   <div class="toast" id="toast" role="status"></div>
   <!-- The legal disclaimer stays bound to the PACK name (the NOT_OFFICIAL_* copy token is rendered at generate time, never marked data-brand-name): an admin renaming the company must not make this notice untruthful. -->
   <aside class="demo-banner" id="demoBanner">
@@ -667,7 +713,7 @@
       }
       box.innerHTML=html;
     }
-    $('#quoteStatusControl').addEventListener('click',e=>{
+    $('#quoteStatusControl').addEventListener('click',async e=>{
       const setBtn=e.target.closest('[data-set-status]');
       const closeBtn=e.target.closest('[data-close-status]');
       if(setBtn){
@@ -679,7 +725,10 @@
       }
       if(closeBtn){
         const status=closeBtn.dataset.closeStatus;
-        if(!confirm(`Esto cierra el caso y no se puede deshacer. ¿Marcar esta solicitud como "${status}"?`))return;
+        const ok=await askConfirm({title:'Cerrar caso',
+          message:`Esto cierra el caso y no se puede deshacer. ¿Marcar esta solicitud como "${status}"?`,
+          confirmText:'Sí, continuar',danger:true});
+        if(!ok)return;
         let q;
         try{q=Store.setQuoteStatus(currentQuote,status)}catch(err){return toast(err.message)}
         renderAll();openQuote(currentQuote);toast(`${q.id} cerrada como ${status}`);
@@ -796,10 +845,13 @@
       try{Store.put('furniture',item)}catch(err){return toast(err.message)}
       renderAll();closeModals();toast('Mueble guardado — el cotizador ya lo usa');
     };
-    $('#deleteFurniture').onclick=()=>{
+    $('#deleteFurniture').onclick=async()=>{
       const id=$('#furnitureForm').elements.id.value;if(!id)return;
       if(furnitureAll().length<=1)return toast('Debe quedar al menos un mueble');
-      if(!confirm('¿Eliminar este mueble? Las cotizaciones ya enviadas conservan su texto.'))return;
+      const ok=await askConfirm({title:'Eliminar mueble',
+        message:'¿Eliminar este mueble? Las cotizaciones ya enviadas conservan su texto.',
+        confirmText:'Sí, continuar',danger:true});
+      if(!ok)return;
       Store.remove('furniture',id);renderAll();closeModals();toast('Mueble eliminado');
     };
 
@@ -878,9 +930,12 @@
       renderAll();closeModals();
       toast(retag?`Punto guardado · ${retag} ${retag===1?'solicitud renombrada':'solicitudes renombradas'}`:'Punto guardado — el cotizador ya lo usa');
     };
-    $('#deletePoint').onclick=()=>{
+    $('#deletePoint').onclick=async()=>{
       const id=$('#pointForm').elements.id.value;if(!id)return;
-      if(!confirm('¿Eliminar este punto de atención? Las cotizaciones ya enviadas conservan su texto.'))return;
+      const ok=await askConfirm({title:'Eliminar punto de atención',
+        message:'¿Eliminar este punto de atención? Las cotizaciones ya enviadas conservan su texto.',
+        confirmText:'Sí, continuar',danger:true});
+      if(!ok)return;
       const touched=Store.removeServicePoint(id);
       renderAll();closeModals();
       toast(touched?`Punto eliminado · ${touched} ${touched===1?'vendedor perdió esa cobertura':'vendedores perdieron esa cobertura'}`:'Punto eliminado');
@@ -1014,8 +1069,11 @@
     };
 
     /* ------------------------------------------------------------------ misc -- */
-    $('#resetData').onclick=()=>{
-      if(!confirm('Se borrarán las telas, vendedores, cotizaciones y ajustes guardados en este navegador. ¿Continuar?'))return;
+    $('#resetData').onclick=async()=>{
+      const ok=await askConfirm({title:'Restablecer datos',
+        message:'Se borrarán las telas, vendedores, cotizaciones y ajustes guardados en este navegador. ¿Continuar?',
+        confirmText:'Sí, continuar',danger:true});
+      if(!ok)return;
       // Store.reset() also drops the brand overrides, so repaint the pack's look.
       Store.reset();Brand.apply();renderAll();loadSettings();
       if($('#styles').classList.contains('active'))renderStyles();
@@ -1189,20 +1247,25 @@
       setBilling(next.dataset.billing);
       next.focus();
     });
-    // El cambio de plan pide confirmación con el precio, igual que cerrar una
-    // cotización: es una decisión comercial, no un toggle casual.
-    $('#plansGrid').addEventListener('click',e=>{
+    // El cambio de plan pide confirmación con el precio, igual que antes —
+    // pero ya no aplica el cambio al aceptar: confirmar solo crea una factura
+    // Pendiente y abre el pago simulado. El plan solo cambia si ese pago se
+    // aprueba (ver SIMULATED PAYMENT más abajo).
+    $('#plansGrid').addEventListener('click',async e=>{
       const btn=e.target.closest('[data-plan]');
       if(!btn||btn.disabled)return;
       const name=btn.dataset.plan,plan=PLANS.find(p=>p.name===name);
       if(!plan)return;
-      const price=planPrice(plan,currentBilling());
-      if(!confirm(`¿Confirmas el cambio al plan ${name} por ${Store.money(price)} COP / mes, ${CONFIRM_MODALITY[currentBilling()]}?`))return;
-      try{Store.saveSettings({plan:name})}catch(err){return toast(err.message)}
-      // The plan gates brand features (fonts, header variant): repaint with what it allows now.
-      Brand.apply();
-      renderUpgrade();
-      toast(`Listo, tu plan ahora es ${name}.`);
+      const billing=currentBilling();
+      const price=planPrice(plan,billing);
+      const ok=await askConfirm({title:'Confirmar cambio de plan',
+        message:`¿Confirmas el cambio al plan ${name} por ${Store.money(price)} COP / mes, ${CONFIRM_MODALITY[billing]}?`});
+      if(!ok)return;
+      let inv;
+      try{inv=Store.createInvoice({kind:'plan',target:name,concept:`Plan ${name}`,amount:price,billing})}
+      catch(err){return toast(err.message)}
+      renderInvoices();
+      openPayModal(inv.id);
     });
 
     /* ---------------------------------------------------------------- tabs --
@@ -1211,7 +1274,8 @@
      * matching the standard tabs pattern). Static product copy again — no
      * seed/Store data — same reasoning as PLANS above. */
     const UPGRADE_LEADS={planes:'Elige el plan que mejor se ajusta al tamaño de tu operación.',
-      paquetes:'Recarga funciones específicas sin cambiar de plan.'};
+      paquetes:'Recarga funciones específicas sin cambiar de plan.',
+      facturacion:'Historial de pagos simulados y facturas pendientes.'};
     function selectUpgradeTab(name){
       $$('#upgrade .tab').forEach(t=>{
         const sel=t.dataset.tab===name;
@@ -1220,6 +1284,7 @@
       });
       $('#panelPlanes').hidden=name!=='planes';
       $('#panelPaquetes').hidden=name!=='paquetes';
+      $('#panelFacturacion').hidden=name!=='facturacion';
       $('#upgradeLead').textContent=UPGRADE_LEADS[name];
     }
     $$('#upgrade .tab').forEach(t=>t.onclick=()=>selectUpgradeTab(t.dataset.tab));
@@ -1275,21 +1340,130 @@
           `</article>`;
       }).join('');
     }
-    // Igual que el cambio de plan: confirmación con el precio antes de tocar
-    // el store, y una recarga se puede repetir cuantas veces haga falta.
-    $('#packagesGrid').addEventListener('click',e=>{
+    // Igual que el cambio de plan: confirmación con el precio, y confirmar ya
+    // no suma el paquete de una — crea una factura Pendiente y abre el pago
+    // simulado; el conteo solo sube si ese pago se aprueba. Una recarga se
+    // puede seguir pidiendo cuantas veces haga falta (cada una es su propia
+    // factura).
+    $('#packagesGrid').addEventListener('click',async e=>{
       const btn=e.target.closest('[data-package]');
       if(!btn)return;
       const pkg=PACKAGES.find(p=>p.id===btn.dataset.package);
       if(!pkg)return;
       const {full}=packagePriceParts(pkg);
-      if(!confirm(`¿Confirmas la compra de ${pkg.name} por ${full}?`))return;
-      const packages={...(Store.settings().packages||{})};
-      packages[pkg.id]=(+packages[pkg.id]||0)+1;
-      try{Store.saveSettings({packages})}catch(err){return toast(err.message)}
-      renderPackages();
-      toast(`Listo, agregamos ${pkg.name} a tu cuenta.`);
+      const ok=await askConfirm({title:'Confirmar compra',message:`¿Confirmas la compra de ${pkg.name} por ${full}?`});
+      if(!ok)return;
+      // El monto de la factura es pkg.min (el mismo número fuente que arma
+      // packagePriceParts): nunca el texto del rango ni nada leído del DOM.
+      let inv;
+      try{inv=Store.createInvoice({kind:'package',target:pkg.id,concept:`Paquete · ${pkg.name}`,amount:pkg.min})}
+      catch(err){return toast(err.message)}
+      renderInvoices();
+      openPayModal(inv.id);
     });
+
+    /* ------------------------------------------------------- facturación --
+     *
+     * SIMULATED PAYMENT. The real product charges through Bold's Payment
+     * Link API: the BACKEND creates the link (POST .../online/link/v1, API
+     * key in headers, amount taken from the stored invoice, expiration in
+     * nanoseconds, callback_url) and a webhook signed with x-bold-signature
+     * (HMAC-SHA256) confirms it — the frontend only redirects. This
+     * prototype has no backend and no network: no real API call, no key, no
+     * lookalike checkout domain. Every invoice's checkoutUrl is an obviously
+     * fake `simulado://pago/<reference>`, and every payment screen carries
+     * the mandatory disclosure below. "Bold" only ever appears as plain text
+     * naming the future provider, never styled as their brand.
+     *
+     * Store.createInvoice() already wrote the Pendiente invoice with its
+     * kind/target; this modal only reads it back by id (payModalInvoiceId)
+     * and, on approval, applies the SAME kind/target the invoice was created
+     * with — so paying a pending invoice later from the Facturación list
+     * (openPayModal called with an existing id, no new invoice) applies the
+     * exact change it was created for. */
+    function invoicePeriodSuffix(inv){
+      if(inv.kind==='plan')return ' COP / mes';
+      const pkg=PACKAGES.find(p=>p.id===inv.target);
+      return pkg&&pkg.monthly?' COP / mes':' COP';
+    }
+    // NOT .status (the quotes pill): measured on this pack's own theme,
+    // .status.accepted's pale-wash + plain --green text falls under 4.5:1
+    // (as low as 3.67:1 here). Same white-chip + currentColor-border shape
+    // .usage-status already uses right above, which does clear 4.5:1.
+    function invoiceStatusClass(status){return status==='Pagada'?'pagada':status==='Rechazada'?'rechazada':'pendiente'}
+    function renderInvoices(){
+      const rows=Store.all('invoices');
+      $('#invoicesEmpty').hidden=!!rows.length;
+      $('#invoiceRows').innerHTML=rows.map(inv=>{
+        const modality=inv.billing?(inv.billing==='mensual'?'Mes':'Año'):'—';
+        const pay=inv.status==='Pendiente'?`<button type="button" class="button primary" data-pay-invoice="${esc(inv.id)}">Pagar</button>`:'';
+        return `<tr><td><strong>${esc(inv.id)}</strong></td><td>${esc(inv.date)}</td><td>${esc(inv.concept)}</td>`+
+          `<td>${esc(Store.money(inv.amount))}</td><td>${esc(modality)}</td>`+
+          `<td><span class="invoice-status ${invoiceStatusClass(inv.status)}">${esc(inv.status)}</span></td>`+
+          `<td>${esc(inv.reference)}</td><td>${pay}</td></tr>`;
+      }).join('');
+    }
+    $('#invoiceRows').addEventListener('click',e=>{
+      const btn=e.target.closest('[data-pay-invoice]');
+      if(btn)openPayModal(btn.dataset.payInvoice);
+    });
+
+    let payModalInvoiceId=null,payModalTrigger=null;
+    function openPayModal(id){
+      const inv=Store.get('invoices',id);
+      if(!inv)return;
+      payModalInvoiceId=id;
+      payModalTrigger=document.activeElement;
+      const modality=inv.billing
+        ?`<p class="pay-detail">Modalidad: ${inv.billing==='mensual'?'Mes a mes':'Año'} · ${esc(BILLING_CAPTIONS[inv.billing])}</p>`:'';
+      $('#payModalBody').innerHTML=
+        `<h3 class="modal-section">${esc(inv.concept)}</h3>`+
+        `<p class="pay-amount">${esc(Store.money(inv.amount))}<span class="pay-period">${esc(invoicePeriodSuffix(inv))}</span></p>`+
+        modality+
+        `<p class="pay-detail">Pasarela: Bold (simulado) · Referencia ${esc(inv.reference)}</p>`+
+        `<p class="pay-detail">Enlace de pago (simulado): ${esc(inv.checkoutUrl)}</p>`+
+        `<p class="pay-sim-note">Simulación de pago · este prototipo no procesa pagos reales.</p>`;
+      openModal('#payModal');
+      $('#payApprove').focus();
+    }
+    // Closes #payModal and returns focus to whatever opened it — same
+    // "return focus to the trigger" courtesy askConfirm gives its own modal.
+    function closePayModal(){
+      $('#payModal').classList.remove('open');
+      payModalInvoiceId=null;
+      if(payModalTrigger&&typeof payModalTrigger.focus==='function')payModalTrigger.focus();
+      payModalTrigger=null;
+    }
+    // Applies the change an APPROVED invoice was created for. Never called on
+    // rejection or cancellation — see the approve/reject handlers below.
+    function applyInvoiceChange(inv){
+      if(inv.kind==='plan'){
+        try{Store.saveSettings({plan:inv.target})}catch(err){return toast(err.message)}
+        // The plan gates brand features (fonts, header variant): repaint with what it allows now.
+        Brand.apply();
+      }else if(inv.kind==='package'){
+        const packages={...(Store.settings().packages||{})};
+        packages[inv.target]=(+packages[inv.target]||0)+1;
+        try{Store.saveSettings({packages})}catch(err){return toast(err.message)}
+      }
+    }
+    $('#payApprove').onclick=()=>{
+      if(!payModalInvoiceId)return;
+      let inv;
+      try{inv=Store.settleInvoice(payModalInvoiceId,'Pagada')}catch(err){return toast(err.message)}
+      applyInvoiceChange(inv);
+      closePayModal();
+      renderUpgrade();renderPackages();renderInvoices();
+      if($('#usage').classList.contains('active'))renderUsage();
+      toast(`Pago aprobado. ${inv.concept} activado.`);
+    };
+    $('#payReject').onclick=()=>{
+      if(!payModalInvoiceId)return;
+      try{Store.settleInvoice(payModalInvoiceId,'Rechazada')}catch(err){return toast(err.message)}
+      closePayModal();
+      renderInvoices();
+      toast('Pago rechazado. No se aplicó ningún cambio.');
+    };
 
     /* ----------------------------------------------------------------- usage --
      *
@@ -1611,8 +1785,11 @@
       Brand.apply();renderStyles();
       toast('Estilos guardados. El cotizador ya usa tu marca.');
     };
-    $('#resetBrand').onclick=()=>{
-      if(!confirm('Se quitarán el nombre, los logos, los colores, las fuentes y el encabezado personalizados, y el cotizador volverá a la marca por defecto. ¿Continuar?'))return;
+    $('#resetBrand').onclick=async()=>{
+      const ok=await askConfirm({title:'Restablecer estilos',
+        message:'Se quitarán el nombre, los logos, los colores, las fuentes y el encabezado personalizados, y el cotizador volverá a la marca por defecto. ¿Continuar?',
+        confirmText:'Sí, continuar',danger:true});
+      if(!ok)return;
       Store.resetBrand();Brand.apply();renderStyles();
       toast('Estilos restablecidos a los valores por defecto.');
     };
@@ -1621,7 +1798,7 @@
     // nuevo lo suma a la lista de los que sí usan estos porcentajes.
     // Usage solo se recalcula si está abierta (go('usage') la pinta al entrar):
     // mide IndexedDB, y no hace falta tocarlo en cada render de las demás.
-    function renderAll(){renderDashboard();renderQuotes();renderFabrics();renderFurniture();renderSellers();renderPoints();renderCoverageScope();renderUpgrade();renderPackages();if($('#usage').classList.contains('active'))renderUsage()}
+    function renderAll(){renderDashboard();renderQuotes();renderFabrics();renderFurniture();renderSellers();renderPoints();renderCoverageScope();renderUpgrade();renderPackages();renderInvoices();if($('#usage').classList.contains('active'))renderUsage()}
     // The cotizador writes to the same store; keep an open backoffice tab current.
     Store.onChange(()=>{renderAll();loadSettings()});
 
@@ -1629,9 +1806,80 @@
     /* ---------------------------------------------------------------- modals -- */
     function openModal(id){$(id).classList.add('open')}
     function closeModals(){$$('.modal-backdrop').forEach(x=>x.classList.remove('open'))}
-    $$('[data-close]').forEach(x=>x.onclick=closeModals);
-    $$('.modal-backdrop').forEach(x=>x.addEventListener('click',e=>{if(e.target===x)closeModals()}));
-    document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModals()});
+    // The in-app confirm (askConfirm(), right below) can open ON TOP of
+    // another already-open modal — e.g. "Eliminar este mueble?" while
+    // #furnitureModal is still open — so its own ×/Cancel/backdrop/Esc must
+    // dismiss ONLY #confirmModal, never sweep every backdrop the way
+    // closeModals() does for every other (never-nested) modal in this file.
+    // #payModal is never nested, but gets the same special case so its own
+    // dismiss paths also return focus to whatever opened it (closePayModal()).
+    $$('[data-close]').forEach(x=>x.onclick=()=>{
+      if(x.closest('#confirmModal')){resolveConfirm(false);return}
+      if(x.closest('#payModal')){closePayModal();return}
+      closeModals();
+    });
+    $$('.modal-backdrop').forEach(x=>x.addEventListener('click',e=>{
+      if(e.target!==x)return;
+      if(x.id==='confirmModal'){resolveConfirm(false);return}
+      if(x.id==='payModal'){closePayModal();return}
+      closeModals();
+    }));
+    document.addEventListener('keydown',e=>{
+      if(e.key!=='Escape')return;
+      if(openConfirm){resolveConfirm(false);return}
+      closeModals();
+    });
+
+    /* ---------------------------------------------------------- confirm dialogs --
+     *
+     * One reusable in-app confirm, replacing every native confirm() in this
+     * file: the browser's own dialog ("localhost:3000 says…") can't be
+     * styled or color-moded and looks broken next to a branded backoffice.
+     * Reuses the same .modal-backdrop/.modal/.modal-head/.modal-body/
+     * .modal-actions markup (and closeModals()/Esc/backdrop-click wiring)
+     * every other modal already has, so both color modes work for free.
+     * Returns a Promise<boolean>, so a call site reads almost like the old
+     * `if(!confirm(...))return`: `if(!await askConfirm({...}))return`. */
+    let openConfirm=null; // {resolve, trigger} while a confirm is open — never two at once
+    function trapConfirmTab(e){
+      if(e.key!=='Tab')return;
+      const items=$$('#confirmModal button:not([disabled])');
+      if(!items.length)return;
+      e.preventDefault();
+      let i=items.indexOf(document.activeElement);
+      if(i<0)i=0;
+      i=(i+(e.shiftKey?-1:1)+items.length)%items.length;
+      items[i].focus();
+    }
+    // Settles whichever confirm is open, however it closed (button, ×,
+    // backdrop, Esc). A Promise only ever settles once, so if the OK button
+    // already resolved it true, a later closeModals()->resolveConfirm(false)
+    // here is a harmless no-op.
+    function resolveConfirm(value){
+      if(!openConfirm)return;
+      const {resolve,trigger}=openConfirm;
+      openConfirm=null;
+      document.removeEventListener('keydown',trapConfirmTab,true);
+      $('#confirmModal').classList.remove('open');
+      resolve(value);
+      if(trigger&&typeof trigger.focus==='function')trigger.focus();
+    }
+    function askConfirm(opts){
+      opts=opts||{};
+      if(openConfirm)return Promise.resolve(false); // never two dialogs at once
+      const trigger=document.activeElement;
+      $('#confirmModalTitle').textContent=opts.title||'Confirmar';
+      $('#confirmModalBody').textContent=opts.message||'';
+      const okBtn=$('#confirmOk');
+      okBtn.textContent=opts.confirmText||(opts.danger?'Sí, continuar':'Confirmar');
+      okBtn.className='button '+(opts.danger?'danger':'primary');
+      $('#confirmCancel').textContent=opts.cancelText||'Cancelar';
+      $('#confirmModal').classList.add('open');
+      document.addEventListener('keydown',trapConfirmTab,true);
+      okBtn.focus();
+      return new Promise(resolve=>{openConfirm={resolve,trigger}});
+    }
+    $('#confirmOk').onclick=()=>resolveConfirm(true);
 
     // The choices come from Configuración, so a renamed option never drifts.
     function fillRecommendationOptions(){

@@ -94,9 +94,11 @@ rendered. Do not bundle, split into modules, or add a framework unless asked.
   DOES belong in `Store` is which plan the client is currently on
   (`Store.settings().plan`, default `'Essential'` in `DEFAULT_SETTINGS` — same
   default for every client): each card's "Plan actual" label/CTA is derived from
-  it, changing plan asks for confirmation naming the plan and its price, and the
-  choice is saved through the normal settings API, so it persists like any other
-  setting. Each `PLANS` entry carries two monthly amounts — `price` (cheaper,
+  it, changing plan asks for confirmation (via `askConfirm()`, see "In-app confirm
+  dialogs" below) naming the plan and its price — but confirming no longer applies
+  the change directly. It creates a `Pendiente` invoice and opens the SIMULATED
+  payment modal instead; the plan (or package count) only changes once that
+  payment is approved. See "Simulated payment (Bold)" below. Each `PLANS` entry carries two monthly amounts — `price` (cheaper,
   under a yearly contract) and `priceMonthly` (month-to-month) — and an
   accessible `#billingSwitch` radiogroup ("Año"/"Mes", roving tabindex, arrow
   keys move AND activate) at the top of the Planes tab picks which one is
@@ -115,8 +117,12 @@ rendered. Do not bundle, split into modules, or add a framework unless asked.
   tabindex, arrow keys switch): "Planes" is the plan cards above; "Paquetes" is a
   second static constant, `PACKAGES` — one-off/recurring add-ons ("recarga
   funciones sin cambiar de plan") — with its own `Store.settings().packages`
-  ({id: count} map, default `{}`), incremented (never reset or toggled) each time
-  "Comprar" is confirmed, so a package can be bought more than once. Right after
+  ({id: count} map, default `{}`), incremented (never reset or toggled) only once
+  a purchase's simulated payment is approved (see below), so a package can be
+  bought more than once. A third tab, "Facturación" (`#tabFacturacion`/
+  `#panelFacturacion`, same roving-tabindex ARIA-tabs pattern), lists every
+  invoice newest-first with a "Pagar" button on pending ones — see "Simulated
+  payment (Bold)". Right after
   it, "Usage" (`usage` section/page id, admin-only through the same `Auth.sections`
   + `go()` gate) shows the company's CURRENT consumption against its current plan +
   purchased packages, re-rendered on every `go('usage')` so a change made in
@@ -181,6 +187,81 @@ Couplings that are easy to break:
   dashboard's cycle metrics (funnel, closed %, acceptance rate, average days to
   close, the admin-only per-seller table) are all derived from these two fields —
   see `renderDashboard()`.
+
+## Simulated payment (Bold)
+
+The real product charges through **Bold** (Colombian PSP) via its Payment Link
+API: the BACKEND creates the link (`POST https://integrations.api.bold.co/online/link/v1`,
+API key in headers, amount taken from the stored invoice — never from anything
+the browser sends — expiration in nanoseconds, `callback_url`), the frontend
+only redirects, and a webhook signed with `x-bold-signature` (HMAC-SHA256)
+confirms payment. This prototype has **no backend and no network**, so it
+SIMULATES that flow instead of calling it: no real API call, no API key or
+secret (not even a placeholder that looks like one), no Bold branding/logo/
+colors, and no lookalike checkout domain — every invoice's `checkoutUrl` is an
+obviously fake `simulado://pago/<reference>`. "Bold" appears only as plain
+text naming the future provider (e.g. "Pasarela: Bold (simulado)"), never
+styled as their brand.
+
+- **`invoices`** — a real `Store` entity (`Store.all('invoices')`, array in
+  localStorage under `<storageNamespace>invoices`), seeded EMPTY for every
+  client pack (never added to `clients/*/seed.json` — it has no history to
+  seed). A record: `{id (e.g. 'FAC-1042', same id style as quotes' 'COT-',
+  via Store.nextInvoiceId()), date (local 'YYYY-MM-DD', same convention as
+  quotes), concept, kind ('plan'|'package'), target (plan name or package
+  id), amount (number), billing ('anual'|'mensual', plan invoices only),
+  provider ('BOLD (simulado)'), reference ('QAI-<id>-<timestamp>'),
+  checkoutUrl ('simulado://pago/<reference>'), status ('Pendiente'|'Pagada'|
+  'Rechazada'), paidAt (ISO timestamp or null)}`.
+- **`Store.createInvoice({kind, target, concept, amount, billing?})`** —
+  the only way an invoice is created; throws on incomplete data. `amount` MUST
+  come from the caller's `PLANS`/`PACKAGES`-sourced number (`planPrice()` for
+  plans, `pkg.min` for packages — the same field `packagePriceParts()` reads),
+  **never from the DOM or anything the user typed**: in the real integration
+  the browser must not be able to change what the backend charges.
+- **`Store.settleInvoice(id, 'Pagada'|'Rechazada')`** — the only door that
+  settles an invoice. Same lock spirit as quotes: only a `Pendiente` invoice
+  can be settled, and a settled one can never change again (throws
+  `'Esta factura ya fue procesada; no se puede modificar.'`).
+- **The flow**: confirming a plan change or package purchase (still asks via
+  `askConfirm()`, same wording as before) calls `Store.createInvoice()` and
+  opens the payment modal (`#payModal`), which shows the concept, the amount
+  (via `Store.money`), the modality (plans only), the reference, and the
+  mandatory label `Simulación de pago · este prototipo no procesa pagos
+  reales.`, plus three actions: `Pagar (simular aprobación)`, `Simular
+  rechazo`, `Cancelar`. **Pagar** settles the invoice `Pagada` (stamps
+  `paidAt`) and ONLY THEN applies the change (`applyInvoiceChange()`: plan
+  switch or package-count increment), with toast `Pago aprobado. <concept>
+  activado.`. **Simular rechazo** settles it `Rechazada`; nothing else
+  changes, toast `Pago rechazado. No se aplicó ningún cambio.`. **Cancelar**
+  (or Esc/backdrop) leaves the invoice `Pendiente`, untouched — payable later
+  from the Facturación tab's "Pagar" button, which reopens the same modal for
+  that invoice id and applies whatever `kind`/`target` it was created with.
+
+## In-app confirm dialogs
+
+Every `confirm()` in `admin.html` (plan change, package purchase, closing a
+quote as Aceptada/Rechazada, "Restablecer datos de demo", "Restablecer
+estilos por defecto") was replaced by **`askConfirm({title, message,
+confirmText?, cancelText?, danger?})`**, an in-app modal — the native
+browser dialog can't be styled or color-moded and looks broken next to a
+branded backoffice. It reuses the same `.modal-backdrop`/`.modal`/
+`.modal-head`/`.modal-body`/`.modal-actions` markup every other modal already
+has, so both color modes work with no extra CSS. Returns a `Promise<boolean>`,
+so a call site reads like the old code: `if(!await askConfirm({...}))return`.
+Accessibility: opens with focus on the action button, traps Tab/Shift+Tab
+between `#confirmModal`'s own buttons, Esc and a backdrop click cancel (both
+funnel through `closeModals()`, which resolves an open confirm as `false`),
+and focus returns to whatever triggered it. Only one confirm can be open at a
+time. Destructive actions (`Restablecer...`, closing a quote) use
+`confirmText: 'Sí, continuar'` and a `.button.danger` action; the rest use the
+default `Confirmar`/`Cancelar`. The confirm can open ON TOP of another modal
+already open (e.g. "¿Eliminar este mueble?" while `#furnitureModal` is still
+open) — its own ×/Cancel/backdrop dismiss ONLY `#confirmModal`, never every
+open backdrop. `index.html` has no `confirm()` calls; its two `alert()` calls
+(rare storage/network error paths) were left as native `alert()` — it has no
+modal component to reuse and building one for two exceptional messages was
+judged out of scope.
 
 ## White-label (multi-client) architecture
 
