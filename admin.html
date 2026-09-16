@@ -326,7 +326,7 @@
   <div id="appShell" hidden>
   <header class="topbar">
     <div style="display:flex;align-items:center;gap:13px"><button class="mobile-menu" id="menuBtn" aria-label="Abrir menú">☰</button><a class="brand" href="index.html"><img data-brand-logo="{{LOGO_SLOT}}" src="{{LOGO_SRC}}" alt="{{LOGO_ALT}}" width="1024" height="620"></a></div>
-    <div class="top-actions"><span class="env">Backoffice · Cotizador IA</span><div class="profile"><span class="avatar" id="meInitials">—</span><div><b id="meName">—</b><small id="meRole">—</small></div></div><button class="button secondary" id="logoutBtn">Salir</button></div>
+    <div class="top-actions"><span class="env">Backoffice · ACI</span><div class="profile"><span class="avatar" id="meInitials">—</span><div><b id="meName">—</b><small id="meRole">—</small></div></div><button class="button secondary" id="logoutBtn">Salir</button></div>
   </header>
   <div class="shell">
     <aside class="sidebar" id="sidebar">
@@ -476,7 +476,7 @@
             <div class="preview-sticky">
               <p class="styles-subtitle preview-title">Vista previa en vivo</p>
               <div class="pv" id="brandPreview">
-                <div class="pv-header"><img class="pv-logo" id="brandPreviewLogo" alt=""><span class="pv-logo-missing" id="brandPreviewLogoMissing" hidden>Falta el logo para fondos claros</span><span class="pv-header-copy">Cotizador inteligente</span></div>
+                <div class="pv-header"><img class="pv-logo" id="brandPreviewLogo" alt=""><span class="pv-logo-missing" id="brandPreviewLogoMissing" hidden>Falta el logo para fondos claros</span><span class="pv-header-copy">ACI · Asesor Comercial Inteligente</span></div>
                 <div class="pv-body">
                   <span class="pv-kicker">Empecemos</span>
                   <h3 class="pv-title">Cotiza la tela ideal para tu mueble</h3>
@@ -2150,7 +2150,7 @@
       $('#meRole').textContent=me.role==='admin'?'Administradora':'Vendedor · '+(me.sellerId?(Store.get('sellers',me.sellerId)||{}).name||'':'');
       $('#meInitials').textContent=initialsOf(me.name);
       const seller=me.role==='seller';
-      $('.env').textContent=seller?'Backoffice · Mis solicitudes':'Backoffice · Cotizador IA';
+      $('.env').textContent=seller?'Backoffice · Mis solicitudes':'Backoffice · ACI';
       // Quotes are read-only for advisers in this prototype.
       $('#exportBtn').hidden=seller;
     }
