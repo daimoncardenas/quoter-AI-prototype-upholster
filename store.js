@@ -58,6 +58,10 @@
     // "Upgrade" page) — same default for every client, so it belongs here and
     // not in a client pack's seed.json, which holds only THAT client's data.
     plan: 'Essential',
+    // Which of a plan's two monthly amounts Upgrade shows/quotes: 'anual' (a
+    // yearly contract, cheaper) or 'mensual' (month-to-month). Shared with
+    // Usage's summary strip so both pages always agree on the same period.
+    billing: 'anual',
     // How many of each add-on package (Upgrade -> Paquetes) the client has
     // bought, keyed by package id — {} for nobody having bought anything yet.
     // A purchase only ever increments this, it never resets or toggles.

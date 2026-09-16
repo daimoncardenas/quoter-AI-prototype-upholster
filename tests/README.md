@@ -40,7 +40,14 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   each card's label/CTA, a change asks for confirmation naming the plan and
   its price, dismissing leaves the plan untouched, and confirming saves the
   new plan, re-renders every card's state, shows a toast, and survives a
-  reload. Also covers Upgrade's two tabs: Planes is selected by default with
+  reload. Also covers the Planes billing-period switch ("Año"/"Mes",
+  `settings.billing`, default `'anual'`): Año selected by default with the
+  three annual prices and "con contrato anual", clicking Mes swaps to the
+  three monthly prices and "mes a mes" with `aria-checked` moving and
+  surviving a reload, arrow keys moving AND activating the selection, the
+  plan-change confirm dialog quoting whichever period is selected, and that
+  switching the period never touches `Store.settings().plan`. Also covers
+  Upgrade's two tabs: Planes is selected by default with
   its cards visible and Paquetes hidden, arrow keys switch tabs (and move
   focus), and the Paquetes panel — exactly five package cards in order with
   the exact price text built from `Store.money` (single/range, one-time/`/
@@ -56,7 +63,9 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   selected), "Ver planes" landing on Planes, Professional + one Usuario adicional
   reading `<used> de 4` with "Incluye 1 de paquetes", one wizard analysis spending
   exactly one AI credit, a submitted quote's photos showing up as real IndexedDB
-  bytes on the storage meter, and — pinned to 21:30 on Sept 30 in Bogotá, already
+  bytes on the storage meter, that the summary strip's price follows whichever
+  billing period is selected on Planes (not always the annual one), and —
+  pinned to 21:30 on Sept 30 in Bogotá, already
   October in UTC — all six seeded September quotes still counting.
 
 - `entities.spec.mjs` — that every option the cotizador shows comes from the
@@ -127,7 +136,10 @@ moved to Cotizada, closed as Aceptada (asking for confirmation, then locking) an
 carry a visible comment — a short per-pack guard that the status cycle and its
 color-mode styling (`modes/inverted.css`, exercised by `clients/intertelas/`) hold
 on every pack's own seed, not only Mediterránea's. Also opens the admin-only
-"Upgrade" plans page on each pack and upgrades from Essential to Professional
+"Upgrade" plans page on each pack, switches the billing-period switch to "Mes"
+and back (asserting at least one price and the caption actually change — a
+short guard that the switch's styling holds under `clients/intertelas/`'s
+inverted color mode too), then upgrades from Essential to Professional
 (accepting the confirmation dialog), then switches to the Paquetes tab and buys
 one Sede adicional (accepting the confirmation dialog too), asserting
 `Comprados: 1` — a short guard that both its styling (same `modes/inverted.css`

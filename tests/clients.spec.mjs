@@ -105,6 +105,18 @@ for (const slug of SLUGS) {
     await page.$$eval('#plansGrid .plan-card h2', els => els.map(e => e.textContent)),
     ['Essential', 'Professional', 'Business']);
   check('Essential es el plan actual por defecto', await page.evaluate(() => Store.settings().plan), 'Essential');
+
+  console.log(`\nEL SWITCH DE PERIODO DE ${CLIENT} CAMBIA LOS PRECIOS (styling de modo invertido incluido)`);
+  const anualPrices = await page.$$eval('#plansGrid .plan-price', els => els.map(e => e.textContent));
+  await page.click('#billingSwitch [data-billing="mensual"]');
+  await page.waitForTimeout(150);
+  const mensualPrices = await page.$$eval('#plansGrid .plan-price', els => els.map(e => e.textContent));
+  check('al menos un precio cambia de Año a Mes', mensualPrices.some((p, i) => p !== anualPrices[i]), true);
+  check('la leyenda pasa a "mes a mes"',
+    await page.$eval('#plansGrid .plan-billing-caption', e => e.textContent), 'mes a mes');
+  await page.click('#billingSwitch [data-billing="anual"]');
+  await page.waitForTimeout(150);
+
   page.once('dialog', d => d.accept());
   await page.click('#plansGrid [data-plan="Professional"]');
   await page.waitForTimeout(200);

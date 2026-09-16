@@ -50,6 +50,16 @@
     .tab:hover{color:var(--ink)}
     .tab[aria-selected="true"]{color:var(--ink);box-shadow:inset 0 -3px 0 var(--accent)}
     .tabpanel[hidden]{display:none}
+    /* Same reasoning as .tabs right above: this sits on the plain page
+     * background inside Planes (never a card surface), so it never flips
+     * between color modes and needs no modes/inverted.css override. The
+     * selected option's ink-background/white-text pairing is the exact same
+     * one .button.primary already uses everywhere, so it stays >=4.5:1 in
+     * every pack's theme without any extra check. */
+    .billing-switch{display:inline-flex;gap:2px;border:1px solid var(--line);border-radius:20px;padding:3px;margin:0 0 18px}
+    .billing-option{border:0;background:transparent;border-radius:16px;padding:8px 20px;font-size:.68rem;font-weight:700;color:var(--text);cursor:pointer;transition:.2s}
+    .billing-option:hover{color:var(--ink)}
+    .billing-option[aria-checked="true"]{background:var(--ink);color:#fff}
     .plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:stretch;margin-bottom:20px}
     .plan-card{background:#fff;border:1px solid var(--line);padding:26px 24px 24px;display:flex;flex-direction:column;box-shadow:0 10px 34px rgba(var(--rgb-shadow),.045);transition:transform .2s ease,box-shadow .2s ease}
     .plan-card:hover{transform:translateY(-3px);box-shadow:0 18px 44px rgba(var(--rgb-shadow),.1)}
@@ -61,6 +71,10 @@
     .plan-card h2{font:600 1.3rem var(--font-heading);color:var(--ink);margin:0 0 8px}
     .plan-price{font:600 1.55rem var(--font-heading);color:var(--ink);margin:0 0 10px}
     .plan-price-period{font-size:.68rem;font-weight:600;color:var(--text);margin-left:2px}
+    /* Same var(--text) on the card's white background as .plan-audience right
+     * below — already proven to clear 4.5:1 in this client's theme — with the
+     * matching modes/inverted.css override for the accent-leaning card bg. */
+    .plan-billing-caption{font-size:.6rem;font-weight:600;color:var(--text);margin:0 0 16px}
     .plan-audience{font-size:.66rem;color:var(--text);line-height:1.5;margin:0 0 16px}
     .plan-divider{border:0;border-top:1px solid var(--line);margin:0 0 16px}
     .plan-section-title{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--ink);margin:16px 0 8px;padding-top:14px;border-top:1px solid var(--line)}
@@ -331,6 +345,10 @@
           <button type="button" class="tab" id="tabPaquetes" role="tab" aria-selected="false" aria-controls="panelPaquetes" tabindex="-1" data-tab="paquetes">Paquetes</button>
         </div>
         <div class="tabpanel" id="panelPlanes" role="tabpanel" aria-labelledby="tabPlanes">
+          <div class="billing-switch" id="billingSwitch" role="radiogroup" aria-label="Periodo de facturación">
+            <button type="button" class="billing-option" role="radio" aria-checked="true" tabindex="0" data-billing="anual">Año</button>
+            <button type="button" class="billing-option" role="radio" aria-checked="false" tabindex="-1" data-billing="mensual">Mes</button>
+          </div>
           <div class="plans-grid" id="plansGrid"></div>
           <p class="plans-note" id="plansNote"></p>
         </div>
@@ -1010,9 +1028,12 @@
      * every client pack, so it is a plain constant here rather than something
      * seeded from a client pack's seed.json (which holds only THIS client's
      * data). Prices render through Store.money so the currency matches the
-     * rest of the backoffice; the number itself is never hand-formatted. */
+     * rest of the backoffice; the number itself is never hand-formatted.
+     * `price` is the monthly amount under a yearly contract ("Año" in the
+     * billing switch); `priceMonthly` is the higher month-to-month amount
+     * ("Mes") — see planPrice()/renderUpgrade() below. */
     const PLANS=[
-      {name:'Essential',price:299000,
+      {name:'Essential',price:299000,priceMonthly:399000,
        quota:{quotes:30,aiCredits:75,storageGB:1,users:1,locations:1,historyMonths:3},
        audience:'Para tapiceros independientes y talleres pequeños con bajo volumen de cotizaciones.',
        features:[
@@ -1049,7 +1070,7 @@
          'Sin integraciones.',
          'Sin desarrollos a la medida.'
        ]},
-      {name:'Professional',price:699000,
+      {name:'Professional',price:699000,priceMonthly:899000,
        quota:{quotes:90,aiCredits:300,storageGB:5,users:3,locations:3,historyMonths:12},
        audience:'Para talleres consolidados y pequeñas empresas de muebles.',
        intro:'Incluye todo lo de Essential, y además:',
@@ -1070,7 +1091,7 @@
          'Sin mención de CARDYRAM.',
          'Soporte con prioridad sobre el plan Essential.'
        ]},
-      {name:'Business',price:1290000,
+      {name:'Business',price:1290000,priceMonthly:1490000,
        quota:{quotes:300,aiCredits:1000,storageGB:15,users:10,locations:10,historyMonths:12},
        audience:'Para distribuidores, fábricas y empresas con varias sedes.',
        intro:'Incluye todo lo de Professional, y además:',
@@ -1094,9 +1115,24 @@
      * every client pack. PLANS' own array order (Essential < Professional <
      * Business) is what decides "higher" vs "lower" for each card's CTA —
      * there is no separate rank field to keep in sync. */
+    // Billing period ('anual'/'mensual') is the other axis alongside the
+    // current plan — same settings field for every client, default 'anual'
+    // in DEFAULT_SETTINGS. planPrice() is the ONE place that resolves a
+    // plan+period into an amount: the cards, the plan-change confirm() and
+    // Usage's summary strip all call it, so none of them can drift from the
+    // period actually selected.
+    const BILLING_CAPTIONS={anual:'con contrato anual',mensual:'mes a mes'};
+    function currentBilling(){return Store.settings().billing==='mensual'?'mensual':'anual'}
+    function planPrice(plan,billing){return billing==='mensual'?plan.priceMonthly:plan.price}
     function renderUpgrade(){
       const currentName=Store.settings().plan||'Essential';
+      const billing=currentBilling();
       const currentIdx=Math.max(0,PLANS.findIndex(p=>p.name===currentName));
+      $$('#billingSwitch .billing-option').forEach(b=>{
+        const sel=b.dataset.billing===billing;
+        b.setAttribute('aria-checked',sel?'true':'false');
+        b.tabIndex=sel?0:-1;
+      });
       $('#plansGrid').innerHTML=PLANS.map((p,i)=>{
         const isCurrent=i===currentIdx;
         const intro=p.intro?`<p class="plan-intro">${esc(p.intro)}</p>`:'';
@@ -1107,7 +1143,8 @@
           :i>currentIdx?{cls:'button primary',text:`Mejorar a ${p.name}`,disabled:false}
           :{cls:'button secondary',text:`Cambiar a ${p.name}`,disabled:false};
         return `<article class="plan-card${isCurrent?' current':''}">${label}<h2>${esc(p.name)}</h2>`+
-          `<p class="plan-price">${esc(Store.money(p.price))} <span class="plan-price-period">COP / mes</span></p>`+
+          `<p class="plan-price">${esc(Store.money(planPrice(p,billing)))} <span class="plan-price-period">COP / mes</span></p>`+
+          `<p class="plan-billing-caption">${esc(BILLING_CAPTIONS[billing])}</p>`+
           `<p class="plan-audience">${esc(p.audience)}</p><hr class="plan-divider">`+
           `${features}${limits}`+
           `<div class="plan-cta"><button type="button" class="${cta.cls}" data-plan="${esc(p.name)}"${cta.disabled?' disabled':''}>${esc(cta.text)}</button></div>`+
@@ -1115,6 +1152,33 @@
       }).join('');
       $('#plansNote').textContent=UPGRADE_NOTE;
     }
+    // Switching the period never touches the current plan — it only changes
+    // which of the plan's two prices is shown/quoted — so it re-renders
+    // Planes (and Usage, if it happens to be the active page) without
+    // touching Store.settings().plan.
+    function setBilling(value){
+      const next=value==='mensual'?'mensual':'anual';
+      try{Store.saveSettings({billing:next})}catch(err){return toast(err.message)}
+      renderUpgrade();
+      if($('#usage').classList.contains('active'))renderUsage();
+    }
+    $('#billingSwitch').addEventListener('click',e=>{
+      const btn=e.target.closest('[data-billing]');
+      if(btn)setBilling(btn.dataset.billing);
+    });
+    // Same roving-tabindex radiogroup pattern as index.html's furniture
+    // picker: the arrow both moves focus AND activates the selection.
+    $('#billingSwitch').addEventListener('keydown',e=>{
+      const dir={ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1}[e.key];
+      if(!dir)return;
+      const opts=$$('#billingSwitch .billing-option');
+      const i=opts.indexOf(document.activeElement);
+      if(i<0)return;
+      e.preventDefault();
+      const next=opts[(i+dir+opts.length)%opts.length];
+      setBilling(next.dataset.billing);
+      next.focus();
+    });
     // El cambio de plan pide confirmación con el precio, igual que cerrar una
     // cotización: es una decisión comercial, no un toggle casual.
     $('#plansGrid').addEventListener('click',e=>{
@@ -1122,7 +1186,8 @@
       if(!btn||btn.disabled)return;
       const name=btn.dataset.plan,plan=PLANS.find(p=>p.name===name);
       if(!plan)return;
-      if(!confirm(`¿Confirmas el cambio al plan ${name} por ${Store.money(plan.price)} COP / mes?`))return;
+      const price=planPrice(plan,currentBilling());
+      if(!confirm(`¿Confirmas el cambio al plan ${name} por ${Store.money(price)} COP / mes?`))return;
       try{Store.saveSettings({plan:name})}catch(err){return toast(err.message)}
       // The plan gates brand features (fonts, header variant): repaint with what it allows now.
       Brand.apply();
@@ -1267,7 +1332,10 @@
       // Storage resolves asynchronously: a newer render wins over a stale one.
       if(seq!==usageRenderSeq)return;
       const s=Store.settings();
-      const {plan,price,limits,extra}=effectiveLimits(s.plan,s.packages);
+      const {plan,limits,extra}=effectiveLimits(s.plan,s.packages);
+      // Same planPrice() Upgrade's cards and plan-change confirm() use, so
+      // this strip never quotes a different period than what's selected there.
+      const price=planPrice(PLANS.find(p=>p.name===plan)||PLANS[0],currentBilling());
       $('#usageLead').textContent=`Así va el uso de tu plan ${plan} este mes.`;
       $('#usagePlanName').textContent=`Plan ${plan}`;
       $('#usagePlanPrice').textContent=`${Store.money(price)} COP / mes`;

@@ -284,6 +284,7 @@
 .plan-current-label{color:var(--mode-on-color)}
 .plan-price{color:var(--mode-on-color)}
 .plan-price-period{color:var(--mode-on-color)}
+.plan-billing-caption{color:var(--mode-on-color)}
 .plan-audience{color:var(--mode-on-color)}
 .plan-divider{border-top-color:var(--mode-line-on-color)}
 .plan-section-title{color:var(--mode-on-color);border-top-color:var(--mode-line-on-color)}

@@ -545,6 +545,64 @@ check('el aviso de integraciones aparece bajo las tarjetas',
   await page.textContent('#plansNote'),
   'La activación de integraciones, los cargos de proveedores externos y los costos de uso no están incluidos en la licencia mensual, salvo que se indique expresamente en la propuesta comercial.');
 
+const billingSwitchState = () => page.evaluate(() => ({
+  checked: [...document.querySelectorAll('#billingSwitch .billing-option')].map(b => [b.dataset.billing, b.getAttribute('aria-checked')]),
+  prices: [...document.querySelectorAll('#plansGrid .plan-price')].map(e => e.textContent),
+  captions: [...document.querySelectorAll('#plansGrid .plan-billing-caption')].map(e => e.textContent)
+}));
+
+console.log('\nUPGRADE — Planes: el switch de periodo de facturación (Año por defecto)');
+check('por defecto Año está seleccionado, con los tres precios anuales y "con contrato anual"',
+  await billingSwitchState(),
+  {
+    checked: [['anual', 'true'], ['mensual', 'false']],
+    prices: await page.evaluate(() => [299000, 699000, 1290000].map(n => Store.money(n) + ' COP / mes')),
+    captions: ['con contrato anual', 'con contrato anual', 'con contrato anual']
+  });
+
+await page.click('#billingSwitch [data-billing="mensual"]');
+await page.waitForTimeout(100);
+check('clic en Mes cambia los tres precios, la leyenda y el aria-checked',
+  await billingSwitchState(),
+  {
+    checked: [['anual', 'false'], ['mensual', 'true']],
+    prices: await page.evaluate(() => [399000, 899000, 1490000].map(n => Store.money(n) + ' COP / mes')),
+    captions: ['mes a mes', 'mes a mes', 'mes a mes']
+  });
+
+await page.reload();
+await page.waitForSelector('#appShell:not([hidden])');
+await page.click('button[data-page="upgrade"]');
+check('el periodo elegido (Mes) sobrevive a un recargo de página',
+  await billingSwitchState(),
+  {
+    checked: [['anual', 'false'], ['mensual', 'true']],
+    prices: await page.evaluate(() => [399000, 899000, 1490000].map(n => Store.money(n) + ' COP / mes')),
+    captions: ['mes a mes', 'mes a mes', 'mes a mes']
+  });
+
+console.log('\nUPGRADE — el diálogo de cambio de plan cita el precio del periodo seleccionado (Mes)');
+let mesDialogMsg = '';
+page.once('dialog', d => { mesDialogMsg = d.message(); d.dismiss(); });
+await page.click('#plansGrid [data-plan="Business"]');
+await page.waitForTimeout(150);
+check('el diálogo cita el precio mensual de Business, no el anual',
+  mesDialogMsg, `¿Confirmas el cambio al plan Business por ${await page.evaluate(() => Store.money(1490000))} COP / mes?`);
+check('cancelar deja el plan sin cambios, y cambiar el periodo tampoco lo cambió',
+  await page.evaluate(() => Store.settings().plan), 'Essential');
+
+console.log('\nUPGRADE — el switch de periodo se navega con el teclado (flechas activan)');
+await page.focus('#billingSwitch [data-billing="mensual"]');
+await page.keyboard.press('ArrowLeft');
+await page.waitForTimeout(100);
+check('flecha izquierda selecciona Año, mueve el foco y actualiza los precios',
+  await page.evaluate(() => ({
+    active: document.activeElement.dataset.billing,
+    checked: document.querySelector('#billingSwitch [aria-checked="true"]').dataset.billing,
+    price: document.querySelector('#plansGrid .plan-price').textContent
+  })),
+  { active: 'anual', checked: 'anual', price: await page.evaluate(() => Store.money(299000) + ' COP / mes') });
+
 const planStates = () => page.evaluate(() => [...document.querySelectorAll('#plansGrid .plan-card')].map(c => {
   const btn = c.querySelector('.plan-cta button');
   const label = c.querySelector('.plan-current-label');
@@ -747,6 +805,26 @@ check('users limit = Professional 3 + 1 purchased, and the card says where the e
 check('a meter no package touched says nothing about packages', (await meter('locations')).extra, null);
 check('effectiveLimits() adds the package on top of the plan',
   await up.evaluate(() => effectiveLimits('Professional', { 'extra-user': 1 }).limits.users), 4);
+
+console.log('\nUSAGE — el resumen sigue el periodo de facturación elegido en Upgrade');
+await up.click('button[data-page="upgrade"]');
+await up.click('#tabPlanes'); // Paquetes quedó seleccionado más arriba; billingSwitch vive en el panel Planes.
+await up.click('#billingSwitch [data-billing="mensual"]');
+await up.waitForTimeout(100);
+const mensualUsagePrice = await up.evaluate(() => Store.money(899000) + ' COP / mes');
+// go('usage') fires renderUsage() without awaiting it (it resolves async, via
+// Photos.totalBytes()), and the 5-progressbar count openUsage() waits on is
+// already true from the previous render — so wait for the actual text
+// instead of reusing that helper, or this reads the stale annual price.
+await up.click('button[data-page="usage"]');
+await up.waitForFunction(want => document.getElementById('usagePlanPrice').textContent === want, mensualUsagePrice);
+check('el resumen de Usage muestra el precio mensual de Professional, no el anual',
+  await up.textContent('#usagePlanPrice'), mensualUsagePrice);
+// Restored to 'anual' so nothing further down in this shared context reads a
+// stale 'mensual' selection.
+await up.click('button[data-page="upgrade"]');
+await up.click('#billingSwitch [data-billing="anual"]');
+await up.waitForTimeout(100);
 
 console.log('\nUSAGE — una revisión con IA gasta exactamente un crédito, y las fotos ocupan almacenamiento');
 await up.goto(D + 'index.html');
