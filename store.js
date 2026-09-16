@@ -533,6 +533,13 @@
 
     assistantCharacters: function () { return clone(ASSISTANT_CHARACTERS); },
 
+    /* Whether the presence can be configured on this plan (default: the
+     * current one). Below ASSISTANT_GATED_PLAN the pack's presence is shown. */
+    assistantConfigurable: function (plan) {
+      return planAtLeast(plan === undefined ? Store.settings().plan : plan, ASSISTANT_GATED_PLAN);
+    },
+    ASSISTANT_GATED_PLAN: 'Professional',
+
     assistantOverrides: function () {
       try {
         var o = JSON.parse(localStorage.getItem(NS + ASSISTANT_KEY) || '{}');
@@ -541,10 +548,22 @@
     },
 
     /* The effective presence: defaults, then every VALID stored override.
-     * `overridden` lists which fields differ from the defaults. */
-    assistant: function () {
+     * `overridden` lists which fields differ from the defaults. Below the
+     * gated plan (`locked`) stored overrides are IGNORED, never deleted —
+     * same downgrade semantics as the brand's fonts/header — and listed in
+     * `ignored`, so an upgrade brings them back. opts.plan evaluates another plan. */
+    assistant: function (opts) {
+      opts = opts || {};
       var d = ASSISTANT_DEFAULTS, ov = Store.assistantOverrides();
       var out = clone(d), o = {};
+      out.requiredPlan = ASSISTANT_GATED_PLAN;
+      out.locked = !Store.assistantConfigurable(opts.plan);
+      if (out.locked) {
+        out.overridden = {};
+        out.ignored = Object.keys(ov).filter(function (k) { return ['enabled', 'character', 'name', 'brandSuit'].indexOf(k) >= 0; });
+        return out;
+      }
+      out.ignored = [];
       if (typeof ov.enabled === 'boolean' && ov.enabled !== d.enabled) { out.enabled = ov.enabled; o.enabled = true; }
       if (assistantCharacter(ov.character) && ov.character !== d.character) { out.character = ov.character; o.character = true; }
       var name = typeof ov.name === 'string' ? ov.name.trim() : '';
@@ -558,6 +577,7 @@
      * is removed rather than stored. Throws (Spanish, user-facing) on an
      * invalid value instead of storing it. */
     saveAssistant: function (patch) {
+      if (!Store.assistantConfigurable()) throw new Error('La presencia del asistente se configura desde el plan ' + ASSISTANT_GATED_PLAN + '.');
       patch = patch || {};
       var d = ASSISTANT_DEFAULTS, next = Store.assistantOverrides();
       ['enabled', 'brandSuit'].forEach(function (k) {
@@ -1104,6 +1124,8 @@
   var ASSISTANT_KEY = 'assistant';
   var ASSISTANT_WELCOMED_KEY = 'assistantWelcomed';
   var ASSISTANT_NAME_MAX = 40;
+  // Configuring the presence (on/off, character, name, suit) starts at this plan.
+  var ASSISTANT_GATED_PLAN = 'Professional';
   // Same ids as tools/client-pack.mjs (ASSISTANT_CHARACTERS) — keep both in sync.
   var ASSISTANT_CHARACTERS = [
     { id: 'female', label: 'Mujer', defaultName: 'Lía' },
@@ -1137,10 +1159,15 @@
     { name: 'Cormorant Garamond', category: 'serif', weights: '400;500;600;700' }
   ];
 
+  /* Essential < Professional < Business; an unknown plan counts as Essential. */
+  function planAtLeast(plan, need) {
+    return Math.max(0, PLAN_ORDER.indexOf(plan)) >= PLAN_ORDER.indexOf(need);
+  }
+
   function planAllows(plan, feature) {
     var need = BRAND_GATED[feature];
     if (!need) return true;
-    return Math.max(0, PLAN_ORDER.indexOf(plan)) >= PLAN_ORDER.indexOf(need);
+    return planAtLeast(plan, need);
   }
 
   function kebab(s) { return String(s).replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase(); }
@@ -1698,7 +1725,8 @@
   if (global.addEventListener) {
     global.addEventListener('storage', function (e) {
       if (e.key === null || e.key === NS + BRAND_KEY || e.key === NS + 'settings') Brand.apply();
-      if (e.key === null || e.key === NS + ASSISTANT_KEY) Assistant.apply();
+      // The plan lives in settings: a downgrade/upgrade changes what the presence shows.
+      if (e.key === null || e.key === NS + ASSISTANT_KEY || e.key === NS + 'settings') Assistant.apply();
     });
   }
 

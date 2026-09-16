@@ -103,7 +103,31 @@ check('el cotizador pinta el nombre del paquete', await wizard(), {
   hitLabel: `Hablar con ${DEF.name}`, askLabel: `Preguntar a ${DEF.name}`, fabLabel: `Hablar con ${DEF.name}`
 });
 
-console.log('\nGUARDAR PERSONAJE, NOMBRE Y TRAJE LLEGA AL COTIZADOR');
+console.log('\nEN ESSENTIAL LA PRESENCIA NO SE PUEDE CONFIGURAR');
+const setPlan = plan => page.evaluate(p => Store.saveSettings({ plan: p }), plan);
+const controls = () => page.evaluate(() => ['#assistantEnabled', '#assistantBrandSuit', '#assistantName', '#saveAssistant', '#resetAssistant', 'input[name="assistantCharacter"][value="female"]', 'input[name="assistantCharacter"][value="male"]']
+  .map(sel => { const el = document.querySelector(sel); return [el.disabled, el.getAttribute('aria-describedby')]; }));
+await openAssistant();
+check('el plan por defecto es Essential', await page.evaluate(() => Store.settings().plan), 'Essential');
+check('Store dice que no es configurable y desde qué plan', await page.evaluate(() => { const a = Store.assistant(); return [Store.assistantConfigurable(), a.locked, a.requiredPlan]; }), [false, true, 'Professional']);
+check('la sección sigue visible para la administradora', await page.isVisible('#assistant .settings-grid'), true);
+check('muestra el aviso', await page.isVisible('#assistantLocked'), true);
+check('el aviso dice desde qué plan', (await page.textContent('#assistantLockedText')).includes('desde el plan Professional'), true);
+check('todos los controles están deshabilitados y describidos por el aviso', await controls(), Array(7).fill([true, 'assistantLockedText']));
+check('muestra los valores efectivos (los del paquete)', await form(),
+  { enabled: String(DEF.enabled), character: DEF.character, name: DEF.name, brandSuit: String(DEF.brandSuit) });
+check('Store.saveAssistant se niega en Essential', await page.evaluate(() => { try { Store.saveAssistant({ name: 'Camilo' }); return 'saved'; } catch (e) { return e.message; } }),
+  'La presencia del asistente se configura desde el plan Professional.');
+check('y no guardó nada', await stored(), null);
+await page.click('#assistantSeePlans');
+check('"Ver planes" lleva a Upgrade, pestaña Planes', await page.evaluate(() => [document.getElementById('upgrade').classList.contains('active'), document.getElementById('tabPlanes').getAttribute('aria-selected')]), [true, 'true']);
+// The simulated payment flow writes this same setting; go('assistant') must unlock without a reload.
+await setPlan('Professional');
+await page.click('button[data-page="assistant"]');
+check('al pasar a Professional se desbloquea sin recargar', [await page.isVisible('#assistantLocked'), (await controls()).every(([d]) => d === false)], [false, true]);
+check('y el nombre vuelve a describirse con su ayuda', (await controls())[2][1], 'assistantNameHint');
+
+console.log('\nGUARDAR PERSONAJE, NOMBRE Y TRAJE LLEGA AL COTIZADOR (plan Professional)');
 await openAssistant();
 const other = DEF.character === 'female' ? 'male' : 'female';
 const chars = await page.evaluate(() => Store.assistantCharacters());
@@ -137,6 +161,25 @@ check('un nombre con HTML se pinta como texto', await page.evaluate(() => {
 check('Store rechaza un personaje desconocido', await page.evaluate(() => { try { Store.saveAssistant({ character: 'robot' }); return false; } catch (e) { return true; } }), true);
 check('y un nombre de más de 40 caracteres', await page.evaluate(() => { try { Store.saveAssistant({ name: 'x'.repeat(41) }); return false; } catch (e) { return true; } }), true);
 await page.evaluate(() => Store.saveAssistant({ name: 'Camilo' }));
+
+console.log('\nBAJAR A ESSENTIAL IGNORA LO GUARDADO SIN BORRARLO, Y SUBIR LO DEVUELVE');
+await setPlan('Essential');
+check('lo guardado sigue en su llave', JSON.parse(await stored()).name, 'Camilo');
+check('Store.assistant() lo ignora y lo reporta', await page.evaluate(() => { const a = Store.assistant(); return [a.character, a.name, a.brandSuit, a.locked, a.ignored.sort()]; }),
+  [DEF.character, DEF.name, DEF.brandSuit, true, ['brandSuit', 'character', 'name']]);
+check('el cotizador muestra el asistente del paquete, encendido', await wizard(), {
+  presence: 'on', chatName: DEF.name, chatLabel: DEF.name,
+  hitLabel: `Hablar con ${DEF.name}`, askLabel: `Preguntar a ${DEF.name}`, fabLabel: `Hablar con ${DEF.name}`
+});
+await openAssistant();
+check('el backoffice muestra los valores del paquete, bloqueados', [await form(), await page.isDisabled('#saveAssistant')],
+  [{ enabled: String(DEF.enabled), character: DEF.character, name: DEF.name, brandSuit: String(DEF.brandSuit) }, true]);
+await setPlan('Professional');
+check('volver a Professional lo devuelve en el cotizador', (await wizard()).chatName, 'Camilo');
+await setPlan('Business');
+await openAssistant();
+check('Business también puede configurarlo', [await page.evaluate(() => Store.assistantConfigurable()), await page.isDisabled('#saveAssistant'), await page.isVisible('#assistantLocked'), (await form()).name], [true, false, false, 'Camilo']);
+await setPlan('Professional');
 
 console.log('\nDESACTIVARLO QUITA SOLO LA PRESENCIA');
 await openAssistant();
@@ -181,7 +224,7 @@ check('marcarla la recuerda', await page.evaluate(() => { localStorage.removeIte
 
 console.log('\nDATOS CORRUPTOS EN LA LLAVE DEL ASISTENTE CAEN A LOS VALORES DEL PAQUETE, SIN ROMPER NADA');
 const savedBeforeCorrupt = await stored(); // the next section expects it back
-const effective = () => page.evaluate(() => { try { const a = Store.assistant(); delete a.overridden; return a; } catch (e) { return 'threw: ' + e.message; } });
+const effective = () => page.evaluate(() => { try { const a = Store.assistant(); return { enabled: a.enabled, character: a.character, name: a.name, brandSuit: a.brandSuit }; } catch (e) { return 'threw: ' + e.message; } });
 for (const raw of ['not-json{', '[1,2]', 'null', '"x"', '42']) {
   for (const where of ['admin.html', 'index.html']) {
     await page.goto(D + where);

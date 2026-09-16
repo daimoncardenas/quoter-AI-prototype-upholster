@@ -208,6 +208,8 @@
     /* Presencia del asistente: reuses the settings/styles cards; the character options have no mini preview column. */
     .variant-option.assistant-option{grid-template-columns:auto minmax(0,1fr)}
     #assistant .variant-options{margin-bottom:16px}
+    #assistant .toggle:disabled,#assistant .variant-option:has(input:disabled){opacity:.55;cursor:not-allowed}
+    #assistantLocked{margin:0 0 16px}
     #assistant .page-head p,#assistant .settings-card>p,#assistant .styles-hint{color:var(--text)}
     .field-label{display:block;font-size:.64rem;font-weight:700}
     .logo-slots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}
@@ -415,6 +417,7 @@
       <section class="page" id="assistant">
         <div class="page-head"><div><span class="eyebrow">COTIZADOR</span><h1>Presencia del asistente</h1><p>El personaje que recibe y acompaña a tus clientes en el cotizador. Desactivarlo solo quita su presencia: el análisis con IA de los pasos 4 y 5 sigue funcionando.</p></div>
           <div class="save-block styles-actions"><a class="styles-link" href="index.html" target="_blank" rel="noopener">Ver cotizador ↗</a><button type="button" class="button secondary" id="resetAssistant">Restablecer asistente por defecto</button><button type="button" class="button primary" id="saveAssistant">Guardar asistente</button></div></div>
+        <div class="locked-note" id="assistantLocked" hidden><span id="assistantLockedText">La presencia del asistente se configura desde el plan Professional. Mientras tanto, tus clientes ven el asistente por defecto.</span><button type="button" class="button secondary" id="assistantSeePlans" data-upgrade-plans>Ver planes</button></div>
         <div class="settings-grid">
           <article class="settings-card"><h2>Presencia</h2><p>Qué ven tus clientes mientras cotizan.</p>
             <div class="setting-row"><div><b id="assistantEnabledLabel">Mostrar el asistente en el cotizador</b><small>El personaje, su bienvenida, el botón Preguntar y el chat.</small></div><button type="button" class="toggle" id="assistantEnabled" role="switch" aria-checked="false" aria-labelledby="assistantEnabledLabel"></button></div>
@@ -1832,12 +1835,23 @@
      * character the cotizador shows. The draft holds full values; Store drops
      * whatever equals the pack default. Nothing reaches the cotizador until saved. */
     let assistantDraft=null;
+    // Below Professional every control is disabled and the effective (pack) values are shown.
+    const ASSISTANT_CONTROLS=['#assistantEnabled','#assistantBrandSuit','#assistantName','#saveAssistant','#resetAssistant'];
     function renderAssistant(){
       const a=Store.assistant();
       assistantDraft={enabled:a.enabled,character:a.character,name:a.name,brandSuit:a.brandSuit};
       paintAssistant();
       $('#assistantName').value=assistantDraft.name;
       $('#assistantNameError').hidden=true;
+      $('#assistantLocked').hidden=!a.locked;
+      $('#assistantLockedText').textContent=`La presencia del asistente se configura desde el plan ${a.requiredPlan}. Mientras tanto, tus clientes ven el asistente por defecto.`;
+      [...ASSISTANT_CONTROLS.map(sel=>$(sel)),...$$('input[name="assistantCharacter"]')].forEach(el=>{
+        el.disabled=a.locked;
+        if(a.locked)el.setAttribute('aria-describedby','assistantLockedText');
+        else if(el.id==='assistantName')el.setAttribute('aria-describedby','assistantNameHint');
+        else el.removeAttribute('aria-describedby');
+      });
+      $('#assistant .variant-options').setAttribute('aria-disabled',String(a.locked));
     }
     function paintAssistant(){
       [['#assistantEnabled','enabled'],['#assistantBrandSuit','brandSuit']].forEach(([sel,k])=>{

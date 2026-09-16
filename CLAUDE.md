@@ -86,8 +86,8 @@ rendered. Do not bundle, split into modules, or add a framework unless asked.
   "Configuración") holds the quoter's rules, and "Configuración de estilos"
   (`data-page="styles"`, right after it) edits the runtime brand — see the
   white-label section. "Presencia del asistente" (`data-page="assistant"`,
-  admin-only, right after estilos) configures the 3D assistant — see
-  "Assistant presence" below. Admin-only sections also include "Upgrade" (the
+  admin-only, right after estilos, configurable from plan Professional)
+  configures the 3D assistant — see "Assistant presence" below. Admin-only sections also include "Upgrade" (the
   `upgrade` section/page id) — CARDYRAM's own three subscription-plan cards for the
   quoter product, admin-only via the same `Auth.sections`/nav-hiding mechanism as
   every other admin section, with `go()` also refusing to switch to a page a role
@@ -210,10 +210,24 @@ only**: turning it off removes the character, the armchair, the welcome bubble,
   (the once-per-browser welcome flag). `assistantName` in the pack is still what
   step 4's AI badge shows; the chat header and accessible names use
   `assistant.name`.
+- **Plan gate (Professional+)**: `Store.assistantConfigurable(plan?)` (plan rank via
+  store.js's `planAtLeast`/`PLAN_ORDER`, constant `ASSISTANT_GATED_PLAN`). On
+  Essential `Store.assistant()` returns the pack defaults with `locked: true`,
+  `requiredPlan` and `ignored` (stored override keys) — overrides are ignored,
+  never deleted, so an upgrade brings them back (brand fonts/header semantics);
+  `Store.saveAssistant()` throws "La presencia del asistente se configura desde
+  el plan Professional."; `Store.resetAssistant()` stays allowed. A plan change in
+  another tab re-applies the presence (storage event on settings). Every pack
+  still ships `assistant.enabled: true`, so Essential shows the assistant.
 - **Backoffice**: "Presencia del asistente" — on/off switch, character radiogroup
   (picking the other character swaps a name still equal to the previous
   suggestion), name, "traje con el color de tu marca" switch, save, and a reset
-  through `askConfirm()`. Admin-only via `Auth.sections`.
+  through `askConfirm()`. Admin-only via `Auth.sections`. On Essential the section
+  stays visible but every control (both switches, radios, name, save, reset) is
+  disabled and `aria-describedby` the `#assistantLocked` notice, which shows the
+  effective pack values and a "Ver planes" button (→ Upgrade, Planes tab).
+  `go('assistant')` re-renders, so a plan paid through the simulated payment
+  unlocks it without a reload.
 - **Wizard, no 3D involved**: `store.js` → `Assistant.apply()` runs from
   `<head>` right after `Brand.apply()`: sets `html[data-assistant="on"|"off"]`
   (CSS does the hiding), fills `[data-assistant-name]` and
