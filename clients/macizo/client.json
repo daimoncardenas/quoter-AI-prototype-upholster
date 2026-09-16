@@ -5,6 +5,7 @@
   "displayName": "Macizo Colombia",
   "shortName": "Macizo",
   "assistantName": "Asistente Macizo",
+  "assistant": { "enabled": true, "character": "female", "name": "Lía", "brandSuit": false },
   "storageNamespace": "mcz.v1.",
   "photosDbName": "mcz-photos",
   "meta": {

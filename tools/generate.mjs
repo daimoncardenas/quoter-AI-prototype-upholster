@@ -125,6 +125,29 @@ function modeStyleTags(activeMode) {
     .join('\n  ');
 }
 
+/* The assistant presence's 3D assets (built by tools/build-assistant-assets.mjs)
+ * and its module script, embedded into index.html. Embedded, not linked: the
+ * wizard opens from file://, where fetch() of a sibling file is blocked, so
+ * the page hands these JSON blocks to GLTFLoader.parse(). A "</" inside a JSON
+ * string is written as "<\/" (same string for JSON.parse) so no model can close
+ * its <script> element early. */
+const ASSISTANT_ASSETS = { female: 'lia.gltf', male: 'tomas.gltf', armchair: 'armchair.gltf' };
+
+function assistantModelTags() {
+  return Object.entries(ASSISTANT_ASSETS).map(([id, file]) => {
+    const p = path.join('assets', 'assistant', file);
+    if (!existsSync(p)) throw new Error(`${p} is missing — run: node tools/build-assistant-assets.mjs`);
+    const text = readFileSync(p, 'utf8').replace(/<\//g, '<\\/');
+    return `<script type="application/json" id="assistantModel-${id}">${text}</script>`;
+  }).join('\n');
+}
+
+function assistantScriptTag() {
+  const js = readFileSync('assistant-presence.js', 'utf8');
+  if (/<\/script/i.test(js)) throw new Error('assistant-presence.js must not contain "</script" (would break the page\'s HTML)');
+  return `<script type="module">\n${js}\n</script>`;
+}
+
 /* Visible brand copy that contains the company name gets that name wrapped
  * in <span data-brand-name>, so Brand.apply() can swap in the name saved in
  * the backoffice. displayName is tried first, then shortName (e.g. Macizo's
@@ -156,6 +179,11 @@ export function generate(clientEnvValue = resolveClient(), outDir = 'generated')
     ASSISTANT_NAME: client.assistantName,
     ASSISTANT_NAME_HTML: brandNameHtml(client.assistantName, client),
     CONSENT_HTML: brandNameHtml(client.copy.consent, client),
+    /* The presence's DEFAULT name, for the first paint; Assistant.apply()
+     * swaps in the one saved in the backoffice. */
+    ASSISTANT_DEFAULT_NAME: escHtml(client.assistant.name),
+    ASSISTANT_MODELS: assistantModelTags(),
+    ASSISTANT_SCRIPT: assistantScriptTag(),
     NOT_OFFICIAL_INDEX: client.copy.notOfficialIndex,
     NOT_OFFICIAL_ADMIN: client.copy.notOfficialAdmin,
     LOGIN_EMAIL_PLACEHOLDER: client.copy.loginEmailPlaceholder,
@@ -190,7 +218,8 @@ export function generate(clientEnvValue = resolveClient(), outDir = 'generated')
     SENDER_EMAIL_JSON: json(seed.settings.senderEmail),
     BUDGETS_JSON: json(seed.settings.budgets),
     DEMO_PASSWORD_JSON: json(client.demoPassword),
-    BRAND_DEFAULTS_JSON: json(brandDefaults)
+    BRAND_DEFAULTS_JSON: json(brandDefaults),
+    ASSISTANT_DEFAULTS_JSON: json(client.assistant)
   };
 
   mkdirSync(outDir, { recursive: true });

@@ -4,6 +4,7 @@
   "displayName": "Mediterránea Insumos",
   "shortName": "Mediterránea",
   "assistantName": "Asistente Mediterránea",
+  "assistant": { "enabled": true, "character": "female", "name": "Lía", "brandSuit": false },
   "storageNamespace": "med.v1.",
   "photosDbName": "med-photos",
   "meta": {

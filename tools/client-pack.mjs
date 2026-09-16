@@ -45,6 +45,27 @@ export function listAvailableClients() {
     .sort();
 }
 
+/* The assistant presence every pack must declare (clients/<slug>/client.json
+ * `assistant`): the DEFAULT the backoffice's "Presencia del asistente" edits.
+ * Character ids mirror store.js's ASSISTANT_CHARACTERS; the name limit mirrors
+ * Store.ASSISTANT_NAME_MAX. */
+export const ASSISTANT_CHARACTERS = ['female', 'male'];
+export const ASSISTANT_NAME_MAX = 40;
+
+export function validateAssistant(assistant, slug) {
+  const where = `clients/${slug}/client.json`;
+  if (!assistant || typeof assistant !== 'object' || Array.isArray(assistant)) {
+    throw new Error(`${where} needs an "assistant" object: { enabled, character, name, brandSuit }`);
+  }
+  const bad = [];
+  if (typeof assistant.enabled !== 'boolean') bad.push(`assistant.enabled = ${JSON.stringify(assistant.enabled)} (expected true or false)`);
+  if (!ASSISTANT_CHARACTERS.includes(assistant.character)) bad.push(`assistant.character = ${JSON.stringify(assistant.character)} (expected one of: ${ASSISTANT_CHARACTERS.join(', ')})`);
+  const name = typeof assistant.name === 'string' ? assistant.name.trim() : '';
+  if (!name || name.length > ASSISTANT_NAME_MAX || name !== assistant.name) bad.push(`assistant.name = ${JSON.stringify(assistant.name)} (expected a trimmed, non-empty string of at most ${ASSISTANT_NAME_MAX} characters)`);
+  if (typeof assistant.brandSuit !== 'boolean') bad.push(`assistant.brandSuit = ${JSON.stringify(assistant.brandSuit)} (expected true or false)`);
+  if (bad.length) throw new Error(`${where} has an invalid assistant:\n  ${bad.join('\n  ')}`);
+}
+
 /* Same formula as Auth.hash() in store.js: sha256(NS + userId + ':' + password). */
 function authHash(ns, userId, password) {
   return createHash('sha256').update(ns + userId + ':' + password, 'utf8').digest('hex');
@@ -64,6 +85,8 @@ export function loadClientPack(clientEnvValue) {
   const client = JSON.parse(readFileSync(path.join(dir, 'client.json'), 'utf8'));
   const seed = JSON.parse(readFileSync(path.join(dir, 'seed.json'), 'utf8'));
   const shared = JSON.parse(readFileSync(SHARED_USERS_FILE, 'utf8'));
+
+  validateAssistant(client.assistant, slug);
 
   /* colorMode picks which modes/*.css gets appended to the pages (see
    * tools/generate.mjs). Missing means "normal" — today's look, unchanged. */

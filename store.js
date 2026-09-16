@@ -520,6 +520,81 @@
       try { localStorage.removeItem(NS + BRAND_KEY); } catch (err) { /* ignore */ }
     },
 
+    /* --------------------------------------------------------- assistant --
+     *
+     * The assistant's PRESENCE in the cotizador (the 3D character, its
+     * welcome, the chat entry points), as the backoffice's "Presencia del
+     * asistente" edits it. Same shape as the brand layer: the pack's
+     * client.json `assistant` block is the default (ASSISTANT_DEFAULTS), and
+     * one localStorage key, <NS>assistant, holds ONLY the fields that differ.
+     * Turning it off removes the presence only: the AI analysis of steps 4-5
+     * does not read any of this. */
+    assistantDefaults: function () { return clone(ASSISTANT_DEFAULTS); },
+
+    assistantCharacters: function () { return clone(ASSISTANT_CHARACTERS); },
+
+    assistantOverrides: function () {
+      try {
+        var o = JSON.parse(localStorage.getItem(NS + ASSISTANT_KEY) || '{}');
+        return o && typeof o === 'object' && !Array.isArray(o) ? o : {};
+      } catch (err) { return {}; }
+    },
+
+    /* The effective presence: defaults, then every VALID stored override.
+     * `overridden` lists which fields differ from the defaults. */
+    assistant: function () {
+      var d = ASSISTANT_DEFAULTS, ov = Store.assistantOverrides();
+      var out = clone(d), o = {};
+      if (typeof ov.enabled === 'boolean' && ov.enabled !== d.enabled) { out.enabled = ov.enabled; o.enabled = true; }
+      if (assistantCharacter(ov.character) && ov.character !== d.character) { out.character = ov.character; o.character = true; }
+      var name = typeof ov.name === 'string' ? ov.name.trim() : '';
+      if (name && name.length <= ASSISTANT_NAME_MAX && name !== d.name) { out.name = name; o.name = true; }
+      if (typeof ov.brandSuit === 'boolean' && ov.brandSuit !== d.brandSuit) { out.brandSuit = ov.brandSuit; o.brandSuit = true; }
+      out.overridden = o;
+      return out;
+    },
+
+    /* Merges a patch into the stored overrides; a field equal to its default
+     * is removed rather than stored. Throws (Spanish, user-facing) on an
+     * invalid value instead of storing it. */
+    saveAssistant: function (patch) {
+      patch = patch || {};
+      var d = ASSISTANT_DEFAULTS, next = Store.assistantOverrides();
+      ['enabled', 'brandSuit'].forEach(function (k) {
+        if (!(k in patch)) return;
+        if (typeof patch[k] !== 'boolean') throw new Error('Valor inválido para "' + k + '".');
+        if (patch[k] === d[k]) delete next[k]; else next[k] = patch[k];
+      });
+      if ('character' in patch) {
+        if (!assistantCharacter(patch.character)) throw new Error('Ese personaje no existe.');
+        if (patch.character === d.character) delete next.character; else next.character = patch.character;
+      }
+      if ('name' in patch) {
+        var n = String(patch.name == null ? '' : patch.name).trim();
+        if (!n) throw new Error('El asistente necesita un nombre.');
+        if (n.length > ASSISTANT_NAME_MAX) throw new Error('El nombre del asistente no puede superar ' + ASSISTANT_NAME_MAX + ' caracteres.');
+        if (n === d.name) delete next.name; else next.name = n;
+      }
+      if (!Object.keys(next).length) { Store.resetAssistant(); return {}; }
+      write(ASSISTANT_KEY, next);
+      return next;
+    },
+
+    resetAssistant: function () {
+      try { localStorage.removeItem(NS + ASSISTANT_KEY); } catch (err) { /* ignore */ }
+    },
+
+    ASSISTANT_NAME_MAX: 40,
+
+    /* The welcome bubble greets a browser once. Storage can throw (private
+     * windows, blocked site data): then it simply greets again next time. */
+    assistantWelcomed: function () {
+      try { return localStorage.getItem(NS + ASSISTANT_WELCOMED_KEY) === '1'; } catch (err) { return false; }
+    },
+    markAssistantWelcomed: function () {
+      try { localStorage.setItem(NS + ASSISTANT_WELCOMED_KEY, '1'); } catch (err) { /* ignore */ }
+    },
+
     /* The single palette-derivation rule, exposed for the backoffice preview
      * (see derivePalette below for how and why). */
     derivePalette: function (ink, accent) { return derivePalette(BRAND_DEFAULTS.colors, ink, accent); },
@@ -528,9 +603,10 @@
     contrastRatio: function (a, b) { return contrastRatio(a, b); },
 
     /* Wipe everything back to seed state. Used by the reset control. Brand
-     * overrides go too: "Restablecer datos de demo" means the pack's look. */
+     * and assistant overrides go too: "Restablecer datos de demo" means the
+     * pack's look and presence (and the welcome greets again). */
     reset: function () {
-      ['fabrics', 'sellers', 'quotes', 'furniture', 'users', 'settings', 'servicePoints', 'invoices', BRAND_KEY].forEach(function (e) {
+      ['fabrics', 'sellers', 'quotes', 'furniture', 'users', 'settings', 'servicePoints', 'invoices', BRAND_KEY, ASSISTANT_KEY, ASSISTANT_WELCOMED_KEY].forEach(function (e) {
         try { localStorage.removeItem(NS + e); } catch (err) { /* ignore */ }
       });
       try { indexedDB.deleteDatabase('med-photos'); } catch (err) { /* ignore */ }
@@ -1021,6 +1097,21 @@
   // The pack's look (clients/<slug>/client.json), rendered by tools/generate.mjs.
   var BRAND_DEFAULTS = {{BRAND_DEFAULTS_JSON}};
   var BRAND_KEY = 'brand';
+
+  /* The pack's assistant presence (clients/<slug>/client.json `assistant`),
+   * rendered by tools/generate.mjs and validated by tools/client-pack.mjs. */
+  var ASSISTANT_DEFAULTS = {{ASSISTANT_DEFAULTS_JSON}};
+  var ASSISTANT_KEY = 'assistant';
+  var ASSISTANT_WELCOMED_KEY = 'assistantWelcomed';
+  var ASSISTANT_NAME_MAX = 40;
+  // Same ids as tools/client-pack.mjs (ASSISTANT_CHARACTERS) — keep both in sync.
+  var ASSISTANT_CHARACTERS = [
+    { id: 'female', label: 'Mujer', defaultName: 'Lía' },
+    { id: 'male', label: 'Hombre', defaultName: 'Tomás' }
+  ];
+  function assistantCharacter(id) {
+    return ASSISTANT_CHARACTERS.filter(function (c) { return c.id === id; })[0] || null;
+  }
   var BRAND_NAME_MAX = 60;
   var BRAND_HEADER_VARIANTS = ['normal', 'inverted'];
   /* Same names tools/generate.mjs emits in each page's :root (see
@@ -1429,7 +1520,7 @@
     sections: function (user) {
       if (!user) return [];
       return user.role === 'admin'
-        ? ['dashboard', 'quotes', 'fabrics', 'furniture', 'sellers', 'points', 'settings', 'styles', 'upgrade', 'usage']
+        ? ['dashboard', 'quotes', 'fabrics', 'furniture', 'sellers', 'points', 'settings', 'styles', 'assistant', 'upgrade', 'usage']
         : ['dashboard', 'quotes'];
     },
 
@@ -1575,10 +1666,39 @@
     return from ? s.split(from).join(name) : s;
   }
 
-  /* Another tab saving (or resetting) the brand or the plan repaints this one. */
+  /* ------------------------------------------------------------ Assistant --
+   *
+   * Paints Store.assistant() onto the cotizador's markup, with no 3D involved:
+   * html[data-assistant="on"|"off"] (CSS hides the character layer, "Preguntar",
+   * the chat button and panel, and swaps assistant copy for neutral copy when
+   * off), [data-assistant-name] text and [data-assistant-label] aria-labels
+   * ("{name}" is replaced). Called from the page's <head> like Brand.apply(),
+   * so a disabled presence never flashes. Fires "assistantchange" on window so
+   * the 3D layer (a module script in index.html) can follow. */
+  var Assistant = {
+    apply: function () {
+      var doc = global.document;
+      if (!doc) return;
+      var a = Store.assistant();
+      doc.documentElement.setAttribute('data-assistant', a.enabled ? 'on' : 'off');
+      var paint = function () {
+        each(doc.querySelectorAll('[data-assistant-name]'), function (el) { el.textContent = a.name; });
+        each(doc.querySelectorAll('[data-assistant-label]'), function (el) {
+          el.setAttribute('aria-label', el.getAttribute('data-assistant-label').split('{name}').join(a.name));
+        });
+      };
+      if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', paint, { once: true });
+      else paint();
+      try { global.dispatchEvent(new CustomEvent('assistantchange', { detail: a })); } catch (err) { /* ignore */ }
+      return a;
+    }
+  };
+
+  /* Another tab saving (or resetting) the brand, the plan or the assistant repaints this one. */
   if (global.addEventListener) {
     global.addEventListener('storage', function (e) {
       if (e.key === null || e.key === NS + BRAND_KEY || e.key === NS + 'settings') Brand.apply();
+      if (e.key === null || e.key === NS + ASSISTANT_KEY) Assistant.apply();
     });
   }
 
@@ -1586,4 +1706,5 @@
   global.Store = Store;
   global.Photos = Photos;
   global.Brand = Brand;
+  global.Assistant = Assistant;
 })(window);

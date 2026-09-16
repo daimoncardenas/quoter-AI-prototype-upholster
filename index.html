@@ -23,6 +23,23 @@
 /* Escritorio: la ventana define el alto. Las acciones quedan siempre a la vista
    y, si un paso no entra, scrollea el paso — nunca la página. En móvil el
    scroll de página es lo natural, así que esto no aplica. */
+/* Assistant presence (Store.assistant(); see assistant-presence.js). The help card is only "Preguntar", centered under the character's feet by the 3D layer. Off = presence only: no character, no chat entry points, neutral copy instead of the assistant's. */
+.journey .help-card{display:block;padding-top:clamp(8px,1.4vh,14px);text-align:right}
+.journey .help-card .text-button{font-size:.74rem;font-weight:700;text-align:center;display:inline-block}
+.assistant-stage{position:fixed;z-index:3;pointer-events:none;opacity:0;transition:opacity .5s}
+.assistant-stage.ready{opacity:1}
+.assistant-stage canvas{display:block;width:100%;height:100%}
+.assistant-hit{position:fixed;z-index:3;border:0;padding:0;background:transparent;cursor:pointer;border-radius:40% 40% 8px 8px}
+.assistant-hit:focus-visible{outline:3px solid rgba(var(--rgb-accent),.45);outline-offset:4px}
+.assistant-bubble{position:fixed;width:260px;pointer-events:none;background:var(--ink);color:#fff;border-radius:10px;padding:12px 30px 12px 14px;box-shadow:0 14px 34px rgba(var(--rgb-shadow),.22);opacity:0;transform:translateX(-6px);transition:.25s;z-index:6}
+.assistant-bubble.show{opacity:1;transform:none}
+.assistant-bubble:after{content:"";position:absolute;left:-6px;top:22px;width:14px;height:14px;background:inherit;transform:rotate(45deg)}
+.assistant-bubble p{margin:0;font-size:.72rem;line-height:1.5}
+.assistant-bubble button{pointer-events:auto;position:absolute;top:4px;right:6px;border:0;background:transparent;color:#fff;font-size:1.1rem;line-height:1;padding:4px}
+@media(min-width:651px){.chat-fab{display:none}}
+@media(prefers-reduced-motion:reduce){.assistant-stage,.assistant-bubble{transition:none}}
+html[data-assistant="off"] .assistant-stage,html[data-assistant="off"] .assistant-hit,html[data-assistant="off"] .assistant-bubble,html[data-assistant="off"] .journey .help-card,html[data-assistant="off"] .chat-fab,html[data-assistant="off"] .chat-panel,html[data-assistant="off"] [data-assistant-copy]{display:none!important}
+html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
 @media(min-width:651px){
   html,body{height:100%;overflow:hidden}
   body{padding-bottom:0}
@@ -69,12 +86,16 @@
   .step-list small{font-size:clamp(.57rem,.92vh,.65rem);margin-top:2px}
   .journey{padding-block:clamp(14px,3.2vh,46px) clamp(10px,2.2vh,28px)}
   .step-list li{margin-bottom:clamp(5px,2vh,22px)}
-@media print{html,body{height:auto!important;overflow:visible!important}.demo-banner{position:static!important}.chat-fab,.chat-panel,#logoutBtn{display:none!important}body::after{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;background-image:var(--print-watermark);background-repeat:repeat}}
+@media print{html,body{height:auto!important;overflow:visible!important}.demo-banner{position:static!important}.chat-fab,.chat-panel,.assistant-stage,.assistant-hit,.assistant-bubble,#logoutBtn{display:none!important}body::after{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;background-image:var(--print-watermark);background-repeat:repeat}}
   </style>
   {{MODE_STYLES}}
   <!-- store.js loads in <head> so Brand.apply() can paint any saved brand overrides (colors, fonts, header variant, title) before first paint; it is a no-op when nothing is overridden. -->
   <script src="store.js"></script>
   <script>Brand.apply()</script>
+  <!-- Paints the assistant presence (on/off, name) before first paint, so a disabled assistant never flashes. -->
+  <script>Assistant.apply()</script>
+  <!-- three.js for the assistant's 3D layer, pinned and loaded from the CDN only after the page's load event (see assistant-presence.js). Offline, it simply does not appear. -->
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"}}</script>
 </head>
 <body>
   <header class="site-header">
@@ -101,9 +122,7 @@
         <li data-step-dot="6"><span>6</span><div><b>Tu cotización</b><small>Datos de contacto</small></div></li>
       </ol>
       <div class="help-card">
-        <span class="help-icon">?</span>
-        <div><b>¿Necesitas ayuda?</b><small>Nuestro asistente te acompaña.</small></div>
-        <button type="button" class="text-button" data-open-chat>Preguntar</button>
+        <button type="button" class="text-button" data-open-chat data-assistant-label="Preguntar a {name}">Preguntar</button>
       </div>
     </aside>
 
@@ -186,7 +205,7 @@
           <div class="ai-card" id="aiCard">
             <div class="ai-summary" id="aiSummary"></div>
             <div class="ai-analysis">
-              <div class="ai-badge"><span class="pulse"></span> {{ASSISTANT_NAME_HTML}}</div>
+              <div class="ai-badge"><span class="pulse"></span> <span data-assistant-copy>{{ASSISTANT_NAME_HTML}}</span><span data-assistant-off-copy>Análisis inteligente</span></div>
               <h3 id="analysisTitle">Listo para revisar</h3>
               <p id="analysisText">Selecciona “Revisar mi información” para comprobar la fotografía y las medidas.</p>
               <div class="analysis-checks" id="analysisChecks" hidden></div>
@@ -259,12 +278,18 @@
     </section>
   </main>
 
-  <button class="chat-fab" type="button" data-open-chat aria-label="Abrir asistente"><span>✦</span><b>¿Tienes dudas?</b></button>
-  <aside class="chat-panel" id="chatPanel" aria-label="{{ASSISTANT_NAME}}" data-brand-label aria-hidden="true">
-    <header><div><span class="ai-orb">✦</span><p><b>{{ASSISTANT_NAME_HTML}}</b><small>Orientación sobre telas y medidas</small></p></div><button type="button" id="closeChat" aria-label="Cerrar">×</button></header>
+  <button class="chat-fab" type="button" data-open-chat data-assistant-label="Hablar con {name}" aria-label="Hablar con {{ASSISTANT_DEFAULT_NAME}}"><span>✦</span><b>¿Tienes dudas?</b></button>
+  <aside class="chat-panel" id="chatPanel" aria-label="{{ASSISTANT_DEFAULT_NAME}}" data-assistant-label="{name}" aria-hidden="true">
+    <header><div><span class="ai-orb">✦</span><p><b data-assistant-name>{{ASSISTANT_DEFAULT_NAME}}</b><small>Orientación sobre telas y medidas</small></p></div><button type="button" id="closeChat" aria-label="Cerrar">×</button></header>
     <div class="messages" id="messages"><div class="message bot">Hola, puedo ayudarte a elegir una tela o explicarte cómo medir tu mueble.</div><div class="quick-questions"><button type="button">¿Cómo tomo las medidas?</button><button type="button">Tengo mascotas</button><button type="button">¿El valor es definitivo?</button></div></div>
     <form id="chatForm"><input id="chatInput" placeholder="Escribe tu pregunta…" aria-label="Pregunta para el asistente"><button aria-label="Enviar">↑</button></form>
   </aside>
+
+  <!-- Assistant presence layer: fixed and outside the sidebar on purpose (the sidebar clips, the character must not). Hidden until assistant-presence.js has placed it. -->
+  <div class="assistant-stage" id="assistantStage" hidden><canvas aria-hidden="true"></canvas></div>
+  <button type="button" class="assistant-hit" id="assistantHit" data-open-chat data-assistant-label="Hablar con {name}" aria-label="Hablar con {{ASSISTANT_DEFAULT_NAME}}" hidden></button>
+  <div class="assistant-bubble" id="assistantBubble" role="status" aria-live="polite" hidden><p></p><button type="button" aria-label="Cerrar mensaje">×</button></div>
+{{ASSISTANT_MODELS}}
 
   <!-- The legal disclaimer stays bound to the PACK name (the NOT_OFFICIAL_* copy token is rendered at generate time, never marked data-brand-name): an admin renaming the company must not make this notice untruthful. -->
   <aside class="demo-banner" id="demoBanner">
@@ -841,5 +866,6 @@ renderPhotos();
 Store.onChange(()=>{renderAllOptions();if(state.step===4)renderReviewSummary();if(state.step===5)renderFabrics()});
 showStep(1);
   </script>
+{{ASSISTANT_SCRIPT}}
 </body>
 </html>

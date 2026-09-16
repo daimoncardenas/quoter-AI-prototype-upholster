@@ -14,3 +14,6 @@ generated-*/
 
 # Selects which client CLIENT resolves to locally; see .env.example.
 .env
+
+# Downloaded CC0 sources for tools/build-assistant-assets.mjs (see assets/assistant/README.md).
+assets/assistant/sources/

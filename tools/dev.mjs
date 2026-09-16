@@ -134,7 +134,7 @@ function scheduleRender(reason) {
 
 // Watch the directory, not the files: editors save by rename, which would
 // silently detach a watcher bound to the original file.
-const ROOT_FILES = new Set(['index.html', 'admin.html', 'store.js', '.env']);
+const ROOT_FILES = new Set(['index.html', 'admin.html', 'store.js', 'assistant-presence.js', '.env']);
 watch('.', (event, filename) => {
   if (filename && ROOT_FILES.has(String(filename))) scheduleRender(filename);
 });
@@ -165,7 +165,7 @@ server.listen(PORT, HOST, () => {
   Quoter:     http://localhost:${PORT}/
   Backoffice: http://localhost:${PORT}/admin.html
 
-  Watching index.html, admin.html, store.js, clients/ and .env.
+  Watching index.html, admin.html, store.js, assistant-presence.js, clients/ and .env.
   Save a change and the browser reloads. Ctrl+C to stop.`);
   if (CLIENT_FROM_SHELL) {
     console.log('  CLIENT comes from the shell, so editing .env will not switch clients.');

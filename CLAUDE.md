@@ -20,6 +20,7 @@ npm test                                          # generates, then all suites (
 npm run test:wiring                               # one suite (also: node tests/wiring.spec.mjs)
 npm run test:clients                              # white-label pipeline smoke test, every non-Mediterránea pack
 npm run build                                     # generates, then writes dist/index.html + dist/admin.html
+npm run build:assistant                           # rebuilds assets/assistant/*.gltf (downloads the CC0 sources first)
 ```
 
 - Run everything from the repo root: suites build `file://` URLs from `process.cwd()`.
@@ -84,7 +85,9 @@ rendered. Do not bundle, split into modules, or add a framework unless asked.
   "Configuraciones de cotizador" (`data-page="settings"`, renamed from
   "Configuración") holds the quoter's rules, and "Configuración de estilos"
   (`data-page="styles"`, right after it) edits the runtime brand — see the
-  white-label section. Admin-only sections also include "Upgrade" (the
+  white-label section. "Presencia del asistente" (`data-page="assistant"`,
+  admin-only, right after estilos) configures the 3D assistant — see
+  "Assistant presence" below. Admin-only sections also include "Upgrade" (the
   `upgrade` section/page id) — CARDYRAM's own three subscription-plan cards for the
   quoter product, admin-only via the same `Auth.sections`/nav-hiding mechanism as
   every other admin section, with `go()` also refusing to switch to a page a role
@@ -188,6 +191,83 @@ Couplings that are easy to break:
   close, the admin-only per-seller table) are all derived from these two fields —
   see `renderDashboard()`.
 
+## Assistant presence
+
+The cotizador shows a 3D salesperson (Lía, a woman, or Tomás, a man) standing in
+the wizard's left sidebar, with an armchair beside them. It is **presence
+only**: turning it off removes the character, the armchair, the welcome bubble,
+"Preguntar", the chat button/panel and any copy that mentions the assistant
+(step 4's badge says "Análisis inteligente" instead). The AI analysis of steps
+4–5 never reads this config and keeps working either way.
+
+- **Config**: pack default in `client.json` → `assistant` (every pack must declare
+  it; `tools/client-pack.mjs` → `validateAssistant()` fails loudly). Runtime
+  overrides, same pattern as the brand layer: `Store.assistant()` (effective
+  value + `overridden`), `Store.saveAssistant(patch)` (validates, stores only the
+  diff under `<storageNamespace>assistant`, name trimmed, 1–40 chars),
+  `Store.resetAssistant()`, `Store.assistantCharacters()` (ids + suggested names).
+  "Restablecer datos de demo" clears it, and also `<storageNamespace>assistantWelcomed`
+  (the once-per-browser welcome flag). `assistantName` in the pack is still what
+  step 4's AI badge shows; the chat header and accessible names use
+  `assistant.name`.
+- **Backoffice**: "Presencia del asistente" — on/off switch, character radiogroup
+  (picking the other character swaps a name still equal to the previous
+  suggestion), name, "traje con el color de tu marca" switch, save, and a reset
+  through `askConfirm()`. Admin-only via `Auth.sections`.
+- **Wizard, no 3D involved**: `store.js` → `Assistant.apply()` runs from
+  `<head>` right after `Brand.apply()`: sets `html[data-assistant="on"|"off"]`
+  (CSS does the hiding), fills `[data-assistant-name]` and
+  `[data-assistant-label]` aria-labels (`{name}` placeholder), and fires
+  `assistantchange` on window. Another tab saving re-applies it (storage event).
+  The help card is only "Preguntar"; `.chat-fab` is hidden above 650px (the
+  character and "Preguntar" are the entry points there).
+  **Gotcha**: index.html's `@media(min-width:651px){` block is never closed
+  before `</style>` (the print rule sits inside it), so presence CSS that must
+  apply on phones lives ABOVE that block.
+- **Wizard, the 3D layer**: `assistant-presence.js` (repo root, not a template)
+  is inlined by `tools/generate.mjs` as a `<script type="module">`, and the
+  three models from `assets/assistant/` as `<script type="application/json"
+  id="assistantModel-female|male|armchair">` blocks (`</` escaped), because
+  `fetch()` of sibling files is blocked on `file://`; the module hands them to
+  `GLTFLoader.parseAsync`. three.js is **pinned three@0.186.0 from
+  cdn.jsdelivr.net** via an importmap in `<head>` (verified to work from
+  `file://`), imported dynamically only after the page's load event, so it never
+  delays the wizard. Offline, no WebGL2, or any error → the layer stays hidden,
+  nothing is thrown to the page, "Preguntar" and the chat still work.
+  Desktop only (>650px). Adds ~3.1 MB to `index.html`.
+- **Behavior**: a transparent fixed layer OUTSIDE the sidebar (the sidebar clips);
+  feet on the help card's line, 75% of the free height, against the sidebar's
+  right edge, "Preguntar" centered under the feet. Head/neck/body follow the
+  focused or hovered form control (else the step title), capped at ~43°; faces
+  the customer while the chat is open; `Wave` on the welcome, `Interact` on
+  opening the chat and on a fabric change (then looks at the armchair). The
+  welcome bubble (`role="status"`, click-through except its ×) shows once per
+  browser, closes after 8 s, on × or on any pointerdown in the form. The
+  armchair wears the fabric selected in step 5 (`.fabric-card.selected` +
+  `#selectedFabric` → `Store.all('fabrics')[].color`). `prefers-reduced-motion`:
+  one still render, no loop. Rendering pauses while the tab is hidden. The fabric sync (a 300 ms interval) runs only while the presence is on, never twice, and its state is mirrored on `#assistantStage[data-fabric-sync="on"|"off"]` — a test hook read by `tests/assistant.spec.mjs`. A replaced character (or armchair) has its geometries, materials and textures disposed.
+- **Assets** (`assets/assistant/`, see its README): built by
+  `tools/build-assistant-assets.mjs` from CC0 Quaternius / Poly Haven downloads
+  (sources gitignored). Gotchas: the Quaternius models already face +Z (do NOT
+  rotate them by π); the men's Suit ships a skinned `Pistol` mesh (removed);
+  Lía's skirt is Formal's legs/feet grafted onto the Suit (identical skeleton and
+  bind pose); garments were lengthened by moving bind-pose vertices (T-pose,
+  meters); `prune()` rewrites one buffer with only reachable data (otherwise the
+  graft ships Formal's whole buffer).
+- **Rendering gotchas** (in `assistant-presence.js`): three's `AnimationMixer`
+  skips writing a bone whose keyframe value did not change, so the look-at offset
+  is applied after `mixer.update` and the neck/head pose is RESTORED after
+  rendering — otherwise it accumulates every frame. Bones are rotated about world
+  axes via the inverted `matrixWorld`. The armchair's fabric and wood share one
+  texture atlas: a shader tints only texels with linear luminance above
+  `smoothstep(0.07, 0.13)` (texel / 0.46 × fabric color, keeping the weave) and
+  forces them matte; a higher threshold left the darker wrinkles untinted (white
+  stains). The armchair has its own scene and an orthographic camera tilted 0.38 rad
+  down (seen dead level the seat is hidden and it reads as a box), at the same
+  pixel scale as the character. Faces have no mouth or morph targets: the smile
+  and raised brows are tube meshes parented to the Head bone, and the original
+  frowning brow material is hidden.
+
 ## Simulated payment (Bold)
 
 The real product charges through **Bold** (Colombian PSP) via its Payment Link
@@ -275,7 +355,7 @@ client they're for.
 
 | File | Contents |
 |------|----------|
-| `client.json` | Brand strings (`displayName`, `shortName`, `assistantName`, `meta.*` titles/descriptions, `copy.*` consent/disclaimer text), `theme` (CSS custom property values, plus `theme.tints`/`theme.rgb` — see below), `fonts` (`{href, headingName, headingFallback, body}` — see below), `logo` (`{file, alt, fileOnLight?}` — see Color modes), `colorMode` (`"normal"` \| `"inverted"`, optional, defaults to `"normal"` — see Color modes), `storageNamespace`, `photosDbName` |
+| `client.json` | Brand strings (`displayName`, `shortName`, `assistantName`, `meta.*` titles/descriptions, `copy.*` consent/disclaimer text), `theme` (CSS custom property values, plus `theme.tints`/`theme.rgb` — see below), `fonts` (`{href, headingName, headingFallback, body}` — see below), `logo` (`{file, alt, fileOnLight?}` — see Color modes), `colorMode` (`"normal"` \| `"inverted"`, optional, defaults to `"normal"` — see Color modes), `assistant` (`{enabled, character: "female"\|"male", name, brandSuit}`, required, validated by `validateAssistant()` — see Assistant presence), `storageNamespace`, `photosDbName` |
 | `seed.json` | Client-specific demo data: `fabrics`, `servicePoints`, `sellers` (`id`, `servicePointIds`, `quotes` count only — identity comes from `shared/demo-users.json`, see below), `quotes`, `settings` (overrides onto `DEFAULT_SETTINGS`, at minimum `senderEmail` and `budgets`) |
 | `logo.png` / `logo.svg` | Referenced by `client.json` → `logo.file`; either extension works (`tools/client-pack.mjs` → `MIME_BY_EXT`). A second logo variant can be added for `colorMode: "inverted"` — see Color modes |
 | `README.md` | Only for placeholder/incomplete packs (see `clients/macizo/README.md`) — notes what's invented and needs replacing |

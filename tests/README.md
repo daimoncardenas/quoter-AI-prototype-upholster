@@ -139,6 +139,24 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   them, that both "Restablecer estilos por defecto" and "Restablecer datos de demo"
   restore the pack's look, that the nav reads "Configuraciones de cotizador", and
   that a seller can neither see nor reach the section.
+- `assistant.spec.mjs` — "Presencia del asistente": the pack's `assistant` block
+  passes `validateAssistant()` and bad ones (missing, unknown character, empty /
+  untrimmed / 41-char name, non-boolean flags) are rejected; the section sits
+  right after "Configuración de estilos", visible to the admin only (a seller
+  neither sees nor reaches it); with nothing saved the form and the cotizador
+  show the pack defaults; switching character swaps a suggested name; an empty
+  name is refused with a message; saving character/name/brand suit stores only
+  the diff (trimmed name), survives a reload and reaches the cotizador (chat
+  header, chat panel, character hit target, "Preguntar" and chat button
+  accessible names), a name with HTML renders as text, `Store.saveAssistant`
+  rejects unknown characters and long names; turning it off hides the
+  character layer, hit target, bubble, "Preguntar", chat panel and (on a phone)
+  the chat button while the AI analysis card stays and its badge reads
+  "Análisis inteligente"; turning it back on restores them ("Preguntar" opens the
+  chat, the phone gets its chat button and no 3D layer); the welcome flag is
+  remembered; the reset (after an `askConfirm()` that a cancel leaves untouched)
+  and "Restablecer datos de demo" restore the defaults. No pixel or WebGL
+  assertions: the 3D layer is optional by design.
 - `sealed.spec.mjs` — the encrypted delivery build: since that gate is
   currently disabled at the owner's request, this checks that `dist/` ships in
   the clear rather than encrypted. It tests the packaging, not the prototype.
