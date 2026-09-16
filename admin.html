@@ -345,7 +345,7 @@
           <button type="button" class="tab" id="tabPaquetes" role="tab" aria-selected="false" aria-controls="panelPaquetes" tabindex="-1" data-tab="paquetes">Paquetes</button>
         </div>
         <div class="tabpanel" id="panelPlanes" role="tabpanel" aria-labelledby="tabPlanes">
-          <div class="billing-switch" id="billingSwitch" role="radiogroup" aria-label="Periodo de facturación">
+          <div class="billing-switch" id="billingSwitch" role="radiogroup" aria-label="Modalidad de contratación">
             <button type="button" class="billing-option" role="radio" aria-checked="true" tabindex="0" data-billing="anual">Año</button>
             <button type="button" class="billing-option" role="radio" aria-checked="false" tabindex="-1" data-billing="mensual">Mes</button>
           </div>
@@ -1067,8 +1067,7 @@
          'Sin dominio propio.',
          'Sin reglas de asignación de vendedores.',
          'Sin exportación de datos por cuenta propia.',
-         'Sin integraciones.',
-         'Sin desarrollos a la medida.'
+         'Sin integraciones.'
        ]},
       {name:'Professional',price:699000,priceMonthly:899000,
        quota:{quotes:90,aiCredits:300,storageGB:5,users:3,locations:3,historyMonths:12},
@@ -1090,6 +1089,11 @@
          'Gestión de catálogo y telas.',
          'Sin mención de CARDYRAM.',
          'Soporte con prioridad sobre el plan Essential.'
+       ],
+       limits:[
+         'Sin integraciones estandarizadas.',
+         'Sin exportación CSV por cuenta propia.',
+         'Una plantilla estándar de cotización.'
        ]},
       {name:'Business',price:1290000,priceMonthly:1490000,
        quota:{quotes:300,aiCredits:1000,storageGB:15,users:10,locations:10,historyMonths:12},
@@ -1109,7 +1113,7 @@
          'Soporte prioritario.'
        ]}
     ];
-    const UPGRADE_NOTE='La activación de integraciones, los cargos de proveedores externos y los costos de uso no están incluidos en la licencia mensual, salvo que se indique expresamente en la propuesta comercial.';
+    const UPGRADE_NOTE='La activación de integraciones, los cargos de proveedores externos, los costos de uso y los desarrollos a la medida no están incluidos en la licencia mensual, salvo que se indique expresamente en la propuesta comercial.';
     /* The client's current plan lives in settings (Store.settings().plan,
      * default 'Essential' — see DEFAULT_SETTINGS in store.js), same field for
      * every client pack. PLANS' own array order (Essential < Professional <
@@ -1121,7 +1125,13 @@
     // plan+period into an amount: the cards, the plan-change confirm() and
     // Usage's summary strip all call it, so none of them can drift from the
     // period actually selected.
-    const BILLING_CAPTIONS={anual:'con contrato anual',mensual:'mes a mes'};
+    const BILLING_CAPTIONS={anual:'con contrato de arrendamiento a 12 meses',mensual:'mes a mes, sin contrato'};
+    // Same modality distinction as BILLING_CAPTIONS, but phrased for the
+    // plan-change confirm() sentence rather than a standalone caption — kept
+    // as its own map instead of reusing BILLING_CAPTIONS because the wording
+    // differs ("y sin contrato" vs. ", sin contrato") to read naturally inside
+    // the full confirm sentence.
+    const CONFIRM_MODALITY={anual:'con contrato de arrendamiento a 12 meses',mensual:'mes a mes y sin contrato'};
     function currentBilling(){return Store.settings().billing==='mensual'?'mensual':'anual'}
     function planPrice(plan,billing){return billing==='mensual'?plan.priceMonthly:plan.price}
     function renderUpgrade(){
@@ -1187,7 +1197,7 @@
       const name=btn.dataset.plan,plan=PLANS.find(p=>p.name===name);
       if(!plan)return;
       const price=planPrice(plan,currentBilling());
-      if(!confirm(`¿Confirmas el cambio al plan ${name} por ${Store.money(price)} COP / mes?`))return;
+      if(!confirm(`¿Confirmas el cambio al plan ${name} por ${Store.money(price)} COP / mes, ${CONFIRM_MODALITY[currentBilling()]}?`))return;
       try{Store.saveSettings({plan:name})}catch(err){return toast(err.message)}
       // The plan gates brand features (fonts, header variant): repaint with what it allows now.
       Brand.apply();

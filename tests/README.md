@@ -40,13 +40,15 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   each card's label/CTA, a change asks for confirmation naming the plan and
   its price, dismissing leaves the plan untouched, and confirming saves the
   new plan, re-renders every card's state, shows a toast, and survives a
-  reload. Also covers the Planes billing-period switch ("Año"/"Mes",
+  reload. Also covers the Planes billing-modality switch ("Año"/"Mes",
+  radiogroup accessible name "Modalidad de contratación",
   `settings.billing`, default `'anual'`): Año selected by default with the
-  three annual prices and "con contrato anual", clicking Mes swaps to the
-  three monthly prices and "mes a mes" with `aria-checked` moving and
-  surviving a reload, arrow keys moving AND activating the selection, the
-  plan-change confirm dialog quoting whichever period is selected, and that
-  switching the period never touches `Store.settings().plan`. Also covers
+  three annual prices and "con contrato de arrendamiento a 12 meses",
+  clicking Mes swaps to the three monthly prices and "mes a mes, sin
+  contrato" with `aria-checked` moving and surviving a reload, arrow keys
+  moving AND activating the selection, the plan-change confirm dialog
+  quoting whichever period is selected (naming the same modality inline),
+  and that switching the period never touches `Store.settings().plan`. Also covers
   Upgrade's two tabs: Planes is selected by default with
   its cards visible and Paquetes hidden, arrow keys switch tabs (and move
   focus), and the Paquetes panel — exactly five package cards in order with

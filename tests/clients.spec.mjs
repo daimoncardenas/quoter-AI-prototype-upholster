@@ -112,8 +112,8 @@ for (const slug of SLUGS) {
   await page.waitForTimeout(150);
   const mensualPrices = await page.$$eval('#plansGrid .plan-price', els => els.map(e => e.textContent));
   check('al menos un precio cambia de Año a Mes', mensualPrices.some((p, i) => p !== anualPrices[i]), true);
-  check('la leyenda pasa a "mes a mes"',
-    await page.$eval('#plansGrid .plan-billing-caption', e => e.textContent), 'mes a mes');
+  check('la leyenda pasa a "mes a mes, sin contrato"',
+    await page.$eval('#plansGrid .plan-billing-caption', e => e.textContent), 'mes a mes, sin contrato');
   await page.click('#billingSwitch [data-billing="anual"]');
   await page.waitForTimeout(150);
 

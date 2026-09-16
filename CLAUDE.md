@@ -105,7 +105,12 @@ rendered. Do not bundle, split into modules, or add a framework unless asked.
   (`'anual'`/`'mensual'`, default `'anual'` in `DEFAULT_SETTINGS`), so it
   persists and is shared with Usage's summary strip; switching it never
   touches `Store.settings().plan`. Each card also shows a caption under the
-  price ("con contrato anual" / "mes a mes") matching the selection. The page
+  price ("con contrato de arrendamiento a 12 meses" / "mes a mes, sin
+  contrato") matching the selection, and the radiogroup's accessible name is
+  "Modalidad de contratación" (the two button labels stay short: "Año"/"Mes").
+  The plan-change confirm() names the same modality inline ("... COP / mes,
+  con contrato de arrendamiento a 12 meses?" / "... COP / mes, mes a mes y
+  sin contrato?"). The page
   has two ARIA tabs (`#tabPlanes`/`#tabPaquetes`, roving
   tabindex, arrow keys switch): "Planes" is the plan cards above; "Paquetes" is a
   second static constant, `PACKAGES` — one-off/recurring add-ons ("recarga

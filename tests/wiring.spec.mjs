@@ -535,15 +535,21 @@ check('exactamente tres planes, en orden Essential/Professional/Business',
 check('cada precio se arma con Store.money, no a mano',
   await page.$$eval('#plansGrid .plan-price', els => els.map(e => e.textContent)),
   await page.evaluate(() => [299000, 699000, 1290000].map(n => Store.money(n) + ' COP / mes')));
-check('conteo de ítems — Essential: 17 incluye + 13 límites, Professional: 15, Business: 11',
+check('conteo de ítems — Essential: 17 incluye + 12 límites, Professional: 15 incluye + 3 límites, Business: 11',
   await page.$$eval('#plansGrid .plan-card', cards => cards.map(c => {
     const lists = c.querySelectorAll('.plan-list');
     return { incluye: lists[0].children.length, limites: lists[1] ? lists[1].children.length : 0 };
   })),
-  [{ incluye: 17, limites: 13 }, { incluye: 15, limites: 0 }, { incluye: 11, limites: 0 }]);
+  [{ incluye: 17, limites: 12 }, { incluye: 15, limites: 3 }, { incluye: 11, limites: 0 }]);
+check('los límites de Professional son exactamente estos tres, en este orden',
+  await page.$$eval('#plansGrid .plan-card', cards => {
+    const limitsList = cards[1].querySelectorAll('.plan-list')[1];
+    return [...limitsList.children].map(li => li.textContent);
+  }),
+  ['Sin integraciones estandarizadas.', 'Sin exportación CSV por cuenta propia.', 'Una plantilla estándar de cotización.']);
 check('el aviso de integraciones aparece bajo las tarjetas',
   await page.textContent('#plansNote'),
-  'La activación de integraciones, los cargos de proveedores externos y los costos de uso no están incluidos en la licencia mensual, salvo que se indique expresamente en la propuesta comercial.');
+  'La activación de integraciones, los cargos de proveedores externos, los costos de uso y los desarrollos a la medida no están incluidos en la licencia mensual, salvo que se indique expresamente en la propuesta comercial.');
 
 const billingSwitchState = () => page.evaluate(() => ({
   checked: [...document.querySelectorAll('#billingSwitch .billing-option')].map(b => [b.dataset.billing, b.getAttribute('aria-checked')]),
@@ -551,13 +557,13 @@ const billingSwitchState = () => page.evaluate(() => ({
   captions: [...document.querySelectorAll('#plansGrid .plan-billing-caption')].map(e => e.textContent)
 }));
 
-console.log('\nUPGRADE — Planes: el switch de periodo de facturación (Año por defecto)');
-check('por defecto Año está seleccionado, con los tres precios anuales y "con contrato anual"',
+console.log('\nUPGRADE — Planes: el switch de modalidad de contratación (Año por defecto)');
+check('por defecto Año está seleccionado, con los tres precios anuales y "con contrato de arrendamiento a 12 meses"',
   await billingSwitchState(),
   {
     checked: [['anual', 'true'], ['mensual', 'false']],
     prices: await page.evaluate(() => [299000, 699000, 1290000].map(n => Store.money(n) + ' COP / mes')),
-    captions: ['con contrato anual', 'con contrato anual', 'con contrato anual']
+    captions: ['con contrato de arrendamiento a 12 meses', 'con contrato de arrendamiento a 12 meses', 'con contrato de arrendamiento a 12 meses']
   });
 
 await page.click('#billingSwitch [data-billing="mensual"]');
@@ -567,7 +573,7 @@ check('clic en Mes cambia los tres precios, la leyenda y el aria-checked',
   {
     checked: [['anual', 'false'], ['mensual', 'true']],
     prices: await page.evaluate(() => [399000, 899000, 1490000].map(n => Store.money(n) + ' COP / mes')),
-    captions: ['mes a mes', 'mes a mes', 'mes a mes']
+    captions: ['mes a mes, sin contrato', 'mes a mes, sin contrato', 'mes a mes, sin contrato']
   });
 
 await page.reload();
@@ -578,16 +584,19 @@ check('el periodo elegido (Mes) sobrevive a un recargo de página',
   {
     checked: [['anual', 'false'], ['mensual', 'true']],
     prices: await page.evaluate(() => [399000, 899000, 1490000].map(n => Store.money(n) + ' COP / mes')),
-    captions: ['mes a mes', 'mes a mes', 'mes a mes']
+    captions: ['mes a mes, sin contrato', 'mes a mes, sin contrato', 'mes a mes, sin contrato']
   });
+
+check('el radiogroup del switch se llama "Modalidad de contratación"',
+  await page.getAttribute('#billingSwitch', 'aria-label'), 'Modalidad de contratación');
 
 console.log('\nUPGRADE — el diálogo de cambio de plan cita el precio del periodo seleccionado (Mes)');
 let mesDialogMsg = '';
 page.once('dialog', d => { mesDialogMsg = d.message(); d.dismiss(); });
 await page.click('#plansGrid [data-plan="Business"]');
 await page.waitForTimeout(150);
-check('el diálogo cita el precio mensual de Business, no el anual',
-  mesDialogMsg, `¿Confirmas el cambio al plan Business por ${await page.evaluate(() => Store.money(1490000))} COP / mes?`);
+check('el diálogo cita el precio mensual de Business, no el anual, y la modalidad mes a mes',
+  mesDialogMsg, `¿Confirmas el cambio al plan Business por ${await page.evaluate(() => Store.money(1490000))} COP / mes, mes a mes y sin contrato?`);
 check('cancelar deja el plan sin cambios, y cambiar el periodo tampoco lo cambió',
   await page.evaluate(() => Store.settings().plan), 'Essential');
 
@@ -624,8 +633,8 @@ let dialogMsg = '';
 page.once('dialog', d => { dialogMsg = d.message(); d.dismiss(); });
 await page.click('#plansGrid [data-plan="Business"]');
 await page.waitForTimeout(150);
-check('el diálogo menciona el plan y el precio',
-  dialogMsg, `¿Confirmas el cambio al plan Business por ${await page.evaluate(() => Store.money(1290000))} COP / mes?`);
+check('el diálogo menciona el plan, el precio y la modalidad de arrendamiento anual',
+  dialogMsg, `¿Confirmas el cambio al plan Business por ${await page.evaluate(() => Store.money(1290000))} COP / mes, con contrato de arrendamiento a 12 meses?`);
 check('cancelar deja a Essential como plan actual',
   await page.evaluate(() => Store.settings().plan), 'Essential');
 
