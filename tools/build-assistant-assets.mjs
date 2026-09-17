@@ -31,7 +31,8 @@ const DRIVE = {
 const CHAIR_ID = 'ArmChair_01';
 
 // Only the clips the assistant plays; the packs also ship combat animations.
-const CLIPS = ['Idle', 'Idle_Neutral', 'Wave', 'Interact'];
+// Walk is what takes her to the armchair when the customer has been quiet for a minute.
+const CLIPS = ['Idle', 'Idle_Neutral', 'Wave', 'Interact', 'Walk'];
 const PROPS = /pistol|gun|sword|backpack/i;
 
 async function download(url, file) {

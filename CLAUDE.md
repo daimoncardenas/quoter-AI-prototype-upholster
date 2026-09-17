@@ -270,7 +270,7 @@ context & actions" below).
   `file://`), imported dynamically only after the page's load event, so it never
   delays the wizard. Offline, no WebGL2, or any error → the layer stays hidden,
   nothing is thrown to the page, "Preguntar" and the chat still work.
-  Desktop only (>650px). Adds ~3.1 MB to `index.html`.
+  Desktop only (>650px). Adds ~3.2 MB to `index.html`.
 - **Behavior**: a transparent fixed layer OUTSIDE the sidebar (the sidebar clips);
   feet on the help card's line, 75% of the free height, against the sidebar's
   right edge, "Preguntar" centered under the feet. She reacts to the wizard's own
@@ -301,8 +301,117 @@ context & actions" below).
   `#assistantStage`: `data-reactions` / `data-reactions-suppressed` (counters),
   `data-reaction` (the last one), `data-glance` (`'selection'`, `'uploader'`,
   `'armchair'`, or the control's id/value — what she is looking at), `data-thinking`,
-  `data-chair-fabric` — read by `tests/assistant.spec.mjs`. A replaced character (or
-  armchair) has its geometries, materials and textures disposed.
+  `data-chair-fabric`, `data-heady` / `data-crown` (her head and the top of her
+  hair), `data-seat` / `data-hip` (the armchair's seat line and where her hip
+  actually lands), `data-pose` (see the next bullet) and `data-idle-ms` (*writable*:
+  shortens the wait below so the suite doesn't sit through a real minute) — read by
+  `tests/assistant.spec.mjs`. A replaced character (or armchair) has its geometries,
+  materials and textures disposed.
+- **The armchair is where she goes when nobody is there** (`IDLE_MS` 60 s): a minute
+  without a single sign of life —`pointermove`, `pointerdown`, `keydown`, `wheel`,
+  `touchstart`, `scroll` or any `aci:event`— and she turns to the chair, walks over
+  (the `Walk` clip, added to the build for this: she faces the chair to walk and
+  turns back to a three-quarter view to sit), sits down and stays there looking at
+  the customer. Any sign stands her up again, and the wait restarts (`lastAlive`).
+  **Sitting is a pose, not a clip** (none exists for it, like "thinking"): the legs
+  are solved AFTER `mixer.update` and restored after rendering, exactly like the
+  look-at — `Torso`/arms keep pitched constants, the legs come from a **two-bone IK**
+  (`cos θ = (drop − shin) / thigh`, both segments measured on the rig at load), and
+  the whole body drops so the hip lands on the seat's line. Blended by `sitWeight`
+  over ~0.7 s. `data-pose` walks `standing → to-chair → sitting → back`. She only
+  sits when it is really idle: chat closed, no notice showing, no review running,
+  tab visible, motion allowed, and a chair drawn at all (`canSit()`). `playStanding()`
+  keeps the standing clips (wave, interact) from firing on a seated body.
+  **The chair's socket is raycast, not eyeballed** (`measureChairSocket()`, exposed as
+  `data-socket` = `seatY|gapCentreX|gapWidth|faceZ`): the armchair ships as ONE mesh with no
+  named parts, so rays are cast down for the seat's surface and horizontally inward
+  for the armrests' inner faces — that is where the seat's line and the gap's centre
+  come from. `SEAT_ABOVE_PY`/`SEAT_X_OFFSET` survive only as fallbacks if the rays
+  miss. The gap is ~78 px wide at cushion height and narrows to ~30 px at the
+  armrest pads, which is why she sits turned (`SIT_YAW` ≈ 41°: her projected waist
+  fits the narrower gap).
+  **And she is placed in DEPTH, not only on screen**: her own bounding box's rear
+  (`box.min.z`, measured at load) must sit in front of the chair's camera-facing
+  surface at seat height (`data-sit-z` = `faceZ|herRearZ`, asserted `herRearZ >
+  faceZ`). With both roots at Z=0 the backrest would draw over her hip on any
+  viewport where their planes line up; `sitGeom.dzUnits` is the forward push that
+  prevents it, animated along the walk-in/walk-out exactly like the X.
+  **Her feet are lifted back by the body's own drop** (`placeFeet`): in this asset the
+  feet are parented to `Root` instead of the shin (see the assets README), so a bent
+  knee does not carry them and the seated body drops them through the floor. The fix
+  moves them up by exactly `sitGeom.dropUnits` in their parent's space, after the
+  mixer, weighted — `data-foot` then lands within a few px of the floor line. It is a
+  workaround for an asset defect, not a rig fix.
+  The chair's placement itself is untouched: she is the one who moves.
+- **Collision layer: she never passes through the armchair** (`assistant-presence.js`,
+  Rapier wasm (`@dimforge/rapier3d-compat@0.20.0/dist/rapier.mjs`, CDN ESM, wasm
+  inlined → still `file://`-openable). The invariant is architectural:
+  **the animation proposes movement, the IK proposes the pose, the collision pass
+  resolves, and only the resolved state is drawn.** Nothing is fixed with offsets.
+  - The world (`loadPhysics()`) is gravity-free: her motion is animation-driven, the
+    world only answers questions. The chair enters as a **trimesh collider** built
+    from its own mesh with its world matrix baked in (`buildChairCollider()`, rebuilt
+    whenever `place()` moves or resizes it), plus a floor cuboid whose top sits on the
+    feet line. Her body is capsules sampled along the POSED bones — torso, head, both
+    thighs, shins, feet **and both arms** (shoulder→elbow, a sphere at the elbow, the
+    forearm toward an estimated hand, a hand sphere) — `herCapsules()`/`handFrom()`.
+    The arms are not optional: with them missing, a forearm inside an armrest was
+    invisible to the metric while plainly visible on screen. Arm contacts push the root
+    only weakly (`0.35×`) — if an elbow doesn't fit, what has to move is the arm, not
+    her off the seat. Her seat yaw is **derived from the chair's own yaw**
+    (`sitYaw()` = `chair.pivot.rotation.y + SIT_YAW_EXTRA`): turned the other way the
+    render read as "the chair looks right and she looks left", and the seat's arms were
+    what ended up inside the armrests.
+  - The resolver (`scanContacts`/`resolvePhysics`) projects each sample against the
+    chair and the floor (`world.projectPoint(p, false)` — exact depth and direction,
+    including when the sample is inside the solid) and corrects: body contacts push
+    her **root**, leg/foot contacts push **that foot's bone** (which the IK follows).
+    It iterates (`PHYS.iterations`), because fixing one point uncovers another.
+    **The direction flips with `isInside`**: `projectPoint` returns the closest point
+    ON the surface, so (point − sample) points *toward* the surface when the sample is
+    outside it and *away* when it is inside. Using one sign for both pushed her INTO the
+    armchair (squeezing the arm, then the feet bouncing ~13 px as `placeFeet` re-asserted
+    what the resolver kept pushing in). That single sign was the "jitter" and the
+    stubborn 7 px "margin".
+  - Rules that matter: **never resolve downward** (`dir.y < -0.2` is skipped — inside a
+    solid the nearest face can be the underside, and pushing there buries her); a
+    surface pushing her UP (`dir.y > PHYS.floorLike`) is somewhere she RESTS (cushion,
+    floor), so the body ignores it — that is what lets her sit at all; the body's push
+    is almost horizontal (`push.y *= PHYS.bodyUp`) or she would float off the cushion;
+    foot pushes are summed per foot, never overwritten, and capped per frame
+    (`PHYS.maxPush`).
+  - The approach respects the chair (`stepSit`): she walks the L-shaped path — forward
+    BESIDE the chair, then across its front — and settles back+down onto the seat.
+    Walking diagonally to the seat drove her legs through the chair's front (measured:
+    9 px for 11 frames); with the L-path **and the projection sign fixed, the whole cycle
+    measures 0.00 px of peak overlap and 0 of ~226 frames with any overlap** (the seated
+    feet hold a 0 px range over 90 frames). While seated
+    her feet are placed in FRONT of the apron (`sitGeom.footZ` from the socket's forward
+    raycast — `frontWorldZ + shinR*1.9`; with less clearance the resolver and the placed
+    feet fight and leave a permanent ~3 px). **`placeFeet` plants the ankle at
+    `feetY + shinR`** — floor plus the limb's own radius — so the authored contact agrees
+    with the collider instead of sitting 0.02 units inside the floor (that disagreement
+    was half of the seated jitter).
+  - If Rapier fails to load (offline), there is no guarantee — so `canSit()` requires
+    `phys?.chair` and she simply does not sit; `data-phys` says which mode is live and
+    the suite reports SKIP instead of failing.
+  - Hooks: `data-phys`, `data-pen` (residual overlap in px AFTER resolving),
+    `data-pen-peak`, `data-pen-frames` (`over2|over6|frames`, reset per episode in
+    `startSit()`), `data-pen-phases`, `data-pen-part`, `data-pushes`, and the suite's
+    `data-shove` (writable: pushes her toward the chair every frame, bypassing the
+    animation, to prove the resolver holds the line). The suite asserts the cycle has no
+    SUSTAINED overlap (≤6 frames above 2 px, 0.00 px at rest), that a sustained 3 px/frame
+    shove never takes her past a ≤16 px brush, and that she returns to a clean seat after.
+  Gotcha: three's `GLTFLoader` sanitizes node names (`UpperLeg.L` → `UpperLegL`), so
+  the rig is looked up through `findBone()`, which tries both spellings — a name
+  that silently misses leaves the pose half-applied.
+  **Still pending on this feature** (owner's call, parked): the sitting pose is fitted
+  by measurements, not solved. Two things would finish it: two-bone IK for the legs so
+  the feet lie flat on the floor (needs `rotateBoneWorld` to take an arbitrary world
+  axis — today it only rotates about X and Y) and an authored "sit" clip if the pose
+  should hold up from every angle. Not a blocker: what is in place is the chair's
+  seat socket (measured), the collision-free placement (hip above the cushion, inside
+  the armrest gap) and the shared depth buffer.
 - **Assets** (`assets/assistant/`, see its README): built by
   `tools/build-assistant-assets.mjs` from CC0 Quaternius / Poly Haven downloads
   (sources gitignored). Gotchas: the Quaternius models already face +Z (do NOT
@@ -311,6 +420,17 @@ context & actions" below).
   bind pose); garments were lengthened by moving bind-pose vertices (T-pose,
   meters); `prune()` rewrites one buffer with only reachable data (otherwise the
   graft ships Formal's whole buffer).
+  **Open rig defect in both assets (the graft exposes it):** the feet are parented
+  to `Root`, not to `LowerLeg.L/R` (which is a leaf), and the upper legs hang off
+  `Body`, not `Hips`. Consequences: rotating a shin bends the visible shin but does
+  NOT carry the foot with it — the feet stay welded to the model's origin, so any
+  pose that drops the body (sitting) sinks them by that same drop. `current.leg`
+  in `assistant-presence.js` measures the lengths off the rest pose (knee → foot),
+  which is what the seated IK solves with, and the suite asserts the thigh really
+  rotates (`data-knee` at hip height). Fixing the feet means re-parenting them at
+  build time **and** retargeting every keyframe of the 5 clips on both assets
+  (their foot channels are local to `Root`; re-parenting without the retarget makes
+  the feet fly during `Walk`), so it is parked — see `assets/assistant/README.md`.
 - **Rendering gotchas** (in `assistant-presence.js`): three's `AnimationMixer`
   skips writing a bone whose keyframe value did not change, so the look-at offset
   is applied after `mixer.update` and the neck/head pose is RESTORED after
@@ -319,9 +439,13 @@ context & actions" below).
   texture atlas: a shader tints only texels with linear luminance above
   `smoothstep(0.07, 0.13)` (texel / 0.46 × fabric color, keeping the weave) and
   forces them matte; a higher threshold left the darker wrinkles untinted (white
-  stains). The armchair has its own scene and an orthographic camera tilted 0.38 rad
-  down (seen dead level the seat is hidden and it reads as a box), at the same
-  pixel scale as the character. Faces have no mouth or morph targets: the smile
+  stains). The armchair shares the character's scene AND her camera — one depth buffer, so
+  the two occlude each other properly (its own scene drew her on top of it no matter
+  what). That camera looks down by 0.38 rad for both (dead level, the chair's seat is
+  hidden and it reads as a box), with the frustum's vertical extent scaled by
+  cos(tilt) so every pixel constant stays put; the chair only carries its yaw (0.3 rad
+  toward her) and a placement computed from the tilt, so it keeps the exact spot it
+  always had. Faces have no mouth or morph targets: the smile
   and raised brows are tube meshes parented to the Head bone, and the original
   frowning brow material is hidden.
 

@@ -21,7 +21,8 @@ npm run build:assistant      # node tools/build-assistant-assets.mjs
 The first run downloads the original files into `assets/assistant/sources/`
 (gitignored, never committed). The script then:
 
-- keeps only the clips the assistant plays (`Idle`, `Idle_Neutral`, `Wave`, `Interact`);
+- keeps only the clips the assistant plays (`Idle`, `Idle_Neutral`, `Wave`, `Interact`,
+  `Walk` — the last one is how she gets to her armchair when the customer has been quiet);
 - removes props (the men's Suit ships a skinned `Pistol` mesh);
 - grafts Formal's `Formal_Legs`/`Formal_Feet` onto the women's Suit (same
   skeleton and bind pose across the pack) and recolors them;
@@ -35,3 +36,40 @@ The first run downloads the original files into `assets/assistant/sources/`
 
 Sizes after pruning: `lia.gltf` ~1.0 MB, `tomas.gltf` ~1.0 MB, `armchair.gltf` ~1.0 MB.
 Always check a new model for weapons or other props before shipping it.
+
+## Known defect: the feet are not parented to the shins
+
+Both characters have this skeleton shape (dumped from the glTF node tree):
+
+```
+Root ─┬─ Body ─┬─ Hips
+      │        ├─ UpperLeg.L → LowerLeg.L   (LowerLeg.L is a LEAF)
+      │        └─ UpperLeg.R → LowerLeg.R
+      ├─ Foot.L          ← hangs off Root, NOT off LowerLeg.L
+      ├─ Foot.R
+      └─ PT.L, PT.R
+```
+
+Rotating a shin bends the visible shin but does not carry the foot with it: the feet
+stay welded to the model's origin, so any pose that lowers the body (sitting on the
+armchair drops her ~46 px) sinks them by that same amount. That is why the seated
+pose can look right above the cushion and still have her feet through the floor.
+
+**The fix, when someone wants to spend the time** (parked on purpose — it is asset
+surgery, not a one-liner):
+
+1. In `tools/build-assistant-assets.mjs`, after the graft: re-parent `Foot.L/R` under
+   `LowerLeg.L/R`, preserving their world transform
+   (`foot.matrix = parentOldWorld⁻¹ · parentNewWorld · foot.matrix`).
+2. Retarget the feet channels of all 5 clips (`Idle`, `Idle_Neutral`, `Interact`,
+   `Walk`, `Wave` — each carries `translation` and `rotation` on both feet). Their
+   values are local to `Root`; after re-parenting they must be local to the shin:
+   per keyframe `t' = R⁻¹(t − T)`, `q' = q_shin⁻¹ · q`. With a static shin (every
+   clip but `Walk`) that is one constant; `Walk` animates the shins, so its foot
+   values have to be re-expressed against the shin's animated transform at each
+   keyframe time.
+3. Re-run `npm run build:assistant`, then the suite.
+
+Until then `assistant-presence.js` measures the leg lengths off the rest pose
+(knee → foot) to solve the seated IK, and the suite asserts the thigh really rotates
+(`data-knee` at hip height) — never that the feet reach the floor.

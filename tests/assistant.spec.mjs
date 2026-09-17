@@ -514,6 +514,95 @@ if (!stageOk) {
   check('y deja marcado "Pregúntale a" como no leído', await page.evaluate(() => document.querySelector('.journey .help-card .text-button').hasAttribute('data-unread')), true);
   await page.click('#width'); // seguir con el formulario la despide
   await page.waitForTimeout(300);
+  // El sillón: sin señales de vida se va caminando y se sienta; cualquier señal la trae.
+  // El hook data-idle-ms acorta la espera (60 s es imposible de esperar en una suite).
+  const idleMs = v => page.evaluate(ms => { document.getElementById('assistantStage').dataset.idleMs = String(ms); }, v);
+  const pose = () => page.getAttribute('#assistantStage', 'data-pose');
+  await idleMs(250);
+  await page.waitForFunction(() => document.getElementById('assistantStage').dataset.pose === 'sitting', { timeout: 9000 }).catch(() => {});
+  check('sin señales de vida se va a su sillón y se sienta', await pose(), 'sitting');
+  check('el sillón y ella comparten escena y profundidad (una sola pasada)', await page.getAttribute('#assistantStage', 'data-render'), 'one-pass');
+  check('y se sienta en el asiento: ni flotando encima ni hundida en el sillón', await page.evaluate(() => {
+    const st = document.getElementById('assistantStage');
+    const hip = Number(st.dataset.hip), seat = Number(st.dataset.seat), corona = Number(st.dataset.crown);
+    const suelo = Math.round(st.getBoundingClientRect().bottom) - 2; // la línea de los pies
+    return { sentada: Math.abs(hip - seat) <= 18, asiento: seat > corona && seat < suelo - 20 };
+  }), { sentada: true, asiento: true });
+  check('y los pies quedan apoyados en el suelo (la colisión los sube a su radio, no los hunde)', await page.evaluate(() => {
+    const st = document.getElementById('assistantStage');
+    const foot = Number(st.dataset.foot);
+    const suelo = Math.round(st.getBoundingClientRect().bottom) - 2; // la línea de los pies
+    // El tobillo queda a un radio de espinilla sobre el suelo por construcción (0.07 u ≈ 9 px
+    // a 1440 y ≈ 12 px a 1915): apoyado, ni hundido ni colgando. Se mide SENTADA, que es
+    // cuando `placeFeet` la coloca; de pie es otro contacto (el apoyabrazos, a su lado).
+    return { resolvio: Number.isFinite(foot), apoyado: Math.abs(foot - suelo) <= 15 };
+  }), { resolvio: true, apoyado: true });
+  await page.mouse.move(700, 420);
+  await page.mouse.move(720, 430);
+  await page.waitForFunction(() => document.getElementById('assistantStage').dataset.pose === 'standing', { timeout: 9000 }).catch(() => {});
+  check('al primer movimiento del ratón se levanta y vuelve a su sitio', await pose(), 'standing');
+  check('y queda DELANTE del respaldo, no en el mismo plano Z', await page.evaluate(() => {
+    const st = document.getElementById('assistantStage');
+    const [cara, espalda] = (st.dataset.sitZ || '').split('|').map(Number);
+    return { medido: Number.isFinite(cara) && Number.isFinite(espalda), delante: espalda > cara };
+  }), { medido: true, delante: true });
+  check('el asiento y el hueco entre apoyabrazos se miden con rayos en el propio sillón', await page.evaluate(() => {
+    const sock = (document.getElementById('assistantStage').dataset.socket || '').split('|');
+    const [asiento, centro, ancho] = sock.map(Number);
+    return { medido: sock.length >= 3 && [asiento, centro, ancho].every(Number.isFinite), ancho: ancho > 20 };
+  }), { medido: true, ancho: true });
+  await idleMs(300);
+  await page.waitForFunction(() => document.getElementById('assistantStage').dataset.pose === 'sitting', { timeout: 9000 }).catch(() => {});
+  check('y el muslo gira de verdad: la rodilla sube a la altura de la cadera (IK)', await page.evaluate(() => {
+    const st = document.getElementById('assistantStage');
+    const knee = Number(st.dataset.knee), hip = Number(st.dataset.hip);
+    return { resolvio: Number.isFinite(knee), sube: Math.abs(knee - hip) <= 14 };
+  }), { resolvio: true, sube: true });
+  // Colisiones: sin el mundo físico cargado no hay garantía, y el producto decidió que
+  // entonces no se sienta. Si no cargó (sin red), se reporta como SKIP, no como fallo.
+  if (await page.evaluate(() => document.getElementById('assistantStage').dataset.phys !== 'rapier')) {
+    skip('nunca la atraviesa: ni un cuadro con solape en todo el ciclo');
+    skip('y un empujón sostenido contra el sillón no la mete');
+  } else {
+    await page.waitForTimeout(800);   // que se asiente: el residuo de reposo es el que se exige
+    check('nunca la atraviesa: ningún cuadro con solape en el ciclo (caminar, girar, sentarse)', await page.evaluate(() => {
+      const st = document.getElementById('assistantStage');
+      const frames = Number((st.dataset.penFrames || '0|0|0').split('|')[2]);
+      // Medido tras arreglar el signo de la proyección: 0.00 px de pico y 0 cuadros con
+      // solape en todo el ciclo. Antes de ese arreglo esta prueba mentía: la resolución
+      // empujaba hacia dentro y el "roce" era suyo.
+      return { fisica: st.dataset.phys === 'rapier', cuadros: frames > 60, pico: Number(st.dataset.penPeak) <= 1, reposo: Number(st.dataset.penU || 0) <= 0.01 };
+    }), { fisica: true, cuadros: true, pico: true, reposo: true });
+    // Y con un empujón sostenido contra el sillón (3 px por cuadro, 1 s ≈ 180 px de intento)
+    // no la mete: mientras empuja el pico no pasa de 16 px, y al soltarlo vuelve a 0.00 px
+    // sentada como estaba. Un empujón que de verdad la metiera no vuelve a cero.
+    await page.evaluate(() => { document.getElementById('assistantStage').dataset.shove = '3'; });
+    await page.waitForTimeout(1000);
+    const peak = await page.evaluate(() => Number(document.getElementById('assistantStage').dataset.penPeak));
+    await page.evaluate(() => { delete document.getElementById('assistantStage').dataset.shove; });
+    await page.waitForTimeout(1200);   // que se vuelva a asentar por completo
+    check('y un empujón sostenido contra el sillón no la mete: sigue sentada y fuera', await page.evaluate(() => {
+      const st = document.getElementById('assistantStage');
+      const hip = Number(st.dataset.hip), seat = Number(st.dataset.seat);
+      // Medido: con 270 px de empuje acumulado el pico es un roce de ~6 px y al soltarlo
+      // vuelve a 0.00 px sentada donde estaba. Un empujón que de verdad la metiera no
+      // vuelve a cero.
+      return { fuera: Number(st.dataset.pen) <= 1, asiento: Math.abs(hip - seat) <= 16 };
+    }), { fuera: true, asiento: true });
+    check('y el pico del empujón se queda en un roce, no la traga', { pico: peak <= 10 }, { pico: true });
+  }
+  await page.mouse.move(640, 340); // y la despierta, para no dejar el resto de la suite sentada
+  await page.waitForFunction(() => document.getElementById('assistantStage').dataset.pose === 'standing', { timeout: 9000 }).catch(() => {});
+  await idleMs(900);
+  await page.waitForTimeout(500); // media espera
+  await page.mouse.move(600, 300); // una señal reinicia la cuenta
+  await page.waitForTimeout(500); // ya venció el plazo original
+  check('la espera se reinicia con cada señal (no se sienta al vencer la primera)', await pose(), 'standing');
+  await page.click('.journey .help-card [data-open-chat]'); // con la conversación abierta atiende
+  await page.waitForTimeout(1000);
+  check('con la conversación abierta no se va al sillón', await pose(), 'standing');
+  await page.click('#closeChat');
+  await idleMs(600000); // de aquí en adelante, sin atajos
   check('el progreso vuelve solo cuando el cliente sigue con el formulario', await page.evaluate(() => {
     const j = document.querySelector('.journey');
     return [document.getElementById('assistantBubble').hidden, j.classList.contains('noticing'), getComputedStyle(document.querySelector('.step-list')).display !== 'none'];

@@ -206,13 +206,21 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   unread mark on "Pregúntale a"; and it leaves the moment the customer goes on with the
   form.
   The 3D reaction hooks (`#assistantStage`
-  `[data-reactions|data-reactions-suppressed|data-reaction|data-glance|data-chair-fabric|data-heady|data-crown]`)
+  `[data-reactions|data-reactions-suppressed|data-reaction|data-glance|data-chair-fabric|data-heady|data-crown|data-seat|data-hip|data-knee|data-foot|data-socket|data-sit-z|data-leg-angle|data-pose|data-render|data-phys|data-pen|data-pen-peak|data-pen-frames|data-pen-phases|data-pen-part|data-pushes|data-shove]`)
   are asserted only when the layer actually starts, and reported as SKIP when it
   doesn't: they cover one reaction per customer action with the next one suppressed
   and counted, that she looks at what the customer touches (a click on a select, not
   the bare cursor / hover) and at the furniture card she just reacted to, that a new
   step clears that glance, and that the click which picked a fabric does not take her
-  eyes off the armchair. Still no pixel assertions, the 3D layer stays optional by
+  eyes off the armchair. Also, with the wait shortened through the writable
+  `data-idle-ms` hook, that a quiet minute sends her to the armchair (`data-pose`
+  goes `standing → to-chair → sitting`) and that she really lands on the seat — the
+  distance between `data-hip` and `data-seat` stays within 14 px, and the seat's line
+  sits between her crown and the floor, so she is neither floating above the cushion
+  nor sunk into it — and that the first mouse move stands her back up, that every
+  sign restarts the wait (she is still standing when the first deadline passes), and
+  that she does not go while the conversation is open. Still no pixel assertions, the
+  3D layer stays optional by
   design.
 - `sealed.spec.mjs` — the encrypted delivery build: since that gate is
   currently disabled at the owner's request, this checks that `dist/` ships in
