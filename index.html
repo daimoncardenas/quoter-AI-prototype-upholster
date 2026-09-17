@@ -33,15 +33,58 @@
 .assistant-stage canvas{display:block;width:100%;height:100%}
 .assistant-hit{position:fixed;z-index:3;border:0;padding:0;background:transparent;cursor:pointer;border-radius:40% 40% 8px 8px}
 .assistant-hit:focus-visible{outline:3px solid rgba(var(--rgb-accent),.45);outline-offset:4px}
-.assistant-bubble{position:fixed;width:260px;pointer-events:none;background:var(--ink);color:#fff;border-radius:10px;padding:12px 30px 12px 14px;box-shadow:0 14px 34px rgba(var(--rgb-shadow),.22);opacity:0;transform:translateX(-6px);transition:.25s;z-index:6}
+.assistant-bubble{background:#fff;color:var(--text);border-left:3px solid var(--gold);border-radius:10px;padding:12px 34px 12px 14px;box-shadow:0 14px 30px rgba(0,0,0,.32);opacity:0;transform:translateY(6px);transition:.25s;position:relative;pointer-events:none}
 .assistant-bubble.show{opacity:1;transform:none}
-.assistant-bubble:after{content:"";position:absolute;left:-6px;top:22px;width:14px;height:14px;background:inherit;transform:rotate(45deg)}
-.assistant-bubble p{margin:0;font-size:.72rem;line-height:1.5}
-.assistant-bubble button{pointer-events:auto;position:absolute;top:4px;right:6px;border:0;background:transparent;color:#fff;font-size:1.1rem;line-height:1;padding:4px}
-@media(min-width:651px){.chat-fab{display:none}}
+.assistant-bubble:after{content:"";position:absolute;right:28px;bottom:-6px;width:14px;height:14px;background:#fff;transform:rotate(45deg)}
+.assistant-bubble p{margin:0;font-size:.74rem;line-height:1.5}
+.assistant-bubble button{pointer-events:auto;border:0;background:transparent;font-size:1.1rem;line-height:1;padding:4px}
+.assistant-bubble .bubble-close{position:absolute;top:4px;right:6px;color:var(--ink)}
+.assistant-bubble .bubble-action{display:block;margin-top:7px;padding:0;color:var(--ink-2);font-size:.64rem;font-weight:700;text-decoration:underline;text-underline-offset:2px}
+/* La conversación vive en la barra: al abrirla reemplaza el progreso y el asistente
+   (capa fija, fuera de la barra) sigue a la vista abajo. */
+.journey{position:relative}
+.journey-foot{margin-top:auto}
+/* El aviso flota justo por encima de ella (--notice-bottom lo calcula la capa 3D desde
+   su coronilla): ni lejos, ni detrás de su cuerpo, ni dejando un hueco vacío. */
+.journey .assistant-bubble{position:absolute;left:22px;right:22px;bottom:var(--notice-bottom,150px);margin:0}
+/* Mientras el aviso está en pantalla, el progreso se guarda: se esconde con opacity (no
+   visibility, que los ítems heredan con su `transition:.25s` y eso retrasaba el cambio
+   ~250 ms: el aviso aparecía y la barra tardaba en irse). Reserva su espacio, así que
+   ella no se mueve, y no recibe clics mientras está invisible. */
+.journey.noticing .journey-intro,.journey.noticing .step-list{opacity:0;pointer-events:none}
+.assistant-bubble .bubble-foot{display:flex;align-items:baseline;gap:10px;margin:8px 0 0}
+.assistant-bubble .bubble-who{font-size:.58rem;text-transform:uppercase;letter-spacing:.14em;color:var(--accent)}
+.assistant-bubble .bubble-text{margin:0}
+.chat-tools{display:flex;justify-content:space-between;align-items:center;gap:10px;background:white;border-bottom:1px solid var(--line);padding:7px 10px}
+.chat-link{border:0;background:transparent;color:var(--ink-2);font-size:.6rem;text-decoration:underline;text-underline-offset:2px;padding:2px 0;text-align:left}
+.chat-link:hover{color:var(--ink)}
+#messages.compact .is-old{display:none}
+.journey .help-card .text-button[data-unread]::after{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--amber);margin-left:6px;vertical-align:middle}
+@media(min-width:651px){
+  .chat-fab{display:none}
+  .journey .chat-panel{position:static;z-index:auto;width:auto;height:auto;flex:1 1 auto;min-height:0;margin:0 0 14px;border-radius:6px;box-shadow:0 16px 40px rgba(0,0,0,.28);transform:none;opacity:1;pointer-events:auto;display:none;max-height:var(--chat-band,none)}
+  .journey .chat-panel.open{display:flex}
+  .journey.chatting .journey-intro,.journey.chatting .step-list{display:none}
+  /* El texto cede ante ella: el panel nunca le pasa por encima de la cabeza. */
+  .journey .chat-panel .messages{mask-image:linear-gradient(to bottom,#000 calc(100% - 18px),transparent)}
+}
+@media(max-width:650px){
+  /* En el celular la barra no se ve: se neutraliza y el panel vuelve a flotar. */
+  .journey{display:block;background:none;padding:0;min-height:0}
+  .journey .journey-intro,.journey .step-list,.journey .journey-foot,.journey .assistant-bubble{display:none}
+  .chat-tools #backToProgress{display:none}
+}
 @media(prefers-reduced-motion:reduce){.assistant-stage,.assistant-bubble{transition:none}}
 html[data-assistant="off"] .assistant-stage,html[data-assistant="off"] .assistant-hit,html[data-assistant="off"] .assistant-bubble,html[data-assistant="off"] .journey .help-card,html[data-assistant="off"] .chat-fab,html[data-assistant="off"] .chat-panel,html[data-assistant="off"] [data-assistant-copy]{display:none!important}
 html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
+/* Assistant context & actions (simulated): the chat's proposals, the note that
+ * answers are simulated, the highlight a FOCUS_FIELD leaves, and an unread dot. */
+.chat-sim-note{margin:0;align-self:center;font-size:.56rem;color:var(--muted);text-align:center}
+.message.aci-proposal ul{margin:6px 0 8px;padding-left:16px}
+.message.aci-proposal li{margin:2px 0}
+.message.aci-proposal .quick-questions button:disabled{opacity:.55;cursor:default}
+.aci-highlight{outline:3px solid rgba(var(--rgb-accent),.55)!important;outline-offset:3px;transition:outline-color .3s}
+.chat-fab[data-unread]::after{content:"";position:absolute;top:6px;right:8px;width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 2px var(--ink)}
 @media(min-width:651px){
   html,body{height:100%;overflow:hidden}
   body{padding-bottom:0}
@@ -123,8 +166,25 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
         <li data-step-dot="5"><span>5</span><div><b>Recomendación</b><small>Telas sugeridas</small></div></li>
         <li data-step-dot="6"><span>6</span><div><b>Tu cotización</b><small>Datos de contacto</small></div></li>
       </ol>
-      <div class="help-card">
-        <button type="button" class="text-button" data-open-chat data-assistant-label="Preguntar a {name}">Preguntar</button>
+      <!-- The conversation lives HERE, not floating over the wizard: opening it
+           replaces the progress list (see .journey.chatting), so the form is never
+           covered. On phones the sidebar is neutralized and the panel floats. -->
+      <aside class="chat-panel" id="chatPanel" aria-label="{{ASSISTANT_DEFAULT_NAME}}" data-assistant-label="{name}" aria-hidden="true">
+        <header><div><span class="ai-orb">✦</span><p><b data-assistant-name>{{ASSISTANT_DEFAULT_NAME}}</b><small>Orientación sobre telas y medidas</small></p></div><button type="button" id="closeChat" aria-label="Cerrar">×</button></header>
+        <div class="chat-tools">
+          <button type="button" class="chat-link" id="backToProgress">← Volver al progreso</button>
+          <button type="button" class="chat-link" id="toggleMessages" aria-pressed="false">Ver toda la conversación</button>
+        </div>
+        <div class="messages" id="messages"><p class="chat-sim-note">Respuestas simuladas: este prototipo no usa inteligencia artificial real.</p><div class="message bot">Hola, puedo ayudarte a elegir una tela o explicarte cómo medir tu mueble.</div><div class="quick-questions"><button type="button">¿Cómo tomo las medidas?</button><button type="button">Tengo mascotas</button><button type="button">¿El valor es definitivo?</button></div></div>
+        <form id="chatForm"><input id="chatInput" placeholder="Escribe tu pregunta…" aria-label="Pregunta para el asistente"><button aria-label="Enviar">↑</button></form>
+      </aside>
+      <!-- El aviso de ella: flota justo encima de su cabeza (--notice-bottom lo calcula la
+           capa 3D desde el hueso de la cabeza), sobre la barra, sin tapar el cotizador. -->
+      <div class="assistant-bubble" id="assistantBubble" role="status" aria-live="polite" hidden><p class="bubble-text"></p><p class="bubble-foot"><b class="bubble-who" data-assistant-name>{{ASSISTANT_DEFAULT_NAME}}</b><button type="button" class="bubble-action" data-open-chat>Ver en el chat</button></p><button type="button" class="bubble-close" aria-label="Cerrar mensaje">×</button></div>
+      <div class="journey-foot">
+        <div class="help-card">
+          <button type="button" class="text-button" data-open-chat data-assistant-label="Preguntar a {name}">Pregúntale a <span data-assistant-name>{{ASSISTANT_DEFAULT_NAME}}</span></button>
+        </div>
       </div>
     </aside>
 
@@ -244,7 +304,7 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
               <label>Nombre completo<input type="text" id="fullName" placeholder="Escribe tu nombre" required></label>
               <label>Correo electrónico<input type="email" id="email" placeholder="nombre@correo.com" required></label>
               <label>Celular o WhatsApp<input type="tel" id="phone" placeholder="Ej. 300 123 4567" required></label>
-              <label class="consent"><input type="checkbox" id="consent" required><span>{{CONSENT_HTML}}</span></label>
+              <label class="consent"><input type="checkbox" id="consent" required><span>{{CONSENT_HTML}}<span data-assistant-copy> {{CONSENT_ASSISTANT_HTML}}</span></span></label>
             </div>
             <aside class="summary-card">
               <span class="eyebrow gold">Resumen</span>
@@ -281,16 +341,10 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
   </main>
 
   <button class="chat-fab" type="button" data-open-chat data-assistant-label="Hablar con {name}" aria-label="Hablar con {{ASSISTANT_DEFAULT_NAME}}"><span>✦</span><b>¿Tienes dudas?</b></button>
-  <aside class="chat-panel" id="chatPanel" aria-label="{{ASSISTANT_DEFAULT_NAME}}" data-assistant-label="{name}" aria-hidden="true">
-    <header><div><span class="ai-orb">✦</span><p><b data-assistant-name>{{ASSISTANT_DEFAULT_NAME}}</b><small>Orientación sobre telas y medidas</small></p></div><button type="button" id="closeChat" aria-label="Cerrar">×</button></header>
-    <div class="messages" id="messages"><div class="message bot">Hola, puedo ayudarte a elegir una tela o explicarte cómo medir tu mueble.</div><div class="quick-questions"><button type="button">¿Cómo tomo las medidas?</button><button type="button">Tengo mascotas</button><button type="button">¿El valor es definitivo?</button></div></div>
-    <form id="chatForm"><input id="chatInput" placeholder="Escribe tu pregunta…" aria-label="Pregunta para el asistente"><button aria-label="Enviar">↑</button></form>
-  </aside>
 
   <!-- Assistant presence layer: fixed and outside the sidebar on purpose (the sidebar clips, the character must not). Hidden until assistant-presence.js has placed it. -->
   <div class="assistant-stage" id="assistantStage" hidden><canvas aria-hidden="true"></canvas></div>
   <button type="button" class="assistant-hit" id="assistantHit" data-open-chat data-assistant-label="Hablar con {name}" aria-label="Hablar con {{ASSISTANT_DEFAULT_NAME}}" hidden></button>
-  <div class="assistant-bubble" id="assistantBubble" role="status" aria-live="polite" hidden><p></p><button type="button" aria-label="Cerrar mensaje">×</button></div>
 {{ASSISTANT_MODELS}}
 
   <!-- The legal disclaimer stays bound to the PACK name (the NOT_OFFICIAL_* copy token is rendered at generate time, never marked data-brand-name): an admin renaming the company must not make this notice untruthful. -->
@@ -300,6 +354,7 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
     </div>
     <p class="demo-author">Hecho por <b>CARDYRAM</b></p>
   </aside>
+{{ASSISTANT_BRAIN_SCRIPT}}
   <script>
 const state={step:1,furniture:'Sofá',photos:[],analyzed:false,fabric:null,fabricTouched:false};
 const steps=[...document.querySelectorAll('.wizard-step')];
@@ -317,6 +372,153 @@ const MEASURE_LABELS={width:'ancho',height:'alto',depth:'fondo'};
 // created or deactivated there shows up here without touching this file.
 const activeFabrics=()=>Store.all('fabrics').filter(f=>f.active);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+/* ACI adapter — the ONLY bridge between the wizard and the (simulated) assistant
+ * brain (assistant-brain.js). It does three things and nothing else:
+ *   1. publishes the wizard's own events as window 'aci:event' {type, payload},
+ *      dispatched from the handlers below/above (never by polling the DOM);
+ *   2. builds the quotation context the assistant may observe (context());
+ *      contact data is included ONLY while the consent checkbox is checked;
+ *   3. applies an approved action through the same controls and events a
+ *      customer's own click or edit uses (execute()). No extra power.
+ * See CLAUDE.md "Assistant context & actions (simulated)". */
+const TENANT={{CLIENT_SLUG_JSON}};
+const ACI=(()=>{
+  const byId=id=>document.getElementById(id);
+  const stepId=n=>(AssistantBrain.STEPS.find(s=>s.n===n)||{}).id||null;
+  const emit=(type,payload={})=>{
+    try{window.dispatchEvent(new CustomEvent('aci:event',{detail:{type,payload}}))}
+    catch(err){console.warn('[aci] evento no publicado',type,err)}
+  };
+  // Typing = a text-like field of the form has focus and got a key recently.
+  let lastKeyAt=-Infinity;
+  const TEXTY=/^(text|number|email|tel|search)$/;
+  const typingTarget=el=>!!(el&&el.closest&&el.closest('#quoteForm')&&((el.tagName==='INPUT'&&TEXTY.test(el.type))||el.tagName==='TEXTAREA'));
+  document.addEventListener('keydown',e=>{if(typingTarget(e.target))lastKeyAt=performance.now()},true);
+  const isTyping=()=>typingTarget(document.activeElement)&&performance.now()-lastKeyAt<1500;
+
+  const petsBox=()=>[...document.querySelectorAll('.chip-grid input')].find(x=>/mascota/i.test(x.value))||null;
+  const num=id=>{const v=+byId(id).value;return Number.isFinite(v)&&v>0?v:null};
+  const selText=sel=>sel&&sel.selectedOptions[0]?sel.selectedOptions[0].text:'';
+  const fabricPayload=(f,auto)=>({fabricId:f.id,name:f.name,colorName:f.colorName,color:f.color,auto:!!auto});
+  // Los rangos plausibles viven en el cotizador con nombres cortos (width/depth:
+  // los usa su paso 4). Aquí se publican con el mismo nombre de campo que FIELDS,
+  // que es el vocabulario con el que habla el asistente.
+  const rangesPayload=()=>{
+    const r=measureRanges[state.furniture];
+    return r?Object.fromEntries(Object.entries(r).map(([k,v])=>['measurements.'+k,v])):null;
+  };
+
+  function estimateSnapshot(){
+    try{
+      const q=billable();
+      return {meters:[q.facMin,q.facMax],metersLabel:`${rangoM(q.facMin,q.facMax)} m`,priceLabel:state.fabric?precioRango(q):null};
+    }catch(err){return null}
+  }
+  function context(){
+    const {min,max}=photoLimits();
+    const pets=petsBox();
+    const seats=byId('seats');
+    const ctx={
+      tenant:TENANT,
+      currentStep:{n:state.step,id:stepId(state.step),name:(AssistantBrain.STEPS.find(s=>s.n===state.step)||{}).name},
+      submitted:!!state.submitted,
+      selectedFurniture:state.furniture,
+      measurements:{width:num('width'),height:num('height'),depth:num('depth'),
+        quantity:{value:+seats.value||1,label:selText(seats)},cushions:cojines(),coverage:byId('coverage').value,
+        // Lo que el propio cotizador considera habitual para este mueble (lo usa
+        // su paso 4); el asistente lo cita, no lo inventa.
+        ranges:rangesPayload()},
+      preferences:{needs:[...document.querySelectorAll('.chip-grid input:checked')].map(x=>x.value),
+        pets:pets?pets.checked:null,style:byId('style').value,color:byId('color').value,
+        budget:selText(byId('budget')),servicePoint:selText(byId('city'))},
+      photos:{count:state.photos.length,min,max},
+      analysis:{done:!!state.analyzed,warnings:state.review?state.review.warnings:[],oddMeasures:state.review?state.review.oddMeasures:[]},
+      fabric:state.fabric?{id:state.fabric.id,name:state.fabric.name,colorName:state.fabric.colorName,auto:!state.fabricTouched}:null,
+      estimate:estimateSnapshot(),
+      consent:byId('consent').checked
+    };
+    // Ley 1581: personal data only with the customer's authorization, which names the assistant.
+    if(ctx.consent)ctx.contact={name:byId('fullName').value.trim(),email:byId('email').value.trim(),phone:byId('phone').value.trim()};
+    return ctx;
+  }
+
+  // What the wizard allows RIGHT NOW, for AssistantBrain.validateActions().
+  function env(){
+    const options=sel=>[...sel.options].map(o=>({value:o.value,label:o.text}));
+    const range=id=>{const el=byId(id);return {min:el.min===''?undefined:+el.min,max:el.max===''?undefined:+el.max}};
+    const seatVals=[...byId('seats').options].map(o=>+o.value).filter(Number.isFinite);
+    return {currentStep:state.step,submitted:!!state.submitted,fields:{
+      'measurements.width':range('width'),'measurements.height':range('height'),'measurements.depth':range('depth'),
+      'measurements.quantity':{min:Math.min(...seatVals),max:Math.max(...seatVals)},
+      'measurements.coverage':{options:options(byId('coverage'))},
+      'preferences.pets':{available:!!petsBox()},
+      'preferences.style':{options:options(byId('style'))},
+      'preferences.color':{options:options(byId('color'))},
+      'analysis':{available:!!byId('analyzeButton')}
+    }};
+  }
+
+  const CONTROLS={
+    'furniture.type':()=>document.querySelector('.furniture-card.selected')||document.querySelector('.furniture-card'),
+    'photos':()=>byId('selectPhoto'),
+    'measurements.width':()=>byId('width'),'measurements.height':()=>byId('height'),'measurements.depth':()=>byId('depth'),
+    'measurements.quantity':()=>byId('seats'),'measurements.coverage':()=>byId('coverage'),
+    'preferences.pets':petsBox,'preferences.style':()=>byId('style'),'preferences.color':()=>byId('color'),
+    'analysis':()=>byId('analyzeButton'),
+    'contact.fullName':()=>byId('fullName'),'contact.email':()=>byId('email'),'contact.phone':()=>byId('phone'),'contact.consent':()=>byId('consent')
+  };
+  function focusField(field){
+    const el=CONTROLS[field]&&CONTROLS[field]();if(!el)return false;
+    el.scrollIntoView({block:'center',behavior:'smooth'});el.focus({preventScroll:true});
+    const mark=el.type==='checkbox'&&el.nextElementSibling?el.nextElementSibling:el;
+    mark.classList.add('aci-highlight');setTimeout(()=>mark.classList.remove('aci-highlight'),2200);
+    return true;
+  }
+  // Same path as the customer: a checkbox is clicked, a field gets its value plus the input/change events.
+  function setField(field,value){
+    const el=CONTROLS[field]&&CONTROLS[field]();if(!el)return false;
+    if(el.type==='checkbox'){if(el.checked!==value)el.click();return el.checked===value}
+    el.value=String(value);
+    if(String(el.value)!==String(value))return false;
+    el.dispatchEvent(new Event('input',{bubbles:true}));
+    el.dispatchEvent(new Event('change',{bubbles:true}));
+    return true;
+  }
+  // Backward only, one "← Volver" at a time, exactly as the customer would.
+  function navigate(step){
+    while(state.step>step){const before=state.step;backButton.click();if(state.step===before)return false}
+    return state.step===step;
+  }
+  /* Runs ONE action already accepted by AssistantBrain.validateActions() (and,
+   * when it needs it, confirmed by the customer). Refuses while the presence is off. */
+  function execute(action){
+    try{if(!Store.assistant().enabled)return false}catch(err){return false}
+    if(action.type==='FOCUS_FIELD')return focusField(action.field);
+    if(action.type==='SET_FIELD')return setField(action.field,action.value);
+    if(action.type==='NAVIGATE_TO_STEP')return navigate(action.step);
+    return false;
+  }
+
+  // Changes the customer makes themselves (change fires on commit, not on every key).
+  // The field name published is the same one the assistant's catalogue uses
+  // (`measurements.width`), not the input's id: one vocabulary for context,
+  // events and actions.
+  const FIELD_BY_INPUT={width:'measurements.width',height:'measurements.height',depth:'measurements.depth',seats:'measurements.quantity',cushions:'measurements.cushions',coverage:'measurements.coverage'};
+  ['width','height','depth','seats','cushions','coverage'].forEach(id=>byId(id).addEventListener('change',e=>{
+    emit('MEASUREMENTS_CHANGED',{field:FIELD_BY_INPUT[id]||id,value:e.target.type==='number'?num(id):e.target.value});
+  }));
+  document.querySelector('.chip-grid').addEventListener('change',e=>{
+    if(e.target.matches('input[type=checkbox]'))emit('PREFERENCES_CHANGED',{field:'needs',option:e.target.value,checked:e.target.checked});
+  });
+  ['style','color','budget','city'].forEach(id=>byId(id).addEventListener('change',e=>emit('PREFERENCES_CHANGED',{field:id,value:e.target.value})));
+  byId('consent').addEventListener('change',e=>emit('CONSENT_CHANGED',{checked:e.target.checked}));
+
+  return {emit,stepId,context,env,execute,isTyping,fabricPayload};
+})();
+/* Also on window: assistant-presence.js is a MODULE (its own scope) and the tests
+ * read it from page.evaluate; a global property is visible to both, and says out
+ * loud that this object is the page's assistant surface. */
+window.ACI=ACI;
 
 function showStep(n){
   state.step=n; steps.forEach(s=>s.classList.toggle('active',+s.dataset.step===n));
@@ -326,7 +528,7 @@ function showStep(n){
   document.getElementById('progressBar').style.width=`${n/6*100}%`; backButton.disabled=n===1;
   nextButton.textContent=n===6?'Enviar cotización  →':'Continuar  →';
   document.getElementById('stepHint').textContent=n===6?'Recibirás una copia en tu correo':'Puedes modificar tus respuestas en cualquier momento';
-  if(n===4) renderReviewSummary(); if(n===5) renderFabrics(); if(n===6) updateSummary(); const pane=steps.find(x=>x.classList.contains('active'));
+  if(n===4) renderReviewSummary(); if(n===5) renderFabrics(); if(n===6) updateSummary(); ACI.emit('STEP_CHANGED',{step:n,id:ACI.stepId(n),name:names[n-1]}); const pane=steps.find(x=>x.classList.contains('active'));
   if(pane&&pane.scrollHeight>pane.clientHeight)pane.scrollTo({top:0,behavior:'smooth'});else window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -443,6 +645,7 @@ function selectFurniture(card){
   document.getElementById('furnitureType').value=state.furniture;
   document.querySelectorAll('[data-furniture-label]').forEach(x=>x.textContent=state.furniture.toLowerCase());
   renderQuantityOptions();
+  ACI.emit('FURNITURE_SELECTED',{furniture:state.furniture,furnitureId:(furnitureRules[state.furniture]||{}).id||null});
 }
 // A radiogroup has to be navigable with the arrow keys, not just Tab.
 document.querySelector('.furniture-grid').addEventListener('keydown',e=>{
@@ -477,6 +680,7 @@ function renderPhotos(){
 document.getElementById('photoStrip').addEventListener('click',e=>{
   const b=e.target.closest('[data-drop]');if(!b)return;
   state.photos.splice(+b.dataset.drop,1);renderPhotos();
+  ACI.emit('PHOTOS_CHANGED',{count:state.photos.length});
 });
 
 function readImage(file){
@@ -510,6 +714,7 @@ async function loadPhotos(files){
     photoError.hidden=false;
   }
   renderPhotos();
+  ACI.emit('PHOTOS_CHANGED',{count:state.photos.length});
 }document.getElementById('selectPhoto').addEventListener('click',()=>photoInput.click());
 photoInput.addEventListener('change',()=>{loadPhotos(photoInput.files);photoInput.value=''});
 ['dragenter','dragover'].forEach(ev=>uploadZone.addEventListener(ev,e=>{e.preventDefault();uploadZone.classList.add('dragging')}));
@@ -554,6 +759,14 @@ function renderReviewSummary(){
 }
 
 
+// Measurements outside the backoffice's plausible range for this furniture.
+function oddMeasures(){
+  const r=measureRanges[state.furniture]||{width:[20,1000],height:[20,500],depth:[5,500]};
+  return Object.keys(r).filter(k=>{
+    const v=+document.getElementById(k).value;
+    return !v||v<r[k][0]||v>r[k][1];
+  });
+}
 function runReview(){
   const checks=[];
 
@@ -573,11 +786,7 @@ function runReview(){
   }
 
   // 2. the measurements — real arithmetic against plausible ranges
-  const r=measureRanges[state.furniture]||{width:[20,1000],height:[20,500],depth:[5,500]};
-  const odd=Object.keys(r).filter(k=>{
-    const v=+document.getElementById(k).value;
-    return !v||v<r[k][0]||v>r[k][1];
-  });
+  const odd=oddMeasures();
   checks.push({ok:!odd.length,title:'Medidas registradas',
     detail:odd.length
       ? `El ${odd.map(k=>MEASURE_LABELS[k]).join(' y el ')} está fuera de lo habitual para ${state.furniture.toLowerCase()}. Puedes corregirlo o dejar que un asesor lo confirme.`
@@ -593,6 +802,7 @@ function runReview(){
 document.getElementById('analyzeButton').addEventListener('click',()=>{
   const btn=document.getElementById('analyzeButton');
   btn.disabled=true;btn.textContent='Revisando…';
+  ACI.emit('ANALYSIS_STARTED',{});
   document.getElementById('analysisTitle').textContent='Revisando tu información';
   document.getElementById('analysisText').textContent='Comprobando la fotografía y las medidas que registraste.';
   setTimeout(()=>{
@@ -611,6 +821,8 @@ document.getElementById('analyzeButton').addEventListener('click',()=>{
     const box=document.getElementById('analysisChecks');
     box.innerHTML=checks.map(c=>`<div class="${c.ok?'':'warn'}"><span>${c.ok?'✓':'!'}</span><p><b>${esc(c.title)}</b><small>${esc(c.detail)}</small></p></div>`).join('');
     box.hidden=false;
+    state.review={warnings:checks.filter(c=>!c.ok).map(c=>c.title),oddMeasures:oddMeasures()};
+    ACI.emit('ANALYSIS_COMPLETED',state.review);
   },1200);
 });
 
@@ -666,7 +878,7 @@ function renderFabrics(){
   if(state.fabric&&!ranked.some(r=>String(r.fabric.id)===String(state.fabric.id)))state.fabric=null;
   // Otherwise lead with the best match. Scoring replaces the old special case
   // that force-selected one fabric whenever "Mascotas" was ticked.
-  if(!state.fabric)state.fabric=ranked[0].fabric;
+  if(!state.fabric){state.fabric=ranked[0].fabric;ACI.emit('FABRIC_SELECTED',ACI.fabricPayload(state.fabric,true))}
   document.getElementById('selectedFabric').value=state.fabric.name;
 
   const best=ranked[0].score>0?ranked[0].fabric.id:null;
@@ -683,7 +895,7 @@ function renderFabrics(){
       (r.reasons.length?`<p class="why"><b>Por qué te la sugerimos:</b> ${esc(r.reasons.join(' · '))}</p>`:'')+
       (r.overBudget?`<p class="why over">Por encima del presupuesto que indicaste</p>`:'')+
       `</div>`;
-    card.addEventListener('click',()=>{state.fabricTouched=true;state.fabric=f;renderFabrics()});
+    card.addEventListener('click',()=>{state.fabricTouched=true;state.fabric=f;renderFabrics();ACI.emit('FABRIC_SELECTED',ACI.fabricPayload(f,false))});
     grid.appendChild(card);
     // La imagen de la tela está en IndexedDB: la tarjeta nace con el color y
     // Store.paintSwatch la reemplaza si el backoffice cargó una foto.
@@ -812,17 +1024,139 @@ async function submitQuote(){
   document.getElementById('requestNumber').textContent=id;
   document.getElementById('successMessage').textContent=settings.confirmationMessage;
   document.getElementById('successSeller').textContent=seller?`Tu asesor asignado es ${seller}.`:'';
+  state.submitted=true;
+  ACI.emit('QUOTE_SUBMITTED',{quoteId:id});
   document.querySelector('.mobile-progress').style.display='none';
   document.querySelector('.step-list').style.opacity='.35';
 }
 document.getElementById('restartButton').addEventListener('click',()=>location.reload());
 
-const chatPanel=document.getElementById('chatPanel');document.querySelectorAll('[data-open-chat]').forEach(b=>b.addEventListener('click',()=>{chatPanel.classList.add('open');chatPanel.setAttribute('aria-hidden','false');document.getElementById('chatInput').focus()}));document.getElementById('closeChat').addEventListener('click',()=>{chatPanel.classList.remove('open');chatPanel.setAttribute('aria-hidden','true')});
-const replies={medidas:'Mide el ancho, alto y profundidad en los puntos más largos. En el siguiente paso verás una guía según el tipo de mueble.',mascotas:'Te recomiendo priorizar telas de fácil limpieza, trama cerrada y buena resistencia al uso. Marcaremos esas opciones en tus recomendaciones.',definitivo:'No. El sistema genera un rango orientativo. Un asesor confirma la cantidad, disponibilidad y precio antes de tu compra.'};
-function replyTo(text){const q=text.toLowerCase();return q.includes('medid')?replies.medidas:q.includes('mascota')?replies.mascotas:q.includes('definit')||q.includes('valor')?replies.definitivo:'Puedo orientarte sobre medidas, uso, cuidado y selección de telas. Si tu pregunta requiere inventario o precio final, la incluiré para que un asesor la confirme.'}
-function addMessage(text,type){const m=document.createElement('div');m.className=`message ${type}`;m.textContent=text;document.getElementById('messages').appendChild(m);m.scrollIntoView({behavior:'smooth'})}
-document.querySelectorAll('.quick-questions button').forEach(b=>b.addEventListener('click',()=>{addMessage(b.textContent,'user');setTimeout(()=>addMessage(replyTo(b.textContent),'bot'),350)}));
-document.getElementById('chatForm').addEventListener('submit',e=>{e.preventDefault();const input=document.getElementById('chatInput');if(!input.value.trim())return;const value=input.value;addMessage(value,'user');input.value='';setTimeout(()=>addMessage(replyTo(value),'bot'),400)});
+/* El contexto, dicho en voz alta la primera vez que se abre el chat: es la forma de
+ * que el cliente VEA que el asistente está leyendo su cotización y no adivinando.
+ * Una sola vez por carga — repetirlo en cada apertura sería ruido. */
+let summaryShown=false;
+function greetWithContext(){
+  if(summaryShown||!assistantOn())return;
+  summaryShown=true;
+  let line=null;
+  try{line=AssistantBrain.summarize(ACI.context())}catch(err){line=null}
+  if(line)addMessage(line,'bot');
+}
+const unreadMark=on=>document.querySelectorAll('.chat-fab,.journey .help-card .text-button').forEach(x=>{if(on)delete x.dataset.unread;else x.dataset.unread=''});
+const journeyShell=document.querySelector('.journey');
+/* La conversación ocupa la barra (y el progreso se guarda) en escritorio; en el
+ * celular el panel flota y esto no cambia nada visual. */
+function openChat(){
+  chatPanel.classList.add('open');chatPanel.setAttribute('aria-hidden','false');
+  if(journeyShell){journeyShell.classList.add('chatting');journeyShell.setAttribute('aria-label','Conversación con '+(Store.assistant().name||'el asistente'))}
+  unreadMark(true);document.getElementById('chatInput').focus();greetWithContext();
+}
+function closeChat(){
+  chatPanel.classList.remove('open');chatPanel.setAttribute('aria-hidden','true');
+  if(journeyShell){journeyShell.classList.remove('chatting');journeyShell.setAttribute('aria-label','Progreso de la cotización')}
+}
+const chatPanel=document.getElementById('chatPanel');
+document.querySelectorAll('[data-open-chat]').forEach(b=>b.addEventListener('click',openChat));
+document.getElementById('closeChat').addEventListener('click',closeChat);
+document.getElementById('backToProgress').addEventListener('click',closeChat);
+/* The chat talks to the SIMULATED brain (assistant-brain.js) through ACI.
+ * Proposals are validated by AssistantBrain.validateActions() against the
+ * wizard as it is now, shown as ONE grouped confirmation, re-validated on "Sí"
+ * and applied through ACI.execute(). Nothing here runs while the presence is off. */
+const assistantOn=()=>{try{return Store.assistant().enabled}catch(err){return false}};
+/* Solo el último intercambio a la vista: la barra es estrecha y el historial completo
+ * sigue en el DOM — "Ver toda la conversación" lo devuelve. */
+const messagesBox=document.getElementById('messages');
+function markExchanges(){
+  const kids=[...messagesBox.children];
+  const lastUser=kids.map((el,i)=>el.classList.contains('user')?i:-1).filter(i=>i>=0).pop();
+  const desde=lastUser===undefined?kids.length:lastUser;
+  kids.forEach((el,i)=>el.classList.toggle('is-old',i<desde));
+  const btn=document.getElementById('toggleMessages');
+  if(btn)btn.hidden=!kids.some(el=>el.classList.contains('is-old'));
+}
+function addMessage(text,type){const m=document.createElement('div');m.className=`message ${type}`;m.textContent=text;messagesBox.appendChild(m);m.scrollIntoView({behavior:'smooth',block:'nearest'});markExchanges();return m}
+messagesBox.classList.add('compact');
+document.getElementById('toggleMessages').addEventListener('click',e=>{
+  const compact=messagesBox.classList.toggle('compact');
+  e.currentTarget.setAttribute('aria-pressed',String(!compact));
+  e.currentTarget.textContent=compact?'Ver toda la conversación':'Ver solo lo último';
+});
+let pendingProposal=null;
+function settleProposal(p,note){
+  p.el.querySelectorAll('button').forEach(b=>{b.disabled=true});
+  if(pendingProposal===p)pendingProposal=null;
+  if(note)addMessage(note,'bot');
+}
+function propose(actions){
+  const {accepted,rejected}=AssistantBrain.validateActions(actions,ACI.env());
+  rejected.forEach(r=>console.warn('[aci] acción rechazada:',r.reason,r.action));
+  const ask=accepted.filter(a=>a.requiresConfirmation).map(a=>a.action);
+  if(!ask.length){
+    accepted.forEach(a=>ACI.execute(a.action)); // focus only: harmless, no confirmation
+    return;
+  }
+  if(pendingProposal)settleProposal(pendingProposal,null); // a newer proposal replaces it
+  const env=ACI.env();
+  const el=document.createElement('div');el.className='message bot aci-proposal';el.setAttribute('role','group');
+  const title=document.createElement('p');title.style.margin='0';
+  title.id='aciProposal'+(++propose.seq);el.setAttribute('aria-labelledby',title.id);
+  title.textContent=ask.length===1?'¿Aplico este cambio?':`¿Aplico estos ${ask.length} cambios?`;
+  const list=document.createElement('ul');
+  ask.forEach(a=>{const li=document.createElement('li');li.textContent=AssistantBrain.describeAction(a,env);list.appendChild(li)});
+  const bar=document.createElement('div');bar.className='quick-questions';
+  const yes=Object.assign(document.createElement('button'),{type:'button',textContent:ask.length===1?'Sí, cámbialo':'Sí, aplícalos'});
+  const keep=Object.assign(document.createElement('button'),{type:'button',textContent:'Mantener'});
+  yes.dataset.aciConfirm='';keep.dataset.aciKeep='';
+  bar.append(yes,keep);el.append(title,list,bar);
+  document.getElementById('messages').appendChild(el);el.scrollIntoView({behavior:'smooth',block:'nearest'});
+  const p={el,actions:ask};pendingProposal=p;
+  yes.addEventListener('click',()=>{
+    // Re-checked against the wizard as it is NOW: it may have changed since the proposal.
+    const again=AssistantBrain.validateActions(p.actions,ACI.env());
+    let done=0;
+    for(const {action} of again.accepted){if(!ACI.execute(action))break;done++}
+    settleProposal(p,done===p.actions.length
+      ?(done===1?'Listo, lo cambié.':`Listo, apliqué los ${done} cambios.`)
+      :`Apliqué ${done} de ${p.actions.length} cambios: el resto ya no era válido. Puedes ajustarlo tú en el formulario.`);
+  });
+  keep.addEventListener('click',()=>settleProposal(p,'Perfecto, lo dejamos como estaba.'));
+  el.addEventListener('keydown',e=>{if(e.key==='Escape'&&!keep.disabled){e.stopPropagation();keep.click()}});
+  if(chatPanel.classList.contains('open'))yes.focus({preventScroll:true});
+}
+propose.seq=0;
+function askAssistant(text){
+  if(!assistantOn()||!String(text).trim())return;
+  addMessage(text,'user');
+  setTimeout(()=>{const out=AssistantBrain.respond(ACI.context(),text);addMessage(out.message,'bot');propose(out.proposedActions)},350);
+}
+document.querySelectorAll('#messages .quick-questions button').forEach(b=>b.addEventListener('click',()=>askAssistant(b.textContent)));
+document.getElementById('chatForm').addEventListener('submit',e=>{e.preventDefault();const input=document.getElementById('chatInput');const value=input.value;input.value='';askAssistant(value)});
+// Proactive, only for inconsistencies the wizard itself found, and never while the customer types.
+/* Un aviso por campo mientras siga fuera de rango: corregirlo lo borra, y volver a
+ * escribir el mismo error lo vuelve a avisar. El asistente no repite ni insiste. */
+const avisos=new Set();
+addEventListener('aci:event',e=>{
+  if(!assistantOn())return;
+  const tipo=e.detail&&e.detail.type,campo=e.detail&&e.detail.payload&&e.detail.payload.field;
+  const out=AssistantBrain.observe(ACI.context(),e.detail);
+  if(tipo==='MEASUREMENTS_CHANGED'&&campo){
+    if(!out)avisos.delete(campo);
+    else if(avisos.has(campo))return;
+    else avisos.add(campo);
+  }
+  if(!out)return;
+  const deliver=()=>{
+    if(!assistantOn())return;
+    if(ACI.isTyping()){setTimeout(deliver,1500);return}
+    addMessage(out.message,'bot');propose(out.proposedActions);
+    if(!chatPanel.classList.contains('open')){
+      document.querySelectorAll('.chat-fab').forEach(x=>{x.dataset.unread=''});
+      window.dispatchEvent(new CustomEvent('aci:notice',{detail:{text:out.notice||out.message}}));
+    }
+  };
+  deliver();
+});
 
 // Los puntos ya vienen ordenados por Store; agruparlos por ciudad conserva
 // ese orden (el grupo nace en la posición del primer punto que lo usa), así

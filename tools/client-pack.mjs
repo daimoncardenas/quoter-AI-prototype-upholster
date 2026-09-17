@@ -87,6 +87,12 @@ export function loadClientPack(clientEnvValue) {
   const shared = JSON.parse(readFileSync(SHARED_USERS_FILE, 'utf8'));
 
   validateAssistant(client.assistant, slug);
+  /* Ley 1581 de 2012: consent covers only the purposes it names, and the
+   * assistant reads contact data once the box is checked, so every pack must
+   * name that purpose (shown only while the presence is on). */
+  if (typeof client.copy?.consentAssistant !== 'string' || !client.copy.consentAssistant.trim()) {
+    throw new Error(`clients/${slug}/client.json needs copy.consentAssistant: the consent clause that names the virtual assistant's use of the customer's data`);
+  }
 
   /* colorMode picks which modes/*.css gets appended to the pages (see
    * tools/generate.mjs). Missing means "normal" — today's look, unchanged. */

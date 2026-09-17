@@ -17,6 +17,8 @@ import { validateAssistant } from '../tools/client-pack.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 const KEY = client.storageNamespace + 'assistant';
 const DEF = client.assistant;
+// Las mismas fotos reales del repo que usa photos.spec.mjs (no una caché fuera del proyecto).
+const TRES = ['1', '2', '3'].map(n => new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
 
 let fails = 0;
 const check = (n, got, want) => {
@@ -143,8 +145,22 @@ await page.fill('#assistantName', '  Camilo  ');
 await page.click('#assistantBrandSuit');
 await save();
 await page.waitForFunction(() => document.getElementById('toast').classList.contains('show'));
-check('guarda solo lo que cambió, con el nombre recortado', sorted(JSON.parse(await stored())),
-  sorted({ character: other, name: 'Camilo', brandSuit: !DEF.brandSuit }));
+// El panel se repinta al cambiar personaje o traje: da un instante a que el guardado esté
+// escrito antes de leerlo (si no lo está, el diagnóstico de abajo dice exactamente qué pasó).
+await page.waitForFunction(k => localStorage.getItem(k) !== null, KEY, { timeout: 5000 }).catch(() => {});
+{
+  const raw = await stored();
+  if (raw === null) console.log('DIAG-NULL', JSON.stringify(await page.evaluate(() => ({
+    url: location.pathname,
+    llaves: Object.keys(localStorage),
+    nombreEnElCampo: document.getElementById('assistantName').value,
+    errorVisible: !document.getElementById('assistantNameError').hidden,
+    toastVisible: document.getElementById('toast').classList.contains('show'),
+    toastTexto: document.getElementById('toast').textContent.trim()
+  }))));
+  check('guarda solo lo que cambió, con el nombre recortado', sorted(JSON.parse(raw)),
+    sorted({ character: other, name: 'Camilo', brandSuit: !DEF.brandSuit }));
+}
 check('Store.assistant() lo refleja', await page.evaluate(() => { const a = Store.assistant(); return [a.character, a.name, a.brandSuit]; }),
   [other, 'Camilo', !DEF.brandSuit]);
 await openAssistant();
@@ -240,25 +256,318 @@ for (const raw of ['not-json{', '[1,2]', 'null', '"x"', '42']) {
 }
 await page.evaluate(k => localStorage.removeItem(k), KEY);
 
-console.log('\nAL APAGARLO SE DETIENE LA SINCRONIZACIÓN DE LA TELA DEL SILLÓN');
-// #assistantStage[data-fabric-sync] mirrors the 300 ms interval (see assistant-presence.js).
+/* -------------------------------------------------- contexto y acciones --
+ * What the cotizador PUBLISHES (window 'aci:event'), what the (simulated)
+ * assistant may READ, and the propose → confirm → apply path. None of this needs
+ * WebGL: the event bus, the context and the chat belong to the page, not to the 3D
+ * layer (which the last block below checks only if it actually started). */
+console.log('\nEL COTIZADOR PUBLICA LO QUE EL CLIENTE HACE (EN VEZ DE VIGILAR EL CURSOR)');
 await page.goto(D + 'index.html');
 await page.evaluate(() => { Store.resetAssistant(); Store.markAssistantWelcomed(); });
 await page.goto(D + 'index.html');
-const syncOn = await page.waitForSelector('#assistantStage[data-fabric-sync="on"]', { timeout: 30000 }).then(() => true, () => false);
-check('con el asistente encendido la sincronización corre (requiere WebGL en Chromium)', syncOn, true);
-await page.evaluate(() => {
-  window.__fabricIntervals = 0;
-  const native = window.setInterval;
-  window.setInterval = (fn, ms, ...rest) => { if (ms === 300) window.__fabricIntervals++; return native(fn, ms, ...rest); };
-  Store.saveAssistant({ enabled: false }); Assistant.apply();
+const watch = () => page.evaluate(() => {
+  window.__aci = [];
+  addEventListener('aci:event', e => window.__aci.push(e.detail));
+  return Object.keys(window.ACI).sort();
 });
-check('apagarlo detiene la sincronización', await page.getAttribute('#assistantStage', 'data-fabric-sync'), 'off');
-await page.evaluate(() => { Store.saveAssistant({ enabled: true }); Assistant.apply(); });
-const syncBack = await page.waitForSelector('#assistantStage[data-fabric-sync="on"]', { timeout: 30000 }).then(() => true, () => false);
-await page.evaluate(() => { Assistant.apply(); Assistant.apply(); }); // repeated applies while already on
-await page.waitForTimeout(500);
-check('reactivarlo la vuelve a correr, con un solo intervalo nuevo', [syncBack, await page.evaluate(() => window.__fabricIntervals)], [true, 1]);
+const eventos = tipo => page.evaluate(t => window.__aci.filter(e => e.type === t).map(e => e.payload), tipo);
+const ultimo = async tipo => (await eventos(tipo)).at(-1);
+check('el adaptador es la superficie del asistente en la página (y en window)', await watch(),
+  ['context', 'emit', 'env', 'execute', 'fabricPayload', 'isTyping', 'stepId']);
+const mueble = await page.evaluate(() => {
+  const c = document.querySelectorAll('.furniture-card')[1];
+  return { name: c.dataset.furniture, id: (furnitureRules[c.dataset.furniture] || {}).id };
+});
+await page.click('.furniture-card:nth-child(2)');
+check('elegir un mueble publica el tipo y su id, no un clic', await ultimo('FURNITURE_SELECTED'), { furniture: mueble.name, furnitureId: mueble.id });
+await page.setInputFiles('#furniturePhoto', TRES);
+await page.waitForFunction(() => state.photos.length === 3);
+check('subir fotos publica cuántas hay', await ultimo('PHOTOS_CHANGED'), { count: 3 });
+await page.click('#nextButton');
+check('cambiar de paso publica cuál, con su id y su nombre', await ultimo('STEP_CHANGED'), { step: 2, id: 'MEASUREMENTS', name: 'Medidas' });
+for (const [id, valor] of [['width', 210], ['height', 85], ['depth', 90]]) {
+  await page.fill('#' + id, String(valor));
+  await page.evaluate(i => document.getElementById(i).dispatchEvent(new Event('change', { bubbles: true })), id);
+}
+{
+  // El nombre de campo que se publica es el del catálogo del asistente
+  // (`measurements.width`), no el id del input: un solo vocabulario.
+  const porCampo = Object.fromEntries((await eventos('MEASUREMENTS_CHANGED')).map(e => [e.field, e.value]));
+  check('escribir una medida publica el campo y su valor', [porCampo['measurements.width'], porCampo['measurements.height'], porCampo['measurements.depth']], [210, 85, 90]);
+}
+await page.click('#nextButton');
+check('el paso 3 se anuncia igual', await ultimo('STEP_CHANGED'), { step: 3, id: 'PREFERENCES', name: 'Preferencias' });
+const chip = await page.evaluate(() => { const i = document.querySelectorAll('.chip-grid input')[0]; i.click(); return i.value; });
+check('marcar una preferencia publica cuál y cómo', await ultimo('PREFERENCES_CHANGED'), { field: 'needs', option: chip, checked: true });
+await page.selectOption('#style', { index: 0 });
+check('cambiar un selector publica el campo y su valor', (await ultimo('PREFERENCES_CHANGED')).field, 'style');
+
+console.log('\nSIN LA AUTORIZACIÓN MARCADA EL ASISTENTE NO VE DATOS PERSONALES');
+check('lo que puede leer es el estado del cotizador, y nada más', await page.evaluate(() => Object.keys(ACI.context()).sort()),
+  ['analysis', 'consent', 'currentStep', 'estimate', 'fabric', 'measurements', 'photos', 'preferences', 'selectedFurniture', 'submitted', 'tenant']);
+await page.evaluate(() => {
+  document.getElementById('fullName').value = 'Natalia Peña';
+  document.getElementById('email').value = 'n@example.com';
+  document.getElementById('phone').value = '3001234567';
+});
+check('con los campos escritos y sin autorización, el contexto no los lleva', await page.evaluate(() => ACI.context().contact ?? null), null);
+await page.evaluate(() => document.getElementById('consent').click());
+check('con la autorización marcada sí, y solo entonces', await page.evaluate(() => ACI.context().contact),
+  { name: 'Natalia Peña', email: 'n@example.com', phone: '3001234567' });
+check('y el contexto dice que está autorizada', await page.evaluate(() => ACI.context().consent), true);
+check('la autorización también se publica como evento', await ultimo('CONSENT_CHANGED'), { checked: true });
+check('y los rangos que el cotizador ya conoce para ese mueble', await page.evaluate(() => Object.keys(ACI.context().measurements.ranges || {}).sort()),
+  ['measurements.depth', 'measurements.height', 'measurements.width']);
+await page.evaluate(() => document.getElementById('consent').click());
+check('al desmarcarla deja de verlos', await page.evaluate(() => ACI.context().contact ?? null), null);
+
+console.log('\nEL ASISTENTE PROPONE, EL CLIENTE CONFIRMA, Y EL CAMBIO PASA POR DONDE PASA UNA EDICIÓN MANUAL');
+await page.click('#backButton'); // paso 3 → 2
+await page.evaluate(() => ['width', 'height', 'depth'].forEach(id => {
+  const el = document.getElementById(id); el.value = ''; el.dispatchEvent(new Event('change', { bubbles: true }));
+}));
+await page.click('.help-card [data-open-chat]');
+await page.waitForSelector('#chatPanel.open');
+check('al abrir el chat dice lo que tiene a la vista', await page.evaluate(() => [...document.querySelectorAll('#messages .message.bot')].some(m => m.textContent.startsWith('Lo que tengo a la vista:'))), true);
+const hablar = async texto => { await page.fill('#chatInput', texto); await page.click('#chatForm button'); };
+const propuesta = () => page.evaluate(() => {
+  const el = [...document.querySelectorAll('#messages .aci-proposal')].at(-1);
+  return el ? {
+    titulo: el.querySelector('p').textContent,
+    cambios: [...el.querySelectorAll('li')].map(l => l.textContent),
+    botones: [...el.querySelectorAll('button')].map(b => b.textContent)
+  } : null;
+});
+await hablar('ancho 210, alto 85');
+await page.waitForSelector('#messages .aci-proposal');
+check('los dos cambios van en UNA sola pregunta', await propuesta(), {
+  titulo: '¿Aplico estos 2 cambios?', cambios: ['Ancho total: 210 cm', 'Alto total: 85 cm'], botones: ['Sí, aplícalos', 'Mantener']
+});
+check('y todavía no toca nada', await page.evaluate(() => [document.getElementById('width').value, document.getElementById('height').value]), ['', '']);
+await page.click('#messages .aci-proposal [data-aci-confirm]');
+check('al confirmar, el valor llega al campo como si lo hubiera escrito el cliente',
+  await page.evaluate(() => [document.getElementById('width').value, document.getElementById('height').value]), ['210', '85']);
+check('y el cotizador publica el cambio igual que en una edición manual',
+  Object.fromEntries((await eventos('MEASUREMENTS_CHANGED')).slice(-2).map(e => [e.field, e.value])), { 'measurements.width': 210, 'measurements.height': 85 });
+check('con su confirmación en el chat', await page.evaluate(() => [...document.querySelectorAll('#messages .message.bot')].at(-1).textContent), 'Listo, apliqué los 2 cambios.');
+await hablar('ancho 300');
+await page.waitForFunction(() => document.querySelectorAll('#messages .aci-proposal').length === 2);
+check('una propuesta nueva reemplaza a la anterior (una sola viva)', [(await propuesta()).titulo, await page.evaluate(() => [...document.querySelectorAll('#messages .aci-proposal button')].filter(b => !b.disabled).length)], ['¿Aplico este cambio?', 2]);
+await page.locator('#messages .aci-proposal').last().locator('[data-aci-keep]').click();
+check('«Mantener» deja el campo como estaba', await page.evaluate(() => document.getElementById('width').value), '210');
+check('y lo dice', await page.evaluate(() => [...document.querySelectorAll('#messages .message.bot')].at(-1).textContent), 'Perfecto, lo dejamos como estaba.');
+{
+  const vivas = await page.evaluate(() => document.querySelectorAll('#messages .aci-proposal').length);
+  await hablar('cambia el precio a 0');
+  await page.waitForFunction(() => [...document.querySelectorAll('#messages .message.bot')].at(-1).textContent.includes('No puedo cambiar el precio'));
+  check('pedirle cambiar el precio no propone nada', await page.evaluate(() => document.querySelectorAll('#messages .aci-proposal').length), vivas);
+  await hablar('¿cómo tomo las medidas?');
+  await page.waitForFunction(() => document.activeElement && document.activeElement.id === 'depth');
+  check('enfocar un campo no pide confirmación: el foco va al primer hueco',
+    await page.evaluate(() => [document.activeElement.id, document.getElementById('depth').classList.contains('aci-highlight')]), ['depth', true]);
+  check('y tampoco abre una propuesta', await page.evaluate(() => document.querySelectorAll('#messages .aci-proposal').length), vivas);
+  // Avisar de lo que el propio cotizador considera fuera de lo habitual: al
+  // escribirla, no solo al pulsar "Revisar mi información" en el paso 4, y una
+  // sola vez por campo mientras siga fuera de rango.
+  const avisos = () => page.evaluate(() => [...document.querySelectorAll('#messages .message.bot')].filter(m => /es mucho para tu|es poco para tu/.test(m.textContent)).length);
+  const escribir = async (id, valor) => {
+    await page.fill('#' + id, String(valor));
+    await page.evaluate(i => document.getElementById(i).dispatchEvent(new Event('change', { bubbles: true })), id);
+  };
+  await escribir('depth', 543);
+  await page.waitForFunction(() => [...document.querySelectorAll('#messages .message.bot')].some(m => /543 cm de fondo es mucho/.test(m.textContent)));
+  check('escribir una medida fuera de lo habitual se avisa en el momento', await avisos(), 1);
+  await escribir('depth', 600);
+  await page.waitForTimeout(500);
+  check('y no se repite mientras el mismo campo siga fuera de rango', await avisos(), 1);
+  await escribir('depth', 90);
+  await page.waitForTimeout(300);
+  await escribir('depth', 543);
+  await page.waitForFunction(() => [...document.querySelectorAll('#messages .message.bot')].filter(m => /es mucho para tu/.test(m.textContent)).length === 2);
+  check('corregirla y volver a escribirla mal avisa otra vez', await avisos(), 2);
+  await page.click('#closeChat');
+  await page.click('.help-card [data-open-chat]');
+  await page.waitForTimeout(300);
+  check('el resumen del contexto se dice una sola vez por carga',
+    await page.evaluate(() => [...document.querySelectorAll('#messages .message.bot')].filter(m => m.textContent.startsWith('Lo que tengo a la vista:')).length), 1);
+}
+
+console.log('\nLA CONVERSACIÓN VIVE EN LA BARRA, NO ENCIMA DEL COTIZADOR');
+await page.goto(D + 'index.html');
+await page.waitForTimeout(300);
+const barra = () => page.evaluate(() => {
+  const j = document.querySelector('.journey');
+  const panel = document.getElementById('chatPanel');
+  const jr = j.getBoundingClientRect(), pr = panel.getBoundingClientRect();
+  const w = document.querySelector('.workspace').getBoundingClientRect();
+  return {
+    chatting: j.classList.contains('chatting'),
+    progreso: getComputedStyle(document.querySelector('.step-list')).display !== 'none',
+    panel: getComputedStyle(panel).display !== 'none',
+    dentroDeLaBarra: pr.left >= jr.left - 1 && pr.right <= jr.right + 1,
+    sobreElWizard: pr.width > 0 && pr.height > 0 && pr.right > w.left + 1,
+    nombre: j.getAttribute('aria-label'),
+    boton: document.querySelector('.journey .help-card .text-button').textContent.trim()
+  };
+});
+const nombre = await page.evaluate(() => Store.assistant().name);
+check('el asistente se anuncia por su nombre, no como un "Preguntar" suelto', (await barra()).boton, `Pregúntale a ${nombre}`);
+await page.click('.journey .help-card [data-open-chat]');
+await page.waitForTimeout(350);
+const abierta = await barra();
+check('abrir la conversación ocupa la barra, guarda el progreso y no tapa el cotizador',
+  [abierta.chatting, abierta.panel, abierta.dentroDeLaBarra, abierta.sobreElWizard, abierta.progreso], [true, true, true, false, false]);
+check('y la barra se anuncia como conversación', abierta.nombre, `Conversación con ${nombre}`);
+check('con "Volver al progreso" arriba', await page.isVisible('#backToProgress'), true);
+await page.click('#backToProgress');
+await page.waitForTimeout(300);
+const cerrada = await barra();
+check('y se vuelve al progreso sin recargar', [cerrada.chatting, cerrada.progreso, cerrada.panel], [false, true, false]);
+await page.click('.journey .help-card [data-open-chat]');
+for (const t of ['hola', '¿cómo tomo las medidas?']) {
+  await page.fill('#chatInput', t); await page.click('#chatForm button');
+  await page.waitForTimeout(800);
+}
+const visibles = () => page.evaluate(() => [...document.querySelectorAll('#messages .message')].filter(m => getComputedStyle(m).display !== 'none').length);
+const total = await page.evaluate(() => document.querySelectorAll('#messages .message').length);
+check('solo el último intercambio a la vista, el resto sigue en el DOM', [await visibles(), total > 4], [2, true]);
+await page.click('#toggleMessages');
+check('"Ver toda la conversación" la despliega entera', await visibles(), total);
+await page.setViewportSize({ width: 390, height: 844 });
+await page.goto(D + 'index.html');
+await page.click('.chat-fab');
+await page.waitForTimeout(300);
+check('en el celular el panel vuelve a flotar y la barra no se dibuja', await page.evaluate(() => {
+  const panel = document.getElementById('chatPanel');
+  const j = document.querySelector('.journey');
+  return [panel.classList.contains('open'), getComputedStyle(panel).position, getComputedStyle(j).display, Math.round(j.getBoundingClientRect().height)];
+}), [true, 'fixed', 'block', 0]);
+await page.setViewportSize({ width: 1440, height: 900 });
+
+console.log('\nLA PRESENCIA REACCIONA A LOS EVENTOS REALES (SI LA CAPA 3D ARRANCA)');
+await page.goto(D + 'index.html');
+const stageOk = await page.waitForSelector('#assistantStage.ready', { timeout: 30000 }).then(() => true, () => false);
+const skip = n => console.log(`  SKIP  ${n}  (la capa 3D no arrancó en este navegador)`);
+if (!stageOk) {
+  skip('una acción del cliente produce una reacción, y la siguiente se suprime');
+  skip('el sillón viste la tela de la cotización, sin sondeos');
+} else {
+  await page.evaluate(() => { window.__aci = []; addEventListener('aci:event', e => window.__aci.push(e.detail)); });
+  check('arranca sin tela y sin «pensar»', await page.getAttribute('#assistantStage', 'data-chair-fabric'), '');
+  await page.click('.furniture-card:nth-child(2)');
+  await page.waitForFunction(() => document.getElementById('assistantStage').dataset.reactions === '1');
+  check('una acción del cliente, una reacción', await page.getAttribute('#assistantStage', 'data-reaction'), 'look-selection');
+  check('y mira lo que acaba de tocar', await page.getAttribute('#assistantStage', 'data-glance'), 'selection');
+  await page.click('.furniture-card:nth-child(1)');
+  await page.waitForFunction(() => document.getElementById('assistantStage').dataset.reactionsSuppressed === '1');
+  check('la siguiente, dentro de la pausa, se suprime y se cuenta',
+    await page.evaluate(() => [document.getElementById('assistantStage').dataset.reactions, document.getElementById('assistantStage').dataset.reaction]), ['1', 'look-selection']);
+  await page.setInputFiles('#furniturePhoto', TRES);
+  await page.waitForFunction(() => state.photos.length === 3);
+  await page.click('#nextButton');
+  await page.waitForTimeout(300);
+  check('un paso nuevo borra la mirada anterior (mira el paso, no el botón)', await page.getAttribute('#assistantStage', 'data-glance'), null);
+  await page.click('#coverage');
+  check('y sigue al cliente por los controles que toca, sin reacción de por medio', await page.getAttribute('#assistantStage', 'data-glance'), 'coverage');
+  // El aviso, como burbuja legible DENTRO de la barra (nunca encima del cotizador), pegada
+  // a ella, con el progreso guardado y el punto de no leído en "Pregúntale a".
+  const coronilla = await page.evaluate(() => Number(document.getElementById('assistantStage').dataset.crown));
+  await page.fill('#depth', '543');
+  await page.evaluate(() => document.getElementById('depth').dispatchEvent(new Event('change', { bubbles: true })));
+  await page.waitForSelector('#assistantBubble:not([hidden])', { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(250);
+  const nombreAsistente = await page.evaluate(() => Store.assistant().name);
+  check('el aviso aparece pegado a ella, no lejos ni detrás de su cuerpo', await page.evaluate(([nombre, coronilla]) => {
+    const bub = document.getElementById('assistantBubble');
+    const j = document.querySelector('.journey');
+    const w = document.querySelector('.workspace').getBoundingClientRect();
+    const r = bub.getBoundingClientRect(), jr = j.getBoundingClientRect();
+    const hueco = Math.round(Number(document.getElementById('assistantStage').dataset.crown) - r.bottom);
+    const intro = document.querySelector('.journey-intro'), pasos = document.querySelector('.step-list');
+    return {
+      visible: !bub.hidden && getComputedStyle(bub).display !== 'none',
+      quien: bub.querySelector('.bubble-who').textContent.trim() === nombre,
+      texto: bub.querySelector('.bubble-text').textContent,
+      sobreSuCabeza: hueco >= 2 && hueco <= 14,
+      barraGuardada: getComputedStyle(intro).opacity === '0' && getComputedStyle(pasos).opacity === '0',
+      pasosNoRecibenClic: (() => {
+        const punto = document.elementFromPoint(60, Math.round(pasos.getBoundingClientRect().top) + 12);
+        return !(punto && punto.closest && punto.closest('.step-list'));
+      })(),
+      sinReacomodo: Math.round(Number(document.getElementById('assistantStage').dataset.crown)) === coronilla,
+      dentroDeLaBarra: r.left >= jr.left - 1 && r.right <= jr.right + 1 && r.right <= w.left + 1
+    };
+  }, [nombreAsistente, coronilla]), { visible: true, quien: true, texto: 'Encontré algo en tus medidas. Tócame para verlo.', sobreSuCabeza: true, barraGuardada: true, pasosNoRecibenClic: true, sinReacomodo: true, dentroDeLaBarra: true });
+  // El relevo es instantáneo: el progreso no puede tardar un cuadro en irse (su `transition`
+  // heredado hacía que el aviso apareciera y la barra se fuera ~250 ms después: un parpadeo).
+  check('la barra se guarda en el mismo instante en que aparece el aviso (sin parpadeo)', await page.evaluate(() => {
+    const journey = document.querySelector('.journey'), pasos = document.querySelector('.step-list');
+    journey.classList.remove('noticing');
+    const antes = getComputedStyle(pasos).opacity;
+    journey.classList.add('noticing');                       // mismo instante del aviso
+    const enElMismoCuadro = getComputedStyle(pasos).opacity;
+    const punto = document.elementFromPoint(60, Math.round(pasos.getBoundingClientRect().top) + 12);
+    const recibeClic = !!(punto && punto.closest && punto.closest('.step-list'));
+    journey.classList.remove('noticing');
+    return { antes, enElMismoCuadro, recibeClic };
+  }), { antes: '1', enElMismoCuadro: '0', recibeClic: false });
+  check('y deja marcado "Pregúntale a" como no leído', await page.evaluate(() => document.querySelector('.journey .help-card .text-button').hasAttribute('data-unread')), true);
+  await page.click('#width'); // seguir con el formulario la despide
+  await page.waitForTimeout(300);
+  check('el progreso vuelve solo cuando el cliente sigue con el formulario', await page.evaluate(() => {
+    const j = document.querySelector('.journey');
+    return [document.getElementById('assistantBubble').hidden, j.classList.contains('noticing'), getComputedStyle(document.querySelector('.step-list')).display !== 'none'];
+  }), [true, false, true]);
+  await page.fill('#depth', '90');
+  await page.evaluate(() => document.getElementById('depth').dispatchEvent(new Event('change', { bubbles: true })));
+  await page.waitForTimeout(200);
+  await page.fill('#width', '210'); await page.fill('#height', '85'); await page.fill('#depth', '90');
+  await page.click('#nextButton'); await page.click('#nextButton');
+  await page.click('#analyzeButton'); await page.waitForFunction(() => state.analyzed);
+  await page.click('#nextButton');
+  await page.waitForFunction(() => document.getElementById('assistantStage').dataset.chairFabric !== '');
+  const vestida = await page.evaluate(() => ({
+    tela: document.getElementById('selectedFabric').value,
+    sillon: document.getElementById('assistantStage').dataset.chairFabric,
+    eventos: window.__aci.filter(e => e.type === 'FABRIC_SELECTED').map(e => [e.payload.name, e.payload.auto])
+  }));
+  check('la mejor coincidencia se anuncia sola (auto: true)', vestida.eventos.at(-1), [vestida.tela, true]);
+  check('y el sillón la viste sin que nadie lo sondee', vestida.sillon, vestida.tela);
+  await page.waitForTimeout(4200); // el presupuesto anti-Clippy es de 4 s: sin esta espera, la reacción se suprime y el clic gana
+  const otra = await page.evaluate(() => {
+    const cards = [...document.querySelectorAll('.fabric-card')];
+    const i = cards.findIndex(c => !c.classList.contains('selected'));
+    const nombre = cards[i].querySelector('b').textContent.split(' · ')[0];
+    cards[i].click();
+    return nombre;
+  });
+  check('elegir otra tela la cambia al instante', await page.getAttribute('#assistantStage', 'data-chair-fabric'), otra);
+  // La reacción se agrupa y llega ~60 ms después del clic (COALESCE_MS).
+  const miraSillon = await page.waitForFunction(() => document.getElementById('assistantStage').dataset.glance === 'armchair', null, { timeout: 3000 }).then(() => true, () => false);
+  check('y el clic no le quita los ojos de encima del sillón (la reacción manda sobre el clic)', miraSillon, true);
+  check('y el evento dice que la eligió el cliente', await page.evaluate(() => window.__aci.filter(e => e.type === 'FABRIC_SELECTED').at(-1).payload.auto), false);
+  // La conversación no le pasa por encima: el panel termina antes de su cabeza (banda
+  // reservada) y ella sigue delante — la capa fija con z-index manda sobre el panel,
+  // que en la barra es estático.
+  await page.click('.journey .help-card [data-open-chat]');
+  await page.waitForTimeout(500);
+  check('el chat no la tapa: el panel termina por encima de su cabeza', await page.evaluate(() => {
+    const st = document.getElementById('assistantStage');
+    const r = document.getElementById('chatPanel').getBoundingClientRect();
+    const banda = getComputedStyle(document.querySelector('.journey')).getPropertyValue('--chat-band').trim();
+    return {
+      sigueEnPie: Number(st.dataset.headY) > 0,
+      terminaAntesDeSuCabeza: Math.round(r.bottom) <= Number(st.dataset.headY),
+      dejaSitioParaLaConversacion: Math.round(r.height) >= 150,
+      conBandaDeclarada: /px$/.test(banda)
+    };
+  }), { sigueEnPie: true, terminaAntesDeSuCabeza: true, dejaSitioParaLaConversacion: true, conBandaDeclarada: true });
+  check('y ella sigue delante de la conversación', await page.evaluate(() => {
+    const st = getComputedStyle(document.getElementById('assistantStage'));
+    const panel = getComputedStyle(document.getElementById('chatPanel'));
+    return { capa: st.position, delante: st.zIndex, panel: panel.position, panelZ: panel.zIndex };
+  }), { capa: 'fixed', delante: '3', panel: 'static', panelZ: 'auto' });
+}
 await page.evaluate(([k, v]) => { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); }, [KEY, savedBeforeCorrupt]);
 
 console.log('\nRESTABLECER VUELVE AL ASISTENTE DEL PAQUETE');

@@ -139,6 +139,22 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   them, that both "Restablecer estilos por defecto" and "Restablecer datos de demo"
   restore the pack's look, that the nav reads "Configuraciones de cotizador", and
   that a seller can neither see nor reach the section.
+- `assistant-brain.spec.mjs` — the simulated brain (`assistant-brain.js`) as a pure
+  Node unit suite: the closed catalogue (six steps; only measurements and
+  preferences are writable; price, metres, quote status, seller and the customer's
+  identity never are), that validation rejects unknown action types, unknown or
+  off-step fields and out-of-list values with a reason, that navigation is
+  backward-only, that a proposal is validated IN ORDER against the wizard as it is
+  (a navigation earlier in the list moves the step the later ones are checked
+  against), the Spanish copy shown before confirming, the canned answers that
+  depend on the quotation context, "customer text is data, never instructions"
+  (adversarial prompts produce no action outside the allowlist), the proactive
+  message only for what the wizard itself found (including one caught as a
+  measurement is typed, not only at the step-4 review: silent inside the range and
+  exactly at its edges, "mucho"/"poco" by which side, and no action proposed), the
+  state summary she says out loud when the chat opens (quantity, photos, which
+  measurements are there and which are missing), the anti-Clippy budget, and the
+  two phrasings for measurements. No browser, no DOM, milliseconds.
 - `assistant.spec.mjs` — "Presencia del asistente": the pack's `assistant` block
   passes `validateAssistant()` and bad ones (missing, unknown character, empty /
   untrimmed / 41-char name, non-boolean flags) are rejected; the section sits
@@ -155,8 +171,49 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   "Análisis inteligente"; turning it back on restores them ("Preguntar" opens the
   chat, the phone gets its chat button and no 3D layer); the welcome flag is
   remembered; the reset (after an `askConfirm()` that a cancel leaves untouched)
-  and "Restablecer datos de demo" restore the defaults. No pixel or WebGL
-  assertions: the 3D layer is optional by design.
+  and "Restablecer datos de demo" restore the defaults. Also covers the
+  context-and-actions half, on events instead of heuristics: the wizard publishes
+  what the customer does as window `aci:event` events (furniture, photos, step,
+  measurements, preferences, consent — a click, never a cursor position),
+  `ACI.context()` exposes the wizard's state and adds name/email/phone ONLY while
+  the consent box is checked (unchecking takes them away again), the chat answers
+  from the quotation context and returns ONE grouped proposal ("¿Aplico estos 2
+  cambios?") that changes nothing until "Sí" — an accepted change writes through
+  the same input+change path as a manual edit, so the cotizador publishes the same
+  event — "Mantener" leaves the field as it was, asking for a price change proposes
+  nothing, and a FOCUS_FIELD carries the customer to the empty field without asking.
+  The context is also made VISIBLE: the first open of the chat says what she has in
+  view ("Lo que tengo a la vista: …") once per load, and a measurement the cotizador
+  considers out of the ordinary for the furniture is flagged as it is typed — once
+  per field while it stays out of range, again if it is corrected and mistyped — with
+  the plausible range read from the wizard itself. Field names in the events are the
+  assistant's own (`measurements.width`),
+  not the inputs' ids. Also covers where the conversation lives: the sidebar's entry
+  point reads "Pregúntale a <name>", opening the chat replaces the progress list with
+  the conversation (`.journey.chatting`, region relabelled "Conversación con <name>"),
+  the panel's rect stays inside the sidebar's and never reaches the wizard's, "←
+  Volver al progreso" brings the progress back without a reload, only the latest
+  exchange is visible by default while the rest stays in the DOM ("Ver toda la
+  conversación" reveals it), and on a phone the panel floats again while the sidebar
+  draws nothing (height 0). And that the conversation never covers her: the panel's
+  bottom edge stops above her head (`data-heady` + the `--chat-band` cap), it keeps a
+  usable height, and she stays in front (fixed, `z-index:3`) of the static panel.
+  The presence-side notice is checked there too: it appears as her card floating just
+  above her crown (never far from her, never behind her body, never reaching the
+  wizard) while the sidebar's intro and progress step aside for those seconds
+  (`.journey.noticing`: opacity + `pointer-events:none`, so the relay is instant and
+  nothing invisible takes a click), with her name, its "Ver en el chat" action and an
+  unread mark on "Pregúntale a"; and it leaves the moment the customer goes on with the
+  form.
+  The 3D reaction hooks (`#assistantStage`
+  `[data-reactions|data-reactions-suppressed|data-reaction|data-glance|data-chair-fabric|data-heady|data-crown]`)
+  are asserted only when the layer actually starts, and reported as SKIP when it
+  doesn't: they cover one reaction per customer action with the next one suppressed
+  and counted, that she looks at what the customer touches (a click on a select, not
+  the bare cursor / hover) and at the furniture card she just reacted to, that a new
+  step clears that glance, and that the click which picked a fabric does not take her
+  eyes off the armchair. Still no pixel assertions, the 3D layer stays optional by
+  design.
 - `sealed.spec.mjs` — the encrypted delivery build: since that gate is
   currently disabled at the owner's request, this checks that `dist/` ships in
   the clear rather than encrypted. It tests the packaging, not the prototype.

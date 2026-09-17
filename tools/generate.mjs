@@ -142,6 +142,13 @@ function assistantModelTags() {
   }).join('\n');
 }
 
+// The simulated assistant brain: a classic script, inlined before the wizard's own.
+function assistantBrainTag() {
+  const js = readFileSync('assistant-brain.js', 'utf8');
+  if (/<\/script/i.test(js)) throw new Error('assistant-brain.js must not contain "</script" (would break the page\'s HTML)');
+  return `<script>\n${js}\n</script>`;
+}
+
 function assistantScriptTag() {
   const js = readFileSync('assistant-presence.js', 'utf8');
   if (/<\/script/i.test(js)) throw new Error('assistant-presence.js must not contain "</script" (would break the page\'s HTML)');
@@ -179,11 +186,16 @@ export function generate(clientEnvValue = resolveClient(), outDir = 'generated')
     ASSISTANT_NAME: client.assistantName,
     ASSISTANT_NAME_HTML: brandNameHtml(client.assistantName, client),
     CONSENT_HTML: brandNameHtml(client.copy.consent, client),
+    /* The assistant's purpose, rendered inside [data-assistant-copy] so it only
+     * shows while the presence is on (see "Assistant context & actions"). */
+    CONSENT_ASSISTANT_HTML: brandNameHtml(client.copy.consentAssistant, client),
+    CLIENT_SLUG_JSON: JSON.stringify(slug),
     /* The presence's DEFAULT name, for the first paint; Assistant.apply()
      * swaps in the one saved in the backoffice. */
     ASSISTANT_DEFAULT_NAME: escHtml(client.assistant.name),
     ASSISTANT_MODELS: assistantModelTags(),
     ASSISTANT_SCRIPT: assistantScriptTag(),
+    ASSISTANT_BRAIN_SCRIPT: assistantBrainTag(),
     NOT_OFFICIAL_INDEX: client.copy.notOfficialIndex,
     NOT_OFFICIAL_ADMIN: client.copy.notOfficialAdmin,
     LOGIN_EMAIL_PLACEHOLDER: client.copy.loginEmailPlaceholder,
