@@ -5,6 +5,7 @@
   "shortName": "Intertelas",
   "assistantName": "Asistente Intertelas",
   "assistant": { "enabled": true, "character": "female", "name": "Lía", "brandSuit": false },
+  "senderEmail": "cotizaciones@intertelas.example",
   "storageNamespace": "itl.v1.",
   "photosDbName": "itl-photos",
   "meta": {

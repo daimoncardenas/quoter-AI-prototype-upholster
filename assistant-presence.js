@@ -47,6 +47,15 @@ const FACES = {
 
 // Canvas room around the character, as a fraction of its height (waving hand, arms).
 const HEAD_ROOM = 0.14, SIDE_ROOM = 0.45;
+/* Cuánto baja el lienzo POR DEBAJO de la línea del suelo (px). Ya no es un número fijo: el hueco
+ * se deriva del alcance del zapato medido en el modelo (ver `floorRoom` en place()), con
+ * `FLOOR_ROOM` como mínimo y `FLOOR_MARGIN` de aire para que la punta nunca toque el borde.
+ * `data-floor` publica la línea para que las pruebas midan la misma que dibuja el render. */
+const FLOOR_ROOM = 14;
+/* Aire bajo los zapatos en el PEOR cuadro del ciclo (medido: `settle` y `walk2` son los que más
+ * se acercan al borde). El lienzo es transparente y no recibe clics, así que reservar de más no
+ * cuesta nada: lo que no se puede es volver a ver una punta cortada. */
+const FLOOR_MARGIN = 20;
 // A standing figure is ~36% as wide as it is tall, arms included.
 const MAX_H = 300, MIN_H = 130, BODY_W = 0.36, EDGE = 12, GAP = 10;
 const SCALE = 0.75; // three quarters of the space it could take: more white room around it
@@ -68,6 +77,14 @@ const THINKING = { pose: { yaw: -0.35, pitch: -0.22 } };
  * (none exists for it): the legs are bent after the mixer, like the wave and the look. */
 const IDLE_MS = 60000;
 const SIT_TURN_MS = 380, SIT_WALK_MS = 1150, SIT_SETTLE_MS = 700, STAND_MS = 620;
+/* El paseo son DOS piernas de caminata, con un giro entre ellas: cada una se camina mirando
+ * a donde va (el clip Walk es una zancada hacia adelante, así que la que se hacía de lado al
+ * ir y de espaldas al volver se leía como patinaje). La cadencia es la de antes: cada pierna
+ * dura la mitad de lo que duraba el tramo entero. */
+const SIT_LEG_MS = SIT_WALK_MS / 2;
+const WALK_PHASES = ['walk1', 'walk2', 'walkback1', 'walkback2'];
+const SIT_SKIP_UNITS = 0.03;   // un tramo más corto que esto no se camina: se salta
+const SIT_FACE_MS = 620;   // el giro de 180° para volver a mirar al cliente
 /* Where the armchair's seat is, relative to where its origin projects (py): measured on the
  * render with marker lines, not derived from the mesh — the seat's surface is not at the
  * chair's origin. The chair's placement itself is untouched; she is the one who moves. */
@@ -101,14 +118,34 @@ const PHYS = {
   floorLike: 0.55  // un empuje así de vertical es una superficie donde se apoya, no un obstáculo
 };
 let RAPIER = null, phys = null;
-const SIT_POSE = { torso: -0.05, arm: -1.05, elbow: -0.45, armIn: 0.3 }; // radianes; las piernas las resuelve la IK
+const SIT_POSE = { torso: -0.05 }; // radianes; piernas y brazos los resuelve su IK
+/* Las manos se apoyan en los muslos: blancos y forma del apoyo (ver placeHands). El blanco
+ * va a lo largo del muslo, a `thighR + handR` sobre su eje — el contacto es un desnivel del
+ * hueso — más el grosor de la prenda, porque apoyar la mano en la PIEL la deja dentro de la
+ * falda y la tela le queda encima (reportado: "la falda le queda en las manos"). Ese grosor
+ * está medido en el render con un rayo, sentada y hacia afuera del blanco (donde la mano ya
+ * no está): 3.9 px a 11 px del blanco y 2.8 px a 20 px en el muslo izquierdo — el derecho
+ * queda tapado por la pierna cruzada. 0.036 u ≈ 4 px. El codo, además, cuelga del hombro con
+ * un sesgo hacia afuera. */
+const SIT_HANDS = { t: 0.32, above: 0.036, out: 0.35, down: 1, back: 0.15 };
+/* Las piernas sentadas: la separación de los tobillos respecto a la línea media, en unidades
+ * del modelo (0.07 u ≈ 8 px por lado, la postura de alguien sentado). */
+const SIT_LEGS = { stance: 0.07 };
+/* Los pies, sentada: girados hacia afuera ~24°. De frente a la cámara el largo del zapato se
+ * proyecta en la profundidad y el pie se lee como un muñón de piel — "no le veo los pies" —
+ * aunque el zapato esté dibujado; girado, su largo se ve como largo. Es además la postura de
+ * alguien sentado. */
+const SIT_FEET = { out: 0.42 };
+/* El paso máximo del descenso al asiento, por cuadro, en unidades del modelo (0.045 u ≈ 5 px a
+ * 1440): acota el salto de un cuadro largo; ver el muelle de sentarse. */
+const SIT_DROP_MAX = 0.045;
 /* Sentada se gira hacia donde mira el sillón, no al revés: el sillón está girado
  * `chair.pivot.rotation.y` (+0.3, hacia su derecha) y con la mujer al otro lado el render
  * se leía como "el sillón mira a la derecha y ella a la izquierda". Se deriva de la
  * orientación del sillón para que un cambio de mueble la arrastre. */
 const SIT_YAW_EXTRA = 0.32; // tres cuartos hacia el cliente, en el mismo sentido que el sillón
 const sitYaw = () => (chair?.pivot?.rotation.y || 0) + SIT_YAW_EXTRA;
-const SIT_BONES = ['UpperLeg.L', 'UpperLeg.R', 'LowerLeg.L', 'LowerLeg.R', 'Torso', 'UpperArm.L', 'UpperArm.R', 'LowerArm.L', 'LowerArm.R'];
+const SIT_BONES = ['UpperLeg.L', 'UpperLeg.R', 'LowerLeg.L', 'LowerLeg.R', 'Torso', 'Shoulder.L', 'Shoulder.R', 'UpperArm.L', 'UpperArm.R', 'LowerArm.L', 'LowerArm.R'];
 
 const $ = id => document.getElementById(id);
 const stage = $('assistantStage'), hit = $('assistantHit'), bubble = $('assistantBubble'), chatPanel = $('chatPanel');
@@ -127,8 +164,12 @@ let reactionCount = 0, suppressedCount = 0, budget = null;
 let loadingKind = null;
 /* Idle-and-sit: `pose` is what the tests read; `sitSeq` is the step of the walk over
  * there, sitting down, or the way back. `bodyYaw` is the sequence's own turn, which the
- * look adds to instead of overwriting (she faces the chair to walk, the customer to sit). */
+ * look adds to instead of overwriting (each walking leg faces where it goes; she sits and
+ * walks home looking at the customer). */
 let pose = 'standing', sitSeq = null, sitWeight = 0, bodyYaw = 0, lastAlive = 0, sitGeom = null, SIT_V3 = null;
+/* La caminata se mide sola: `walkPrev` es dónde estaba en el cuadro anterior (para saber
+ * hacia dónde se movió) y `travelPeak` el peor ángulo del episodio (ver publishTravel). */
+let walkPrev = null, travelPeak = 0;
 
 const hideLayer = () => { stage.hidden = true; hit.hidden = true; layout = null; resetSit(); };
 
@@ -162,9 +203,20 @@ function resetSit() {
   sitSeq = null;
   sitWeight = 0;
   bodyYaw = 0;
+  walkPrev = null;
+  travelPeak = 0;
   if (current) { current.body.position.set(0, 0, 0); }
   if (hit) hit.style.removeProperty('transform');
-  if (stage) stage.dataset.pose = 'standing';
+  if (stage) {
+    stage.dataset.pose = 'standing';
+    stage.dataset.sitPhase = '';
+    delete stage.dataset.travel;
+    delete stage.dataset.travelPeak;
+    delete stage.dataset.pushRoot;
+    delete stage.dataset.hands;   // de pie no hay manos apoyadas que publicar
+    delete stage.dataset.feetFlat;
+    delete stage.dataset.legReach;
+  }
 }
 
 function webglAvailable() {
@@ -289,6 +341,7 @@ function measureChairSocket() {
   const front = cast(new THREE.Vector3(c.x, box.min.y + size.y * 0.04, box.max.z + size.z * 2), BACK);
   chair.socket = {
     seatWorldY: seat.y,
+    seatWorldZ: seat.z,
     gapCenterWorldX: l && r ? (l.x + r.x) / 2 : c.x,
     gapWidthWorld: l && r ? Math.abs(r.x - l.x) : null,
     faceWorldZ: face ? face.z : null,
@@ -311,7 +364,8 @@ async function loadPhysics() {
       world, floorBody,
       floor: world.createCollider(mod.ColliderDesc.cuboid(30, 0.5, 30), floorBody),
       chairBody: world.createRigidBody(mod.RigidBodyDesc.fixed()),
-      chair: null
+      chair: null,
+      pushRoot: new THREE.Vector3()   // cuánto la movió la colisión en el cuadro (ver data-push-root)
     };
     return true;
   } catch (err) {
@@ -463,6 +517,7 @@ function scanContacts(apply) {
       push.add(insidePush);
       scanContacts.log.push({ part: 'root', dir: push.clone().normalize(), depth: push.length() });
       current.body.position.add(push);
+      phys.pushRoot.add(push);   // el empuje del cuadro, publicado como data-push-root
       current.body.updateMatrixWorld(true);   // las cápsulas se leen de las matrices
       moved = true;
       scanContacts.pushedRoot = true;
@@ -474,6 +529,7 @@ function scanContacts(apply) {
 
 function resolvePhysics() {
   if (!phys?.chair || !current) return 0;
+  phys.pushRoot.set(0, 0, 0);
   let pushed = false;
   for (let it = 0; it < PHYS.iterations; it++) {
     scanContacts(true);
@@ -656,7 +712,12 @@ async function loadCharacter(kind) {
     hips: findBone(root, 'Hips'),
     sitBones: Object.fromEntries(SIT_BONES.map(n => [n, findBone(root, n)]).filter(([, b]) => b)),
     originalColors: materials.map(m => m.color.clone()),
-    feetY: box.min.y, bodyH: box.max.y - box.min.y, rearZ: box.min.z
+    feetY: box.min.y, bodyH: box.max.y - box.min.y, rearZ: box.min.z,
+    /* Hasta dónde llega el zapato hacia adelante (la punta es el punto más al frente del
+     * modelo: 0.255 u medidos en Lía). Con la cámara inclinada eso se DIBUJA más abajo que el
+     * tobillo, y es lo que dimensiona el hueco bajo la línea del suelo — ver `floorRoom` en
+     * place(). Medido en el ciclo completo: 12 px bajo la línea en el peor cuadro. */
+    shoeZ: box.max.z - box.min.z
   };
   // Where her hip joint is while standing, in model units above her feet: what has to
   // come down for her to land on the armchair's seat.
@@ -682,13 +743,50 @@ async function loadCharacter(kind) {
   }
   const otherFoot = findBone(root, 'Foot.R');
   current.feet = [current.foot, otherFoot].filter(Boolean);
+  /* El "arriba" del pie en su propio espacio, medido en la pose en que se carga (de pie, con
+   * las suelas en el suelo): con esa referencia se lo acuesta plano al sentarla. El clip deja
+   * el pie colgando — punta hacia abajo, taco hacia arriba — y eso se veía como un zapato en
+   * el aire aunque el tobillo estuviera en la línea. */
+  current.footUp = {};
+  {
+    const q = new THREE.Quaternion();
+    for (const [side, bone] of [['L', current.foot], ['R', otherFoot]]) {
+      if (!bone) continue;
+      bone.getWorldQuaternion(q);
+      current.footUp[side] = new THREE.Vector3(0, 1, 0).applyQuaternion(q.invert()).normalize();
+    }
+  }
   // La otra pierna, para las cápsulas de colisión (misma resolución, sin caminar la cadena).
   const upperR = findBone(root, 'UpperLeg.R');
   current.kneeR = upperR?.children.find(c => /LowerLeg/i.test(c.name)) || null;
   current.footR = otherFoot || null;
-  // Brazos, para las cápsulas de colisión (hombro y codo de cada lado).
+  // Brazos, para las cápsulas de colisión (hombro y codo de cada lado) y para apoyar las
+  // manos: la muñeca es donde termina el brazo visible.
   current.shoulderL = findBone(root, 'Shoulder.L'); current.elbowL = findBone(root, 'LowerArm.L');
   current.shoulderR = findBone(root, 'Shoulder.R'); current.elbowR = findBone(root, 'LowerArm.R');
+  current.wristL = findBone(root, 'Wrist.L'); current.wristR = findBone(root, 'Wrist.R');
+  /* Los brazos, medidos en el rig como las piernas: la IK de las manos es aritmética con
+   * estas dos longitudes (hombro→codo y codo→muñeca), no con proporciones supuestas. */
+  current.armSeg = {};
+  for (const [side, sh, el, wr] of [['L', current.shoulderL, current.elbowL, current.wristL], ['R', current.shoulderR, current.elbowR, current.wristR]]) {
+    if (!sh || !el || !wr) continue;
+    const A = new THREE.Vector3(), B = new THREE.Vector3(), C = new THREE.Vector3();
+    sh.getWorldPosition(A); el.getWorldPosition(B); wr.getWorldPosition(C);
+    current.armSeg[side] = { upper: A.distanceTo(B), fore: B.distanceTo(C) };
+  }
+  /* --- TEMPORAL: API de diagnóstico (banco de pruebas del zapato; NO commitear) ---
+   * Se expone solo si la página la pide (`#assistantStage[data-dbg-api]`) y sirve para mirar la
+   * jerarquía REAL de three.js — mallas, esqueleto, materiales, cámara — y para aislar piezas.
+   * Sin la marca no existe: `window.__aci` queda undefined. */
+  if (stage.dataset.dbgApi) {
+    window.__aci = {
+      THREE, scene, camera, renderer, stage,
+      get current() { return current; },
+      get chair() { return chair; },
+      get layout() { return layout; },
+      place: () => place(),
+    };
+  }
 }
 
 /* three's GLTFLoader runs node names through PropertyBinding.sanitizeNodeName(), which
@@ -740,8 +838,18 @@ function place() {
   const ask = helpCard.querySelector('.text-button');
   if (ask) ask.style.marginRight = `${Math.max(0, Math.round(j.right - centerX - ask.offsetWidth / 2 - parseFloat(getComputedStyle(journey).paddingRight)))}px`;
   const unitsPerPx = current.bodyH / heightPx;
-  const height = Math.round(heightPx * (1 + HEAD_ROOM));
-  const top = floorY - height + 2;
+  /* El lienzo termina POR DEBAJO de la línea del suelo, no a 2 px: con la cámara inclinada, todo
+   * lo que está más cerca (z mayor) se dibuja más abajo, y el zapato es lo más cercano que hay.
+   * Medido en el ciclo completo a 1919×1149: en el peor cuadro (`settle`) el tobillo va 16 px
+   * bajo la línea y la punta suma otros ~16 — 32 px de zapato, con 14 px fijos quedaba a 2-3 px
+   * del borde y con el redondeo de DPR se veía cortado. El hueco se DERIVA del alcance del zapato
+   * en el modelo (0.355 u, la punta es el punto más al frente) por 1.5 (el peor cuadro medido
+   * equivale a ~0.53 u de profundidad) y de la escala de la figura, más `FLOOR_MARGIN` de aire:
+   * sirve en cualquier ventana y para cualquier personaje. */
+  const shoeDropPx = (current.shoeZ * 1.5 * Math.abs(Math.sin(CHAIR_ELEVATION))) / unitsPerPx;
+  const floorRoom = Math.max(FLOOR_ROOM, Math.ceil(shoeDropPx + FLOOR_MARGIN));
+  const height = Math.round(heightPx * (1 + HEAD_ROOM)) - 2 + floorRoom;
+  const top = floorY - height + floorRoom;
   let left = centerX - Math.round(heightPx * (BODY_W + SIDE_ROOM * 2) / 2);
   const right = centerX + Math.round(heightPx * (BODY_W + SIDE_ROOM * 2) / 2);
 
@@ -777,6 +885,12 @@ function place() {
   layout = { heightPx, floorY, left, top, width, height, centerX, headY: top + heightPx * (HEAD_ROOM + 0.07), chairX, chairY: floorY - heightPx * 0.2 };
   // What sitting down needs, in the same units the camera uses: how far left the chair is,
   // how far her hip has to drop to reach the seat, and where that seat is on screen.
+  /* El suelo de esta escena es una LÍNEA en pantalla, no un plano a la vista, y la cámara
+   * mira inclinada: lo que está más cerca (z mayor) se dibuja MÁS ABAJO. El sillón compensa
+   * su propio frente al colocarse (py usa `sin(CHAIR_ELEVATION)`); lo que se apoya en el
+   * suelo tiene que compensar igual. Los pies no lo hacían y con z ≈ 0.56 aparecían 23 px por
+   * debajo de la línea — fuera del lienzo, que es "no tiene pies" cuando se sienta. */
+  const upTilt = v => v * Math.sin(CHAIR_ELEVATION) / unitsPerPx;   // px hacia abajo por z
   sitGeom = null;
   if (chair?.root.visible && chair.frame && current.hipY) {
     const { u, px, py } = chair.frame;
@@ -784,20 +898,11 @@ function place() {
     // The seat's line and the gap's centre come from the chair's own geometry when the
     // rays find them (`data-socket`), and fall back to the marker-measured constants
     // if they don't (a mesh that moves under the rays, an odd viewport).
-    const seatY = sock ? floorY - (sock.seatWorldY - current.feetY) / unitsPerPx
+    const seatY = sock ? floorY - (sock.seatWorldY - current.feetY) / unitsPerPx + upTilt(sock.seatWorldZ ?? 0)
                        : py - SEAT_ABOVE_PY * (chair.heightUnits / u);
     const seatCenterX = sock ? centerX + sock.gapCenterWorldX / unitsPerPx : chairX + SEAT_X_OFFSET;
     const hipStandingY = floorY - current.hipY / unitsPerPx;
-    /* Two-bone IK for the legs. With the shin vertical, the foot lands exactly on the floor
-     * when cos θ = (drop − L2) / L1, where `drop` is how far the hip joint sits above the
-     * ankle's spot on the floor and L1/L2 are the thigh and shin measured on the rig. If her
-     * legs don't reach, θ = 0 and `legShort` says by how many px — a number in the open
-     * beats a foot hovering off the floor and nobody knowing why. */
-    const toPx = v => v / unitsPerPx;
-    const L1 = toPx(current.leg.thigh), L2 = toPx(current.leg.shin), anklePx = toPx(current.leg.ankle);
     const hipOnSeatPx = HIP_ON_SEAT_UNITS / unitsPerPx;   // el contacto, en píxeles de ESTA ventana
-    const drop = (floorY - anklePx) - (seatY - hipOnSeatPx);
-    const cos = L1 > 0 ? (drop - L2) / L1 : 1;
     /* Y en profundidad: su parte trasera (su propia caja, medida al cargar) tiene que quedar
      * delante de la cara del respaldo. Con las dos raíces en Z=0 su espalda arrancaba dentro
      * del respaldo y este se le dibujaba por encima de la cadera. */
@@ -812,12 +917,15 @@ function place() {
       dzUnits,
       approachZ,
       footZ,
-      footY: current.feetY + PHYS.shinR,   // el suelo + el radio de la ESPINILLA (el mayor): los dos apoyados, ninguno metido
+      /* El tobillo, a la altura que proyecta SOBRE la línea del suelo para su propia z (la
+       * compensación de la inclinación), MÁS lo que hay del tobillo a la suela: lo que se
+       * apoya en la línea es la SUELA, y con el tobillo justo en ella el pie quedaba medio
+       * fuera del lienzo por abajo (2 px más abajo) y no se leía como un pie. `leg.ankle` es
+       * esa altura, medida en el rig al cargar. */
+      footY: current.feetY + (footZ ?? 0) * Math.sin(CHAIR_ELEVATION) + (current.leg?.ankle || 0),
       rearZ: rear + dzUnits,
       dropUnits: Math.max(0, (seatY - hipOnSeatPx + SIT_FWD.y) - hipStandingY) * unitsPerPx,
-      seatY: Math.round(seatY),
-      legAngle: cos >= 1 ? 0 : (cos <= -1 ? Math.PI : Math.acos(cos)),
-      legShort: Math.max(0, Math.round(drop - (L1 + L2)))
+      seatY: Math.round(seatY)
     };
     stage.dataset.seat = String(sitGeom.seatY);
     stage.dataset.chairX = String(Math.round(chairX));
@@ -840,7 +948,7 @@ function place() {
    * constant built on it — stays exactly what it was. */
   const cosTilt = Math.cos(CHAIR_ELEVATION);
   camera.left = (left - centerX) * unitsPerPx; camera.right = (right - centerX) * unitsPerPx;
-  camera.bottom = (current.feetY - 2 * unitsPerPx) * cosTilt;
+  camera.bottom = (current.feetY - floorRoom * unitsPerPx) * cosTilt;
   camera.top = camera.bottom + height * unitsPerPx * cosTilt;
   camera.position.set(0, Math.sin(CHAIR_ELEVATION) * 10, Math.cos(CHAIR_ELEVATION) * 10);
   camera.lookAt(0, 0, 0);
@@ -942,6 +1050,7 @@ function tick() {
     const saved = posed.map(b => [b, b.quaternion.clone(), b.position.clone()]);
     updateLook(dt);
     applySitPose();
+    if (sitWeight > 0.001) placeHands(sitWeight);
     if (sitWeight > 0.001 && sitGeom) placeFeet(sitWeight);
     /* El empujón de prueba de la suite: la mete hacia el sillón sin pasar por la
      * animación, para comprobar que el paso de colisiones la deja fuera igual. */
@@ -957,14 +1066,43 @@ function tick() {
       const px = pen / (current.bodyH / layout.heightPx);
       /* Sentada y sin nadie empujando, vuelve sola a su sitio: los empujes de la colisión
        * desplazan la raíz y sin esto se quedaba corrida donde la dejara el último roce.
-       * Sólo cuando está libre (sin roce este cuadro): tirar de ella mientras la resolución
-       * la está sacando del sillón deja un tira y afloja de unos píxeles cada cuadro. */
-      if (pose === 'sitting' && !sitSeq && !Number(stage.dataset.shove) && sitGeom && !phys.rootPushed) {
-        const k = 1 - Math.exp(-dt * 3);
-        current.body.position.x += (sitGeom.dxUnits - current.body.position.x) * k;
-        current.body.position.z += (sitGeom.dzUnits - current.body.position.z) * k;
-        current.body.position.y += (-sitGeom.dropUnits - current.body.position.y) * k;
+       * El sitio es el RESUELTO, no el geométrico: el blanco de `dxUnits/dzUnits` cae unos
+       * píxeles dentro del apoyabrazos (su cuerpo no cabe entero en el hueco a la altura
+       * del brazo), así que el muelle la metía y la resolución la sacaba — un vaivén de
+       * ~3 px cada ~0.5 s que se veía como un balanceo sentada. El ancla se toma del primer
+       * cuadro SENTADA y, mientras nadie la empuje a propósito, sigue a los empujes de la
+       * resolución — pero sólo a los que dejan el cuadro LIMPIO (`px` ~0): si tras resolver
+       * queda solape (un pie metido que la resolución no puede sacar sin pelear), el ancla no
+       * se mueve y el muelle la trae de vuelta al sitio bueno en vez de quedarse en el malo.
+       * Así el cuerpo se para en el borde EXTERIOR de lo que la animación mete en el sillón
+       * (el clip Idle respira y se balancea) sin volver nunca a un sitio con roce: eso era el
+       * balanceo — ~3 px cada ~0.5 s con el blanco geométrico, ~1.3 px cada ~2 s con el
+       * ancla fija. Un empujón de prueba (`data-shove`) mueve a ella y NO al ancla. */
+      if (pose === 'sitting' && !sitSeq && sitGeom && !shove && px < 0.05 && (sitGeom.restX == null || phys.rootPushed)) {
+        sitGeom.restX = current.body.position.x;
+        sitGeom.restZ = current.body.position.z;
       }
+      /* El muelle tira hacia el ancla SIEMPRE que esté sentada (y nadie la empuje a
+       * propósito): desde que el ancla es el sitio resuelto, tirar de ella y sacarla del
+       * sillón son la misma dirección, así que ya no hay tira y afloja que evitar — y con el
+       * empujón de prueba salía de un pozo de 6 px sólo con los topes de la resolución. */
+      if (pose === 'sitting' && !sitSeq && sitGeom && !shove) {
+        const k = 1 - Math.exp(-dt * 3);
+        current.body.position.x += (sitGeom.restX - current.body.position.x) * k;
+        current.body.position.z += (sitGeom.restZ - current.body.position.z) * k;
+        /* El descenso al asiento, con el paso ACOTADO: un cuadro largo (una pestaña que se
+         * atasca, el resto de la suite corriendo) hacía un salto de decenas de píxeles y la
+         * hundía en el sillón de golpe — medido: 1 cuadro de más de 6 px de hondura en una
+         * corrida de cada tantas, contra ~2 px en las demás. El tope es el mismo recurso que
+         * `PHYS.maxPush`: sin saltos, y el muelle llega igual (unos cuadros más tarde). */
+        const step = (-sitGeom.dropUnits - current.body.position.y) * k;
+        const maxStep = SIT_DROP_MAX / (current.bodyH / layout.heightPx);
+        current.body.position.y += Math.max(-maxStep, Math.min(maxStep, step));
+      }
+      /* Cuánto la movió la colisión este cuadro (en unidades del modelo): vacío es que no
+       * tuvo que tocarla. Sentada y quieta tiene que quedarse vacío — si vuelve a haber
+       * empujes cada medio segundo, el ancla y la colisión están peleando otra vez. */
+      stage.dataset.pushRoot = phys.pushRoot.lengthSq() > 0 ? `${phys.pushRoot.x.toFixed(4)},${phys.pushRoot.z.toFixed(4)}` : '';
       stage.dataset.pen = px.toFixed(2);
       /* Y en unidades del modelo, que no dependen del tamaño de la ventana: 0.075 unidades
        * es el margen de la cápsula del brazo contra el apoyabrazos (la malla no cruza). */
@@ -990,6 +1128,52 @@ function tick() {
         .map(l => `${l.part}:${l.dir.x.toFixed(2)},${l.dir.y.toFixed(2)},${l.dir.z.toFixed(2)}@${l.depth.toFixed(3)}`).join(' ');
     }
     if (sitWeight > 0.001 && current.hips) reportHip();
+    /* --- TEMPORAL: mapa de primer impacto por píxel (banco de pruebas; NO commitear) ---
+     * Lanza rayos desde la cámara sobre la franja de los pies, en este cuadro YA posado, y
+     * publica qué objeto gana cada rayo: C=sillón, S=zapato/pie, L=piernas, B=cuerpo, .=nada.
+     * Es la única forma de saber qué tapa qué: un raycast fuera de este punto mediría la pose
+     * restaurada. Se pone `stage.dataset.dbgRay = '1'` y el mapa queda en ese mismo atributo. */
+    if (stage.dataset.dbgRay === '1') {
+      const ray = new THREE.Raycaster();
+      const tag = o => {
+        for (let n = o; n; n = n.parent) {
+          if (/ArmChair/i.test(n.name || '')) return 'C';
+          if (/^Cube047/.test(n.name || '')) return 'S';
+          if (/^Cube016/.test(n.name || '')) return 'L';
+          if (/^Cube03/.test(n.name || '')) return 'B';
+        }
+        return '#';
+      };
+      const rows = [];
+      for (let py = layout.floorY - 36; py <= layout.floorY + 10; py += 6) {
+        let line = '';
+        for (let px = layout.left + layout.width * 0.15; px < layout.left + layout.width * 0.85; px += 6) {
+          ray.setFromCamera({
+            x: ((px - layout.left) / layout.width) * 2 - 1,
+            y: -((py - layout.top) / layout.height) * 2 + 1,
+          }, camera);
+          const hit = ray.intersectObjects(scene.children, true).find(h => h.object.visible);
+          line += hit ? tag(hit.object) : '.';
+        }
+        rows.push(`${Math.round(py)} ${line}`);
+      }
+      stage.dataset.dbgRay = rows.join('\n');
+    }
+    /* --- TEMPORAL: caja de lo que se DIBUJA (banco de pruebas; NO commitear) ---
+     * Se mide aquí, antes de dibujar, porque la pose se deshace justo después: medir fuera de
+     * este punto devuelve la pose restaurada. Se dispara una sola vez: poner el atributo en '1'. */
+    if (stage.dataset.dbgBoxes === '1') {
+      const acc = {};
+      current.body.updateWorldMatrix(true, true);
+      current.body.traverse(o => {
+        if (!o.isSkinnedMesh || !o.geometry?.attributes?.position) return;
+        const bb = new THREE.Box3(), v = new THREE.Vector3();
+        const n = o.geometry.attributes.position.count;
+        for (let i = 0; i < n; i++) { o.getVertexPosition(i, v).applyMatrix4(o.matrixWorld); bb.expandByPoint(v); }
+        acc[o.name] = [bb.min.x, bb.min.y, bb.min.z, bb.max.x, bb.max.y, bb.max.z].map(x => +x.toFixed(3));
+      });
+      stage.dataset.dbgBoxes = JSON.stringify(acc);
+    }
     draw();
     for (const [b, q, p] of saved) { b.quaternion.copy(q); b.position.copy(p); }
   } catch (err) { fail(err); }
@@ -998,9 +1182,15 @@ function tick() {
 /* Test hooks: where her hip joint and her ankle end up on screen, in viewport pixels — a
  * test can then check she is really ON the seat and that her feet reach the floor. */
 function reportHip() {
-  const toScreen = v => Math.round(layout.floorY - (v.y - current.feetY) / (current.bodyH / layout.heightPx));
+  /* A pantalla, con la inclinación de la cámara incluida: un punto más cerca (z mayor) se
+   * dibuja más abajo (el mismo término que usa el sillón para apoyar su frente en la línea).
+   * Sin él, estos hooks publicaban la altura "en el aire" de un punto que en pantalla está
+   * 23 px más abajo — y la prueba de los pies medía contra un número que no era el dibujado. */
+  const toScreen = v => Math.round(layout.floorY - (v.y - current.feetY) / (current.bodyH / layout.heightPx)
+    + v.z * Math.sin(CHAIR_ELEVATION) / (current.bodyH / layout.heightPx));
   current.hips.getWorldPosition(SIT_V3);
   stage.dataset.hip = String(toScreen(SIT_V3));
+  stage.dataset.floor = String(Math.round(layout.floorY));
   if (current.foot) {
     current.foot.getWorldPosition(SIT_V3);
     stage.dataset.foot = String(toScreen(SIT_V3));
@@ -1011,10 +1201,20 @@ function reportHip() {
   }
 }
 
-// El eje del plano sagital de la IK (su normal), reutilizado cada cuadro.
-let LEG_AXIS = null;
 // Para medir el socket del sillón (una sola malla, sin partes con nombre).
 let _ray = null;
+// Temporales de la IK de los brazos: se crean en el arranque (three llega después).
+let _QI = null;
+let _hS = null, _hT = null, _hEl = null, _hElNow = null, _hDir = null, _hAim = null, _hPole = null, _hKnee = null, _hHip = null, _hTmp = null;
+let _hQ1 = null, _hQ2 = null, _hQ3 = null;
+// La distancia de cada muñeca a su blanco en el muslo, para `data-hands`.
+const handsPx = { L: '', R: '' };
+// Temporales y medida del acostado de los pies (suela plana en la línea).
+let _fUp = null, _fQ = null, _fWordUp = null;
+const feetFlat = { L: '', R: '' };
+// Temporales de la IK de las piernas y cuánto le falta a cada una para llegar al suelo.
+let _lFwd = null, _lLeft = null, _lHip = null, _lT = null, _lAim = null, _lPole = null, _lKnee = null, _lDir = null, _lNow = null, _lTmp = null;
+const legReach = { L: '0.0', R: '0.0' };
 
 /* --------------------------------------------------------------- descanso -- */
 
@@ -1048,41 +1248,73 @@ function alive() {
 
 function startSit() {
   pose = 'to-chair';
-  sitSeq = { phase: 'turn', t0: performance.now() };
+  sitSeq = { phase: 'walk1', t0: performance.now(), fromX: current.body.position.x, fromZ: current.body.position.z };
+  if (sitGeom) { sitGeom.restX = null; sitGeom.restZ = null; }   // el ancla se vuelve a medir en cada paseo
+  walkPrev = null; travelPeak = 0;
+  if (stage) stage.dataset.travelPeak = '0';
   if (phys) { phys.peak = 0; phys.shoved = 0; phys.phases = {}; phys.track = { over2: 0, over6: 0, frames: 0 }; }   // cada episodio se mide aparte
+  play('Walk', 0.25);
   hideBubble();
   setPose();
 }
 
 function standUp() {
-  sitSeq = { phase: 'rise', t0: performance.now(), weight: sitWeight };
+  sitSeq = { phase: 'rise', t0: performance.now(), weight: sitWeight, fromZ: current.body.position.z };
   pose = 'back';
   setPose();
 }
 
-/* Un paso de la secuencia: girar hacia el sillón, caminar, sentarse y girar de nuevo
- * hacia el cliente — y lo mismo al revés cuando vuelve. */
+/* El ángulo entre hacia dónde MIRA y hacia dónde CAMINA, en grados: 0 es caminar de frente,
+ * ±90 un paso de lado y ±180 caminar de espaldas. Se publica como `data-travel` mientras hay
+ * una pierna de caminata (y `data-travel-peak` guarda el peor del paseo), que es lo que la
+ * suite exige que se quede cerca de 0: el clip Walk es una zancada hacia adelante, así que
+ * cualquier otra cosa se ve como patinar. Se mide contra `bodyYaw` —el giro que decide la
+ * secuencia—, no contra el giro real del cuerpo: la mirada suma aparte (hasta ~13°), y que
+ * ella mire al cliente mientras camina es correcto. */
+function publishTravel() {
+  stage.dataset.sitPhase = sitSeq ? sitSeq.phase : '';
+  if (!current || !sitSeq || !WALK_PHASES.includes(sitSeq.phase)) { delete stage.dataset.travel; walkPrev = null; return; }
+  const { x, z } = current.body.position;
+  const dx = walkPrev ? x - walkPrev.x : 0, dz = walkPrev ? z - walkPrev.z : 0;
+  walkPrev = { x, z };
+  if (Math.hypot(dx, dz) < 1e-6) return;   // sin avance en este cuadro no hay veredicto
+  const fx = Math.sin(bodyYaw), fz = Math.cos(bodyYaw);
+  const deg = Math.atan2(fx * dz - fz * dx, fx * dx + fz * dz) * 180 / Math.PI;
+  travelPeak = Math.max(travelPeak, Math.abs(deg));
+  stage.dataset.travel = deg.toFixed(1);
+  stage.dataset.travelPeak = travelPeak.toFixed(1);
+}
+
+/* Un paso de la secuencia: caminar hasta el frente del sillón, girarse hacia él, caminar
+ * hasta el asiento y sentarse — y lo mismo al revés cuando vuelve. El camino es el L de
+ * siempre (de frente primero, de lado después: cruzarlo en diagonal metía las piernas por
+ * el mueble), pero cada pierna se camina MIRANDO A DONDE VA, y el giro va entre las dos. */
 function stepSit(now) {
   const g = sitGeom;
-  if (!g) { sitSeq = null; pose = 'standing'; setPose(); return; }
+  if (!g) { sitSeq = null; pose = 'standing'; setPose(); stage.dataset.sitPhase = ''; return; }
   const k = easeInOut(Math.min(1, (now - sitSeq.t0) / SIT_TURN_MS));
-  if (sitSeq.phase === 'turn') {
-    bodyYaw = -(Math.PI / 2) * k;
-    if (now - sitSeq.t0 >= SIT_TURN_MS) { sitSeq = { phase: 'walk', t0: now }; play('Walk', 0.25); }
-  } else if (sitSeq.phase === 'walk') {
-    /* Hasta el FRENTE del sillón y por fuera: primero se adelanta a su lado y después se
-     * corre hasta el centro. Caminar en diagonal cruzaba las piernas por el frente del
-     * sillón y la colisión tenía que sacarlas a empujones (medido: 9 px, 11 cuadros). */
-    const w = easeInOut(Math.min(1, (now - sitSeq.t0) / SIT_WALK_MS));
-    const az = g.approachZ ?? g.dzUnits;
-    if (w < 0.5) { current.body.position.z = az * (w / 0.5); current.body.position.x = 0; }
-    else { current.body.position.z = az; current.body.position.x = g.dxUnits * ((w - 0.5) / 0.5); }
-    if (now - sitSeq.t0 >= SIT_WALK_MS) { sitSeq = { phase: 'settle', t0: now }; play('Idle', 0.3); }
+  const leg = () => easeInOut(Math.min(1, (now - sitSeq.t0) / SIT_LEG_MS));
+  const az = g.approachZ ?? g.dzUnits;
+  if (sitSeq.phase === 'walk1') {
+    // De frente al cliente hasta ponerse delante del sillón (el clip Walk ya es una zancada
+    // hacia adelante: caminar de frente es lo que hace que se lea caminando).
+    bodyYaw = 0;
+    current.body.position.z = sitSeq.fromZ + (az - sitSeq.fromZ) * leg();
+    current.body.position.x = sitSeq.fromX;
+    if (now - sitSeq.t0 >= SIT_LEG_MS) { sitSeq = { phase: 'turn', t0: now }; play('Idle', 0.3); }
+  } else if (sitSeq.phase === 'turn') {
+    bodyYaw = -(Math.PI / 2) * k;   // se gira hacia el sillón para entrar de frente
+    if (now - sitSeq.t0 >= SIT_TURN_MS) { sitSeq = { phase: 'walk2', t0: now, fromX: current.body.position.x }; play('Walk', 0.25); }
+  } else if (sitSeq.phase === 'walk2') {
+    bodyYaw = -(Math.PI / 2);
+    current.body.position.x = sitSeq.fromX + (g.dxUnits - sitSeq.fromX) * leg();
+    current.body.position.z = az;
+    if (now - sitSeq.t0 >= SIT_LEG_MS) { sitSeq = { phase: 'settle', t0: now }; play('Idle', 0.3); }
   } else if (sitSeq.phase === 'settle') {
     const w = easeInOut(Math.min(1, (now - sitSeq.t0) / SIT_SETTLE_MS));
     sitWeight = w;
     // Del frente al asiento, y de pie a sentada: los dos movimientos a la vez.
-    current.body.position.z = (g.approachZ ?? g.dzUnits) * (1 - w) + g.dzUnits * w;
+    current.body.position.z = az * (1 - w) + g.dzUnits * w;
     // De caminar mirando al sillón a quedarse de tres cuartos: así se le ven los muslos
     // hacia adelante y se lee sentada, no de pie con las piernas cortas.
     bodyYaw = (1 - w) * -(Math.PI / 2) + w * sitYaw();
@@ -1090,24 +1322,45 @@ function stepSit(now) {
   } else if (sitSeq.phase === 'rise') {
     const w = easeInOut(Math.min(1, (now - sitSeq.t0) / STAND_MS));
     sitWeight = sitSeq.weight * (1 - w);
-    current.body.position.z = g.dzUnits * (1 - w) + (g.approachZ ?? g.dzUnits) * w; // se levanta hacia adelante
+    current.body.position.z = sitSeq.fromZ + (az - sitSeq.fromZ) * w;   // se levanta hacia adelante
     bodyYaw = sitYaw();
-    if (now - sitSeq.t0 >= STAND_MS) sitSeq = { phase: 'turnback', t0: now };
-  } else if (sitSeq.phase === 'turnback') {
-    bodyYaw = sitYaw() * (1 - k) + -(Math.PI / 2) * k;
-    if (now - sitSeq.t0 >= SIT_TURN_MS) { sitSeq = { phase: 'walkback', t0: now }; play('Walk', 0.25); }
-  } else if (sitSeq.phase === 'walkback') {
-    const w = easeInOut(Math.min(1, (now - sitSeq.t0) / SIT_WALK_MS));
-    current.body.position.x = g.dxUnits * (1 - w);
-    current.body.position.z = (g.approachZ ?? g.dzUnits) * (1 - w);
-    if (now - sitSeq.t0 >= SIT_WALK_MS) { sitSeq = { phase: 'face', t0: now }; play('Idle', 0.3); }
-  } else if (sitSeq.phase === 'face') {
-    bodyYaw = -(Math.PI / 2) * (1 - k);
+    if (now - sitSeq.t0 >= STAND_MS) sitSeq = { phase: 'turnback1', t0: now };
+  } else if (sitSeq.phase === 'turnback1') {
+    /* Se gira hacia donde VA a caminar (de espaldas al sillón), no hacia el sillón: girarse
+     * hacia el mueble y caminar hacia afuera es exactamente el moonwalk que se veía. */
+    bodyYaw = sitYaw() * (1 - k) + (Math.PI / 2) * k;
     if (now - sitSeq.t0 >= SIT_TURN_MS) {
+      /* Si la despertaron a mitad del paseo, algún tramo ya no tiene nada que caminar: no se
+       * camina en el sitio, se salta al siguiente (y así no hay saltos de posición). */
+      const nada = Math.abs(current.body.position.x) <= SIT_SKIP_UNITS;
+      sitSeq = nada ? { phase: 'turnback2', t0: now } : { phase: 'walkback1', t0: now, fromX: current.body.position.x };
+      if (!nada) play('Walk', 0.25);
+    }
+  } else if (sitSeq.phase === 'walkback1') {
+    bodyYaw = Math.PI / 2;
+    current.body.position.x = sitSeq.fromX * (1 - leg());
+    current.body.position.z = az;
+    if (now - sitSeq.t0 >= SIT_LEG_MS) { sitSeq = { phase: 'turnback2', t0: now }; play('Idle', 0.3); }
+  } else if (sitSeq.phase === 'turnback2') {
+    bodyYaw = (Math.PI / 2) * (1 - k) + Math.PI * k;   // se gira hacia su sitio, para ir de frente
+    if (now - sitSeq.t0 >= SIT_TURN_MS) {
+      const nada = current.body.position.z <= SIT_SKIP_UNITS;
+      sitSeq = nada ? { phase: 'face', t0: now } : { phase: 'walkback2', t0: now, fromZ: current.body.position.z };
+      if (!nada) play('Walk', 0.25);
+    }
+  } else if (sitSeq.phase === 'walkback2') {
+    bodyYaw = Math.PI;
+    current.body.position.z = sitSeq.fromZ * (1 - leg());
+    current.body.position.x = 0;
+    if (now - sitSeq.t0 >= SIT_LEG_MS) { sitSeq = { phase: 'face', t0: now }; play('Idle', 0.3); }
+  } else if (sitSeq.phase === 'face') {
+    bodyYaw = Math.PI * (1 - easeInOut(Math.min(1, (now - sitSeq.t0) / SIT_FACE_MS)));   // 180°: vuelve a mirar al cliente
+    if (now - sitSeq.t0 >= SIT_FACE_MS) {
       sitSeq = null; pose = 'standing'; setPose();
       lastAlive = performance.now();
     }
   }
+  publishTravel();
   current.body.position.y = -g.dropUnits * sitWeight;
   // El blanco de clic viaja con ella: sigue siendo ella la que se toca, esté donde esté.
   if (layout) hit.style.transform = `translateX(${Math.round(current.body.position.x / (current.bodyH / layout.heightPx))}px)`;
@@ -1119,49 +1372,174 @@ function stepSit(now) {
  * la mirada. No arregla el rig, pero pone los pies en el suelo. */
 function placeFeet(w) {
   if (!current.feet || !sitGeom) return;
-  for (const foot of current.feet) {
-    foot.getWorldPosition(SIT_V3);
-    // Apoyado, no dentro: el hueso del pie va a la altura del suelo MÁS su propio radio, que
-    // es justo donde lo quiere la colisión. Antes se subía "lo que bajó el cuerpo" y quedaba
-    // 0.028 unidades dentro del suelo: la resolución lo empujaba fuera cada cuadro y esto lo
-    // volvía a meter — 13 px de bamboleo visible en los pies.
-    SIT_V3.y = sitGeom.footY;
-    if (sitGeom.footZ != null) SIT_V3.z = sitGeom.footZ;   // delante del faldón, no bajo el asiento
+  for (const [side, foot, shin] of [['L', current.foot, current.knee], ['R', current.footR, current.kneeR]]) {
+    if (!foot || !shin) continue;
+    /* El pie va donde TERMINA LA ESPINILLA (posición + su largo por su eje), no donde lo dejó
+     * el clip: la malla del zapato está repartida entre los dos huesos (≈60% pie, 40%
+     * espinilla), así que un pie lejos de la punta de la espinilla estira la malla entre dos
+     * anclas y el zapato se ve como un borrón pegado a la pantorrilla. La espinilla ya está
+     * resuelta por la IK, con su punta en la línea del suelo (compensada por la inclinación y
+     * subida lo que hay del tobillo a la suela). */
+    shin.getWorldPosition(SIT_V3);
+    shin.getWorldQuaternion(_fQ);
+    _fUp.set(0, 1, 0).applyQuaternion(_fQ).multiplyScalar(current.leg.shin);
+    SIT_V3.add(_fUp);
     foot.position.lerp(foot.parent.worldToLocal(SIT_V3), w);
+    /* Y acostado: la suela horizontal, que es como está de pie. Sin esto el pie hereda del
+     * clip la punta hacia abajo y el taco hacia arriba, y el zapato cuelga. La referencia se
+     * midió al cargar (de pie, suelas en el suelo). */
+    const upLocal = current.footUp?.[side];
+    if (upLocal && _fUp) {
+      _fUp.copy(upLocal).applyQuaternion(foot.getWorldQuaternion(_fQ)).normalize();
+      const tilt = Math.acos(Math.min(1, Math.max(-1, _fUp.dot(_fWordUp))));
+      feetFlat[side] = (tilt * 180 / Math.PI).toFixed(1);
+      alignBoneWorld(foot, _fUp, _fWordUp, w);
+      // Y los dedos hacia afuera, que es como se lee un zapato desde esta cámara (ver SIT_FEET).
+      rotateAboutWorld(foot, WORLD_Y, (side === 'L' ? 1 : -1) * SIT_FEET.out * w);
+    }
   }
+  if (feetFlat.L && feetFlat.R) stage.dataset.feetFlat = `${feetFlat.L}|${feetFlat.R}`;
 }
 
 /* La pose de sentada, después del mixer (que manda sobre los huesos) y con el peso de la
- * transición; se restaura después de dibujar, como la mirada. Las piernas salen de la IK
- * (ángulo resuelto con las longitudes medidas), no de constantes. */
+ * transición; se restaura después de dibujar, como la mirada. Piernas y brazos salen de su IK
+ * (dos huesos, longitudes medidas en el rig), no de constantes. */
 function applySitPose() {
   if (!current || !sitGeom || sitWeight <= 0.001) return;
-  const th = sitGeom.legAngle;
-  // Su plano sagital está girado por el yaw de sentarse: el eje de la IK es su normal.
-  LEG_AXIS.set(Math.cos(sitYaw()), 0, -Math.sin(sitYaw()));
-  for (const n of ['UpperLeg.L', 'UpperLeg.R']) {
-    const bone = current.sitBones[n];
-    if (bone) rotateAboutWorld(bone, LEG_AXIS, -th * sitWeight);
-  }
-  for (const n of ['LowerLeg.L', 'LowerLeg.R']) {
-    const bone = current.sitBones[n];
-    if (bone) rotateAboutWorld(bone, LEG_AXIS, th * sitWeight);
-  }
+  /* Las piernas se pliegan ANTES de aterrizar: con el mismo peso que el descenso, el muslo
+   * barría el sillón mientras bajaba — medido, 1 cuadro de cada tantos con la pierna 13.27 px
+   * dentro (`settle`, parte `leg`). Como una persona: primero dobla, después se sienta. */
+  placeLegs(Math.min(1, sitWeight * 1.6));
   for (const [name, yaw, pitch] of SIT_UPPER) {
     const bone = current.sitBones[name];
     if (bone) rotateBoneWorld(bone, yaw, pitch * sitWeight);
   }
-  /* Brazos: al frente (pitch) y un poco hacia adentro (abducción con signo opuesto por
-   * lado — el espejo se hace sobre su eje, no sobre un eje del mundo). Sentada girada, el
-   * brazo de fuera se metía en el apoyabrazos: medido con las cápsulas, y por eso los
-   * brazos son colliders y no sólo decoración. */
-  for (const [n, sign] of [['UpperArm.L', -1], ['UpperArm.R', 1]]) {
-    const bone = current.sitBones[n];
-    if (bone) rotateBoneWorld(bone, sign * SIT_POSE.armIn * sitWeight, SIT_POSE.arm * sitWeight);
+}
+
+/* --------------------------- piernas de sentada (IK de dos huesos) -- */
+
+/* IK de dos huesos por pierna — el mismo triángulo que los brazos — con el blanco SIMÉTRICO
+ * (el tobillo sobre la línea del suelo, delante del faldón y a medio pie de la línea media) y
+ * el polo hacia adelante, que es hacia donde dobla la rodilla alguien sentado.
+ *
+ * Antes era UN ángulo para las dos piernas, resuelto del clip. El clip deja una pierna ~20 px
+ * más alta y ~24 px más adelante que la otra (se lee como pierna cruzada), y el zapato —una
+ * malla repartida entre el pie y la espinilla, ~60/40— quedaba estirado entre dos anclas
+ * separadas 30-40 px: la pierna visible bajaba por la x de la RODILLA y el zapato se dibujaba
+ * como un borrón pegado a la pantorrilla, con el pie del clip fuera de cuadro. Eso era el
+ * reporte "no le veo los pies cuando está sentada" — no la altura (que ya estaba en la línea),
+ * sino que el pie y su espinilla no estaban en el mismo sitio. */
+function placeLegs(w) {
+  if (!current?.leg || !sitGeom || w <= 0.001 || !_QI || !current.hips) return;
+  _lFwd.set(Math.sin(sitYaw()), 0, Math.cos(sitYaw()));
+  _lLeft.set(Math.cos(sitYaw()), 0, -Math.sin(sitYaw()));
+  for (const [side, upper, lower, kneeBone, foot] of [
+    ['L', current.sitBones['UpperLeg.L'], current.sitBones['LowerLeg.L'], current.knee, current.foot],
+    ['R', current.sitBones['UpperLeg.R'], current.sitBones['LowerLeg.R'], current.kneeR, current.footR]
+  ]) {
+    if (!upper || !lower || !kneeBone || !foot) continue;
+    /* El origen de la IK es el hueso del MUSLO, no la cadera: en este rig las piernas cuelgan
+     * de `Body`, no de `Hips`, y el triángulo resuelto desde la cadera quedaba unos píxeles
+     * corrido (el tobillo terminaba por encima del blanco). */
+    upper.getWorldPosition(_lHip);
+    /* El blanco: el tobillo, a un lado de la línea media (las piernas separadas, no juntas). */
+    _lT.copy(_lHip).addScaledVector(_lLeft, side === 'L' ? SIT_LEGS.stance : -SIT_LEGS.stance);
+    _lT.y = sitGeom.footY;
+    if (sitGeom.footZ != null) _lT.z = sitGeom.footZ;
+    _lAim.copy(_lT).sub(_lHip);
+    const want = _lAim.length();
+    const reach = (current.leg.thigh + current.leg.shin) * 0.995;
+    const dist = Math.min(want, reach);
+    if (dist < 1e-4) continue;
+    legReach[side] = (Math.max(0, want - reach) / (current.bodyH / layout.heightPx)).toFixed(1);
+    _lAim.normalize();
+    // El codo… la rodilla: a lo largo de cadera→tobillo y `b` perpendicular, hacia adelante.
+    const a = (current.leg.thigh * current.leg.thigh + dist * dist - current.leg.shin * current.leg.shin) / (2 * dist);
+    const b = Math.sqrt(Math.max(0, current.leg.thigh * current.leg.thigh - a * a));
+    _lPole.copy(_lFwd).addScaledVector(_lAim, -_lFwd.dot(_lAim));
+    if (_lPole.lengthSq() < 1e-6) _lPole.set(0, 1, 0).addScaledVector(_lAim, _lAim.y);
+    _lPole.normalize();
+    _lKnee.copy(_lHip).addScaledVector(_lAim, a).addScaledVector(_lPole, b);
+    // 1) el muslo apunta a la rodilla resuelta; 2) la espinilla, al tobillo del blanco.
+    kneeBone.getWorldPosition(_lDir).sub(_lHip).normalize();
+    alignBoneWorld(upper, _lDir, _lTmp.copy(_lKnee).sub(_lHip).normalize(), w);
+    kneeBone.getWorldPosition(_lNow);
+    // La dirección de la espinilla es SU EJE, no la recta rodilla→pie: la posición del pie la
+    // escribe `placeFeet` y el respaldo del cuadro la revierte, así que la recta apuntaba al
+    // pie del clip (a 30-40 px) y la pierna giraba a cualquier parte.
+    kneeBone.getWorldQuaternion(_fQ);
+    _lDir.set(0, 1, 0).applyQuaternion(_fQ).normalize();
+    alignBoneWorld(lower, _lDir, _lTmp.copy(_lT).sub(_lNow).normalize(), w);
   }
-  for (const n of ['LowerArm.L', 'LowerArm.R']) {
-    const bone = current.sitBones[n];
-    if (bone) rotateBoneWorld(bone, 0, SIT_POSE.elbow * sitWeight);
+  stage.dataset.legReach = `${legReach.L}|${legReach.R}`;
+}
+
+/* ------------------------------- manos sobre los muslos (IK de brazos) -- */
+
+/* Las manos se apoyan en los muslos con IK de dos huesos por brazo — la misma clase de
+ * solución que las piernas, y por la misma razón: un juego FIJO de rotaciones no llega. El
+ * clip deja los dos brazos en posturas distintas (medido: su muñeca derecha quedaba 21 px
+ * más alta que la izquierda, con las dos a 22 y 33 px por encima del muslo) y cada hombro
+ * está a otra distancia de su propio muslo. El blanco es un punto SOBRE la superficie del
+ * muslo —el contacto es un desnivel, no la coordenada del hueso—, el codo se resuelve por
+ * triángulo (ley de cosenos) y el plano de flexión mira hacia afuera y abajo, que es hacia
+ * donde apunta un codo de alguien sentado. */
+
+/* Gira un hueso para que su dirección actual (hueso → hijo) pase a ser `to`, en ejes del
+ * mundo: la rotación se pasa al espacio del padre (el hueso puede venir girado por el clip,
+ * por el giro del cuerpo y por la mirada). Con `weight` < 1 se mezcla hacia la identidad,
+ * que es como entra y sale con la transición de sentarse. */
+function alignBoneWorld(bone, fromDir, toDir, weight) {
+  if (!bone || !bone.parent || weight <= 0.001 || !_QI) return;
+  _hQ1.setFromUnitVectors(fromDir, toDir);
+  bone.parent.getWorldQuaternion(_hQ2);
+  _hQ3.copy(_hQ2).invert();
+  _hQ1.premultiply(_hQ3).multiply(_hQ2);
+  if (weight < 0.999) _hQ1.slerp(_QI, 1 - weight);
+  bone.quaternion.premultiply(_hQ1);
+  bone.updateWorldMatrix(false, true);
+}
+
+function placeHands(w) {
+  if (!current?.armSeg || !sitGeom || w <= 0.001 || !_QI || !current.hips) return;
+  for (const [side, sh, el, wr, knee] of [
+    ['L', current.shoulderL, current.elbowL, current.wristL, current.knee],
+    ['R', current.shoulderR, current.elbowR, current.wristR, current.kneeR]
+  ]) {
+    const seg = current.armSeg[side];
+    if (!seg || !sh || !el || !wr || !knee) continue;
+    sh.getWorldPosition(_hS);
+    knee.getWorldPosition(_hKnee);
+    current.hips.getWorldPosition(_hHip);
+    /* El blanco: a lo largo del muslo (de la cadera a la rodilla) y un desnivel por encima
+     * de su superficie, del tamaño de la mano: apoyada, no dentro. */
+    _hT.copy(_hHip).lerp(_hKnee, SIT_HANDS.t);
+    _hT.y += PHYS.thighR + PHYS.handR + SIT_HANDS.above;   // piel + mano + tela
+    _hAim.copy(_hT).sub(_hS);
+    const reach = (seg.upper + seg.fore) * 0.995;
+    const dist = Math.min(_hAim.length(), reach);
+    if (dist < 1e-4) continue;
+    _hAim.normalize();
+    // El codo: a lo largo de hombro→blanco y `b` perpendicular a eso, hacia el polo.
+    const a = (seg.upper * seg.upper + dist * dist - seg.fore * seg.fore) / (2 * dist);
+    const b = Math.sqrt(Math.max(0, seg.upper * seg.upper - a * a));
+    _hPole.set(side === 'L' ? SIT_HANDS.out : -SIT_HANDS.out, -SIT_HANDS.down, -SIT_HANDS.back).normalize();
+    _hPole.addScaledVector(_hAim, -_hPole.dot(_hAim));
+    if (_hPole.lengthSq() < 1e-6) _hPole.set(0, -1, 0).addScaledVector(_hAim, _hAim.y);
+    _hPole.normalize();
+    _hEl.copy(_hS).addScaledVector(_hAim, a).addScaledVector(_hPole, b);
+    // 1) el hombro apunta al codo resuelto; 2) el codo, a la muñeca sobre el blanco.
+    el.getWorldPosition(_hDir).sub(_hS).normalize();
+    alignBoneWorld(sh, _hDir, _hTmp.copy(_hEl).sub(_hS).normalize(), w);
+    el.getWorldPosition(_hElNow);
+    wr.getWorldPosition(_hDir).sub(_hElNow).normalize();
+    alignBoneWorld(el, _hDir, _hTmp.copy(_hT).sub(_hElNow).normalize(), w);
+    /* Lo que quedó la muñeca del blanco, en px: es la medida de "la mano se apoya en el
+     * muslo" — 0 es apoyada; un gesto fijo la dejaba 22 px (izquierda) y 33 px (derecha) por
+     * encima, que es lo que se veía como manos flotando frente al vientre. */
+    wr.getWorldPosition(_hTmp);
+    handsPx[side] = (_hTmp.distanceTo(_hT) / (current.bodyH / layout.heightPx)).toFixed(1);
+    if (side === 'R') stage.dataset.hands = `${handsPx.L}|${handsPx.R}`;
   }
 }
 
@@ -1237,7 +1615,15 @@ async function start() {
   await loadThree();
   M = _m(); AXIS = new THREE.Vector3(); DQ = new THREE.Quaternion();
   SIT_V3 = new THREE.Vector3();
-  LEG_AXIS = new THREE.Vector3();
+  _QI = new THREE.Quaternion();
+  _hS = new THREE.Vector3(); _hT = new THREE.Vector3(); _hEl = new THREE.Vector3(); _hElNow = new THREE.Vector3();
+  _hDir = new THREE.Vector3(); _hAim = new THREE.Vector3(); _hPole = new THREE.Vector3(); _hKnee = new THREE.Vector3();
+  _hHip = new THREE.Vector3(); _hTmp = new THREE.Vector3();
+  _hQ1 = new THREE.Quaternion(); _hQ2 = new THREE.Quaternion(); _hQ3 = new THREE.Quaternion();
+  _fUp = new THREE.Vector3(); _fQ = new THREE.Quaternion(); _fWordUp = new THREE.Vector3(0, 1, 0);
+  _lFwd = new THREE.Vector3(); _lLeft = new THREE.Vector3(); _lHip = new THREE.Vector3(); _lT = new THREE.Vector3();
+  _lAim = new THREE.Vector3(); _lPole = new THREE.Vector3(); _lKnee = new THREE.Vector3(); _lDir = new THREE.Vector3();
+  _lNow = new THREE.Vector3(); _lTmp = new THREE.Vector3();
   _ray = new THREE.Raycaster();
   await loadPhysics();
   stage.dataset.phys = phys ? 'rapier' : 'sin-colisiones';
@@ -1246,7 +1632,7 @@ async function start() {
   if (!current || current.kind !== cfg.character) await loadCharacter(cfg.character);
   applyBrandSuit(cfg.brandSuit);
   place();
-  if (current.leg) stage.dataset.legAngle = (sitGeom?.legAngle ?? -1).toFixed(3);
+  if (current.leg) stage.dataset.legReach = `${legReach.L}|${legReach.R}`;
   lastAlive = performance.now();
   setPose();
   stage.classList.add('ready');

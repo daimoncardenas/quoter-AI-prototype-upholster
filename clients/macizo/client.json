@@ -6,6 +6,7 @@
   "shortName": "Macizo",
   "assistantName": "Asistente Macizo",
   "assistant": { "enabled": true, "character": "female", "name": "Lía", "brandSuit": false },
+  "senderEmail": "cotizaciones@macizo.example",
   "storageNamespace": "mcz.v1.",
   "photosDbName": "mcz-photos",
   "meta": {

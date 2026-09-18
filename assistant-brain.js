@@ -22,6 +22,7 @@
   'use strict';
 
   const STEPS = [
+    { n: 0, id: 'SERVICE', name: 'Tu línea de servicio' },
     { n: 1, id: 'FURNITURE', name: 'Tu mueble' },
     { n: 2, id: 'MEASUREMENTS', name: 'Medidas' },
     { n: 3, id: 'PREFERENCES', name: 'Preferencias' },
@@ -176,7 +177,7 @@
     const measures = extractMeasurements(t);
     const qty = t.match(/(\d{1,2})\s*(puestos|plazas|sillas|cuerpos|unidades|cojines?)\b/);
     if (Object.keys(measures).length || (qty && !/cojin/.test(qty[2]))) {
-      if (step < 2) return reply('Anótalo: en el paso 2 (Medidas) podrás escribir esas medidas. Primero elige el mueble y sube las fotos.');
+      if (step < 2) return reply('Anótalo: en Medidas podrás escribir esas medidas. Primero elige el mueble y sube las fotos.');
       const actions = step > 2 ? [{ type: 'NAVIGATE_TO_STEP', step: 2 }] : [];
       for (const [field, value] of Object.entries(measures)) actions.push({ type: 'SET_FIELD', field, value });
       if (qty && !/cojin/.test(qty[2])) actions.push({ type: 'SET_FIELD', field: 'measurements.quantity', value: parseInt(qty[1], 10) });
@@ -188,7 +189,7 @@
       const base = 'Con mascotas conviene una tela de fácil limpieza, trama cerrada y buena resistencia al rasguño.';
       if (pets === true) return reply(`${base} Ya tienes «Mascotas» marcado en tus preferencias, así que lo tendré en cuenta al recomendarte telas.`);
       if (pets === null) return reply(base);
-      if (step < 3) return reply(`${base} Cuando lleguemos a Preferencias (paso 3) te propondré marcarlo.`);
+      if (step < 3) return reply(`${base} Cuando lleguemos a Preferencias te propondré marcarlo.`);
       const actions = step > 3 ? [{ type: 'NAVIGATE_TO_STEP', step: 3 }] : [];
       actions.push({ type: 'SET_FIELD', field: 'preferences.pets', value: true });
       return reply(`${base} ¿Quieres que marque «Mascotas» en tus preferencias?`, actions);

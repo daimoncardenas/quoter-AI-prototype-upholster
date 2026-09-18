@@ -1,5 +1,6 @@
 import { chromium } from 'playwright';
 import { PHOTOS_DB } from './client.mjs';
+import { openWizard } from './helpers.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 const png = ['1','2','3'].map(n=>new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
 let fails = 0;
@@ -8,7 +9,7 @@ const check = (n, got, want) => { const ok = JSON.stringify(got)===JSON.stringif
 const browser = await chromium.launch(); const page = await browser.newPage();
 const errs = []; page.on('pageerror', e => errs.push(String(e)));
 async function fresh(){ await page.goto(D+'index.html');
-  await page.evaluate((db)=>{localStorage.clear();indexedDB.deleteDatabase(db)}, PHOTOS_DB); await page.goto(D+'index.html'); }
+  await page.evaluate((db)=>{localStorage.clear();indexedDB.deleteDatabase(db)}, PHOTOS_DB); await openWizard(page, D); }
 async function reach(step){
   await page.setInputFiles('#furniturePhoto', png);
   await page.waitForFunction(()=>state.photos.length>=3);

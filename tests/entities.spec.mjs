@@ -1,13 +1,13 @@
 import { chromium } from 'playwright';
 import { PHOTOS_DB } from './client.mjs';
-import { openAdmin, setTags } from './helpers.mjs';
+import { openAdmin, openWizard, setTags } from './helpers.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 let fails = 0;
 const check = (n, got, want) => { const ok = JSON.stringify(got)===JSON.stringify(want); if(!ok)fails++;
   console.log(`  ${ok?'PASS':'FAIL'}  ${n}` + (ok?'':`\n        got:  ${JSON.stringify(got)}\n        want: ${JSON.stringify(want)}`)); };
 const b = await chromium.launch(); const page = await b.newPage();
 const errs=[]; page.on('pageerror',e=>errs.push(String(e)));
-const fresh = async f => { await page.goto(D+f); await page.evaluate((db)=>{localStorage.clear();indexedDB.deleteDatabase(db)}, PHOTOS_DB); if(f==='admin.html'){await openAdmin(page,D)}else{await page.goto(D+f)} };
+const fresh = async f => { await page.goto(D+f); await page.evaluate((db)=>{localStorage.clear();indexedDB.deleteDatabase(db)}, PHOTOS_DB); if(f==='admin.html'){await openAdmin(page,D)}else{await openWizard(page,D)} };
 
 console.log('\nTODA ENTIDAD DEL COTIZADOR VIVE EN EL STORE');
 await fresh('index.html');
@@ -46,7 +46,7 @@ await page.fill(F+'[name=order]','7');
 await page.click(F+'button.primary');
 check('guardar confirma que el cotizador ya lo usa',(await page.textContent('#toast')).includes('cotizador'),true);
 
-await page.goto(D+'index.html');
+await openWizard(page, D);
 check('el mueble nuevo se ofrece al cliente',
   await page.$$eval('.furniture-card', e=>e.map(c=>c.dataset.furniture).includes('Puf')), true);
 await page.click('.furniture-card[data-furniture="Puf"]');
@@ -75,7 +75,7 @@ await page.click('button[data-page="furniture"]');
 await page.click('[data-edit-furniture="silla"]');
 await page.selectOption(F+'[name=active]','false');
 await page.click(F+'button.primary');
-await page.goto(D+'index.html');
+await openWizard(page, D);
 check('la silla desaparece para el cliente',
   await page.$$eval('.furniture-card', e=>e.map(c=>c.dataset.furniture).includes('Silla')), false);
 
@@ -86,7 +86,7 @@ await setTags(page,'#setNeeds',['Mascotas','Antialérgico']);
 await setTags(page,'#setStyles',['Nórdico','Industrial']);
 await page.fill('#setCovSeatsMin','50'); await page.fill('#setCovSeatsMax','55');
 await page.click('#saveSettings');
-await page.goto(D+'index.html');
+await openWizard(page, D);
 check('las necesidades cambian', await page.$$eval('.chip-grid input',e=>e.map(i=>i.value)), ['Mascotas','Antialérgico']);
 check('los estilos cambian', await page.$$eval('#style option',e=>e.map(o=>o.textContent)), ['Nórdico','Industrial']);
 check('el multiplicador de cobertura cambia el cálculo', await page.evaluate(()=>{

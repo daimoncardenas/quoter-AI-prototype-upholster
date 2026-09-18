@@ -7,7 +7,7 @@
  * pasaba con sellerId en quotes. */
 import { chromium } from 'playwright';
 import { client, PHOTOS_DB, userEmail, emailFor } from './client.mjs';
-import { openAdmin } from './helpers.mjs';
+import { openAdmin, openWizard } from './helpers.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 const png = ['1','2','3'].map(n => new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
 
@@ -39,7 +39,7 @@ async function wizardTo(step, opts = {}) {
  * label), sin tocar el store previo — así una escena puede montarse sobre lo
  * que dejó la anterior. */
 async function submitQuote(cityOption) {
-  await page.goto(D + 'index.html');
+  await openWizard(page, D);
   await wizardTo(5, { city: cityOption });
   await page.click('#fabricGrid .fabric-card:nth-child(1)');
   await page.click('#nextButton');
@@ -100,7 +100,7 @@ const auroraId = await newPoint('Zona Aurora', 'Ciudad Aurora');
 check('el backoffice confirma que el cotizador ya lo usa',
   (await page.textContent('#toast')).includes('cotizador'), true);
 
-await page.goto(D + 'index.html');
+await openWizard(page, D);
 check('el punto nuevo aparece en el selector, con su propia ciudad como grupo',
   (await cityGroups()).some(g => g.label === 'Ciudad Aurora' && g.options.includes('Zona Aurora')), true);
 
@@ -109,7 +109,7 @@ await page.click('button[data-page="points"]');
 await page.click(`[data-edit-point="${auroraId}"]`);
 await page.selectOption('#pointForm [name=active]', 'false');
 await page.click('#pointForm button.primary');
-await page.goto(D + 'index.html');
+await openWizard(page, D);
 check('pausarlo lo saca del selector', (await cityOptionTexts()).includes('Zona Aurora'), false);
 
 await openAdmin(page, D);
@@ -122,7 +122,7 @@ await page.click('#pointForm button.primary');
 await page.click('[data-edit-point="sp-patio-bonito"]');
 await page.fill('#pointForm [name=order]', '1');
 await page.click('#pointForm button.primary');
-await page.goto(D + 'index.html');
+await openWizard(page, D);
 const bogotaGroup = (await cityGroups()).find(g => g.label === 'Bogotá');
 check('cambiar el orden reordena el grupo', bogotaGroup.options, ['Patio Bonito','12 de Octubre','Primera de Mayo']);
 
@@ -153,7 +153,7 @@ await page.click(`[data-edit-point="${multiId}"]`);
 await page.fill('#pointForm [name=name]', 'Zona Multi Renombrada');
 await page.click('#pointForm button.primary');
 
-await page.goto(D + 'index.html');
+await openWizard(page, D);
 const renamedOptions = await cityOptionTexts();
 check('el selector muestra el nombre nuevo', renamedOptions.includes('Zona Multi Renombrada'), true);
 check('y ya no el viejo', renamedOptions.includes('Zona Multi'), false);
@@ -182,11 +182,11 @@ await page.click('#deletePoint');
 await page.click('#confirmOk');
 check('la ficha del vendedor pierde esa cobertura',
   await page.evaluate(id => Store.get('sellers', 2).servicePointIds.includes(id), borrarId), false);
-await page.goto(D + 'index.html');
+await openWizard(page, D);
 check('y desaparece del selector', (await cityOptionTexts()).includes('Zona Borrar'), false);
 
 console.log('\nUN NAVEGADOR CON ZONAS DE TEXTO LIBRE MIGRA A PUNTOS POR ID');
-await page.goto(D + 'index.html');
+await openWizard(page, D);
 await page.evaluate((db) => { localStorage.clear(); indexedDB.deleteDatabase(db); }, PHOTOS_DB);
 await page.evaluate(({ ns, lauraEmail, customEmail }) => {
   // Forma antigua y ningún <ns>servicePoints — dispara la migración en el
@@ -207,7 +207,7 @@ await page.evaluate(({ ns, lauraEmail, customEmail }) => {
       zones: ['Chía', 'Medellín'], active: true, quotes: 0 }
   ]));
 }, { ns: client.storageNamespace, lauraEmail: userEmail('u-laura'), customEmail: emailFor('custom') });
-await page.goto(D + 'index.html');
+await openWizard(page, D);
 const pointNamesAfterMigration = await page.evaluate(() => Store.all('servicePoints').map(p => p.name));
 check('"Bogotá Norte" nunca se crea: solo la tenía una vendedora semilla, y esa se resuelve por su cobertura real',
   pointNamesAfterMigration.includes('Bogotá Norte'), false);

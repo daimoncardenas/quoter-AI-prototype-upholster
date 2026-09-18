@@ -1,0 +1,20 @@
+{
+  "lines": [
+    { "id": "suministro-tela", "label": "Suministro de tela", "journey": "suministro", "minPlan": "base",
+      "hint": "Te decimos cuántos metros necesita tu mueble y a qué precio la referencia que elijas." },
+    { "id": "retapizado", "label": "Retapizado de muebles", "journey": "existente", "minPlan": "base",
+      "hint": "Cambiamos tela y rellenos de tu mueble, con la estructura como está." },
+    { "id": "cambio-de-tela", "label": "Cambio de tela", "journey": "existente", "minPlan": "Professional",
+      "hint": "Solo la cubierta: la estructura y los rellenos siguen bien." },
+    { "id": "reparacion", "label": "Reparación y restauración", "journey": "existente", "minPlan": "Professional",
+      "hint": "Estructura, resortes, madera y acabados, además de la tela." },
+    { "id": "a-la-medida", "label": "Muebles a la medida", "journey": "nueva", "minPlan": "Professional",
+      "hint": "Fabricamos la pieza desde cero, con tus medidas y tus acabados." },
+    { "id": "proyecto-comercial", "label": "Proyecto comercial", "journey": "proyecto", "minPlan": "Business",
+      "hint": "Cantidades, instalación y entrega para hoteles, oficinas y locales." },
+    { "id": "tapiceria-arquitectonica", "label": "Tapicería arquitectónica", "journey": "proyecto", "minPlan": "Business",
+      "hint": "Paneles, muros y techos tapizados, con medidas y acabados de obra." },
+    { "id": "mantenimiento", "label": "Mantenimiento y limpieza", "journey": "existente", "minPlan": "Business",
+      "hint": "Limpieza profunda, tratamientos de protección y repaso de piezas en uso." }
+  ]
+}

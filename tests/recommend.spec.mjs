@@ -1,12 +1,12 @@
 import { chromium } from 'playwright';
-import { openAdmin } from './helpers.mjs';
+import { openAdmin, openWizard } from './helpers.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 let fails = 0;
 const check = (n, got, want) => { const ok = JSON.stringify(got)===JSON.stringify(want); if(!ok)fails++;
   console.log(`  ${ok?'PASS':'FAIL'}  ${n}` + (ok?'':`\n        got:  ${JSON.stringify(got)}\n        want: ${JSON.stringify(want)}`)); };
 const b = await chromium.launch(); const page = await b.newPage();
 const errs=[]; page.on('pageerror',e=>errs.push(String(e)));
-await page.goto(D+'index.html'); await page.evaluate(()=>localStorage.clear()); await page.goto(D+'index.html');
+await openWizard(page, D); await page.evaluate(()=>localStorage.clear()); await openWizard(page, D);
 const rank = c => page.evaluate(x=>Store.recommend(x).map(r=>({n:r.fabric.name,s:r.score,over:r.overBudget,why:r.reasons})), c);
 
 console.log('\nLA NECESIDAD MANDA');
@@ -68,7 +68,7 @@ await page.click('button[data-page="fabrics"]');
 await page.click('[data-edit-fabric="1"]');                       // Lino Verona
 await page.selectOption('#fabricForm [name=needs]',['Mascotas']);
 await page.click('#fabricForm button.primary');
-await page.goto(D+'index.html');
+await openWizard(page, D);
 check('marcar "Mascotas" en una tela la sube en el cotizador',
   (await rank({needs:['Mascotas'],budget:160000}))[0].n, 'Lino Verona');
 

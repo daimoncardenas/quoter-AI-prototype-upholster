@@ -16,7 +16,7 @@ import { chromium } from 'playwright';
 import { readFileSync } from 'node:fs';
 import { generate } from '../tools/generate.mjs';
 import { loadClientPack, listAvailableClients } from '../tools/client-pack.mjs';
-import { openAdmin, setTags } from './helpers.mjs';
+import { openAdmin, openWizard, setTags } from './helpers.mjs';
 
 const PHOTOS = ['1', '2', '3'].map(n => new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
 
@@ -44,6 +44,33 @@ for (const slug of ALL_SLUGS) {
   const { client, seed } = loadClientPack(slug.toUpperCase());
   markersBySlug[slug] = [client.displayName, `'${client.storageNamespace}'`, seed.settings.senderEmail].filter(Boolean);
 }
+
+/* La regla de arquitectura, comprobada: las TRES PLANTILLAS son las mismas para todos los
+ * clientes — el flujo vive en index.html/admin.html/store.js y lo que cambia por cliente son
+ * los DATOS del paquete (marca, tema, logo, líneas de servicio). Un dato de cliente escrito en
+ * una plantilla rompe esa promesa (y mañana obliga a tocar código por cada cliente nuevo), así
+ * que aquí se busca cada marcador de cada paquete dentro de las plantillas, con los COMENTARIOS
+ * quitados: un comentario que usa "Macizo" como ejemplo no es una fuga; un valor en el código sí.
+ * Los literales de color también cuentan: el tema del paquete llega por variables CSS. */
+const stripComments = s => s
+  .replace(/\/\*[\s\S]*?\*\//g, ' ')
+  .replace(/<!--[\s\S]*?-->/g, ' ')
+  .replace(/^[ \t]*\/\/.*$/gm, ' ');
+const TEMPLATES = ['index.html', 'admin.html', 'store.js'].map(f => [f, stripComments(readFileSync(f, 'utf8'))]);
+const templateLeaks = [];
+for (const slug of ALL_SLUGS) {
+  const { client } = loadClientPack(slug.toUpperCase());
+  /* Las etiquetas del catálogo son copy del producto (shared/service-lines.json, inyectado por
+   * token); lo que un paquete aporta son su marca, su correo y sus namespaces, y eso no puede
+   * aparecer literal en una plantilla. */
+  const valores = [...markersBySlug[slug], client.senderEmail, client.theme.accent];
+  for (const [file, text] of TEMPLATES) {
+    for (const v of valores) if (v && text.includes(v)) templateLeaks.push(`${file}: ${JSON.stringify(v)} (de clients/${slug}/)`);
+  }
+}
+console.log('\nLAS PLANTILLAS (HTML/JS) NO LLEVAN NADA DE NINGÚN CLIENTE: ES EL MISMO CÓDIGO PARA TODOS');
+check('ninguna plantilla contiene datos de ningún paquete (marca, líneas de servicio, correo, color de acento)',
+  templateLeaks, []);
 
 // #rrggbb -> "rgb(r, g, b)", to compare against getComputedStyle()'s format.
 const hexToRgbCss = hex => {
@@ -162,6 +189,26 @@ for (const slug of SLUGS) {
   check('Sedes suma la Sede adicional comprada al límite de Professional (3 + 1)',
     await page.$eval('#usageGrid [data-metric="locations"] .usage-value', e => e.textContent.endsWith(' de 4')), true);
 
+  console.log(`\nLAS LÍNEAS DE SERVICIO DE ${CLIENT}: EL PLAN DECIDE CUÁLES SE OFRECEN`);
+  /* Las líneas las define el PLAN: el catálogo es del producto (shared/service-lines.json, que
+   * llega al cliente en `serviceLines`) y el paquete no declara ninguna. El plan vigente es
+   * Professional (se cambió arriba). */
+  const SERVICIO_RANK = { base: 0, Essential: 0, Professional: 1, Business: 2 };
+  const lineasPagina = await page.evaluate(() => ({
+    lista: Store.services().map(s => [s.id, s.label, s.requiredPlan, s.enabled]),
+    habilitadas: Store.servicesEnabled().map(s => s.id),
+  }));
+  const vivas = client.serviceLines;
+  check('el backoffice lista las líneas vivas del catálogo con su plan',
+    lineasPagina.lista,
+    vivas.map(s => [s.id, s.label, s.minPlan === 'base' ? 'Essential' : s.minPlan, SERVICIO_RANK[s.minPlan] <= SERVICIO_RANK['Professional']]));
+  check('y el cotizador habilita exactamente las que el plan cubre',
+    lineasPagina.habilitadas,
+    vivas.filter(s => SERVICIO_RANK[s.minPlan] <= SERVICIO_RANK['Professional']).map(s => s.id));
+  check('la lista del backoffice muestra las líneas habilitadas',
+    await page.$$eval('#serviceLines li strong', els => els.map(e => e.textContent)),
+    vivas.map(s => s.label));
+
   console.log('page errors: ' + (errs.length ? errs.join(' | ') : 'none'));
   if (errs.length) fails++;
 
@@ -178,7 +225,7 @@ for (const slug of SLUGS) {
   await page.close();
 
   const indexPage = await b.newPage();
-  await indexPage.goto(D + 'index.html');
+  await openWizard(indexPage, D);
   const headerBg = await indexPage.evaluate(() => getComputedStyle(document.querySelector('.site-header')).backgroundColor);
   const shellBg = await indexPage.evaluate(() => getComputedStyle(document.querySelector('.app-shell')).backgroundColor);
   if (client.colorMode === 'inverted') {
@@ -188,6 +235,33 @@ for (const slug of SLUGS) {
     check('cotizador: el header usa theme.ink (modo normal)', headerBg, hexToRgbCss(client.theme.ink));
     check('cotizador: el panel principal es blanco (modo normal)', shellBg, hexToRgbCss('#ffffff'));
   }
+
+  /* La pregunta por la línea es un paso CONDICIONAL y PROPIO (el paso 0): con UNA línea
+   * habilitada el paso no existe — el cotizador entra derecho al paso 1 y la numeración se
+   * queda en 6 — y con dos o más aparece, con la numeración en 7. El plan vive en el
+   * almacenamiento del navegador y esta pestaña es un contexto nuevo (arranca en el plan por
+   * defecto), así que se pone Professional a mano y se recarga: el candado se comprueba de
+   * punta a punta. */
+  await indexPage.evaluate(() => Store.saveSettings({ plan: 'Professional' }));
+  await indexPage.reload();
+  /* Con el paso de la línea activo, la grilla de muebles (paso 1) está OCULTA: waitForSelector
+   * espera visible por defecto, así que se espera cualquiera de los dos — el selector de línea
+   * cuando existe, o la grilla cuando no hay paso de línea. */
+  await indexPage.waitForSelector('#serviceGrid .service-choice, .furniture-grid .furniture-card', { timeout: 10000 });
+  const pasoUno = await indexPage.evaluate(() => ({
+    habilitadas: Store.servicesEnabled().map(s => s.label),
+    paso: !document.querySelector('[data-step-dot="0"]').hidden,
+    activo: document.querySelector('.wizard-step.active').dataset.step,
+    pasos: document.getElementById('mobileStep').textContent,
+    tarjetas: [...document.querySelectorAll('#serviceGrid .service-choice b')].map(e => e.textContent),
+    nota: document.getElementById('servicePlanNote').textContent,
+  }));
+  const esperadasIndex = vivas.filter(s => SERVICIO_RANK[s.minPlan] <= SERVICIO_RANK['Professional']).map(s => s.label);
+  const hayPaso = esperadasIndex.length > 1;
+  check('el paso «¿qué quieres hacer?» existe solo con más de una línea, y es su propio paso',
+    { paso: pasoUno.paso, activo: pasoUno.activo, pasos: pasoUno.pasos, tarjetas: pasoUno.tarjetas, nota: pasoUno.nota },
+    hayPaso ? { paso: true, activo: '0', pasos: 'Paso 1 de 7', tarjetas: esperadasIndex, nota: `Tu plan Professional incluye ${esperadasIndex.length} líneas de servicio.` }
+            : { paso: false, activo: '1', pasos: 'Paso 1 de 6', tarjetas: [], nota: '' });
   await indexPage.close();
 
   /* The pack is the brand's DEFAULT: with nothing saved both pages render it
@@ -209,7 +283,7 @@ for (const slug of SLUGS) {
   await brandPage.click('#saveBrand');
   await brandPage.waitForFunction(() => document.getElementById('toast').classList.contains('show'));
   check('el color queda guardado como override', await brandPage.evaluate(() => Store.brandOverrides().colors), { ink: BRAND_INK });
-  await brandPage.goto(D + 'index.html');
+  await openWizard(brandPage, D);
   const brandSurface = client.colorMode === 'inverted' ? '.app-shell' : '.site-header';
   check(`cotizador: ${brandSurface} toma el color guardado`,
     await brandPage.evaluate(s => getComputedStyle(document.querySelector(s)).backgroundColor, brandSurface), hexToRgbCss(BRAND_INK));
@@ -226,11 +300,11 @@ for (const slug of SLUGS) {
   const loop = await b.newPage();
   const loopErrs = [];
   loop.on('pageerror', e => loopErrs.push(String(e)));
-  await loop.goto(D + 'index.html');
+  await openWizard(loop, D);
   await loop.evaluate(db => { localStorage.clear(); indexedDB.deleteDatabase(db); }, client.photosDbName);
   const fabricNames = () => loop.$$eval('.fabric-card-body > b', els => els.map(e => e.textContent));
   const toFabricStep = async () => {
-    await loop.goto(D + 'index.html');
+    await openWizard(loop, D);
     await loop.setInputFiles('#furniturePhoto', PHOTOS);
     await loop.waitForFunction(() => state.photos.length >= 3);
     await loop.click('#nextButton');
@@ -265,7 +339,7 @@ for (const slug of SLUGS) {
     await loop.fill(`${F}[name=${name}]`, value);
   }
   await loop.click(F + 'button.primary');
-  await loop.goto(D + 'index.html');
+  await openWizard(loop, D);
   check('un mueble creado en el backoffice aparece en el cotizador',
     await loop.$$eval('.furniture-card', els => els.map(c => c.dataset.furniture).includes('Puf Prueba')), true);
 
@@ -273,7 +347,7 @@ for (const slug of SLUGS) {
   await loop.click('button[data-page="settings"]');
   await setTags(loop, '#setBudgets', ['30000', '40000', '50000']);
   await loop.click('#saveSettings');
-  await loop.goto(D + 'index.html');
+  await openWizard(loop, D);
   check('los rangos de presupuesto del backoffice son los del cotizador',
     await loop.$$eval('#budget option', els => els.map(e => e.value)), ['30000', '40000', '50000', '']);
 

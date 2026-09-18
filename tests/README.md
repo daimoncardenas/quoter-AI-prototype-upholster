@@ -25,7 +25,11 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   have recognised the furniture in the image.
 - `wiring.spec.mjs` — the loop between the two pages: a tela created in the
   backoffice reaching the cotizador, a submitted quote (with its photo) reaching
-  the backoffice, and the backoffice settings driving the estimate. Also covers
+  the backoffice, and the backoffice settings driving the estimate. The submitted
+  quote also carries its **service line** — derived from the shared catalogue
+  (`shared/service-lines.json`), never a hardcoded name — and the plan enables more than one, so
+  the wizard's first step is the line itself (seven steps, the plan named in the note above the
+  list). Also covers
   the quote status cycle: the three non-final statuses moving freely in either
   direction, closing (Aceptada/Rechazada) only offered from Cotizada and only
   after a confirmation that a dismiss leaves untouched, the status lock holding
@@ -157,7 +161,11 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   two phrasings for measurements. No browser, no DOM, milliseconds.
 - `assistant.spec.mjs` — "Presencia del asistente": the pack's `assistant` block
   passes `validateAssistant()` and bad ones (missing, unknown character, empty /
-  untrimmed / 41-char name, non-boolean flags) are rejected; the section sits
+  untrimmed / 41-char name, non-boolean flags) are rejected; before anything else it
+  asserts that `generated/` really is the build of the pack it is testing (the `var NS`
+  namespace in `generated/store.js`) — `tools/dev.mjs` re-renders `generated/` with the
+  `.env` pack whenever a template changes, and a run against the wrong one passes by
+  coincidence and then dies somewhere unrelated. The section sits
   right after "Configuración de estilos", visible to the admin only (a seller
   neither sees nor reaches it); with nothing saved the form and the cotizador
   show the pack defaults; switching character swaps a suggested name; an empty
@@ -206,7 +214,7 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   unread mark on "Pregúntale a"; and it leaves the moment the customer goes on with the
   form.
   The 3D reaction hooks (`#assistantStage`
-  `[data-reactions|data-reactions-suppressed|data-reaction|data-glance|data-chair-fabric|data-heady|data-crown|data-seat|data-hip|data-knee|data-foot|data-socket|data-sit-z|data-leg-angle|data-pose|data-render|data-phys|data-pen|data-pen-peak|data-pen-frames|data-pen-phases|data-pen-part|data-pushes|data-shove]`)
+  `[data-reactions|data-reactions-suppressed|data-reaction|data-glance|data-chair-fabric|data-heady|data-crown|data-seat|data-hip|data-knee|data-foot|data-floor|data-hands|data-feet-flat|data-leg-reach|data-socket|data-sit-z|data-pose|data-sit-phase|data-travel|data-travel-peak|data-render|data-phys|data-pen|data-pen-peak|data-pen-frames|data-pen-phases|data-pen-part|data-pushes|data-push-root|data-shove]`)
   are asserted only when the layer actually starts, and reported as SKIP when it
   doesn't: they cover one reaction per customer action with the next one suppressed
   and counted, that she looks at what the customer touches (a click on a select, not
@@ -219,7 +227,35 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   sits between her crown and the floor, so she is neither floating above the cushion
   nor sunk into it — and that the first mouse move stands her back up, that every
   sign restarts the wait (she is still standing when the first deadline passes), and
-  that she does not go while the conversation is open. Still no pixel assertions, the
+  that she does not go while the conversation is open. The paseo itself is measured
+  frame by frame through `data-sit-phase` + `data-travel`: every walking leg (both
+  trips, four legs) keeps the angle between her facing and her displacement ≤45°
+  (0° is walking forward, ±90° a side-step, ±180° the "moonwalk" of the old single
+  leg), the return's phases come in order (`rise → turnback1 → walkback1 →
+  turnback2 → walkback2 → face`), and — with the collision live — seated and
+  undisturbed the resolver does not touch her at all (`data-push-root` empty and
+  `data-pen` 0.00 over a 2.5 s sample; it used to push her ~3 px every ~0.5 s, the
+  seated sway). Seated, three more things are asserted because all three were wrong in the
+  render: that her feet land on the floor LINE (`data-foot` within 15 px of `data-floor`, the
+  line the canvas hangs from — the hook publishes the tilted projection, the same one the
+  render uses, so a foot placed "on the floor" in world units but drawn 23 px below it fails
+  here instead of passing in silence) — and, next to it, that the canvas RESERVES room under
+  that line: the canvas's bottom sits `floorRoom` px below it, derived in `place()` from the
+  shoe's own forward reach in the model (measured over the whole cycle: the worst frame,
+  `settle`, draws 32 px of shoe below the line, so a fixed 14 px left the tip 2 px from the
+  edge and DPR rounding made it read as cut); that the SOLES are flat (`data-feet-flat` = each
+  foot's tilt against
+  the standing reference, ≤10° — the clip leaves a foot dangling with the toe down), and that
+  both hands rest on the thighs (`data-hands` = each wrist's distance to its target on the
+  thigh's surface, in px; the fixed gesture before the arm IK left 22 px on the left and
+  33 px on the right). The legs are a two-bone IK per leg (`data-leg-reach` = how many px
+  each one falls short of the floor, 0.0|0.0 here): with one angle for both, the clip's
+  asymmetry put the shoe's mesh between two anchors 30-40 px apart and the feet were simply
+  not visible — see `CLAUDE.md`. The asset side of that hunt is in
+  `assets/assistant/README.md`: the feet mesh carried HALF its weight on the shins, so with
+  the ankle bent the shoe collapsed into a stub; the builder now reweights it to 1.0 of its
+  own foot bone (weights only — the clips stay valid; the walk's stubs are the retargeting
+  that is still parked). Still no pixel assertions, the
   3D layer stays optional by
   design.
 - `sealed.spec.mjs` — the encrypted delivery build: since that gate is
@@ -256,9 +292,26 @@ short guard that both its styling (same `modes/inverted.css` rules, reading
 correctly under `clients/intertelas/`'s inverted color mode, now including the
 payment modal too) and its plan-change/package-purchase/payment-approval
 flows hold on every pack. Closing a quote as Aceptada also goes through the
-same in-app confirm modal here. Then opens "Usage" and
+same in-app confirm modal here. It also checks the **service lines** the plan
+grants each pack (the shared catalogue in `shared/service-lines.json` — the pack declares no
+lines at all): Essential enables the two `base` lines, so the line step is the wizard's first
+step (active step 0, "Paso 1 de 7", the plan named in the note above the list). Then it turns a
+line **off** from the backoffice's checkboxes (`#serviceLines input[data-line]`) and asserts the
+cotizador stops offering it, that the choice is only a `disabledLines` entry (nothing deleted),
+that turning off the LAST one is refused, and that re-enabling restores it. Then opens "Usage" and
 asserts five progressbars plus the history card, every value well-formed
 (`<x> de <y>`), and Sedes reading `de 4` (Professional's 3 + the Sede bought).
+It also asserts the **service lines** of each pack: what `Store.services()`
+returns (id, label, required plan, enabled) matches the pack's own
+`client.json` → `services` filtered by the live journeys and the plan in force,
+`Store.servicesEnabled()` narrows to exactly the plans the current plan covers,
+and the backoffice's "Configuración de cotizador" page lists those lines with
+their lock. Then, on that pack's cotizador, that **step 1 asks "¿Qué quieres
+hacer?" only when more than one line is enabled** — with a single line the
+question does not exist and the wizard enters that line directly (Macizo's three
+lines at Professional show three cards; Intertelas' one line shows none). The
+plan is set explicitly in that fresh browser context first, so the check is the
+plan gate end to end, not a default.
 Then, per pack, it checks the brand layer end to end on that pack's own
 design: with nothing saved there is nothing applied, the pack's own defaults pass
 their own contrast checks, and a color saved in "Configuración de estilos" reaches

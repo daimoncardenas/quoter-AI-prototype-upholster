@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
-import { PHOTOS_DB } from './client.mjs';
-import { openAdmin, setTags } from './helpers.mjs';
+import { PHOTOS_DB, client } from './client.mjs';
+import { openAdmin, openWizard, setTags } from './helpers.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 const png = ['1','2','3'].map(n=>new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
 
@@ -11,13 +11,16 @@ const check = (name, got, want) => {
   console.log(`  ${ok?'PASS':'FAIL'}  ${name}` + (ok?'':`\n        got:  ${JSON.stringify(got)}\n        want: ${JSON.stringify(want)}`));
 };
 const browser = await chromium.launch();
-const page = await browser.newPage();
+/* Contexto explícito (no `browser.newPage()`): el localStorage es por contexto, y este suite
+ * necesita abrir el cotizador en OTRA página que comparta el del backoffice. */
+const context = await browser.newContext();
+const page = await context.newPage();
 const errs = []; page.on('pageerror', e => errs.push(String(e)));
 
 async function fresh(file) {
   await page.goto(D + file);
   await page.evaluate((db) => { localStorage.clear(); indexedDB.deleteDatabase(db); }, PHOTOS_DB);
-  if (file === 'admin.html') { await openAdmin(page, D); } else { await page.goto(D + file); }
+  if (file === 'admin.html') { await openAdmin(page, D); } else { await openWizard(page, D); }
 }
 // El modelo por componentes da decimales, y la UI los escribe con coma; un
 // rango cuyos extremos coinciden se imprime una sola vez.
@@ -42,6 +45,7 @@ async function wizardTo(step, opts = {}) {
 console.log('\nCATALOG — backoffice is the single source of truth');
 await fresh('index.html');
 await wizardTo(5);
+await page.waitForSelector('.fabric-card-body > b', { timeout: 5000 }).catch(() => {});
 check('wizard shows the backoffice catalog, not its own hardcoded 3',
   (await page.$$eval('.fabric-card-body > b', els => els.map(e => e.textContent.split(' · ')[0]))).sort(),
   ['Bouclé Capri','Lino Verona','Náutica Bari','Terciopelo Roma','Velvet Siena']);
@@ -60,7 +64,7 @@ await page.fill('#fabricForm [name=tags]', 'Lavable, Antimanchas');
 await page.click('#fabricForm button.primary');
 check('backoffice confirms the save', (await page.textContent('#toast')).includes('cotizador'), true);
 
-await page.goto(D + 'index.html');
+await openWizard(page, D);
 await wizardTo(5);
 check('the new tela is offered to the customer',
   await page.$$eval('.fabric-card-body > b', els => els.some(e => e.textContent.includes('Lino Toscana'))), true);
@@ -74,7 +78,7 @@ await openAdmin(page, D);
 await page.click('button[data-page="settings"]');
 await page.fill('#setWaste','0'); await page.fill('#setMargin','0');
 await page.click('#saveSettings');
-await page.goto(D + 'index.html');
+await openWizard(page, D);
 await wizardTo(5);
 const after = await page.evaluate(() => estimate());
 check('zeroing waste+margin lowers the metres (was 12%+8% uplift)', after[1] < before[1], true);
@@ -96,10 +100,68 @@ await page.click('#nextButton');
 await page.waitForSelector('#successState:not([hidden])');
 const quoteId = await page.textContent('#requestNumber');
 check('customer gets a request number', /^COT-\d+$/.test(quoteId), true);
+/* La línea de servicio: con una sola línea habilitada el cotizador NO tiene el paso «¿qué
+ * quieres hacer?» — entra derecho al paso 1 y la numeración se queda en 6 — y la cotización
+ * igual guarda la línea; el backoffice la muestra. La lista vive en el paquete (client.json →
+ * services) y el candado del plan en Store.services(). */
+const linea = await page.evaluate(id => {
+  const q = Store.get('quotes', id);
+  return {
+    paso: document.querySelector('[data-step-dot="0"]').hidden,
+    dots: document.querySelectorAll('[data-step-dot]:not([hidden])').length,
+    habilitadas: Store.servicesEnabled().map(s => ({ id: s.id, label: s.label, journey: s.journey })),
+    guardada: q && q.service,
+  };
+}, quoteId);
+/* La línea de servicio la decide el PLAN, y con más de una habilitada el cotizador tiene el paso
+ * de la línea como primero: el stepper pasa a 7 y las tarjetas son las que el plan habilita (el
+ * catálogo es del producto, así que la esperada se deriva de él, no de un nombre escrito a mano). */
+check('el paso de la línea existe y ofrece las líneas que el plan habilita',
+  { paso: linea.paso, dots: linea.dots, habilitadas: linea.habilitadas.map(h => h.id) },
+  { paso: false, dots: 7, habilitadas: client.serviceLines.filter(s => s.minPlan === 'base').map(s => s.id) });
+/* La línea de servicio con la que se cotizó: el cotizador elige la primera que el plan habilita
+ * (el plan manda, no el nombre de ninguna línea escrito a mano), y con más de una el paso de la
+ * línea es el primero. */
+const lineaEsperada = client.serviceLines
+  .filter(s => s.minPlan === 'base')
+  .map(s => ({ id: s.id, label: s.label, journey: s.journey }))[0];
+check('y la cotización guarda la línea con la que se cotizó', linea.guardada, lineaEsperada);
 check('and is told who will contact them (auto-assign by point: 12 de Octubre -> Laura)',
   (await page.textContent('#successSeller')).includes('Laura Méndez'), true);
 
 await openAdmin(page, D);
+/* Prender y apagar líneas de servicio desde el backoffice (checkboxes): la apagada sale del
+ * cotizador, volver a marcarla la repone, y apagar la última se rechaza — un cotizador sin
+ * líneas no puede cotizar nada. */
+await page.click('button[data-page="settings"]');
+await page.waitForSelector('#serviceLines input[data-line]');
+const cajas = await page.$$eval('#serviceLines input[data-line]', els => els.map(e => [e.dataset.line, e.checked, e.disabled]));
+check('cada línea del catálogo trae su checkbox: marcadas las del plan, bloqueadas las de arriba',
+  cajas.length === client.serviceLines.length && cajas.every(([, on, bloqueada]) => on === !bloqueada), true);
+const aApagar = cajas[0][0];
+await page.click(`#serviceLines input[data-line="${aApagar}"]`);
+check('apagarla la saca del cotizador',
+  await page.evaluate(id => Store.servicesEnabled().some(s => s.id === id), aApagar), false);
+check('y queda registrada como apagada, sin borrar nada',
+  await page.evaluate(id => Store.settings().disabledLines.includes(id), aApagar), true);
+/* Mismo contexto que la página del backoffice: el localStorage es por contexto, y en uno nuevo
+ * el cotizador no vería la línea apagada (es la trampa que ya me mordió en clients.spec). */
+const cotizadorTrasApagar = await page.context().newPage();
+await openWizard(cotizadorTrasApagar, D);
+const tarjetasTrasApagar = await cotizadorTrasApagar.$$eval('#serviceGrid .service-choice b', els => els.map(e => e.textContent));
+const etiquetaApagada = client.serviceLines.find(s => s.id === aApagar).label;
+check('el cotizador deja de ofrecerla', tarjetasTrasApagar.includes(etiquetaApagada), false);
+await cotizadorTrasApagar.close();
+check('apagar la última línea se rechaza',
+  await page.evaluate(async id => {
+    const vivas = Store.servicesEnabled();
+    for (const l of vivas.slice(0, -1)) Store.setLineEnabled(l.id, false);
+    try { Store.setLineEnabled(vivas[vivas.length - 1].id, false); return 'apagada'; }
+    catch (e) { return e.message; }
+  }, aApagar), 'Debe quedar al menos una línea habilitada.');
+await page.evaluate(id => Store.setLineEnabled(id, true), aApagar);
+check('volver a marcarla la repone',
+  await page.evaluate(id => Store.servicesEnabled().some(s => s.id === id), aApagar), true);
 await page.click('button[data-page="quotes"]');
 const row = await page.textContent('#quoteRows');
 check('the quote appears in the backoffice table', row.includes(quoteId), true);
@@ -355,7 +417,7 @@ console.log('\nDEACTIVATE A TELA -> IT LEAVES THE COTIZADOR');
 await page.click('button[data-page="fabrics"]');
 await page.click('[data-toggle-fabric]:has-text("Desactivar")');
 const deactivated = await page.evaluate(() => Store.all('fabrics').filter(f=>!f.active).map(f=>f.name));
-await page.goto(D + 'index.html');
+await openWizard(page, D);
 await wizardTo(5);
 check('a deactivated tela disappears for customers',
   await page.$$eval('.fabric-card-body > b', (els, names) => els.every(e => !names.includes(e.textContent.split(' · ')[0])), deactivated),
@@ -379,7 +441,7 @@ check('the catalogue keeps the edited price, not a duplicate row',
   await page.evaluate(n => Store.all('fabrics').filter(f => f.name === n).map(f => f.price), target.name),
   [31500]);
 
-await page.goto(D + 'index.html');
+await openWizard(page, D);
 await wizardTo(5);
 await page.click(`.fabric-card:has-text("${target.name}")`);
 check('the customer sees the edited rate on the card',
@@ -400,7 +462,7 @@ await openAdmin(page, D);
 await page.click('button[data-page="settings"]');
 await setTags(page, '#setBudgets', ['30000','40000','50000']);
 await page.click('#saveSettings');
-await page.goto(D + 'index.html');
+await openWizard(page, D);
 await page.setInputFiles('#furniturePhoto', png);
 await page.waitForFunction(() => state.photos.length >= 3);
 /* n cortes son n+1 tramos. La versión anterior emitía n opciones y se comía el
@@ -438,9 +500,9 @@ const night = await bogota.newPage();
 const nightErrs = []; night.on('pageerror', e => nightErrs.push(String(e)));
 await night.clock.setFixedTime(new Date('2026-09-06T20:30:00-05:00'));
 
-await night.goto(D + 'index.html');
+await openWizard(night, D);
 await night.evaluate((db) => { localStorage.clear(); indexedDB.deleteDatabase(db); }, PHOTOS_DB);
-await night.goto(D + 'index.html');
+await openWizard(night, D);
 await night.setInputFiles('#furniturePhoto', png);
 await night.waitForFunction(() => state.photos.length >= 3);
 await night.click('#nextButton');
@@ -507,7 +569,7 @@ check('the catalogue card paints the photo instead of the colour',
   await page.$eval('#fabricGrid .fabric:has-text("Lino Verona") .swatch',
     e => e.style.background.includes('url("data:image')), true);
 
-await page.goto(D + 'index.html');
+await openWizard(page, D);
 await wizardTo(5);
 await page.waitForSelector('.fabric-card:has-text("Lino Verona") .swatch.has-photo', { timeout: 5000 });
 check('and the customer sees that same photo on the tela card',
@@ -971,7 +1033,7 @@ await up.click('#billingSwitch [data-billing="anual"]');
 await up.waitForTimeout(100);
 
 console.log('\nUSAGE — una revisión con IA gasta exactamente un crédito, y las fotos ocupan almacenamiento');
-await up.goto(D + 'index.html');
+await openWizard(up, D);
 const creditsBefore = await up.evaluate(() => Store.aiCreditsUsed());
 await up.setInputFiles('#furniturePhoto', png);
 await up.waitForFunction(() => state.photos.length >= 3);

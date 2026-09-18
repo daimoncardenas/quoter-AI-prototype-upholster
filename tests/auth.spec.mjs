@@ -272,10 +272,13 @@ check('y el contador de su tarjeta las sigue contando',
   await pe.$eval('#sellerGrid .seller:has-text("Laura Méndez Ruiz") .seller-meta strong', e=>e.textContent), '1');
 
 // El cambio vive en el localStorage de ESTE contexto, así que la comprobación
-// del login se hace aquí mismo — un contexto nuevo no vería la edición.
+// del login se hace aquí mismo — un contexto nuevo no vería la edición. Se ESPERA la
+// condición que se va a afirmar: leer `isVisible` justo después del submit corría una
+// carrera (falló una vez en la cadena y pasó al correr la suite sola).
 await signOut(pe);
 await signIn(pe, lauraRuizEmail);
-check('entra con el correo nuevo', await pe.isVisible('#appShell'), true);
+check('entra con el correo nuevo',
+  await pe.waitForSelector('#appShell', { timeout: 5000 }).then(() => true, () => false), true);
 await pe.click('button[data-page="quotes"]');
 check('y sigue viendo su propia solicitud, ahora a su nombre nuevo',
   await pe.$$eval('#quoteRows tr', rs => rs.map(r => r.textContent.includes('Laura Méndez Ruiz'))), [true]);

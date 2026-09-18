@@ -263,6 +263,59 @@ function reshape(g, nodeName, materials, fn) {
 
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
+/* Los zapatos van con SU pie, no mitad y mitad.
+ *
+ * Medido en el modelo construido: los vértices de la banda de los pies llevan 26.3% Foot.L,
+ * 26.3% Foot.R, 23.7% LowerLeg.L y 23.7% LowerLeg.R — la mitad del zapato monta en la
+ * ESPINILLA. Con el tobillo doblado (sentada, la suela plana en el suelo) las dos mitades
+ * tiran para lados distintos y la malla se acartona: el zapato se ve como un muñón y en el
+ * render se lee "no tiene pies cuando está sentada". Se reescriben los pesos de la malla de
+ * los pies a 1.0 de su propio hueso —el lado por el signo de x en la pose de reposo, que la
+ * modelo mira a +Z— así el zapato queda rígido y sigue al pie, que es lo que hace un zapato.
+ *
+ * No toca la jerarquía ni los clips: solo los pesos, así que Walk/Idle siguen válidos. */
+function reweightFeet(g) {
+  const skin = g.skins && g.skins[0];
+  if (!skin) return;
+  const footL = skin.joints.findIndex(j => /^Foot\.?L$/.test(g.nodes[j].name));
+  const footR = skin.joints.findIndex(j => /^Foot\.?R$/.test(g.nodes[j].name));
+  if (footL < 0 || footR < 0) return;
+  for (const mesh of g.meshes) {
+    for (const p of mesh.primitives) {
+      const { POSITION, JOINTS_0, WEIGHTS_0 } = p.attributes;
+      if (POSITION == null || JOINTS_0 == null || WEIGHTS_0 == null) continue;
+      const pos = g.accessors[POSITION], jo = g.accessors[JOINTS_0], we = g.accessors[WEIGHTS_0];
+      if (pos.componentType !== 5126 || we.componentType !== 5126) continue;
+      const jWidth = jo.componentType === 5121 ? 1 : jo.componentType === 5123 ? 2 : 0;
+      if (!jWidth) continue;
+      const pBv = g.bufferViews[pos.bufferView], jBv = g.bufferViews[JOINTS_0], wBv = g.bufferViews[WEIGHTS_0];
+      if (pBv.byteStride || jBv.byteStride || wBv.byteStride) continue;   // sin datos entrelazados
+      const pB = viewBytes(g, pos.bufferView), jB = viewBytes(g, JOINTS_0), wB = viewBytes(g, WEIGHTS_0);
+      const pAt = pos.byteOffset || 0, jAt = jo.byteOffset || 0, wAt = we.byteOffset || 0;
+      const joint = (i, k) => jWidth === 1 ? jB.readUInt8(jAt + i * 4 + k) : jB.readUInt16LE(jAt + i * 4 + k * 2);
+      // ¿es esta malla los zapatos? La mayoría de sus vértices bajos con peso en un pie.
+      let low = 0, lowFoot = 0;
+      for (let i = 0; i < pos.count; i++) {
+        if (pB.readFloatLE(pAt + i * 12 + 4) > 0.15) continue;
+        low++;
+        for (let k = 0; k < 4; k++) {
+          const j = joint(i, k);
+          if (wB.readFloatLE(wAt + i * 16 + k * 4) > 0.01 && (j === footL || j === footR)) { lowFoot++; break; }
+        }
+      }
+      if (!low || lowFoot / low < 0.5) continue;
+      for (let i = 0; i < pos.count; i++) {
+        const j = pB.readFloatLE(pAt + i * 12) >= 0 ? footL : footR;   // x>0 es su izquierda
+        for (let k = 0; k < 4; k++) {
+          if (jWidth === 1) jB.writeUInt8(k ? 0 : j, jAt + i * 4 + k);
+          else jB.writeUInt16LE(k ? 0 : j, jAt + i * 4 + k * 2);
+          wB.writeFloatLE(k ? 0 : 1, wAt + i * 16 + k * 4);
+        }
+      }
+    }
+  }
+}
+
 /* Stretches everything below `top` so the edge at `from` lands at `to`, flaring by up
  * to `flare` around (cx(x), cz) toward the new edge. Proportional, so lapels and
  * pockets keep their shape. The bind pose is a T-pose in meters, y up. */
@@ -305,6 +358,7 @@ reshape(men, 'Suit_Body', ['Suit', 'White'], lengthen({ top: 1.20, from: 1.02, t
 reshape(men, 'Suit_Body', ['Suit'], lengthenSleeve({ from: 0.36, end: 0.546, to: 0.60, flare: 0.12, ay: 1.435, az: 0.08 }));
 reshape(men, 'Suit_Body', ['White'], shiftCuff({ beyond: 0.45, by: 0.032 }));
 reshape(men, 'Suit_Legs', ['Suit'], lengthen({ top: 0.42, from: 0.14, to: 0.07, flare: 0.12, cx: x => Math.sign(x) * 0.124, cz: 0.063 }));
+reweightFeet(men);
 save(prune(men), 'tomas.gltf');
 
 // Lía: Suit jacket over Formal's skirt and flats (recolored to match the suit),
@@ -320,6 +374,7 @@ const skin = material(women, 'Skin');
 const skirt = material(women, 'Skirt', suitBlack);
 const shoes = material(women, 'Shoes', [0.02, 0.02, 0.02]);
 graft(women, formal, n => /^Formal_(Legs|Feet)$/.test(n), m => (m.name === 'Skin' ? skin : m.name === 'LimeGreen' ? skirt : shoes));
+reweightFeet(women);
 save(prune(women), 'lia.gltf');
 
 // Armchair: already lean; only re-packed into one self-contained file.

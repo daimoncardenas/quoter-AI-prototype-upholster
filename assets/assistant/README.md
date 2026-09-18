@@ -55,6 +55,18 @@ stay welded to the model's origin, so any pose that lowers the body (sitting on 
 armchair drops her ~46 px) sinks them by that same amount. That is why the seated
 pose can look right above the cushion and still have her feet through the floor.
 
+**What the build does about it today** (2026-09): `reweightFeet()` in the builder
+rewrites the FEET mesh's skin weights to 1.0 of its own `Foot.L/R` (the side read from
+the x sign in the bind pose). Measured before: the feet band of `lia.gltf` carried
+26.3% `Foot.L`, 26.3% `Foot.R`, 23.7% `LowerLeg.L` and 23.7% `LowerLeg.R` — HALF the
+shoe rode the shin, and with the ankle bent (seated, sole flat on the floor) the two
+halves pulled apart and the mesh collapsed: on screen the leg ended in a skin stub,
+reported as "she has no feet when she is sitting". After the reweight the shoes render
+at the feet — verified standing and seated (`assets/assistant/*.gltf` rebuilt, same
+byte size, weights only). Walking still shows stubs: the clips animate the foot bones
+in a space of their OWN (root-local), so during `Walk` they do not land where the leg
+mesh ends — that is the retargeting below, still parked.
+
 **The fix, when someone wants to spend the time** (parked on purpose — it is asset
 surgery, not a one-liner):
 

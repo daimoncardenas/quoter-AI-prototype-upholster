@@ -5,6 +5,7 @@
   "shortName": "Mediterránea",
   "assistantName": "Asistente Mediterránea",
   "assistant": { "enabled": true, "character": "female", "name": "Lía", "brandSuit": false },
+  "senderEmail": "cotizaciones@mediterraneacol.com",
   "storageNamespace": "med.v1.",
   "photosDbName": "med-photos",
   "meta": {

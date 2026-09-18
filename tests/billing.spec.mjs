@@ -3,7 +3,7 @@
  * with no minimum, and that people confuse constantly. */
 import { chromium } from 'playwright';
 import { PHOTOS_DB } from './client.mjs';
-import { openAdmin } from './helpers.mjs';
+import { openAdmin, openWizard } from './helpers.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 const png = ['1','2','3'].map(n => new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
 
@@ -117,7 +117,7 @@ check('the rule is saved on the fabric',
     return [f.incrementM, f.minOrderM];
   }), [2, 12]);
 
-await page.goto(D + 'index.html');
+await openWizard(page, D);
 await wizardTo(5);
 await page.click('.fabric-card:has-text("Lino Verona")');
 // El sofá ya se calcula por piezas contra el ancho del rollo de esta tela.

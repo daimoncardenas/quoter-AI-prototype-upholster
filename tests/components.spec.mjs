@@ -2,7 +2,7 @@
  * rollo de la tela elegida, con el rango base del mueble como respaldo para los
  * tipos que todavía no tienen plantilla. */
 import { chromium } from 'playwright';
-import { openAdmin } from './helpers.mjs';
+import { openAdmin, openWizard } from './helpers.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 
 let fails = 0;
@@ -14,9 +14,9 @@ const check = (name, got, want) => {
 const browser = await chromium.launch();
 const page = await browser.newPage();
 const errs = []; page.on('pageerror', e => errs.push(String(e)));
-await page.goto(D + 'index.html');
+await openWizard(page, D);
 await page.evaluate(() => localStorage.clear());
-await page.goto(D + 'index.html');
+await openWizard(page, D);
 
 const SOFA = { width: 210, height: 85, depth: 90, seats: 3, cushions: 3, coverage: 'complete' };
 const est = (mueble, inp, rollWidthCm) => page.evaluate(([m, i, w]) => {

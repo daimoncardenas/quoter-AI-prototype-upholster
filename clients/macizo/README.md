@@ -4,12 +4,21 @@ Design/brand taken from macizocolombia.com (2026-09-14): `displayName`, `theme`,
 `fonts` and `logo` in `client.json` are real, sourced from the live site with
 Playwright (computed styles, loaded fonts, and the actual logo asset).
 
-`seed.json` and `storageNamespace` are still **invented placeholders** — nobody has
-provided Macizo's real fabric catalog, service points or quotes yet. Backoffice
-logins (emails, password) are **not** Macizo's to invent: every client shares the
-same demo users from `shared/demo-users.json`, so there is nothing to replace there.
-Everything below that's still open only concerns the fabric/service-point/quote
-demo data.
+`services` in `client.json` is a **proposal**, not Macizo's real line list: the
+three lines (retapizado · cambio de tela · reparación y restauración) are the
+implemented journey (`existente`) split by scope, and the plan that unlocks each
+one follows Cardyram's plans (Essential = one line, Professional = several).
+Before this pack is shown as Macizo's own, the lines must be checked against what
+Macizo actually sells and what each one is called in their own words
+(`docs/journeys.md`, §8).
+
+The demo data is **not** a placeholder to fill: it is the shared seed
+(`shared/demo-seed.json`) — the same fake catalogue, service points, sellers and quotes on every
+client, on purpose, because the prototype demonstrates functionality and the client you render
+must not change anything. `storageNamespace` stays per-pack only so each demo keeps its own
+browser storage. Backoffice logins (emails, password) are **not** Macizo's to invent either:
+every client shares the same demo users from `shared/demo-users.json`. What is still open for
+this pack is its brand (below) and its real sender email.
 
 ## TODO before this client ships
 
@@ -41,13 +50,12 @@ demo data.
       pack-driven. The print-watermark SVG fill comes from the core
       `theme.inkSecondary`, not from tints. See CLAUDE.md's white-label section for
       the full breakdown.
-- [ ] Real sender email (`seed.json` → `settings.senderEmail`) — the backoffice login
+- [ ] Real sender email (`client.json` → `senderEmail`) — the backoffice login
       domain/password stay the shared demo ones on purpose, this is only the "from"
       address on quote emails
-- [ ] Real fabric catalog, service points, and quotes (`seed.json`) — sellers'
-      identity (name/email/active) is shared across all clients
-      (`shared/demo-users.json`); only their `servicePointIds`/`quotes` count in
-      `seed.json` is Macizo's to set
+- [x] Demo data: shared and identical for every client on purpose
+      (`shared/demo-seed.json` + `shared/demo-users.json`). Only replace it if this
+      stops being a prototype
 
 See `../mediterranea/` for a fully populated reference pack, and
 `README.md` / `CLAUDE.md` at the repo root for the pack file contract.

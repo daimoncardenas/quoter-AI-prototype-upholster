@@ -231,7 +231,8 @@ export function generate(clientEnvValue = resolveClient(), outDir = 'generated')
     BUDGETS_JSON: json(seed.settings.budgets),
     DEMO_PASSWORD_JSON: json(client.demoPassword),
     BRAND_DEFAULTS_JSON: json(brandDefaults),
-    ASSISTANT_DEFAULTS_JSON: json(client.assistant)
+    ASSISTANT_DEFAULTS_JSON: json(client.assistant),
+    SERVICE_LINES_JSON: json(client.serviceLines),
   };
 
   mkdirSync(outDir, { recursive: true });

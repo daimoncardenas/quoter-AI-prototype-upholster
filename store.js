@@ -66,6 +66,11 @@
     // bought, keyed by package id — {} for nobody having bought anything yet.
     // A purchase only ever increments this, it never resets or toggles.
     packages: {},
+    // Las líneas de servicio que el negocio apagó (backoffice -> "Líneas de servicio", con
+    // checkboxes). Se guardan SOLO las apagadas: ausente = "todo lo que el plan habilita está
+    // prendido", así un cambio de plan nunca pierde la elección (mismo espíritu que las
+    // anulaciones del asistente y de la marca). Nunca queda en cero: apagar la última se rechaza.
+    disabledLines: [],
     // Per-month consumption the prototype has no record to derive from,
     // keyed by LOCAL calendar month ('YYYY-MM') — today only
     // { aiCredits: n }. See Store.spendAiCredit() for the tracking rule.
@@ -530,6 +535,68 @@
      * Turning it off removes the presence only: the AI analysis of steps 4-5
      * does not read any of this. */
     assistantDefaults: function () { return clone(ASSISTANT_DEFAULTS); },
+
+    /* Las líneas de servicio las define EL PLAN, no el paquete. El catálogo es del producto
+     * (shared/service-lines.json) y cada línea declara el plan que la habilita; el cliente solo
+     * elige su línea BASE, la que un plan Essential incluye. Mismo contrato que el asistente:
+     * `enabled` según el plan y `requiredPlan` para el candado (abajo del plan la línea se
+     * bloquea sin borrar nada). `Store.servicesEnabled()` es lo que el cotizador usa para decidir
+     * si pregunta "¿qué quieres hacer?": con una sola línea no hay pregunta. */
+    services: function (opts) {
+      opts = opts || {};
+      var settings = Store.settings();
+      var plan = opts.plan === undefined ? settings.plan : opts.plan;
+      var off = settings.disabledLines || [];
+      var out = [];
+      for (var i = 0; i < SERVICE_LINES.length; i++) {
+        var s = SERVICE_LINES[i];
+        /* Dos candados, uno encima del otro: el PLAN decide qué líneas existen para este cliente
+         * (subir de plan AGREGA servicios al primer paso, bajar los quita) y el negocio decide
+         * CUÁLES de esas presta, apagándolas desde el backoffice. El catálogo es el mismo para
+         * todos los clientes. */
+        var required = s.minPlan === 'base' ? 'Essential' : s.minPlan;
+        var withinPlan = planAtLeast(plan, required);
+        out.push({
+          id: s.id, label: s.label, hint: s.hint || '', journey: s.journey,
+          requiredPlan: required,
+          /* `withinPlan` = el plan lo permite; `enabled` = además el negocio la dejó prendida.
+           * Van separadas para que el backoffice pueda mostrar una línea bloqueada por plan sin
+           * confundirla con una apagada a mano (y sin reimplementar el rango de planes). */
+          withinPlan: withinPlan,
+          enabled: withinPlan && off.indexOf(s.id) < 0
+        });
+      }
+      return out;
+    },
+
+    /* Prender o apagar una línea de servicio (backoffice -> "Líneas de servicio"). Apagarla la
+     * saca del cotizador sin borrar nada; prenderla la repone. Nunca se permite dejar el
+     * cotizador sin líneas: una solicitud sin línea no se puede cotizar. */
+    setLineEnabled: function (id, on) {
+      var line = Store.serviceById(id);
+      if (!line) throw new Error('Esa línea de servicio no existe en este cotizador.');
+      if (on && !planAtLeast(Store.settings().plan, line.requiredPlan)) {
+        throw new Error('La línea «' + line.label + '» se habilita desde el plan ' + line.requiredPlan + '.');
+      }
+      var off = Store.settings().disabledLines.slice();
+      if (on) off = off.filter(function (x) { return x !== id; });
+      else if (off.indexOf(id) < 0) {
+        if (Store.servicesEnabled().length <= 1) throw new Error('Debe quedar al menos una línea habilitada.');
+        off.push(id);
+      }
+      Store.saveSettings({ disabledLines: off });
+      return Store.serviceById(id);
+    },
+
+    servicesEnabled: function (opts) {
+      return Store.services(opts).filter(function (s) { return s.enabled; });
+    },
+
+    serviceById: function (id) {
+      var all = Store.services();
+      for (var i = 0; i < all.length; i++) { if (all[i].id === id) return all[i]; }
+      return null;
+    },
 
     assistantCharacters: function () { return clone(ASSISTANT_CHARACTERS); },
 
@@ -1121,6 +1188,9 @@
   /* The pack's assistant presence (clients/<slug>/client.json `assistant`),
    * rendered by tools/generate.mjs and validated by tools/client-pack.mjs. */
   var ASSISTANT_DEFAULTS = {{ASSISTANT_DEFAULTS_JSON}};
+  /* El catálogo de líneas es del producto y el PLAN define cuáles entran: el paquete no declara
+   * líneas ni línea base, solo su marca. El `minPlan` de cada línea es el candado del plan. */
+  var SERVICE_LINES = {{SERVICE_LINES_JSON}};
   var ASSISTANT_KEY = 'assistant';
   var ASSISTANT_WELCOMED_KEY = 'assistantWelcomed';
   var ASSISTANT_NAME_MAX = 40;

@@ -48,7 +48,7 @@ const envFor = (step = 2, fields = {}) => ({
 /* What ACI.context() exposes: the quotation state, never keystrokes. */
 const ctxFor = (step = 2, over = {}) => Object.assign({
   tenant: 'mediterranea',
-  currentStep: { n: step, id: brain.STEPS[step - 1].id, name: brain.STEPS[step - 1].name },
+  currentStep: { n: step, id: brain.STEPS.find(s => s.n === step).id, name: brain.STEPS.find(s => s.n === step).name },
   submitted: false,
   selectedFurniture: 'Sofá',
   measurements: { width: 210, height: 85, depth: 90, quantity: { value: 1, label: '1 puesto' }, coverage: 'complete' },
@@ -61,8 +61,8 @@ const ctxFor = (step = 2, over = {}) => Object.assign({
 }, over);
 
 console.log('\nEL CATÁLOGO CERRADO: PASOS, CAMPOS Y ACCIONES');
-check('seis pasos, en orden y con los ids que el adaptador busca', brain.STEPS.map(s => [s.n, s.id]), [
-  [1, 'FURNITURE'], [2, 'MEASUREMENTS'], [3, 'PREFERENCES'], [4, 'REVIEW'], [5, 'RECOMMENDATION'], [6, 'CONTACT']
+check('los pasos, en orden y con los ids que el adaptador busca', brain.STEPS.map(s => [s.n, s.id]), [
+  [0, 'SERVICE'], [1, 'FURNITURE'], [2, 'MEASUREMENTS'], [3, 'PREFERENCES'], [4, 'REVIEW'], [5, 'RECOMMENDATION'], [6, 'CONTACT']
 ]);
 check('solo los tres tipos de acción declarados', brain.ACTION_TYPES, ['FOCUS_FIELD', 'SET_FIELD', 'NAVIGATE_TO_STEP']);
 check('cada campo declara su paso y su etiqueta', Object.entries(brain.FIELDS)
@@ -158,7 +158,9 @@ check('y lo explica sin prometer nada', dice(ctxFor(2), 'cambia los metros a 3')
 check('con mascotas en el paso 3 propone marcarlo', dice(ctxFor(3), 'tengo mascotas').proposedActions, [{ type: 'SET_FIELD', field: 'preferences.pets', value: true }]);
 check('si ya está marcado, lo dice en vez de proponer', dice(ctxFor(3, { preferences: { needs: ['Mascotas'], pets: true } }), 'tengo mascotas').proposedActions, []);
 check('si el catálogo del cliente no ofrece la opción, solo informa', dice(ctxFor(3, { preferences: { needs: [], pets: null, style: 'Moderno', color: 'Neutros' } }), 'tengo mascotas').proposedActions, []);
-check('antes del paso 3 avisa que lo propondrá', dice(ctxFor(1), 'tengo un gato').message.includes('paso 3'), true);
+/* La copia nombra el paso por su nombre, nunca por su número: con la línea de servicio el
+ * stepper pasa de 6 a 7 y «paso 3» dejaría de ser Preferencias. */
+check('antes de Preferencias avisa que lo propondrá', dice(ctxFor(1), 'tengo un gato').message.includes('Preferencias'), true);
 check('el valor no es definitivo, y lo dice con el rango de hoy', dice(ctxFor(2, { estimate: { priceLabel: '$1.200.000 – $1.800.000' } }), '¿el valor es definitivo?').message.includes('$1.200.000 – $1.800.000'), true);
 check('«cómo mido» con el fondo vacío lleva el foco al primer hueco', dice(ctxFor(2, { measurements: { width: 210, height: 85, depth: null } }), '¿cómo tomo las medidas?').proposedActions, [{ type: 'FOCUS_FIELD', field: 'measurements.depth' }]);
 check('con las tres medidas registradas no hay a dónde llevar el foco', dice(ctxFor(2), '¿cómo tomo las medidas?').proposedActions, []);

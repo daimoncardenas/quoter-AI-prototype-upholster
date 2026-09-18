@@ -10,6 +10,36 @@ proposal piece opened by the client with a double-click, not a deployed app.
 data renders. See "White-label (multi-client) architecture" below before assuming
 anything about branding, colors, emails, or demo data is fixed — almost none of it is.
 
+## Cómo se trabaja en este repo (reglas)
+
+Léelas antes de tocar nada. Son del dueño del producto y mandan sobre cualquier criterio propio.
+
+1. **Esto es un PROTOTIPO de demostración, no un producto real.** Un código, y los packs
+   (`clients/<slug>/`) son **datos de demo**: el seed es **uno solo** (`shared/demo-seed.json`)
+   y los logins ya son compartidos (`shared/demo-users.json`), así que ningún dato cambia con el
+   cliente. No se construye lógica
+   "porque este cliente es así", y no se inventan datos de una empresa real: un dato que describa
+   la realidad (servicios, nombres, precios) sale del dueño o va marcado como inventado.
+2. **Lo que se evalúa es la COHERENCIA de la aplicación**, no qué cliente esté cargado. Cambiar de
+   plan tiene que agregar o quitar servicios (y cualquier otra consecuencia del plan) de forma
+   visible en el cotizador, y **cualquier pack debe comportarse igual**. Que una corrida de tests
+   use Mediterránea, Macizo o Intertelas es irrelevante; que el flujo cambie con el cliente, es un
+   bug.
+3. **El plan define lo que se ofrece** (`shared/service-lines.json`: cada línea declara su
+   `minPlan`); el pack solo aporta su `baseLine` y su marca. La oferta nunca vive en el pack.
+4. **Spec primero.** El diseño se escribe (docs/ + OK del dueño) **antes** del código, y los
+   criterios de aceptación citan sus palabras textuales.
+5. **Desviarse se dice ANTES**, con el precio: "propongo desviarme por esto". Nunca se documenta
+   el atajo después como si fuera lo acordado (pasó: el paso de la línea embutido en el paso 1).
+6. **Alcance cerrado.** Se hace lo acordado; lo adyacente se reporta como sugerencia, no se toca.
+7. **Nada de "ya funciona" sin número**: medición o `archivo:línea`. Las suites corren **de a
+   una**, y la última acción de cualquier corrida es regenerar `generated/` con el `CLIENT` del
+   `.env` — la pantalla del dueño siempre queda en el estado bueno.
+8. **Terminado significa**: código + tests en la capa que corresponde + esta guía actualizada +
+   `tests/README.md` + el doc de diseño + `generate` verde. Falta cualquiera, y no está terminado.
+9. **Commits**: convencional en español, hilos distintos en commits distintos, y no se commitea ni
+   se empuja sin OK explícito.
+
 ## Commands
 
 ```
@@ -95,7 +125,7 @@ rendered. Do not bundle, split into modules, or add a framework unless asked.
   every other admin section, with `go()` also refusing to switch to a page a role
   can't see even if something forces the click. That plan copy is static product
   copy (a `PLANS` constant inside `admin.html`), identical for every client — it is
-  NOT client data, so it does not live in `clients/*/seed.json` or `Store`. What
+  NOT client data, so it does not live in `shared/demo-seed.json` or `Store`. What
   DOES belong in `Store` is which plan the client is currently on
   (`Store.settings().plan`, default `'Essential'` in `DEFAULT_SETTINGS` — same
   default for every client): each card's "Plan actual" label/CTA is derived from
@@ -192,6 +222,46 @@ Couplings that are easy to break:
   dashboard's cycle metrics (funnel, closed %, acceptance rate, average days to
   close, the admin-only per-seller table) are all derived from these two fields —
   see `renderDashboard()`.
+
+## Líneas de servicio (qué cotiza ACI)
+
+Lo que el cotizador ofrece se organiza en **líneas de servicio**, y **el plan es el que las
+define**: el catálogo es del producto (`shared/service-lines.json`) y cada línea declara el plan
+que la habilita (`minPlan`: `base` —la única que incluye Essential—, `Professional` o `Business`).
+Un paquete NO declara líneas: el catálogo es del producto y el plan decide cuáles entran. Essential
+incluye las dos líneas `base` (hoy suministro de tela y retapizado de muebles) — separadas a
+propósito: son dos trabajos distintos, uno es material y el otro oficio —, Professional suma las
+suyas y Business todas (proyecto comercial, tapicería arquitectónica, mantenimiento). De ahí que la
+pregunta del cotizador exista **desde Essential**: con más de una línea el cliente siempre elige, y
+subir de plan agrega servicios de forma visible.
+
+Encima de ese candado va el del negocio: "Líneas de servicio" (Configuraciones de cotizador) lista
+las líneas del plan con un **checkbox** y `Store.setLineEnabled()` apaga o prende cada una
+(`settings.disabledLines`, solo las apagadas: un cambio de plan nunca pierde la elección).
+Apagarlas todas se rechaza — una solicitud sin línea no se puede cotizar — y con una sola
+habilitada el cotizador no pregunta: entra directo a ella. `Store.services()` devuelve
+`withinPlan` (el plan la permite) y `enabled` (además el negocio la dejó prendida), separadas
+para que el backoffice muestre una línea bloqueada por plan sin confundirla con una apagada.
+
+- `tools/client-pack.mjs` → `validateServiceLines()` (el catálogo compartido se valida a sí mismo:
+  ids únicos, journeys y planes conocidos, al menos una línea `base`; el paquete no declara líneas,
+  solo su marca, su `senderEmail` y sus namespaces).
+- `tools/generate.mjs` inyecta `{{SERVICE_LINES_JSON}}`; `store.js` expone
+  `Store.services()` (el catálogo completo con `enabled`, `withinPlan` y `requiredPlan`),
+  `Store.servicesEnabled()`, `Store.serviceById()` y `Store.setLineEnabled()`.
+- El primer paso del cotizador («¿Qué quieres hacer?», `index.html` → `#serviceStep`) **existe
+  solo si el plan habilita más de una línea**: con una sola, el cotizador entra derecho al paso 1
+  y la numeración se queda en seis; con dos o más hay SIETE pasos, el stepper se renumera solo
+  (`applyServiceStep()`) y el "Continuar" está deshabilitado hasta que el cliente elija. Cada paso
+  existe para aliviar la carga de información, no para embutir dos preguntas en una.
+- La cotización guarda `service: {id,label,journey}`; el contexto del asistente lo lleva
+  (`assistant-brain.js` → `STEPS`, `n: 0`, id `SERVICE`) y su copy nombra los pasos por nombre,
+  nunca por número (con siete pasos "paso 3" dejaría de ser Preferencias). El backoffice lo muestra
+  en la lista de cotizaciones, en el detalle y en la tarjeta "Líneas de servicio" de
+  "Configuraciones de cotizador", donde las bloqueadas se ven como "requiere plan X" — nunca se
+  esconden.
+- El spec de producto (vocabulario, arquetipos de journey, reparto por plan, invariantes) es
+  `docs/journeys.md`; se actualiza con el código, no después.
 
 ## Assistant presence
 
@@ -309,16 +379,29 @@ context & actions" below).
   materials and textures disposed.
 - **The armchair is where she goes when nobody is there** (`IDLE_MS` 60 s): a minute
   without a single sign of life —`pointermove`, `pointerdown`, `keydown`, `wheel`,
-  `touchstart`, `scroll` or any `aci:event`— and she turns to the chair, walks over
-  (the `Walk` clip, added to the build for this: she faces the chair to walk and
-  turns back to a three-quarter view to sit), sits down and stays there looking at
-  the customer. Any sign stands her up again, and the wait restarts (`lastAlive`).
+  `touchstart`, `scroll` or any `aci:event`— and she walks over (the `Walk` clip, added
+  to the build for this), sits down and stays there looking at the customer. Any sign
+  stands her up again, and the wait restarts (`lastAlive`).
+  **The paseo is TWO walking legs with a turn between them, and each leg is walked
+  facing where it goes**: forward to the chair's front, turn to face the chair, forward
+  to the seat's line, then settle — and on the way back, rise, turn AWAY from the chair,
+  walk out, turn, walk home, and a 180° turn to face the customer again. The clip is a
+  forward stride, so a leg walked sideways or backwards reads as ice-skating (that is
+  what the old single L-tramo did on the way home: ~125° off, reported as "walk
+  backward, like a Billie Jean"), and each leg's facing-vs-travel angle is published as
+  `data-travel` (`data-travel-peak` keeps the worst of the episode) so the suite can
+  require it stays near 0°. `stepSit` samples her position when a leg STARTS, so an
+  interruption mid-walk resumes from wherever she is (a leg with nothing left to walk is
+  skipped, never walked in place).
   **Sitting is a pose, not a clip** (none exists for it, like "thinking"): the legs
   are solved AFTER `mixer.update` and restored after rendering, exactly like the
   look-at — `Torso`/arms keep pitched constants, the legs come from a **two-bone IK**
   (`cos θ = (drop − shin) / thigh`, both segments measured on the rig at load), and
   the whole body drops so the hip lands on the seat's line. Blended by `sitWeight`
-  over ~0.7 s. `data-pose` walks `standing → to-chair → sitting → back`. She only
+  over ~0.7 s. `data-pose` walks `standing → to-chair → sitting → back`, and
+  `data-sit-phase` names the `sitSeq` step underneath (`walk1`, `turn`, `walk2`,
+  `settle`, `rise`, `turnback1`, `walkback1`, `turnback2`, `walkback2`, `face`) while
+  the sequence runs and is empty when she is not in it. She only
   sits when it is really idle: chat closed, no notice showing, no review running,
   tab visible, motion allowed, and a chair drawn at all (`canSit()`). `playStanding()`
   keeps the standing clips (wave, interact) from firing on a seated body.
@@ -381,7 +464,8 @@ context & actions" below).
     foot pushes are summed per foot, never overwritten, and capped per frame
     (`PHYS.maxPush`).
   - The approach respects the chair (`stepSit`): she walks the L-shaped path — forward
-    BESIDE the chair, then across its front — and settles back+down onto the seat.
+    BESIDE the chair, then across its front — with a turn between the two legs so each one
+    is walked facing where it goes, and settles back+down onto the seat.
     Walking diagonally to the seat drove her legs through the chair's front (measured:
     9 px for 11 frames); with the L-path **and the projection sign fixed, the whole cycle
     measures 0.00 px of peak overlap and 0 of ~226 frames with any overlap** (the seated
@@ -392,16 +476,37 @@ context & actions" below).
     `feetY + shinR`** — floor plus the limb's own radius — so the authored contact agrees
     with the collider instead of sitting 0.02 units inside the floor (that disagreement
     was half of the seated jitter).
+  - **While she is seated, the spring's target is the RESOLVED spot, not the geometric
+    one** (`sitGeom.restX/restZ`): `dxUnits/dzUnits` (the armrest gap's centre) sits a few
+    px INSIDE the chair — her body does not fit the gap whole at armrest height — so the
+    spring kept pulling her in and the resolver kept pushing her out: **~3 px every
+    ~0.5 s, the whole seated body including the feet, reported as "an unusual little
+    movement while sitting"**. The anchor is taken on the first seated frame (the one the
+    resolver has already resolved) and then only follows pushes that leave the frame CLEAN
+    (`px` ~0 — a push that still leaves overlap is not a spot to park at), and while nobody
+    shoves her (a test shove moves HER, never the anchor). Until there is an anchor the
+    spring falls back to the geometric target, never to a null one: a null anchor would pull
+    her toward (0,0), off the seat and into the armrest, where she stays pressed with a
+    permanent ~6 px residual. `data-push-root` (the root push of the frame, in model units,
+    empty when the collision did not have to touch her) went from 6 pushes in 3 s to
+    **0 in 8 s**, and the root's on-screen motion from ~3 px to **0.0 px**. What is left
+    moving is the clip itself — knees ≤1.7 px on a 2.08 s cycle, feet pinned at 0.0 px —
+    which is breathing, not a fight.
   - If Rapier fails to load (offline), there is no guarantee — so `canSit()` requires
     `phys?.chair` and she simply does not sit; `data-phys` says which mode is live and
     the suite reports SKIP instead of failing.
   - Hooks: `data-phys`, `data-pen` (residual overlap in px AFTER resolving),
     `data-pen-peak`, `data-pen-frames` (`over2|over6|frames`, reset per episode in
-    `startSit()`), `data-pen-phases`, `data-pen-part`, `data-pushes`, and the suite's
+    `startSit()`), `data-pen-phases`, `data-pen-part`, `data-pushes`,
+    `data-push-root` (what the collision moved her ROOT by this frame, in model units;
+    empty is "it did not have to touch her" — the seated-stillness assertion),
+    `data-travel` / `data-travel-peak` (see the paseo bullet above), and the suite's
     `data-shove` (writable: pushes her toward the chair every frame, bypassing the
     animation, to prove the resolver holds the line). The suite asserts the cycle has no
     SUSTAINED overlap (≤6 frames above 2 px, 0.00 px at rest), that a sustained 3 px/frame
-    shove never takes her past a ≤16 px brush, and that she returns to a clean seat after.
+    shove never takes her past a ≤16 px brush, that she returns to a clean seat after,
+    and that seated and undisturbed the collision does not push her at all (0 pushes in
+    a 2.5 s sample).
   Gotcha: three's `GLTFLoader` sanitizes node names (`UpperLeg.L` → `UpperLegL`), so
   the rig is looked up through `findBone()`, which tries both spellings — a name
   that silently misses leaves the pose half-applied.
@@ -561,7 +666,7 @@ styled as their brand.
 
 - **`invoices`** — a real `Store` entity (`Store.all('invoices')`, array in
   localStorage under `<storageNamespace>invoices`), seeded EMPTY for every
-  client pack (never added to `clients/*/seed.json` — it has no history to
+  client pack (never added to `shared/demo-seed.json` — it has no history to
   seed). A record: `{id (e.g. 'FAC-1042', same id style as quotes' 'COT-',
   via Store.nextInvoiceId()), date (local 'YYYY-MM-DD', same convention as
   quotes), concept, kind ('plan'|'package'), target (plan name or package
@@ -632,7 +737,7 @@ client they're for.
 | File | Contents |
 |------|----------|
 | `client.json` | Brand strings (`displayName`, `shortName`, `assistantName`, `meta.*` titles/descriptions, `copy.*` consent/disclaimer text), `theme` (CSS custom property values, plus `theme.tints`/`theme.rgb` — see below), `fonts` (`{href, headingName, headingFallback, body}` — see below), `logo` (`{file, alt, fileOnLight?}` — see Color modes), `colorMode` (`"normal"` \| `"inverted"`, optional, defaults to `"normal"` — see Color modes), `assistant` (`{enabled, character: "female"\|"male", name, brandSuit}`, required, validated by `validateAssistant()` — see Assistant presence), `storageNamespace`, `photosDbName` |
-| `seed.json` | Client-specific demo data: `fabrics`, `servicePoints`, `sellers` (`id`, `servicePointIds`, `quotes` count only — identity comes from `shared/demo-users.json`, see below), `quotes`, `settings` (overrides onto `DEFAULT_SETTINGS`, at minimum `senderEmail` and `budgets`) |
+| — (no `seed.json`) | La data de demo es **una sola** para todos: `shared/demo-seed.json` (telas, puntos de atención, asignaciones y conteos de vendedores, cotizaciones, `settings.budgets`) — datos falsos con apariencia de reales, iguales en los tres paquetes, porque el prototipo demuestra la FUNCIONALIDAD y el cliente con el que corras no debe cambiar nada. Lo único que un paquete aporta en datos es su `senderEmail` (en `client.json`, inyectado a `settings`) |
 | `logo.png` / `logo.svg` | Referenced by `client.json` → `logo.file`; either extension works (`tools/client-pack.mjs` → `MIME_BY_EXT`). A second logo variant can be added for `colorMode: "inverted"` — see Color modes |
 | `README.md` | Only for placeholder/incomplete packs (see `clients/macizo/README.md`) — notes what's invented and needs replacing |
 
@@ -809,9 +914,9 @@ unknown or missing `CLIENT` fails loudly and lists the available `clients/*/` sl
 `clients/<slug>/`, replace every value, run `CLIENT=<SLUG> npm run generate` and open
 `generated/index.html`/`admin.html` to eyeball it. No template or tooling change
 needed for a new client — only a new pack directory. Backoffice logins come from
-`shared/demo-users.json` automatically; a new client's `seed.json` only needs to assign
-each shared seller `id` its own `servicePointIds` (and starting `quotes` count) — see
-"Shared demo logins" above.
+`shared/demo-users.json` and the demo catalogue from `shared/demo-seed.json` automatically:
+a new pack declares nothing about demo data beyond its own `senderEmail` — see "Shared demo
+logins" above.
 
 **Mediterránea vs. everyone else**: `clients/mediterranea/` reproduces the *original*
 pre-white-label product (brand, colors, logo, catalog, service points) exactly — it's
@@ -819,9 +924,9 @@ what the whole `npm test` suite is written against; its backoffice logins are th
 shared demo set every client uses, not part of that original reproduction.
 Every other pack (`clients/macizo/`, `clients/intertelas/`, ...) has a **real design**
 (`displayName`, `theme`, `fonts`, `logo`) sourced from that client's own live site with
-Playwright, but **invented demo data** (`seed.json`'s fabrics/service points/quotes
-assignments, `storageNamespace`) — see each pack's own `README.md` before treating
-anything else in it as real. `tests/clients.spec.mjs` (`npm run test:clients`) checks
+Playwright, and the **same shared demo data** as everyone else (`shared/demo-seed.json` +
+`shared/demo-users.json`): there is no per-client demo data to invent, and `storageNamespace`
+stays per-pack only so each demo keeps its own browser storage. `tests/clients.spec.mjs` (`npm run test:clients`) checks
 every one of these packs in isolation (looping over `clients/*` minus `mediterranea`),
 generating each into its own `generated-<slug>/` so none of them collides with the
 main suite's `generated/` or with each other.

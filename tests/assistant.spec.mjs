@@ -10,8 +10,9 @@
  * Written against whichever pack generated/ holds: defaults are read from
  * tests/client.mjs, never hardcoded. */
 import { chromium } from 'playwright';
+import { readFileSync } from 'node:fs';
 import { client, slug, userEmail } from './client.mjs';
-import { openAdmin } from './helpers.mjs';
+import { openAdmin, openWizard } from './helpers.mjs';
 import { validateAssistant } from '../tools/client-pack.mjs';
 
 const D = 'file://' + process.cwd() + '/generated/';
@@ -39,12 +40,26 @@ check('un nombre con espacios alrededor falla', throws(() => validateAssistant({
 check('un nombre de 41 caracteres falla', throws(() => validateAssistant({ ...DEF, name: 'x'.repeat(41) }, slug)), true);
 check('enabled que no es booleano falla', throws(() => validateAssistant({ ...DEF, enabled: 'sí' }, slug)), true);
 check('brandSuit que no es booleano falla', throws(() => validateAssistant({ ...DEF, brandSuit: 1 }, slug)), true);
+/* Y el build que la suite va a abrir tiene que ser EL DEL PAQUETE ACTIVO. `tools/dev.mjs`
+ * deja en generated/ el suyo —el de .env— cada vez que alguien edita una plantilla, y una
+ * corrida contra el otro paquete compara manzanas con peras: pasa por casualidad (los
+ * nombres sugeridos, los usuarios de demo y media configuración son los mismos) y después
+ * revienta o falla donde menos se espera (medido: la sección de configuración del asistente
+ * termina en "Cannot convert undefined or null to object"). Un segundo aquí ahorra media hora. */
+check('generated/ es el build del paquete activo, no el de .env',
+  readFileSync('generated/store.js', 'utf8').match(/var NS = '([^']+)'/)?.[1], client.storageNamespace);
 
 const b = await chromium.launch();
 const errs = [];
 const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
 const page = await ctx.newPage();
 page.on('pageerror', e => errs.push(String(e)));
+/* El cotizador abre en el paso de la línea cuando el plan habilita más de una (esta suite corre
+ * en Professional a propósito). Se elige la primera como haría el cliente y el resto del
+ * formulario queda donde siempre: paso 1 = Tu mueble. */
+async function gotoWizard(){
+  await openWizard(page, D);
+}
 await page.goto(D + 'admin.html');
 await page.evaluate(() => localStorage.clear());
 
@@ -66,7 +81,7 @@ const form = () => page.evaluate(() => ({
   brandSuit: document.getElementById('assistantBrandSuit').getAttribute('aria-checked')
 }));
 const wizard = async () => {
-  await page.goto(D + 'index.html');
+  await gotoWizard();
   return page.evaluate(() => ({
     presence: document.documentElement.getAttribute('data-assistant'),
     chatName: document.querySelector('#chatPanel [data-assistant-name]').textContent,
@@ -158,7 +173,7 @@ await page.waitForFunction(k => localStorage.getItem(k) !== null, KEY, { timeout
     toastVisible: document.getElementById('toast').classList.contains('show'),
     toastTexto: document.getElementById('toast').textContent.trim()
   }))));
-  check('guarda solo lo que cambió, con el nombre recortado', sorted(JSON.parse(raw)),
+  check('guarda solo lo que cambió, con el nombre recortado', raw ? sorted(JSON.parse(raw)) : null,
     sorted({ character: other, name: 'Camilo', brandSuit: !DEF.brandSuit }));
 }
 check('Store.assistant() lo refleja', await page.evaluate(() => { const a = Store.assistant(); return [a.character, a.name, a.brandSuit]; }),
@@ -230,7 +245,7 @@ check('el cotizador lo marca encendido', (await wizard()).presence, 'on');
 check('vuelve "Preguntar"', await shown('.help-card [data-open-chat]'), true);
 check('"Preguntar" abre el chat', await page.evaluate(() => { document.querySelector('.help-card [data-open-chat]').click(); return document.getElementById('chatPanel').classList.contains('open'); }), true);
 await page.setViewportSize({ width: 390, height: 844 });
-await page.goto(D + 'index.html');
+await gotoWizard();
 check('en el celular vuelve el botón de chat', await shown('.chat-fab'), true);
 check('y no hay capa 3D en el celular', await shown('#assistantStage'), false);
 await page.setViewportSize({ width: 1440, height: 900 });
@@ -262,9 +277,9 @@ await page.evaluate(k => localStorage.removeItem(k), KEY);
  * WebGL: the event bus, the context and the chat belong to the page, not to the 3D
  * layer (which the last block below checks only if it actually started). */
 console.log('\nEL COTIZADOR PUBLICA LO QUE EL CLIENTE HACE (EN VEZ DE VIGILAR EL CURSOR)');
-await page.goto(D + 'index.html');
+await gotoWizard();
 await page.evaluate(() => { Store.resetAssistant(); Store.markAssistantWelcomed(); });
-await page.goto(D + 'index.html');
+await gotoWizard();
 const watch = () => page.evaluate(() => {
   window.__aci = [];
   addEventListener('aci:event', e => window.__aci.push(e.detail));
@@ -304,7 +319,7 @@ check('cambiar un selector publica el campo y su valor', (await ultimo('PREFEREN
 
 console.log('\nSIN LA AUTORIZACIÓN MARCADA EL ASISTENTE NO VE DATOS PERSONALES');
 check('lo que puede leer es el estado del cotizador, y nada más', await page.evaluate(() => Object.keys(ACI.context()).sort()),
-  ['analysis', 'consent', 'currentStep', 'estimate', 'fabric', 'measurements', 'photos', 'preferences', 'selectedFurniture', 'submitted', 'tenant']);
+  ['analysis', 'consent', 'currentStep', 'estimate', 'fabric', 'measurements', 'photos', 'preferences', 'selectedFurniture', 'service', 'submitted', 'tenant']);
 await page.evaluate(() => {
   document.getElementById('fullName').value = 'Natalia Peña';
   document.getElementById('email').value = 'n@example.com';
@@ -393,7 +408,7 @@ check('y lo dice', await page.evaluate(() => [...document.querySelectorAll('#mes
 }
 
 console.log('\nLA CONVERSACIÓN VIVE EN LA BARRA, NO ENCIMA DEL COTIZADOR');
-await page.goto(D + 'index.html');
+await gotoWizard();
 await page.waitForTimeout(300);
 const barra = () => page.evaluate(() => {
   const j = document.querySelector('.journey');
@@ -434,7 +449,7 @@ check('solo el último intercambio a la vista, el resto sigue en el DOM', [await
 await page.click('#toggleMessages');
 check('"Ver toda la conversación" la despliega entera', await visibles(), total);
 await page.setViewportSize({ width: 390, height: 844 });
-await page.goto(D + 'index.html');
+await gotoWizard();
 await page.click('.chat-fab');
 await page.waitForTimeout(300);
 check('en el celular el panel vuelve a flotar y la barra no se dibuja', await page.evaluate(() => {
@@ -445,7 +460,7 @@ check('en el celular el panel vuelve a flotar y la barra no se dibuja', await pa
 await page.setViewportSize({ width: 1440, height: 900 });
 
 console.log('\nLA PRESENCIA REACCIONA A LOS EVENTOS REALES (SI LA CAPA 3D ARRANCA)');
-await page.goto(D + 'index.html');
+await gotoWizard();
 const stageOk = await page.waitForSelector('#assistantStage.ready', { timeout: 30000 }).then(() => true, () => false);
 const skip = n => console.log(`  SKIP  ${n}  (la capa 3D no arrancó en este navegador)`);
 if (!stageOk) {
@@ -518,6 +533,20 @@ if (!stageOk) {
   // El hook data-idle-ms acorta la espera (60 s es imposible de esperar en una suite).
   const idleMs = v => page.evaluate(ms => { document.getElementById('assistantStage').dataset.idleMs = String(ms); }, v);
   const pose = () => page.getAttribute('#assistantStage', 'data-pose');
+  /* El paseo se mide cuadro a cuadro: `data-sit-phase` dice en qué tramo va y `data-travel`
+   * el ángulo entre su giro y su desplazamiento (0° de frente, ±90° de lado, ±180° de
+   * espaldas). Se muestrea desde antes de que se vaya hasta que vuelve de pie. */
+  await page.evaluate(() => {
+    const st = document.getElementById('assistantStage');
+    window.__walk = [];
+    window.__walkOpen = true;
+    const step = () => {
+      if (!window.__walkOpen) return;
+      if (st.dataset.sitPhase) window.__walk.push([st.dataset.sitPhase, st.dataset.travel ?? null]);
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
   await idleMs(250);
   await page.waitForFunction(() => document.getElementById('assistantStage').dataset.pose === 'sitting', { timeout: 9000 }).catch(() => {});
   check('sin señales de vida se va a su sillón y se sienta', await pose(), 'sitting');
@@ -525,22 +554,70 @@ if (!stageOk) {
   check('y se sienta en el asiento: ni flotando encima ni hundida en el sillón', await page.evaluate(() => {
     const st = document.getElementById('assistantStage');
     const hip = Number(st.dataset.hip), seat = Number(st.dataset.seat), corona = Number(st.dataset.crown);
-    const suelo = Math.round(st.getBoundingClientRect().bottom) - 2; // la línea de los pies
+    const suelo = Number(st.dataset.floor); // la línea de la que cuelga el lienzo (`data-floor`)
     return { sentada: Math.abs(hip - seat) <= 18, asiento: seat > corona && seat < suelo - 20 };
   }), { sentada: true, asiento: true });
-  check('y los pies quedan apoyados en el suelo (la colisión los sube a su radio, no los hunde)', await page.evaluate(() => {
+  check('y los pies quedan apoyados en el suelo, no dibujados debajo de la línea', await page.evaluate(() => {
     const st = document.getElementById('assistantStage');
     const foot = Number(st.dataset.foot);
-    const suelo = Math.round(st.getBoundingClientRect().bottom) - 2; // la línea de los pies
-    // El tobillo queda a un radio de espinilla sobre el suelo por construcción (0.07 u ≈ 9 px
-    // a 1440 y ≈ 12 px a 1915): apoyado, ni hundido ni colgando. Se mide SENTADA, que es
-    // cuando `placeFeet` la coloca; de pie es otro contacto (el apoyabrazos, a su lado).
+    const suelo = Number(st.dataset.floor); // la línea de la que cuelga el lienzo (`data-floor`)
+    /* Los pies se colocan a la altura que PROYECTA sobre la línea del suelo para su propia z:
+     * la cámara mira inclinada y lo que está más cerca se dibuja más abajo, así que un tobillo
+     * puesto "en el suelo" en el mundo (y = feetY) aparecía 23 px por debajo, fuera del lienzo:
+     * eso era "no tiene pies" al sentarse. `data-foot` publica esa proyección, no la altura en
+     * el aire. Se mide SENTADA, que es cuando `placeFeet` la coloca. */
     return { resolvio: Number.isFinite(foot), apoyado: Math.abs(foot - suelo) <= 15 };
   }), { resolvio: true, apoyado: true });
+  check('y las suelas quedan planas, no colgando del tobillo', await page.evaluate(() => {
+    const st = document.getElementById('assistantStage');
+    const [l, r] = (st.dataset.feetFlat || '').split('|').map(Number);
+    /* `data-feet-flat` es la inclinación de cada pie contra la referencia medida al cargar (de
+     * pie, suelas en el suelo). El clip lo deja colgando —punta abajo, taco arriba—, que se
+     * veía como un zapato en el aire; la pose lo acuesta. 10° cubre el temblor del clip. */
+    return { midio: Number.isFinite(l) && Number.isFinite(r), planas: l <= 10 && r <= 10 };
+  }), { midio: true, planas: true });
+  check('y las manos se apoyan en los muslos (IK de brazos, no un gesto fijo)', await page.evaluate(() => {
+    const st = document.getElementById('assistantStage');
+    const [l, r] = (st.dataset.hands || '').split('|').map(Number);
+    /* `data-hands` es lo que quedó cada muñeca del blanco sobre el muslo, en px: 0 es apoyada.
+     * El gesto fijo que había antes dejaba 22 px (izquierda) y 33 px (derecha) por encima del
+     * muslo — manos flotando frente al vientre. La IK las baja a ~0; el margen de 6 px cubre
+     * el redondeo y el temblor del clip de reposo. */
+    return { midio: Number.isFinite(l) && Number.isFinite(r), apoyadas: l <= 6 && r <= 6 };
+  }), { midio: true, apoyadas: true });
   await page.mouse.move(700, 420);
   await page.mouse.move(720, 430);
   await page.waitForFunction(() => document.getElementById('assistantStage').dataset.pose === 'standing', { timeout: 9000 }).catch(() => {});
   check('al primer movimiento del ratón se levanta y vuelve a su sitio', await pose(), 'standing');
+  /* Y la vuelta se camina: cada pierna mirando a donde va. Antes la ida empezaba con un paso
+   * de lado (~90°) y la vuelta era un desplazamiento de espaldas y en diagonal (~125°) con
+   * el clip de caminar hacia adelante — el "moonwalk" que se veía. El ángulo se mide contra
+   * el giro que decide la secuencia (la mirada suma aparte, hasta ~13°). */
+  const caminata = await page.evaluate(() => {
+    window.__walkOpen = false;
+    return { m: window.__walk, pico: document.getElementById('assistantStage').dataset.travelPeak };
+  });
+  const tramos = caminata.m.map(([f]) => f).filter((f, i, a) => f !== a[i - 1]);
+  const piernas = caminata.m.map(([f]) => f);
+  const angulos = caminata.m.filter(([, a]) => a !== null).map(([, a]) => Math.abs(Number(a)));
+  check('camina mirando a donde va: las dos piernas de ida y las dos de vuelta', {
+    ida: ['walk1', 'walk2'].every(p => piernas.includes(p)),
+    vuelta: ['walkback1', 'walkback2'].every(p => piernas.includes(p)),
+    deFrente: angulos.every(a => a <= 45),
+    /* No es una aserción de fidelidad, es cobertura: que se hayan muestreado suficientes cuadros
+     * del paseo. Bajo carga (varios Chromium y `npm test` a la vez en la misma máquina) el rAF se
+     * cae a la mitad y 60 muestras por paseo no llegan: 30 siguen siendo medio segundo de caminata
+     * real, y una máquina ocupada no es un fallo del paseo. */
+    mide: angulos.length > 30
+  }, { ida: true, vuelta: true, deFrente: true, mide: true });
+  check('y el peor ángulo del paseo se queda de frente (era ~125° de espaldas)', Number(caminata.pico) <= 45, true);
+  check('la vuelta se hace en orden: se levanta, se gira, camina, se gira y camina', {
+    orden: ['rise', 'turnback1', 'walkback1', 'turnback2', 'walkback2', 'face'].map((p, i, l) => {
+      const at = tramos.indexOf(p);
+      return at >= 0 && (i === 0 || at > tramos.indexOf(l[i - 1]));
+    }).every(Boolean),
+    completa: ['rise', 'turnback1', 'walkback1', 'turnback2', 'walkback2', 'face'].every(p => tramos.includes(p))
+  }, { orden: true, completa: true });
   check('y queda DELANTE del respaldo, no en el mismo plano Z', await page.evaluate(() => {
     const st = document.getElementById('assistantStage');
     const [cara, espalda] = (st.dataset.sitZ || '').split('|').map(Number);
@@ -556,7 +633,11 @@ if (!stageOk) {
   check('y el muslo gira de verdad: la rodilla sube a la altura de la cadera (IK)', await page.evaluate(() => {
     const st = document.getElementById('assistantStage');
     const knee = Number(st.dataset.knee), hip = Number(st.dataset.hip);
-    return { resolvio: Number.isFinite(knee), sube: Math.abs(knee - hip) <= 14 };
+    /* La tolerancia es 20 px, no 14: la rodilla está ~0.2 u más cerca de la cámara que la
+     * cadera, y con la cámara inclinada eso la dibuja ~8 px más abajo (el mismo término que
+     * lleva los pies a la línea del suelo). Lo que la prueba exige es que la rodilla esté a la
+     * ALTURA de la cadera: una pierna colgando la dejaría ~34 px por debajo. */
+    return { resolvio: Number.isFinite(knee), sube: Math.abs(knee - hip) <= 20 };
   }), { resolvio: true, sube: true });
   // Colisiones: sin el mundo físico cargado no hay garantía, y el producto decidió que
   // entonces no se sienta. Si no cargó (sin red), se reporta como SKIP, no como fallo.
@@ -567,12 +648,48 @@ if (!stageOk) {
     await page.waitForTimeout(800);   // que se asiente: el residuo de reposo es el que se exige
     check('nunca la atraviesa: ningún cuadro con solape en el ciclo (caminar, girar, sentarse)', await page.evaluate(() => {
       const st = document.getElementById('assistantStage');
-      const frames = Number((st.dataset.penFrames || '0|0|0').split('|')[2]);
-      // Medido tras arreglar el signo de la proyección: 0.00 px de pico y 0 cuadros con
-      // solape en todo el ciclo. Antes de ese arreglo esta prueba mentía: la resolución
-      // empujaba hacia dentro y el "roce" era suyo.
-      return { fisica: st.dataset.phys === 'rapier', cuadros: frames > 60, pico: Number(st.dataset.penPeak) <= 1, reposo: Number(st.dataset.penU || 0) <= 0.01 };
-    }), { fisica: true, cuadros: true, pico: true, reposo: true });
+      const [over2, over6, frames] = (st.dataset.penFrames || '0|0|0').split('|').map(Number);
+      /* Medido con la IK de piernas: 1 cuadro de ~400 con 2.12 px de hondura, en la fase
+       * `settle`, parte `body` — el aterrizaje en el sillón, que la resolución deja en 0.00 px.
+       * Lo que esta prueba exige es que no lo ATRAVIESE: un roce de uno o dos cuadros al
+       * sentarse no es eso, un solape sostenido sí. De ahí: ningún cuadro por encima de 6 px,
+       * a lo sumo 3 por encima de 2 px, el pico acotado y el residuo de reposo en 0.01 u.
+       * (Con el arreglo del signo de la proyección el pico era 0.00; la pose de piernas nueva
+       * toca el sillón un cuadro al aterrizar.) */
+      return { fisica: st.dataset.phys === 'rapier', cuadros: frames > 60, sostenido: over2 <= 3, grave: over6 === 0, pico: Number(st.dataset.penPeak) <= 6, reposo: Number(st.dataset.penUnits || 0) <= 0.01 };
+    }), { fisica: true, cuadros: true, sostenido: true, grave: true, pico: true, reposo: true });
+    /* Y sentada y quieta la colisión NO tiene que tocarla. El balanceo que se veía era esto:
+     * el muelle la devolvía al blanco geométrico del asiento —unos píxeles DENTRO del
+     * apoyabrazos, porque su cuerpo no cabe entero en el hueco a la altura del brazo— y la
+     * resolución la sacaba otra vez: medido, ~3 px cada ~0.5 s, con los pies moviéndose con
+     * ella. El ancla ahora es el sitio RESUELTO, así que los dos están de acuerdo. Y se mide
+     * el reposo PURO: esta muestra va ANTES del empujón de prueba, porque la cola de ése
+     * (roces de hondura 0.000 px, medidos) se contaba como si fuera reposo. */
+    await page.waitForTimeout(800);   // el reposo, sin empujón de prueba de por medio
+    const quieta = await page.evaluate(async () => {
+      const st = document.getElementById('assistantStage');
+      const out = { cuadros: 0, empujes: 0, pen: 0, parte: '', pushes: '', hip: '', seat: '', fases: '', frames: '' };
+      const t0 = performance.now();
+      await new Promise(done => {
+        const step = () => {
+          out.cuadros++;
+          if ((st.dataset.pushRoot || '') !== '') out.empujes++;
+          if (Number(st.dataset.pen) > out.pen) {
+            out.pen = Number(st.dataset.pen); out.parte = st.dataset.penPart; out.pushes = st.dataset.pushes;
+            out.fases = st.dataset.penPhases; out.frames = st.dataset.penFrames;
+          }
+          out.hip = st.dataset.hip; out.seat = st.dataset.seat;
+          if (performance.now() - t0 < 2500) requestAnimationFrame(step); else done();
+        };
+        requestAnimationFrame(step);
+      });
+      return out;
+    });
+    // Diagnóstico SÓLO por el camino que falla: qué solape, de qué parte y con qué empujes.
+    if (quieta.empujes || quieta.pen) console.log(`        diagnóstico: pen=${quieta.pen} parte=${quieta.parte} hip=${quieta.hip} seat=${quieta.seat}\n        pushes=${quieta.pushes}\n        fases=${quieta.fases} frames=${quieta.frames}`);
+    check('sentada y quieta la colisión no la empuja: se acabó el vaivén', {
+      empujes: quieta.empujes, pen: quieta.pen, corrio: quieta.cuadros >= 20
+    }, { empujes: 0, pen: 0, corrio: true });
     // Y con un empujón sostenido contra el sillón (3 px por cuadro, 1 s ≈ 180 px de intento)
     // no la mete: mientras empuja el pico no pasa de 16 px, y al soltarlo vuelve a 0.00 px
     // sentada como estaba. Un empujón que de verdad la metiera no vuelve a cero.
@@ -592,7 +709,7 @@ if (!stageOk) {
     check('y el pico del empujón se queda en un roce, no la traga', { pico: peak <= 10 }, { pico: true });
   }
   await page.mouse.move(640, 340); // y la despierta, para no dejar el resto de la suite sentada
-  await page.waitForFunction(() => document.getElementById('assistantStage').dataset.pose === 'standing', { timeout: 9000 }).catch(() => {});
+  await page.waitForFunction(() => document.getElementById('assistantStage').dataset.pose === 'standing', { timeout: 25000 }).catch(() => {});
   await idleMs(900);
   await page.waitForTimeout(500); // media espera
   await page.mouse.move(600, 300); // una señal reinicia la cuenta

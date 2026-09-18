@@ -24,7 +24,7 @@ export const PHOTOS_DB = client.photosDbName;
 /* Look up a seeded user's email by id, e.g. userEmail('u-laura'). */
 export function userEmail(id) {
   const u = seed.users.find(x => x.id === id);
-  if (!u) throw new Error(`No seeded user with id "${id}" in clients/${slug}/seed.json`);
+  if (!u) throw new Error(`No seeded user with id "${id}" in shared/demo-users.json`);
   return u.email;
 }
 
