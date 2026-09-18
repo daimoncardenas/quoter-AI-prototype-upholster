@@ -349,3 +349,5 @@ identidad ni la migración de nada.
 vive en la plantilla + el catálogo; los textos son datos del catálogo; los valores comerciales de
 cada negocio (los que faltan: relleno/espuma y transporte) son **configuración del negocio** —
 ver `docs/onboarding-precios.md`, que define la entrevista para obtenerlos y el esquema provisional.
+La capa de conocimiento POR MOTIVO (los pares `qualification`/`expert` que Lía cargaría algún día)
+está contratada y **parkeada** en `docs/lia-skills.md`: hoy nada la consume.
