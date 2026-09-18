@@ -196,19 +196,134 @@
     }
   },
 
+  "copyByEngine": {
+    "tela": {
+      "wizardTitle": "Cotiza la tela ideal para tu mueble",
+      "wizardIntro": "Te guiaremos paso a paso. Solo necesitas una foto y las medidas aproximadas.",
+    "photoTitle": "Sube fotos de tu mueble",
+      "photoInstructions": "De frente, en diagonal y un detalle de la tela, con buena luz.",
+      "analysisTitle": "Listo para revisar",
+      "estimateTitle": "Estimación del tapizado",
+      "preliminaryNotice": "Es una estimación: un asesor confirma la tela, las medidas y los daños antes de cotizar en firme.",
+      "confirmationMessage": "Recibimos tu solicitud. Un asesor revisará las fotos y te escribirá con la cotización.",
+      "artifactLabel": "Precotización de tapizado",
+      "stepperLabel": "Estimación",
+      "pendingConfirm": [
+        "Las medidas del mueble",
+        "La tela y su disponibilidad",
+        "Los daños que haya que reparar"
+      ]
+    },
+    "pieza": {
+      "wizardTitle": "Cotiza la limpieza de tus muebles",
+      "wizardIntro": "Te guiaremos paso a paso. Necesitamos una foto y saber cuántas piezas son.",
+    "photoTitle": "Sube fotos de las piezas",
+      "photoInstructions": "De frente y un detalle del tejido o de la mancha, con buena luz.",
+      "analysisTitle": "Listo para revisar",
+      "estimateTitle": "Estimación de la limpieza",
+      "preliminaryNotice": "Es una estimación por pieza: el taller confirma la cantidad y el estado antes de cotizar en firme.",
+      "confirmationMessage": "Recibimos tu solicitud. Un asesor revisará las piezas y te escribirá con el valor de la limpieza.",
+      "artifactLabel": "Estimación de mantenimiento y limpieza",
+      "stepperLabel": "Estimación",
+      "pendingConfirm": [
+        "La cantidad de piezas",
+        "El estado y el tipo de manchas",
+        "Si el traslado va o no incluido"
+      ]
+    },
+    "m2": {
+      "wizardTitle": "Cotiza tu tapicería arquitectónica",
+      "wizardIntro": "Te guiaremos paso a paso. Necesitamos las medidas del espacio y una foto.",
+    "photoTitle": "Sube fotos del espacio",
+      "photoInstructions": "El panel completo, de frente, y un detalle del tejido o de la estructura.",
+      "analysisTitle": "Listo para revisar",
+      "estimateTitle": "Estimación por metro cuadrado",
+      "preliminaryNotice": "Es una estimación por m²: un asesor confirma la superficie real y los acabados antes de cotizar en firme.",
+      "confirmationMessage": "Recibimos tu solicitud. Un asesor revisará el espacio y te escribirá con la propuesta.",
+      "artifactLabel": "Precotización de tapicería arquitectónica",
+      "stepperLabel": "Estimación",
+      "pendingConfirm": [
+        "La superficie real del espacio",
+        "El acabado y el montaje",
+        "Las condiciones de obra"
+      ]
+    },
+    "unidad": {
+      "wizardTitle": "Cotiza tu proyecto comercial",
+      "wizardIntro": "Te guiaremos paso a paso. Con la lista de piezas y una foto del montaje basta para empezar.",
+    "photoTitle": "Sube fotos del montaje",
+      "photoInstructions": "Una foto del montaje o del mobiliario, si lo tienes a mano.",
+      "analysisTitle": "Listo para revisar",
+      "estimateTitle": "Propuesta preliminar del proyecto",
+      "preliminaryNotice": "Es una propuesta preliminar: un asesor confirma el alcance, las cantidades y la instalación antes de cotizar en firme.",
+      "confirmationMessage": "Recibimos tu solicitud. Un asesor revisará el alcance y te escribirá con la propuesta.",
+      "artifactLabel": "Propuesta preliminar para proyecto comercial",
+      "stepperLabel": "Propuesta",
+      "pendingConfirm": [
+        "El alcance y las cantidades",
+        "La instalación y el retiro",
+        "La logística y los tiempos"
+      ]
+    },
+    "fabricacion": {
+      "wizardTitle": "Cotiza tu mueble a la medida",
+      "wizardIntro": "Te guiaremos paso a paso. Necesitamos una foto del espacio y las medidas.",
+    "photoTitle": "Sube fotos del espacio",
+      "photoInstructions": "El espacio donde irá el mueble y una referencia del estilo que te gusta.",
+      "analysisTitle": "Listo para revisar",
+      "estimateTitle": "Estimación de fabricación",
+      "preliminaryNotice": "Es una estimación de fabricación: maderas, acabados y entrega se confirman antes de cotizar en firme.",
+      "confirmationMessage": "Recibimos tu solicitud. Un asesor revisará el diseño y te escribirá con la cotización.",
+      "artifactLabel": "Precotización de mueble a la medida",
+      "stepperLabel": "Estimación",
+      "pendingConfirm": [
+        "Las maderas y los acabados",
+        "Las medidas finales",
+        "La entrega y el montaje"
+      ]
+    }
+  },
+
   "lines": [
     { "id": "suministro-tela", "label": "Suministro de tela", "journey": "suministro", "minPlan": "base",
       "pricing": "tela", "laborPct": 0, "skips": [],
-      "hint": "Te decimos cuántos metros necesita tu mueble y a qué precio la referencia que elijas." },
+      "hint": "Te decimos cuántos metros necesita tu mueble y a qué precio la referencia que elijas.",
+      "copy": {
+        "artifactLabel": "Precotización de suministro de tela",
+        "estimateTitle": "Estimación del suministro",
+        "pendingConfirm": [
+          "Los metros de tela",
+          "La referencia y su disponibilidad",
+          "El punto de entrega"
+        ]
+      } },
     { "id": "retapizado", "label": "Retapizado de muebles", "journey": "existente", "minPlan": "base",
       "pricing": "tela", "laborPct": 60, "skips": [],
-      "hint": "Cambiamos tela y rellenos de tu mueble, con la estructura como está." },
+      "hint": "Cambiamos tela y rellenos de tu mueble, con la estructura como está.",
+      "copy": {
+        "artifactLabel": "Precotización de retapizado",
+        "wizardTitle": "Cotiza el retapizado de tu mueble"
+      } },
     { "id": "cambio-de-tela", "label": "Cambio de tela", "journey": "existente", "minPlan": "Professional",
       "pricing": "tela", "laborPct": 45, "skips": [],
-      "hint": "Solo la cubierta: la estructura y los rellenos siguen bien." },
+      "hint": "Solo la cubierta: la estructura y los rellenos siguen bien.",
+      "copy": {
+        "artifactLabel": "Precotización de cambio de tela",
+        "estimateTitle": "Estimación del cambio de tela"
+      } },
     { "id": "reparacion", "label": "Reparación y restauración", "journey": "existente", "minPlan": "Professional",
       "pricing": "tela", "laborPct": 60, "asks": ["danos"], "skips": [],
-      "hint": "Estructura, resortes, madera y acabados, además de la tela." },
+      "hint": "Estructura, resortes, madera y acabados, además de la tela.",
+      "copy": {
+        "artifactLabel": "Precotización de reparación y restauración",
+        "wizardTitle": "Cotiza la reparación de tu mueble",
+        "estimateTitle": "Estimación de la reparación",
+        "pendingConfirm": [
+          "Los daños reales del mueble",
+          "El estado de la estructura",
+          "La tela de reemplazo"
+        ]
+      } },
     { "id": "a-la-medida", "label": "Muebles a la medida", "journey": "nueva", "minPlan": "Professional",
       "pricing": "fabricacion", "laborPct": 0, "asks": ["materiales", "tapizado"], "skips": [],
       "hint": "Fabricamos la pieza desde cero, con tus medidas y tus acabados." },
@@ -223,6 +338,9 @@
     { "id": "mantenimiento", "label": "Mantenimiento y limpieza", "journey": "existente", "minPlan": "Business",
       "pricing": "pieza", "laborPct": 0, "asks": ["limpieza", "traslado"],
       "skips": ["measurements", "preferences", "recommendation"],
-      "hint": "Limpieza profunda, tratamientos de protección y repaso de piezas en uso." }
+      "hint": "Limpieza profunda, tratamientos de protección y repaso de piezas en uso.",
+      "copy": {
+        "artifactLabel": "Estimación de mantenimiento"
+      } }
   ]
 }

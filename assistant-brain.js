@@ -37,7 +37,10 @@
     { n: 12, id: 'PREFERENCES', name: 'Preferencias' },
     { n: 13, id: 'REVIEW', name: 'Validación' },
     { n: 14, id: 'RECOMMENDATION', name: 'Recomendación' },
-    { n: 15, id: 'CONTACT', name: 'Tu cotización' }
+    { n: 15, id: 'CONTACT', name: 'Tu cotización' },
+    /* El paso de la estimación es de TODOS los motivos (ver docs/journeys.md §10): va después de las
+     * preguntas y antes del contacto, y esta tabla es la que lo nombra en el móvil y en los eventos. */
+    { n: 16, id: 'ESTIMATE', name: 'Estimación' }
   ];
   /* Los pasos se NOMBRAN por su id, nunca por un número escrito a mano: con los tres pasos
    * opcionales (la línea, los daños y los que pide cada motivo) la numeración corre, y un

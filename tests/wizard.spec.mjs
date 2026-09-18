@@ -41,7 +41,10 @@ check('price uses the chosen rate (119.000/m)', await page.evaluate(()=>{
   return document.getElementById('priceRange').textContent===esperado;
 }), true);
 await page.click('#nextButton');
-check('step 6 summary agrees', await page.textContent('#summaryFabric'), 'Velvet Siena · Petróleo');
+await page.waitForFunction(()=>state.step===16);   // el paso de la estimación
+await page.click('#nextButton');
+await page.waitForFunction(()=>state.step===15);   // el cierre, que es donde vive el resumen
+check('el resumen del cierre concuerda con la tela elegida', await page.textContent('#summaryFabric'), 'Velvet Siena · Petróleo');
 
 console.log('\nBLOCKER #3 — quantity counts, and is named correctly');
 await fresh();
@@ -143,10 +146,113 @@ const barra = async (motivo) => {
 };
 const siete = await barra('Suministro de tela');
 const nueve = await barra('Muebles a la medida');
-check('siete pasos: la barra entra sin scroll', [siete.filas, siete.scroll[0] === siete.scroll[1]], ['7', true]);
-check('nueve pasos: también entra sin scroll', [nueve.filas, nueve.scroll[0] === nueve.scroll[1]], ['9', true]);
+check('ocho pasos: la barra entra sin scroll', [siete.filas, siete.scroll[0] === siete.scroll[1]], ['8', true]);
+check('diez pasos (el recorrido largo, con la estimación): también entra sin scroll', [nueve.filas, nueve.scroll[0] === nueve.scroll[1]], ['10', true]);
 check('la barra mide lo mismo con siete y con nueve', nueve.barra, siete.barra);
 check('y el hueco de Lía (su canvas) no se mueve', [nueve.stage, nueve.canvas], [siete.stage, siete.canvas]);
+
+/* Un «Continuar» se confirma esperando el cambio de paso: un clic que llegue antes de que el wizard
+ * termine de moverse se pierde y la secuencia termina en el paso equivocado. Un solo helper para
+ * las dos caminatas de esta suite. */
+const avanzar = async () => {
+  const antes = await page.evaluate(()=>state.step);
+  await page.click('#nextButton');
+  await page.waitForFunction(x=>state.step!==x, antes);
+};
+/* Los pasos que el motivo pide (`asks`) no abren la puerta sin respuesta: marca la primera opción. */
+const responderPregunta = async (ask) => {
+  const box = `#quoteForm .wizard-step[data-ask="${ask}"]`;
+  if (!(await page.isVisible(`${box} .chip-grid label`))) return;
+  if (!(await page.$$eval(`${box} .chip-grid input:checked`, els => els.length))) {
+    await page.check(`${box} .chip-grid label:first-child input`);
+  }
+};
+
+console.log('\nCADA MOTIVO LLEGA A SU ESTIMACIÓN — y el cotizador habla de lo que ese motivo trata');
+/* El precio vivía DENTRO del paso de telas, así que limpieza y proyecto comercial solo veían su
+ * número en el resumen final. Ahora la estimación es un paso propio y ninguno se lo salta; y el
+ * nombre que el cliente lee (título, artefacto, paso) es el de su motivo, no el de las telas. */
+await page.goto(D + 'index.html');
+await page.evaluate((db)=>{localStorage.clear();indexedDB.deleteDatabase(db)}, PHOTOS_DB);
+await page.goto(D + 'index.html');
+await page.waitForTimeout(300);
+const motivos = await page.$$eval('#serviceGrid .service-choice b', els => els.map(e => e.textContent));
+const recorridos = [];
+for (let i = 1; i <= motivos.length; i++) {
+  await page.goto(D + 'index.html');
+  await page.waitForTimeout(220);
+  await page.click(`#serviceGrid .service-choice:nth-child(${i})`);
+  await page.waitForTimeout(150);
+  recorridos.push(await page.evaluate(() => {
+    const c = Store.lineCopy(state.service);
+    return {
+      estimacion: pasosVisibles().includes(16),
+      artefacto: c.artifactLabel,
+      titulo: document.getElementById('journeyTitle').textContent,
+      foto: document.getElementById('uploadTitle').textContent,
+      pasos: pasosVisibles().length
+    };
+  }));
+}
+check('los ocho motivos pasan por el paso de la estimación', recorridos.map(r => r.estimacion), motivos.map(() => true));
+check('el nombre que el cliente lee es el de su motivo',
+  [recorridos[1].artefacto, recorridos[5].artefacto, recorridos[7].artefacto],
+  ['Precotización de retapizado', 'Propuesta preliminar para proyecto comercial', 'Estimación de mantenimiento']);
+check('y la línea pisa el default de su oficio (los cuatro de «tela» no dicen lo mismo)',
+  new Set([recorridos[0].artefacto, recorridos[1].artefacto, recorridos[2].artefacto, recorridos[3].artefacto]).size, 4);
+check('limpieza no habla de telas ni de «tu mueble»',
+  [/limpieza/i.test(recorridos[7].titulo), /tela/i.test(recorridos[7].titulo), /piezas/i.test(recorridos[7].foto)],
+  [true, false, true]);
+check('y el recorrido largo (a la medida) crece un paso con la estimación',
+  [recorridos[4].pasos, recorridos[7].pasos], [10, 7]);
+
+console.log('\nMANTENIMIENTO VE SU ESTIMACIÓN EN SU PASO — y queda congelada en la solicitud');
+/* El caso que la auditoría marcó como el peor: un oficio sin tela, cuyo `price` guardado era null.
+ * Ahora la estimación por pieza tiene su paso Y viaja en el snapshot. */
+await page.goto(D + 'index.html');
+await page.evaluate((db)=>{localStorage.clear();indexedDB.deleteDatabase(db)}, PHOTOS_DB);
+await page.goto(D + 'index.html');
+await page.waitForTimeout(300);
+await page.click('#serviceGrid .service-choice:nth-child(8)');
+await avanzar();                                                        // 0 → 1 (Tu mueble)
+await page.setInputFiles('#furniturePhoto', png);
+await page.waitForFunction(()=>state.photos.length>=3);
+await avanzar();                                                        // 1 → 3 (limpieza)
+await responderPregunta('limpieza');
+await avanzar();                                                        // 3 → 4 (traslado)
+await responderPregunta('traslado');
+await avanzar();                                                        // 4 → 13 (validación)
+if (await page.isVisible('#analyzeButton')) { await page.click('#analyzeButton'); await page.waitForFunction(()=>state.analyzed); }
+await avanzar();                                                        // 13 → 16 (estimación)
+const enPiezas = (await page.textContent('#priceRange')).trim();
+const supuestos = await page.$$eval('#estimateAssumptions li', els => els.map(e => e.textContent));
+check('la limpieza enseña su estimación en su propio paso, con lo que la compone',
+  [enPiezas !== '—' && enPiezas.length > 0, /Piezas: \d+/.test(supuestos.join(' | ')), /Motivo: Mantenimiento/.test(supuestos.join(' | '))],
+  [true, true, true]);
+check('y dice qué falta por confirmar, en el idioma del oficio',
+  await page.$$eval('#estimatePendingConfirm li', els => els.map(e => e.textContent)),
+  ['La cantidad de piezas', 'El estado y el tipo de manchas', 'Si el traslado va o no incluido']);
+await avanzar();                                                        // 16 → 15 (contacto)
+const enResumenMant = (await page.textContent('#summaryPrice')).trim();
+await page.fill('#fullName','Cliente Limpieza');
+await page.fill('#email','limpieza@example.com');
+await page.fill('#phone','3000000000');
+await page.check('#consent');
+await page.click('#nextButton');
+await page.waitForSelector('#successState:not([hidden])');
+const mantId = (await page.textContent('#requestNumber')).trim();
+const mant = await page.evaluate(i => Store.get('quotes', i), mantId);
+const totalMant = await page.evaluate(i => {
+  const e = Store.get('quotes', i).estimate, m = n => Store.money(n);
+  return e.total[0] === e.total[1] ? m(e.total[0]) : `${m(e.total[0])} – ${m(e.total[1])}`;
+}, mantId);
+check('la solicitud de limpieza guarda su estimación por pieza, con el total que vio el cliente',
+  [mant.estimate.kind, enPiezas, enResumenMant, totalMant], ['pieza', totalMant, totalMant, totalMant]);
+check('y sin tela de por medio: lo que antes quedaba en null ahora es un número',
+  [mant.price, mant.estimate.total[0] > 0, Object.keys(mant.estimate.inputs.answers).length > 0],
+  [null, true, true]);
+check('el artefacto también aparece en la pantalla de cierre',
+  (await page.textContent('#successArtifact')).trim(), 'Estimación de mantenimiento');
 
 console.log('\nLA SOLICITUD GUARDA LA ESTIMACIÓN QUE VIO EL CLIENTE — no solo el rango de la tela');
 /* Hallazgo de la auditoría: la pantalla mostraba la estimación del oficio (material + mano de obra
@@ -159,13 +265,6 @@ await page.evaluate((db)=>{localStorage.clear();indexedDB.deleteDatabase(db)}, P
 await page.goto(D + 'index.html');
 await page.waitForTimeout(300);
 await page.click('#serviceGrid .service-choice:nth-child(2)');          // Retapizado de muebles
-/* Cada «Continuar» se confirma esperando el cambio de paso: un clic que llegue antes de que el
- * wizard termine de moverse se pierde y la secuencia termina en el paso equivocado. */
-const avanzar = async () => {
-  const antes = await page.evaluate(()=>state.step);
-  await page.click('#nextButton');
-  await page.waitForFunction(x=>state.step!==x, antes);
-};
 await avanzar();
 await page.setInputFiles('#furniturePhoto', png);
 await page.waitForFunction(()=>state.photos.length>=3);
@@ -178,10 +277,11 @@ if (await page.isVisible('#analyzeButton')) { await page.click('#analyzeButton')
 await avanzar();                                                        // 13 → 14 (Recomendación)
 await page.waitForSelector('#fabricGrid .fabric-card');
 await page.click('#fabricGrid .fabric-card:nth-child(1)');
+await avanzar();                                                        // 14 → 16 (Estimación: su propio paso)
 const enBloque = (await page.textContent('#priceRange')).trim();
-await avanzar();                                                        // 14 → 15 (Contacto)
+await avanzar();                                                        // 16 → 15 (Contacto)
 const enResumen = (await page.textContent('#summaryPrice')).trim();
-check('la recomendación y el resumen final dicen el mismo número', [enBloque, enResumen], [enBloque, enBloque]);
+check('el paso de la estimación y el resumen final dicen el mismo número', [enBloque, enResumen], [enBloque, enBloque]);
 await page.fill('#fullName','Cliente Prueba');
 await page.fill('#email','prueba@example.com');
 await page.fill('#phone','3000000000');

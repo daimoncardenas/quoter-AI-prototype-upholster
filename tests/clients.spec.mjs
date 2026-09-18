@@ -264,8 +264,8 @@ for (const slug of SLUGS) {
   const hayPaso = esperadasIndex.length > 1;
   check('el paso «¿qué quieres hacer?» existe solo con más de una línea, y es su propio paso',
     { paso: pasoUno.paso, activo: pasoUno.activo, pasos: pasoUno.pasos, tarjetas: pasoUno.tarjetas, nota: pasoUno.nota },
-    hayPaso ? { paso: true, activo: '0', pasos: 'Paso 1 de 7', tarjetas: esperadasIndex, nota: `Tu plan Empresa de muebles incluye ${esperadasIndex.length} líneas de servicio.` }
-            : { paso: false, activo: '1', pasos: 'Paso 1 de 6', tarjetas: [], nota: '' });
+    hayPaso ? { paso: true, activo: '0', pasos: 'Paso 1 de 8', tarjetas: esperadasIndex, nota: `Tu plan Empresa de muebles incluye ${esperadasIndex.length} líneas de servicio.` }
+            : { paso: false, activo: '1', pasos: 'Paso 1 de 7', tarjetas: [], nota: '' });
   await indexPage.close();
 
   /* The pack is the brand's DEFAULT: with nothing saved both pages render it
@@ -358,6 +358,9 @@ for (const slug of SLUGS) {
   await toFabricStep();
   await loop.click('.fabric-card:has-text("Tela Prueba Loop")');
   await loop.click('#nextButton');
+  await loop.waitForFunction(()=>state.step===16);   // el paso de la estimación
+  await loop.click('#nextButton');
+  await loop.waitForFunction(()=>state.step===15);   // cierre: contacto y resumen
   await loop.fill('#fullName', 'Cliente Prueba Loop');
   await loop.fill('#email', 'loop@example.com');
   await loop.fill('#phone', '3001234567');

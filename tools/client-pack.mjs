@@ -217,6 +217,41 @@ export function validateAskSpecs(specs, lines) {
   if (bad.length) throw new Error(`${SHARED_LINES_FILE} has invalid asks:\n  ${bad.join('\n  ')}`);
 }
 
+/* Los textos que ve el cliente, por OFICIO y con la línea como override (ver Store.lineCopy):
+ * `copyByEngine` trae el default completo de cada uno de los cinco oficios y `lines[].copy` solo lo
+ * que cambia — la etiqueta del artefacto, sobre todo. Faltando un default el cotizador mostraría
+ * huecos, así que aquí se exige entero: es el mismo trato que el resto del catálogo. */
+export const COPY_KEYS = ['wizardTitle', 'wizardIntro', 'photoInstructions', 'analysisTitle', 'estimateTitle',
+  'preliminaryNotice', 'confirmationMessage', 'artifactLabel', 'stepperLabel', 'pendingConfirm'];
+
+export function validateCopyByEngine(byEngine, lines) {
+  const bad = [];
+  for (const engine of SERVICE_PRICINGS) {
+    const c = byEngine[engine];
+    if (!c || typeof c !== 'object' || Array.isArray(c)) {
+      bad.push(`copyByEngine.${engine} (missing: every pricing engine needs its default copy)`);
+      continue;
+    }
+    for (const key of COPY_KEYS) {
+      const v = c[key];
+      const ok = key === 'pendingConfirm'
+        ? Array.isArray(v) && v.length > 0 && v.every(x => typeof x === 'string' && x.trim() === x && x.length > 0)
+        : typeof v === 'string' && v.trim() === v && v.length > 0 && v.length <= 160;
+      if (!ok) bad.push(`copyByEngine.${engine}.${key} = ${JSON.stringify(v)} (expected ${key === 'pendingConfirm' ? 'a non-empty array of trimmed, non-empty strings' : 'a trimmed, non-empty string of at most 160 characters'})`);
+    }
+  }
+  for (const [i, s] of lines.entries()) {
+    if (!s || !SERVICE_PRICINGS.includes(s.pricing)) continue; // validateServiceLines already flags it
+    const copy = s.copy || {};
+    const unknown = Object.keys(copy).filter(k => !COPY_KEYS.includes(k));
+    if (unknown.length) bad.push(`lines[${i}] (${s.id}).copy has unknown key(s): ${unknown.join(', ')} (expected only: ${COPY_KEYS.join(', ')})`);
+    const resolved = { ...(byEngine[s.pricing] || {}), ...copy };
+    const missing = COPY_KEYS.filter(k => resolved[k] === undefined);
+    if (missing.length) bad.push(`lines[${i}] (${s.id}): copy leaves ${missing.join(', ')} unresolved`);
+  }
+  if (bad.length) throw new Error('service catalogue copy is invalid:\n  - ' + bad.join('\n  - '));
+}
+
 /* Las tarifas de los oficios que no se cotizan por metro de rollo (valores demo, sujetos a las
  * anclas de precio): un bloque vacío dejaría la cotización en cero sin error. */
 export function validatePricingRates(rates, lines) {
@@ -328,6 +363,7 @@ export function loadClientPack(clientEnvValue) {
   const shared = JSON.parse(readFileSync(SHARED_USERS_FILE, 'utf8'));
   const catalogue = JSON.parse(readFileSync(SHARED_LINES_FILE, 'utf8'));
   const serviceLines = catalogue.lines;
+  const copyByEngine = catalogue.copyByEngine || {};
   const damageItems = catalogue.damageItems || [];
   const askSpecs = catalogue.asks || {};
   const pricingRates = catalogue.pricingRates || {};
@@ -335,6 +371,7 @@ export function loadClientPack(clientEnvValue) {
   const sharedSeed = JSON.parse(readFileSync(SHARED_SEED_FILE, 'utf8'));
 
   validateServiceLines(serviceLines);
+  validateCopyByEngine(copyByEngine, serviceLines);
   validateDamageItems(damageItems);
   validateAskSpecs(askSpecs, serviceLines);
   validatePricingRates(pricingRates, serviceLines);
@@ -430,6 +467,7 @@ export function loadClientPack(clientEnvValue) {
     demoPassword,
     emailDomain,
     serviceLines,
+    copyByEngine,
     damageItems,
     askSpecs,
     pricingRates,

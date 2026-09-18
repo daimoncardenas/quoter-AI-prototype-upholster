@@ -43,6 +43,9 @@ async function submitQuote(cityOption) {
   await wizardTo(5, { city: cityOption });
   await page.click('#fabricGrid .fabric-card:nth-child(1)');
   await page.click('#nextButton');
+  await page.waitForFunction(()=>state.step===16);   // el paso de la estimación
+  await page.click('#nextButton');
+  await page.waitForFunction(()=>state.step===15);   // cierre: contacto y resumen
   await page.fill('#fullName','Cliente Prueba');
   await page.fill('#email','prueba@example.com');
   await page.fill('#phone','3000000000');

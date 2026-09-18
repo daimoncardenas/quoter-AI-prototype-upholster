@@ -141,7 +141,10 @@ check('a range whose ends collapse is printed once, not twice',
 await page.click('.fabric-card:has-text("Lino Verona")');
 
 await page.click('#nextButton');
-check('step 6 shows both numbers, so the two are never confused',
+await page.waitForFunction(()=>state.step===16);   // el paso de la estimación
+await page.click('#nextButton');
+await page.waitForFunction(()=>state.step===15);   // el cierre: donde vive el resumen
+check('el resumen del cierre muestra los dos números, para no confundirlos',
   [await page.textContent('#summaryConsumo'), await page.textContent('#summaryMeters')],
   ['12,5–14 m', '14 m']);
 

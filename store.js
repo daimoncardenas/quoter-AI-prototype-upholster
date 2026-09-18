@@ -570,6 +570,9 @@
            * catálogo (shared/service-lines.json), no casos especiales del código. */
           pricing: s.pricing || 'tela',
           skips: (s.skips || []).slice(),
+          /* La copia con la que ese motivo se le cuenta al cliente: el default de su oficio más lo
+           * que la línea sobrescriba (la etiqueta del artefacto, casi siempre). */
+          copy: Object.assign({}, COPY_BY_ENGINE[s.pricing || 'tela'] || {}, s.copy || {}),
           /* `withinPlan` es siempre verdadero desde el modelo v2 (el plan dejó de ser la puerta:
            * ver el comentario de arriba) — queda como campo para que el backoffice pueda decir de
            * qué paquete venía una línea sin reimplementar el rango de planes. `enabled` es la
@@ -748,6 +751,13 @@
       var all = Store.services();
       for (var i = 0; i < all.length; i++) { if (all[i].id === id) return all[i]; }
       return null;
+    },
+
+    /* La copia resuelta de un motivo (por id o por el objeto que devuelve services()): el único
+     * sitio donde se resuelve oficio + override, para que el cotizador no repita la regla. */
+    lineCopy: function (lineOrId) {
+      var line = typeof lineOrId === 'string' ? Store.serviceById(lineOrId) : lineOrId;
+      return (line && line.copy) || null;
     },
 
     /* ── Composición del paquete (modelo v2, docs/paquetes-y-precios.md) ────────────────────────
@@ -1519,6 +1529,9 @@
    * base, solo su marca. Quién entra lo decide el negocio desde el backoffice (modelo v2); el
    * `minPlan` de cada línea se conserva como dato de qué paquete lo traía, sin bloquear nada. */
   var SERVICE_LINES = {{SERVICE_LINES_JSON}};
+  /* Los textos de cada motivo, por oficio (shared/service-lines.json → `copyByEngine`) con la línea
+   * como override: los pasos del cotizador leen la copia YA resuelta y no saben de oficios. */
+  var COPY_BY_ENGINE = {{COPY_BY_ENGINE_JSON}};
   /* Los daños que pregunta una línea que los pide (hoy «reparación»): cada ítem suma un valor
    * fijo a la estimación (ver lineEstimate). */
   var DAMAGE_ITEMS = {{DAMAGE_ITEMS_JSON}};

@@ -121,6 +121,9 @@ console.log('    · estado antes del clic:', await page.evaluate(() => {
 await page.click('#nextButton');
 await page.click('.fabric-card:has-text("Velvet Siena")');
 await page.click('#nextButton');
+await page.waitForFunction(() => state.step === 16);   // el paso de la estimación
+await page.click('#nextButton');
+await page.waitForFunction(() => state.step === 15);   // cierre: contacto y resumen
 await page.fill('#fullName','Natalia Peña');
 await page.fill('#email','natalia@example.com');
 await page.fill('#phone','3001234567');
@@ -143,12 +146,12 @@ const linea = await page.evaluate(id => {
   };
 }, quoteId);
 /* La línea de servicio la decide EL NEGOCIO (Upgrade → Configurar mi plan), no el plan: con más de
- * una habilitada el cotizador tiene el paso de la línea como primero, el stepper pasa a 7 y las
+ * una habilitada el cotizador tiene el paso de la línea como primero, el stepper pasa a 8 y las
  * tarjetas son las que el negocio tiene habilitadas (el catálogo es del producto, así que la
  * esperada se deriva de él, no de un nombre escrito a mano). */
 check('el paso de la línea existe y ofrece las líneas que el negocio tiene habilitadas',
   { paso: linea.paso, dots: linea.dots, habilitadas: linea.habilitadas.map(h => h.id) },
-  { paso: false, dots: 7, habilitadas: client.serviceLines.map(s => s.id) });
+  { paso: false, dots: 8, habilitadas: client.serviceLines.map(s => s.id) });
 /* La línea de servicio con la que se cotizó: el cotizador elige la primera que el negocio tiene
  * habilitada (el negocio manda, no el plan ni el nombre de ninguna línea escrito a mano), y con
  * más de una el paso de la línea es el primero. */
@@ -209,7 +212,7 @@ const estadoFlujo = () => flujo.evaluate(() => ({
 }));
 await flujo.click('#nextButton');
 check('con suministro no hay paso de daños y «Continuar» cae en Medidas',
-  await estadoFlujo(), { paso: 9, visible: 'Paso 3 de 7', dotDanos: false, motivo: 'Suministro de tela' });
+  await estadoFlujo(), { paso: 9, visible: 'Paso 3 de 8', dotDanos: false, motivo: 'Suministro de tela' });
 check('y su estimación es solo material',
   await flujo.evaluate(() => { const e = Store.lineEstimate(Store.serviceById('suministro-tela'), [1000000, 1200000], []); return [e.laborPct, e.total]; }),
   [0, [1000000, 1200000]]);
@@ -219,7 +222,7 @@ await flujo.click('#serviceGrid .service-choice:has-text("Reparación y restaura
 check('elegir reparación avisa el motivo y abre su paso', (await estadoFlujo()).dotDanos, true);
 await flujo.click('#nextButton'); await flujo.waitForSelector('[data-step="1"].active');
 await flujo.click('#nextButton'); await flujo.waitForSelector('[data-step="2"].active');
-check('el paso de daños es el tercero de ocho', (await estadoFlujo()).visible, 'Paso 3 de 8');
+check('el paso de daños es el tercero de nueve', (await estadoFlujo()).visible, 'Paso 3 de 9');
 await flujo.click('#nextButton');
 check('sin marcar ningún daño no avanza, y lo explica',
   [await flujo.$eval('.wizard-step.active', s => s.dataset.step), await flujo.$eval('#damageError', e => !e.hidden)], ['2', true]);
@@ -263,16 +266,16 @@ await flujo.close();
   await page.evaluate(() => Store.saveSettings({ plan: 'Business', disabledLines: [] }));
   const motivos = [
     { etiqueta: 'Mantenimiento y limpieza', pricing: 'pieza',
-      pasos: ['Tu línea de servicio', 'Tu mueble', 'Lo que necesita', 'Cómo llega al taller', 'Validación', 'Tu cotización'],
+      pasos: ['Tu línea de servicio', 'Tu mueble', 'Lo que necesita', 'Cómo llega al taller', 'Validación', 'Estimación', 'Tu cotización'],
       ctx: { furnitureId: 'sofa', quantity: 1, answers: { tratamientos: ['quitamanchas'], traslado: 'taller' } }, total: 320000 },
     { etiqueta: 'Tapicería arquitectónica', pricing: 'm2',
-      pasos: ['Tu línea de servicio', 'La superficie', 'Cómo se monta', 'Validación', 'Recomendación', 'Tu cotización'],
+      pasos: ['Tu línea de servicio', 'La superficie', 'Cómo se monta', 'Validación', 'Recomendación', 'Estimación', 'Tu cotización'],
       ctx: { answers: { ancho: 300, alto: 200, papel: 'decorativo' }, fabricPerM2: 95000 }, total: 840000 },
     { etiqueta: 'Muebles a la medida', pricing: 'fabricacion',
-      pasos: ['Tu línea de servicio', 'Tu mueble', 'Medidas', 'Materiales y acabados', 'El tapizado', 'Preferencias', 'Validación', 'Recomendación', 'Tu cotización'],
+      pasos: ['Tu línea de servicio', 'Tu mueble', 'Medidas', 'Materiales y acabados', 'El tapizado', 'Preferencias', 'Validación', 'Recomendación', 'Estimación', 'Tu cotización'],
       ctx: { furnitureId: 'silla', materialRange: [0, 0], answers: { madera: 'pino', acabado: 'barniz', firmeza: 'media' } }, total: 628500 },
     { etiqueta: 'Proyecto comercial', pricing: 'unidad',
-      pasos: ['Tu línea de servicio', 'Tu mueble', 'Qué piezas', 'La obra', 'Validación', 'Tu cotización'],
+      pasos: ['Tu línea de servicio', 'Tu mueble', 'Qué piezas', 'La obra', 'Validación', 'Propuesta', 'Tu cotización'],
       ctx: { boq: [{ furniture: 'poltrona', cantidad: 12 }], answers: { servicios: ['instalacion'] } }, total: 9070000 },
   ];
   for (const m of motivos) {
@@ -633,6 +636,9 @@ check('the customer sees the edited rate on the card',
 check('and the estimate is recomputed at the new rate',
   await priceMatchesRate(31500), true);
 await page.click('#nextButton');
+await page.waitForFunction(() => state.step === 16);   // el paso de la estimación
+await page.click('#nextButton');
+await page.waitForFunction(() => state.step === 15);   // el cierre: donde vive el resumen
 check('and the step-6 summary quotes the same edited rate',
   await page.evaluate(() => {
     const [mn, mx] = estimate();
@@ -700,6 +706,8 @@ await night.waitForSelector('#analysisChecks:not([hidden])');
 await night.click('#nextButton');
 await night.waitForSelector('[data-step="14"].active');
 await night.click('#fabricGrid .fabric-card:nth-child(1)');
+await night.click('#nextButton');
+await night.waitForSelector('[data-step="16"].active');   // el paso de la estimación
 await night.click('#nextButton');
 await night.waitForSelector('[data-step="15"].active');
 await night.fill('#fullName', 'Prueba Nocturna');
@@ -1302,6 +1310,9 @@ check('one completed analysis spends exactly one AI credit',
 await up.click('#nextButton');
 await up.click('#fabricGrid .fabric-card:nth-child(1)');
 await up.click('#nextButton');
+await up.waitForFunction(() => state.step === 16);   // el paso de la estimación
+await up.click('#nextButton');
+await up.waitForFunction(() => state.step === 15);   // cierre: contacto y resumen
 await up.fill('#fullName', 'Cliente Usage');
 await up.fill('#email', 'usage@example.com');
 await up.fill('#phone', '3001234567');

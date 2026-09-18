@@ -93,6 +93,9 @@ await page.fill('#width','210');await page.fill('#height','85');await page.fill(
 await page.click('#nextButton'); await page.click('#nextButton');
 await page.click('#analyzeButton'); await page.waitForFunction(()=>state.analyzed);
 await page.click('#nextButton'); await page.click('#nextButton');
+await page.waitForFunction(()=>state.step===16);   // el paso de la estimación
+await page.click('#nextButton');
+await page.waitForFunction(()=>state.step===15);   // cierre: contacto y resumen
 await page.fill('#fullName','Natalia Peña');await page.fill('#email','n@example.com');
 await page.fill('#phone','3001234567');await page.check('#consent');
 await page.click('#nextButton');
