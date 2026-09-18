@@ -27,7 +27,9 @@ await page.click('[data-preset="empresa"]');
 await page.check('input[data-cap="plantillas"]');
 const totalUI = (await page.textContent('#aciTotal span')).replace(/\s+/g,' ').trim();
 const totalEsperado = await page.evaluate(()=>Store.money(Store.myAci().total)+' / mes');
-check('el total de la pantalla es el de Store.myAci()', totalUI, totalEsperado.replace(/\s+/g,' ').trim());
+/* La pantalla de Configurar mi plan también dice «+ IVA» junto a cada precio. */
+check('el total de la pantalla es el de Store.myAci(), con su + IVA',
+  totalUI, (totalEsperado.replace(' / mes','')+' + IVA / mes').replace(/\s+/g,' ').trim());
 check('el botón de guardar existe y dice «Guardar configuración»',
   await page.textContent('#saveMyAci'), 'Guardar configuración');
 
@@ -38,7 +40,7 @@ const card = page.locator('article.plan-card:has-text("Plan a la medida")');
 check('tras guardar, la tarjeta «Plan a la medida» está en Planes', await card.count(), 1);
 check('la tarjeta muestra el total guardado',
   (await card.locator('.plan-price').textContent()).replace(/\s+/g,' ').trim(),
-  (totalEsperado.replace(' / mes','')+' COP / mes').replace(/\s+/g,' ').trim());
+  (totalEsperado.replace(' / mes','')+' + IVA COP / mes').replace(/\s+/g,' ').trim());
 check('el botón dice «Pagar» en negrita', await card.locator('[data-pay-customplan]').innerText(), 'Pagar');
 check('el snapshot guardado coincide con lo marcado', await page.evaluate(()=>{
   const cp=Store.customPlan();

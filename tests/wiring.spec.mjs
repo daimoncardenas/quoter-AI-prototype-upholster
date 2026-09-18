@@ -809,7 +809,12 @@ check('ninguna tarjeta de plan muestra el nombre interno, ni en el título ni en
   [0, 0, 0]);
 check('cada precio se arma con Store.money, no a mano',
   await page.$$eval('#plansGrid .plan-price', els => els.map(e => e.textContent)),
-  await page.evaluate(() => [299000, 699000, 1290000].map(n => Store.money(n) + ' COP / mes')));
+  await page.evaluate(() => [299000, 699000, 1290000].map(n => Store.money(n) + ' + IVA COP / mes')));
+/* El precio del catálogo es ANTES de IVA y las tarjetas tienen que decirlo: cada una lleva su
+ * «+ IVA» pegado a la cifra (el dueño: «esto es importante»). */
+check('cada tarjeta dice «+ IVA» junto a su precio',
+  await page.$$eval('#plansGrid .plan-card .plan-iva', els => els.map(e => e.textContent)),
+  ['+ IVA', '+ IVA', '+ IVA']);
 check('conteo de ítems — Essential: 17 incluye + 12 límites, Professional: 15 incluye + 3 límites, Business: 11',
   await page.$$eval('#plansGrid .plan-card', cards => cards.map(c => {
     const lists = c.querySelectorAll('.plan-list');
@@ -837,7 +842,7 @@ check('por defecto Año está seleccionado, con los tres precios anuales y "con 
   await billingSwitchState(),
   {
     checked: [['anual', 'true'], ['mensual', 'false']],
-    prices: await page.evaluate(() => [299000, 699000, 1290000].map(n => Store.money(n) + ' COP / mes')),
+    prices: await page.evaluate(() => [299000, 699000, 1290000].map(n => Store.money(n) + ' + IVA COP / mes')),
     captions: ['con contrato de arrendamiento a 12 meses', 'con contrato de arrendamiento a 12 meses', 'con contrato de arrendamiento a 12 meses']
   });
 
@@ -847,7 +852,7 @@ check('clic en Mes cambia los tres precios, la leyenda y el aria-checked',
   await billingSwitchState(),
   {
     checked: [['anual', 'false'], ['mensual', 'true']],
-    prices: await page.evaluate(() => [399000, 899000, 1490000].map(n => Store.money(n) + ' COP / mes')),
+    prices: await page.evaluate(() => [399000, 899000, 1490000].map(n => Store.money(n) + ' + IVA COP / mes')),
     captions: ['mes a mes, sin contrato', 'mes a mes, sin contrato', 'mes a mes, sin contrato']
   });
 /* El paquete es el plan: en Mes las dos pantallas dicen el mismo número (el precio por mes). */
@@ -865,7 +870,7 @@ check('el periodo elegido (Mes) sobrevive a un recargo de página',
   await billingSwitchState(),
   {
     checked: [['anual', 'false'], ['mensual', 'true']],
-    prices: await page.evaluate(() => [399000, 899000, 1490000].map(n => Store.money(n) + ' COP / mes')),
+    prices: await page.evaluate(() => [399000, 899000, 1490000].map(n => Store.money(n) + ' + IVA COP / mes')),
     captions: ['mes a mes, sin contrato', 'mes a mes, sin contrato', 'mes a mes, sin contrato']
   });
 
@@ -877,7 +882,7 @@ const invoicesBeforeMes = await page.evaluate(() => Store.all('invoices').length
 await page.click('#plansGrid [data-plan="Business"]');
 const mesDialogMsg = await page.textContent('#confirmModalBody');
 check('el modal cita el precio mensual de Distribuidor, no el anual, y la modalidad mes a mes',
-  mesDialogMsg, `¿Confirmas el cambio al plan Distribuidor por ${await page.evaluate(() => Store.money(1490000))} COP / mes, mes a mes y sin contrato?`);
+  mesDialogMsg, `¿Confirmas el cambio al plan Distribuidor por ${await page.evaluate(() => Store.money(1490000))} + IVA COP / mes, mes a mes y sin contrato?`);
 await page.click('#confirmCancel');
 check('cancelar deja el plan sin cambios, y cambiar el periodo tampoco lo cambió, y no crea factura',
   [await page.evaluate(() => Store.settings().plan), await page.evaluate(() => Store.all('invoices').length)],
@@ -893,7 +898,7 @@ check('flecha izquierda selecciona Año, mueve el foco y actualiza los precios',
     checked: document.querySelector('#billingSwitch [aria-checked="true"]').dataset.billing,
     price: document.querySelector('#plansGrid .plan-price').textContent
   })),
-  { active: 'anual', checked: 'anual', price: await page.evaluate(() => Store.money(299000) + ' COP / mes') });
+  { active: 'anual', checked: 'anual', price: await page.evaluate(() => Store.money(299000) + ' + IVA COP / mes') });
 
 const planStates = () => page.evaluate(() => [...document.querySelectorAll('#plansGrid .plan-card')].map(c => {
   const btn = c.querySelector('.plan-cta button');
@@ -916,7 +921,7 @@ const invoicesBeforePlan = await page.evaluate(() => Store.all('invoices').lengt
 await page.click('#plansGrid [data-plan="Business"]');
 const dialogMsg = await page.textContent('#confirmModalBody');
 check('el modal menciona el plan, el precio y la modalidad de arrendamiento anual',
-  dialogMsg, `¿Confirmas el cambio al plan Distribuidor por ${await page.evaluate(() => Store.money(1290000))} COP / mes, con contrato de arrendamiento a 12 meses?`);
+  dialogMsg, `¿Confirmas el cambio al plan Distribuidor por ${await page.evaluate(() => Store.money(1290000))} + IVA COP / mes, con contrato de arrendamiento a 12 meses?`);
 await page.click('#confirmCancel');
 check('cancelar deja a Essential como plan actual, y no crea ninguna factura',
   [await page.evaluate(() => Store.settings().plan), await page.evaluate(() => Store.all('invoices').length)],
