@@ -26,8 +26,15 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   mueble (piezas contra heurística), el nombre del artefacto, el snapshot congelado, que
   **ninguna promesa prohibida** (transporte, plazo, garantía, relleno dentro de la cifra)
   se cuele en lo que el cliente lee, y los límites declarados (el relleno no se valora, la
-  firmeza es un ask de otro motivo). Imprime el número de cada persona —y lo que ve quien
-  no cambia la cantidad— para que la mitad de juicio la haga un humano. Nace del contrato
+  firmeza es un ask de otro motivo). Después pasa los **clientes de carácter** —el terco,
+  el que no sabe qué quiere, el que se contradice, el apurado, el parco, el que se cree en
+  otro servicio, el que pregunta por el relleno o por transporte— por el **chat** (contra
+  el cerebro simulado, en Node: ninguna cifra que no venga de su estimación, ninguna
+  promesa prohibida, ninguna acción fuera de la lista cerrada, y las respuestas impresas)
+  y por el **formulario** (sin fotos no avanza, 0 cm y 999999 cm los detiene la validación
+  sin NaN, el que cambia de motivo ve el artefacto y las partes de la línea nueva, el que
+  recarga no rompe la página). Imprime el número de cada persona —y lo que ve quien no
+  cambia la cantidad— para que la mitad de juicio la haga un humano. Nace del contrato
   `docs/lia-skills.md`: los criterios salen del catálogo y del motor, nunca de lo que el
   evaluador supone.
 - `wizard.spec.mjs` — the public cotizador: fabric selection, the quantity
