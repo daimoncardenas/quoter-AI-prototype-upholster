@@ -327,6 +327,49 @@ check('the detail carries the photo the customer uploaded',
 check('and the measurements', (await page.textContent('#quoteDetail')) !== null &&
   await page.$$eval('#quoteDetail input', els => els.some(i => i.value === '210 × 85 × 90 cm')), true);
 
+console.log('\nEL DETALLE LEE LA ESTIMACIÓN CONGELADA — no una recalculada hoy');
+/* Se le añade a mano una estimación imposible (1.234.567 no sale de ninguna fórmula viva): si el
+ * backoffice recalculara, pintaría otro número. Después se le quita y la solicitud vuelve a
+ * leerse por su rango de tela, que es lo único que guardaban las viejas. */
+const detalle = async (etiqueta) => page.$$eval('#quoteDetail label.field', (els, e) => {
+  const l = els.find(x => x.textContent.startsWith(e));
+  return l ? l.querySelector('input').value : null;
+}, etiqueta);
+const conEstimacion = await page.evaluate((id) => {
+  const q = Store.get('quotes', id);
+  Store.put('quotes', { ...q, estimate: {
+    kind: 'tela', engineVersion: 7, calculatedAt: '2026-01-05T15:04:05.000Z',
+    parts: [{ label: 'Material', value: [400000, 500000] }, { label: 'Mano de obra (≈ 60 %)', value: [240000, 300000] }],
+    total: [1234567, 1234567],
+    inputs: { furnitureId: 'sofa', quantity: 1, materialRange: [400000, 500000], fabricPerM2: 119000,
+              damages: [], answers: { limpieza: 'Solo la cubierta' }, boq: [] }
+  } });
+  return Store.get('quotes', id).estimate.total[0];
+}, quoteId.trim());
+await page.click('#quoteModal [data-close]');
+await page.click(`[data-quote="${quoteId.trim()}"]`);
+await page.waitForSelector('#quoteModal.open');
+check('la estimación que se pinta es la congelada, no una recalculada',
+  [await detalle('Estimación mostrada'), conEstimacion],
+  [await page.evaluate(() => Store.money(1234567)), 1234567]);
+check('y el detalle dice con qué motor se congeló', await detalle('Motor'), 'tela · snapshot v7');
+check('el desglose se pinta con su total (material, mano de obra y total)',
+  await page.$$eval('#quoteDetail .quote-estimate li', els => els.length), 3);
+check('y las entradas que produjeron el número quedan a la vista para auditarlo',
+  await page.$eval('#quoteDetail .quote-inputs', el => el.textContent.includes('limpieza: Solo la cubierta') &&
+    el.textContent.includes('2026-01-05T15:04:05') && el.textContent.includes('Rango de material')), true);
+await page.evaluate((id) => { const q = Store.get('quotes', id); delete q.estimate; Store.put('quotes', q); }, quoteId.trim());
+const rangoTela = await page.evaluate((id) => {
+  const p = Store.get('quotes', id).price, m = n => Store.money(n), a = [].concat(p || []).map(x => +x || 0);
+  return a.length ? (a[0] === a[1] ? m(a[0]) : `${m(a[0])} – ${m(a[a.length - 1])}`) : '—';
+}, quoteId.trim());
+await page.click('#quoteModal [data-close]');
+await page.click(`[data-quote="${quoteId.trim()}"]`);
+await page.waitForSelector('#quoteModal.open');
+check('una solicitud vieja (sin estimación) sigue leyéndose por su rango de tela, y lo dice',
+  [await detalle('Estimación mostrada'), await detalle('Motor'), await page.$$eval('#quoteDetail .quote-estimate', els => els.length)],
+  [rangoTela, 'Sin snapshot: rango de tela de una solicitud vieja', 0]);
+
 console.log('\nDASHBOARD — derived, not decorative');
 await page.click('#quoteModal [data-close]');
 await page.click('button[data-page="dashboard"]');

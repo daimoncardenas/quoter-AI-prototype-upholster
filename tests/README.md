@@ -20,6 +20,10 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
 
 - `wizard.spec.mjs` — the public cotizador: fabric selection, the quantity
   estimate, step validation, and the furniture radiogroup's keyboard behaviour.
+  It also walks a whole quote out the door (Retapizado, so the estimate is not
+  just the fabric range) and asserts the record keeps the **estimate the customer
+  saw**: same total, its `parts`, its `kind`, `engineVersion`, `calculatedAt` and
+  the normalized `inputs` (see `docs/paquetes-y-precios.md` §14).
 - `review.spec.mjs` — step 4: that the checks report the photo's real
   dimensions and the measurement ranges per furniture type, and never claim to
   have recognised the furniture in the image.
@@ -29,7 +33,10 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   quote also carries its **service line** — derived from the shared catalogue
   (`shared/service-lines.json`), never a hardcoded name — and the plan enables more than one, so
   the wizard's first step is the line itself (seven steps, the plan named in the note above the
-  list). Also covers
+  list). The quote detail is pinned to the FROZEN estimate (a hand-written
+  `estimate` with an impossible number, so a live recompute would show something
+  else) and to the legacy fallback: a quote without `estimate` still reads by its
+  fabric range. Also covers
   the quote status cycle: the three non-final statuses moving freely in either
   direction, closing (Aceptada/Rechazada) only offered from Cotizada and only
   after a confirmation that a dismiss leaves untouched, the status lock holding

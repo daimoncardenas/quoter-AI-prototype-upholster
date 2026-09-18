@@ -483,6 +483,10 @@ const uploadZone=document.getElementById('uploadZone');
 const photoError=document.getElementById('photoError');
 const serviceError=document.getElementById('serviceError');
 const money=n=>Store.money(n);
+/* Versión del motor de estimación (`Store.lineQuote`). Se guarda con cada solicitud junto a la
+ * estimación congelada: si mañana cambia una fórmula, una solicitud vieja sigue diciendo lo que se
+ * le mostró al cliente y esta marca dice con qué motor se calculó. Súbela al cambiar una fórmula. */
+const ESTIMATE_ENGINE_VERSION=1;
 // Furniture types, their consumption rules and their plausible measurement
 // ranges are all defined in the backoffice; nothing about them lives here.
 let furnitureRules={},measureRanges={};
@@ -1181,6 +1185,30 @@ async function submitQuote(){
   const ahora=new Date(),dosDigitos=n=>String(n).padStart(2,'0');
   const hoy=`${ahora.getFullYear()}-${dosDigitos(ahora.getMonth()+1)}-${dosDigitos(ahora.getDate())}`;
 
+  /* La estimación que el cliente vio, congelada con sus entradas. El porcentaje de mano de obra,
+   * los daños, las tarifas de cada oficio y las líneas mismas cambian con el catálogo; esta
+   * solicitud tiene que seguir diciendo el número que se le mostró, y sus entradas tienen que
+   * quedar para poder auditarlo. El motor es el MISMO que pintó la pantalla (`linePrice`), no un
+   * segundo cálculo paralelo. */
+  const mostrado=linePrice(q);
+  const entradas={
+    furnitureId:(Store.furnitureByName(state.furniture)||{}).id||null,
+    quantity:+seatsSelect.value||1,
+    materialRange:state.fabric?[q.facMin*state.fabric.price,q.facMax*state.fabric.price]:[0,0],
+    fabricPerM2:state.fabric&&state.fabric.rollWidthCm?state.fabric.price/(state.fabric.rollWidthCm/100):0,
+    damages:damageIds(),
+    answers:allAnswers(),
+    boq:allAnswers().rows||[]
+  };
+  const estimate=mostrado?{
+    kind:mostrado.kind||null,
+    engineVersion:ESTIMATE_ENGINE_VERSION,
+    calculatedAt:ahora.toISOString(),
+    parts:mostrado.parts.map(p=>({label:p.label,value:[p.value[0],p.value[1]]})),
+    total:[mostrado.total[0],mostrado.total[1]],
+    inputs:entradas
+  }:null;
+
   const quote={
     id,date:hoy,
     customer:{name:document.getElementById('fullName').value.trim(),
@@ -1215,6 +1243,7 @@ async function submitQuote(){
       razones:q.razones,reglas:q.desglose.max.reglas
     }:null,
     price:state.fabric?[q.facMin*state.fabric.price,q.facMax*state.fabric.price]:null,
+    estimate,
     seller,sellerId:asignado?asignado.id:'',status:'Nueva',photoIds
   };
   try{Store.put('quotes',quote)}

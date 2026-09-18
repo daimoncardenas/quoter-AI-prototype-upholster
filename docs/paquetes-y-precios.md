@@ -223,3 +223,20 @@ El `amount` GUARDADO en la factura sigue siendo el valor del catálogo (lo que s
 `PLANS`/`PACKAGES`, nunca algo tecleado): el IVA y el total son derivados. Si mañana el IVA cambia,
 cambia en una constante y todas las facturas —viejas incluidas, que no guardan el suyo— lo reflejan;
 si debe congelarse por factura, es un campo más en el registro.
+
+## 14. La estimación que vio el cliente viaja con la solicitud
+
+`Store.lineQuote()` (por oficio: material + mano de obra + daños, piezas, m², unidades o
+fabricación) es el número que pintan el paso de recomendación y el resumen. Hasta ahora la
+solicitud guardaba solo `price` (metros × precio de tela) — o `null` cuando el oficio no lleva
+tela — así que en 7 de las 8 líneas lo guardado no era lo que se le mostró al cliente. Ahora la
+solicitud guarda además `estimate`: el desglose (`parts`), el `total`, el oficio (`kind`),
+`calculatedAt`, `engineVersion` y las `inputs` normalizadas que lo produjeron (mueble, cantidad,
+rango de material, tela por m², daños, respuestas de los pasos y filas del BOQ).
+
+Es un **snapshot**, no una receta para recalcular: el catálogo, las tarifas y las fórmulas cambian,
+y una solicitud vieja tiene que seguir diciendo exactamente lo que se le prometió al cliente. Por
+eso el backoffice pinta el número guardado — nunca uno recalculado — y cae al rango de tela cuando
+la solicitud es anterior a este campo (`quote.estimate?.total ?? quote.price ?? null`).
+`ESTIMATE_ENGINE_VERSION` (index.html) marca con qué motor se congeló: súbelo al cambiar una
+fórmula, no al cambiar un precio (los precios ya van dentro del snapshot).

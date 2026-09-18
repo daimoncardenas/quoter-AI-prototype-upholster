@@ -148,6 +148,69 @@ check('nueve pasos: también entra sin scroll', [nueve.filas, nueve.scroll[0] ==
 check('la barra mide lo mismo con siete y con nueve', nueve.barra, siete.barra);
 check('y el hueco de Lía (su canvas) no se mueve', [nueve.stage, nueve.canvas], [siete.stage, siete.canvas]);
 
+console.log('\nLA SOLICITUD GUARDA LA ESTIMACIÓN QUE VIO EL CLIENTE — no solo el rango de la tela');
+/* Hallazgo de la auditoría: la pantalla mostraba la estimación del oficio (material + mano de obra
+ * + daños, o piezas, m², unidades, fabricación) y la solicitud guardaba metros × precio de tela — o
+ * nada. Ahora la estimación viaja congelada con sus entradas, así que una solicitud vieja sigue
+ * diciendo el número que se le mostró al cliente aunque el catálogo haya cambiado. Retapizado es el
+ * caso con mano de obra (60 %): su estimación NO es el rango de la tela. */
+await page.goto(D + 'index.html');
+await page.evaluate((db)=>{localStorage.clear();indexedDB.deleteDatabase(db)}, PHOTOS_DB);
+await page.goto(D + 'index.html');
+await page.waitForTimeout(300);
+await page.click('#serviceGrid .service-choice:nth-child(2)');          // Retapizado de muebles
+/* Cada «Continuar» se confirma esperando el cambio de paso: un clic que llegue antes de que el
+ * wizard termine de moverse se pierde y la secuencia termina en el paso equivocado. */
+const avanzar = async () => {
+  const antes = await page.evaluate(()=>state.step);
+  await page.click('#nextButton');
+  await page.waitForFunction(x=>state.step!==x, antes);
+};
+await avanzar();
+await page.setInputFiles('#furniturePhoto', png);
+await page.waitForFunction(()=>state.photos.length>=3);
+await avanzar();                                                        // 1 → 9 (Medidas)
+await page.fill('#width','210'); await page.fill('#height','85'); await page.fill('#depth','90');
+await avanzar();                                                        // 9 → 12 (Preferencias)
+await avanzar();                                                        // 12 → 13 (Validación)
+/* La validación no abre la puerta sin revisar: el botón de análisis vive en este paso. */
+if (await page.isVisible('#analyzeButton')) { await page.click('#analyzeButton'); await page.waitForFunction(()=>state.analyzed); }
+await avanzar();                                                        // 13 → 14 (Recomendación)
+await page.waitForSelector('#fabricGrid .fabric-card');
+await page.click('#fabricGrid .fabric-card:nth-child(1)');
+const enBloque = (await page.textContent('#priceRange')).trim();
+await avanzar();                                                        // 14 → 15 (Contacto)
+const enResumen = (await page.textContent('#summaryPrice')).trim();
+check('la recomendación y el resumen final dicen el mismo número', [enBloque, enResumen], [enBloque, enBloque]);
+await page.fill('#fullName','Cliente Prueba');
+await page.fill('#email','prueba@example.com');
+await page.fill('#phone','3000000000');
+await page.check('#consent');
+await page.click('#nextButton');
+await page.waitForSelector('#successState:not([hidden])');
+const estId = (await page.textContent('#requestNumber')).trim();
+const guardada = await page.evaluate(i => Store.get('quotes', i), estId);
+const totalComoSeEscribe = await page.evaluate(i => {
+  const e = Store.get('quotes', i).estimate, m = n => Store.money(n);
+  return e.total[0] === e.total[1] ? m(e.total[0]) : `${m(e.total[0])} – ${m(e.total[1])}`;
+}, estId);
+check('el total guardado es, palabra por palabra, el que vio el cliente',
+  [enBloque, enResumen], [totalComoSeEscribe, totalComoSeEscribe]);
+check('y viaja con su motor, su desglose y su versión de snapshot',
+  [guardada.estimate.kind, /Mano de obra/.test(guardada.estimate.parts.map(p=>p.label).join(' | ')),
+   guardada.estimate.parts.length >= 2, guardada.estimate.engineVersion],
+  ['tela', true, true, 1]);
+check('la estimación guardada no es el rango de tela que se guardaba antes (era el hallazgo)',
+  guardada.estimate.total[0] > guardada.price[0], true);
+check('la solicitud sigue trayendo su rango de tela de siempre (compatibilidad)',
+  [Array.isArray(guardada.price), guardada.price.length], [true, 2]);
+check('y las entradas que produjeron el número quedan para poder auditarlo',
+  [typeof guardada.estimate.inputs.answers, Array.isArray(guardada.estimate.inputs.boq),
+   guardada.estimate.inputs.quantity > 0, guardada.estimate.inputs.fabricPerM2 > 0,
+   Array.isArray(guardada.estimate.inputs.materialRange),
+   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(String(guardada.estimate.calculatedAt))],
+  ['object', true, true, true, true, true]);
+
 console.log('\npage errors: ' + (errs.length?errs.join(' | '):'none'));
 console.log(fails?`\n${fails} FAILING`:'\nALL PASS');
 await browser.close(); process.exit(fails?1:0);
