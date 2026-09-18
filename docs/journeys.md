@@ -308,3 +308,44 @@ de copia por motivo y unificar el paso de daños con el render de `asks`.
 primeros prueban lo que hoy no existe en ningún motivo (pieza sin tela; superficie en vez de
 mueble) y son los más baratos; `a la medida` reusa el motor de telas; el BOQ es el único que pide
 una interacción nueva (varias filas) y se hace al final, cuando el resto ya está probado.
+
+## 10. La estimación es un paso, y cada motivo habla de lo suyo (P4A + P4B)
+
+**El paso (P4B).** La estimación vivía DENTRO del paso de recomendación de telas, así que
+`mantenimiento` y `proyecto comercial` —que se saltan ese paso— solo veían su precio en el resumen
+final. Ahora es un paso propio (`data-step="16"`, `data-brain="ESTIMATE"`) que va después de las
+preguntas del motivo y antes del contacto, y **ningún motivo se lo salta**: `SERVICE_SKIPS` no
+incluye `estimate`, así que una línea que lo pidiera en `skips` no pasa la validación del catálogo.
+El paso pinta el mismo número que ya calculaba el motor (`Store.lineQuote`, un solo motor para los
+cinco oficios) más tres cosas que antes no existían en ninguna pantalla: **con qué se calculó**
+(supuestos armados con las MISMAS entradas que se congelan en la solicitud — ver
+`docs/paquetes-y-precios.md` §14), **qué falta por confirmar** (por oficio, `copy.pendingConfirm`) y
+el **aviso de preliminar** (`copy.preliminaryNotice`). El bloque de precio dejó el paso de telas y
+se mudó aquí, con su tarjeta oscura propia.
+
+La barra de progreso suma una fila por motivo: los recorridos quedaron en 7, 8, 9 y 10 pasos. El
+CSS tiene cubos por número de filas (`[data-rows="8|9|10"]`) y la regla es la de siempre — **la
+barra no hace scroll** — medido en `tests/wizard.spec.mjs` (ocho y diez filas, `scrollHeight ===
+clientHeight`, y el hueco de Lía en el mismo sitio).
+
+**La copia (P4A).** Los textos que ve el cliente salen del catálogo, no del markup: `copyByEngine`
+(`shared/service-lines.json`) trae el default completo de cada oficio y `lines[].copy` solo lo que
+cambia. La clave **autoritativa es la línea**, no el journey: `pricing: 'tela'` cubre cuatro
+servicios comercialmente distintos (suministro, retapizado, cambio de tela, reparación) y
+`mantenimiento` comparte journey (`existente`) con tres de ellos — una copia por journey le habría
+seguido diciendo «elige la tela ideal» a quien pide una limpieza. Las claves son `wizardTitle`,
+`wizardIntro`, `photoTitle`, `photoInstructions`, `analysisTitle`, `estimateTitle`,
+`preliminaryNotice`, `confirmationMessage`, `artifactLabel`, `stepperLabel` y `pendingConfirm`;
+`Store.lineCopy(line)` las resuelve (oficio + override) y `tools/client-pack.mjs`
+(`validateCopyByEngine`) exige que no quede ninguna sin resolver ni desconocida.
+
+**El nombre del artefacto.** El nombre que el cliente lee cambia por motivo —«Precotización de
+retapizado», «Estimación de mantenimiento», «Propuesta preliminar para proyecto comercial»— y
+aparece en la ceja del paso de la estimación, en el paso del stepper y en la pantalla de cierre. El
+**identificador del registro sigue siendo `COT-123`**: es el nombre visible el que cambia, no la
+identidad ni la migración de nada.
+
+**Dónde queda cada cosa.** El formato de la estimación (paso, supuestos, pendientes) es producto y
+vive en la plantilla + el catálogo; los textos son datos del catálogo; los valores comerciales de
+cada negocio (los que faltan: relleno/espuma y transporte) son **configuración del negocio** —
+ver `docs/onboarding-precios.md`, que define la entrevista para obtenerlos y el esquema provisional.

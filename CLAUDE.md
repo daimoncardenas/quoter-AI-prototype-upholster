@@ -265,8 +265,9 @@ plan». El modelo completo (Core, capacidades con precio, cuota, guardar y pagar
 y la regla de los precios) vive en `docs/paquetes-y-precios.md`.
 Apagarlas todas se rechaza — una solicitud sin línea no se puede cotizar — y con una sola
 habilitada el cotizador no pregunta: entra directo a ella. `Store.services()` devuelve
-`withinPlan` (el plan la permite) y `enabled` (además el negocio la dejó prendida), separadas
-para que el backoffice muestre una línea bloqueada por plan sin confundirla con una apagada.
+`withinPlan` (siempre verdadero desde el modelo v2: el plan dejó de ser la puerta, el campo se
+conserva para poder decir de qué paquete venía la línea) y `enabled` (la puerta viva: el negocio
+la dejó prendida).
 
 La línea no es una etiqueta: declara `laborPct` (mano de obra sobre el material) y `asks` (lo que
 pregunta de más), y `Store.lineEstimate()` reparte material + mano de obra + daños. Suministro
@@ -751,6 +752,31 @@ styled as their brand.
   `{value, iva, total}` are the only place that arithmetic happens, so the
   Billing table (total with its breakdown) and the payment modal (big total, plus
   the value + IVA line) can never disagree.
+- **`quote.estimate` — la estimación que vio el cliente, congelada con la solicitud** — el número
+  de la pantalla sale de `Store.lineQuote()` (un motor para los cinco oficios: material + mano de
+  obra + daños, piezas, m², unidades o fabricación) y la solicitud guardaba solo `price` (metros ×
+  precio de tela, `null` cuando el oficio no lleva tela): en 7 de las 8 líneas lo guardado no era lo
+  mostrado, y sin las respuestas ni se podía rehacer. Ahora toda solicitud lleva
+  `estimate: {kind, parts, total, calculatedAt, engineVersion, inputs}`, donde `inputs` son las
+  selecciones normalizadas que el motor consumió (furnitureId, quantity, materialRange, fabricPerM2,
+  damages, answers, boq). Es un **snapshot, no una receta**: el catálogo, las tarifas y las líneas
+  cambian, y una solicitud vieja tiene que seguir diciendo exactamente lo que se le prometió.
+  `ESTIMATE_ENGINE_VERSION` (index.html) marca con qué motor se congeló — súbelo al cambiar una
+  fórmula, no un precio (los precios van dentro del snapshot). El backoffice pinta el número
+  GUARDADO, nunca uno recalculado, y cae al rango de tela (`quote.estimate?.total ?? quote.price ??
+  null`) cuando la solicitud es anterior al campo. Ver `docs/paquetes-y-precios.md` §14.
+- **La copia es del MOTIVO (P4A/P4B)** — `Store.lineCopy(line)` resuelve los textos que ve el
+  cliente (wizardTitle, wizardIntro, photoTitle, photoInstructions, analysisTitle, estimateTitle,
+  preliminaryNotice, confirmationMessage, artifactLabel, stepperLabel, pendingConfirm) desde
+  `copyByEngine` (`shared/service-lines.json`) más los overrides de la línea, y
+  `validateCopyByEngine` rechaza un catálogo con una clave sin resolver. La clave autoritativa es la
+  LÍNEA, no el journey: `pricing: 'tela'` cubre cuatro servicios comercialmente distintos y
+  `mantenimiento` comparte journey con tres de ellos. La estimación es su propio paso universal
+  (`data-brain="ESTIMATE"`, después de las preguntas del motivo y antes del contacto; `SERVICE_SKIPS`
+  no incluye `estimate`, así que ninguna línea puede saltárselo) y la barra lleva una fila más
+  (`[data-rows="8|9|10"]`, medido sin scroll en `tests/wizard.spec.mjs`). El nombre del artefacto
+  cambia por motivo; el id del registro sigue siendo `COT-123`. Ver `docs/journeys.md` §10 y, para
+  los precios que faltan (relleno y transporte), `docs/onboarding-precios.md`.
 - **`Store.settleInvoice(id, 'Pagada'|'Rechazada')`** — the only door that
   settles an invoice. Same lock spirit as quotes: only a `Pendiente` invoice
   can be settled, and a settled one can never change again (throws

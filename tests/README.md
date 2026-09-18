@@ -23,7 +23,14 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   It also walks a whole quote out the door (Retapizado, so the estimate is not
   just the fabric range) and asserts the record keeps the **estimate the customer
   saw**: same total, its `parts`, its `kind`, `engineVersion`, `calculatedAt` and
-  the normalized `inputs` (see `docs/paquetes-y-precios.md` §14).
+  the normalized `inputs` (see `docs/paquetes-y-precios.md` §14). It also pins the
+  **copy per motivo** (`Store.lineCopy`: every line reaches the ESTIMATE step, the
+  four `tela` lines do not share one artifact name, cleaning never reads about
+  fabric) and walks Mantenimiento end to end — the line whose stored `price` used
+  to be `null` — checking its estimate step, what it says is pending and the frozen
+  `pieza` snapshot that travels with the request. The progress bar is measured at
+  8 and 10 rows (`scrollHeight === clientHeight`, Lía's gap unmoved):
+  `docs/journeys.md` §10 is the contract behind all of it.
 - `review.spec.mjs` — step 4: that the checks report the photo's real
   dimensions and the measurement ranges per furniture type, and never claim to
   have recognised the furniture in the image.
