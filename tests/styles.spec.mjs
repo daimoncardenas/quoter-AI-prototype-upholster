@@ -210,6 +210,8 @@ check('cotizador: ningún script de SVG corrió aquí tampoco', await page.evalu
 console.log('\nBAJAR A ESSENTIAL IGNORA FUENTES Y ENCABEZADO, SIN BORRARLOS');
 await openAdmin(page, D);
 await page.click('button[data-page="upgrade"]');
+// Upgrade abre en «Configurar mi plan»; las tarjetas de plan viven en la pestaña Planes.
+await page.click('#tabPlanes');
 await page.click('#plansGrid [data-plan="Essential"]');
 await page.click('#confirmOk');
 await page.waitForSelector('#payModal.open');
