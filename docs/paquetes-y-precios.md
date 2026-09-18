@@ -209,3 +209,17 @@ cuentas se separen.
 Un precio o es del dueño o está investigado con fuente citada en el archivo; los provisionales se
 marcan como tales ahí mismo. No se ajusta a ojo, no se retira la fila que molesta y no se inventa un
 ancla para justificar un número. (CLAUDE.md, regla 10.)
+
+## 13. IVA (19%)
+
+Los precios del catálogo son **antes de IVA** y las pantallas lo dicen («+ IVA» pegado a la cifra en
+las tarjetas de Planes, en la tarjeta a la medida, en las confirmaciones y en todo «Configurar mi
+plan»). La **factura lo suma**: `Store.IVA_RATE` (0.19) y `Store.invoiceTotals(inv)` →
+`{value, iva, total}`, el único sitio donde se calcula, así que la tabla de Facturación y el modal de
+pago no pueden dar números distintos — la tabla muestra el total con su desglose («valor $ 399.000 +
+IVA $ 75.810») y el modal, el total grande con la línea del desglose.
+
+El `amount` GUARDADO en la factura sigue siendo el valor del catálogo (lo que sale de
+`PLANS`/`PACKAGES`, nunca algo tecleado): el IVA y el total son derivados. Si mañana el IVA cambia,
+cambia en una constante y todas las facturas —viejas incluidas, que no guardan el suyo— lo reflejan;
+si debe congelarse por factura, es un campo más en el registro.

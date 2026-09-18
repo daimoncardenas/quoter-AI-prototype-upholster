@@ -1367,6 +1367,19 @@
       };
       return Store.put('invoices', invoice);
     },
+    /* IVA (Colombia, 19%): el precio del catálogo es ANTES de IVA y la factura lo suma. Es una
+     * constante del prototipo — una sola cifra para toda la app, la misma que las pantallas de
+     * precios insinúan con su «+ IVA» — no una tasa por cliente. */
+    IVA_RATE: 0.19,
+    /* Desglose de una factura: valor de lista + IVA = total a pagar. El `amount` GUARDADO sigue
+     * siendo el valor del catálogo (lo que sale de PLANS/PACKAGES, nunca algo tecleado); el IVA y
+     * el total se derivan aquí, en un solo sitio, para que la tabla y el modal de pago no puedan
+     * decir números distintos. */
+    invoiceTotals: function (inv) {
+      var value = Math.max(0, +((inv && inv.amount) || 0));
+      var iva = Math.round(value * Store.IVA_RATE);
+      return { value: value, iva: iva, total: value + iva };
+    },
 
     /* The only door that settles an invoice: only a 'Pendiente' one can
      * become 'Pagada' or 'Rechazada', and a settled one is locked forever —

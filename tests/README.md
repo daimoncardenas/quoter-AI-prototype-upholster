@@ -49,7 +49,10 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   Confirming does NOT change the plan directly any more: it creates a
   `Pendiente` invoice (amount sourced from `PLANS`/`planPrice()`, never typed)
   and opens the SIMULATED payment modal (`#payModal`) — see "Simulated
-  payment (Bold)" in the root `CLAUDE.md`. The plan only changes once that
+  payment (Bold)" in the root `CLAUDE.md`. The invoice's stored `amount` is the
+  catalog value (pre-IVA) and the modal/table show the total to pay with its
+  breakdown (`Store.invoiceTotals()`: value + 19% IVA) — the plan cards' "+ IVA"
+  says the same. The plan only changes once that
   payment is approved (`#payApprove`), with its own toast
   (`Pago aprobado. <concepto> activado.`) and re-rendered card state,
   surviving a reload; rejecting (`#payReject`) leaves the plan untouched and

@@ -945,6 +945,14 @@ check('el modal trae el concepto, el monto, la modalidad anual y la referencia',
   [true, true, true, true]);
 check('el modal muestra la etiqueta obligatoria de simulación, tal cual',
   planPayBody.includes('Simulación de pago · este prototipo no procesa pagos reales.'), true);
+/* El precio del catálogo es ANTES de IVA: la factura lo SUMA (19%) y el modal enseña el total a
+ * pagar con su desglose — el mismo número que la tabla de Facturación. */
+check('el modal desglosa valor + IVA (19%) y el número grande es el total a pagar',
+  [planPayBody.includes(`Valor ${await page.evaluate(() => Store.money(1290000))}`),
+   planPayBody.includes('IVA (19%)'),
+   planPayBody.includes(await page.evaluate(() => Store.money(245100))),
+   await page.$eval('#payModalBody .pay-amount', e => e.textContent.replace(/[^\d]/g, ''))],
+  [true, true, true, '1535100']);
 
 console.log('\nUPGRADE — aprobar el pago simulado paga la factura y RECIÉN AHÍ aplica el cambio de plan, con su propio toast');
 await page.click('#payApprove');
@@ -1009,6 +1017,9 @@ check('la factura Pendiente aparece primero (más reciente), con botón Pagar',
   { text: (await page.$eval('#invoiceRows tr:first-child', tr => tr.textContent)), hasPay: true });
 check('la fila trae fecha, concepto, monto, modalidad, estado y referencia de esa factura',
   await page.$eval('#invoiceRows tr:first-child', tr => tr.textContent.includes('Pendiente') && tr.textContent.includes('Empresa de muebles')), true);
+check('la fila muestra el TOTAL a cobrar con su desglose (valor + IVA 19%)',
+  await page.$eval('#invoiceRows tr:first-child .invoice-iva', e => e.textContent.replace(/\s+/g, ' ').trim()),
+  await page.evaluate(() => { const t = Store.invoiceTotals(Store.all('invoices')[0]); return `valor ${Store.money(t.value)} + IVA ${Store.money(t.iva)}`.replace(/\s+/g, ' ').trim(); }));
 
 await page.click(`#invoiceRows [data-pay-invoice="${laterInvoice.id}"]`);
 await page.waitForSelector('#payModal.open');
@@ -1074,7 +1085,7 @@ console.log('\nUPGRADE — confirmar la compra crea una factura Pendiente y abre
 await page.click('#packagesGrid [data-package="extra-user"]');
 const pkgDialogMsg = await page.textContent('#confirmModalBody');
 check('el modal menciona el paquete y su precio exacto',
-  pkgDialogMsg, `¿Confirmas la compra de Usuario adicional por ${await page.evaluate(() => Store.money(50000))} COP / mes?`);
+  pkgDialogMsg, `¿Confirmas la compra de Usuario adicional por ${await page.evaluate(() => Store.money(50000))} COP / mes + IVA?`);
 await page.click('#confirmOk');
 await page.waitForSelector('#payModal.open');
 check('el conteo sigue en 0 mientras la factura está Pendiente',

@@ -151,12 +151,17 @@ rendered. Do not bundle, split into modules, or add a framework unless asked.
   dialogs" below) naming the plan and its price — but confirming no longer applies
   the change directly. It creates a `Pendiente` invoice and opens the SIMULATED
   payment modal instead; the plan (or package count) only changes once that
-  payment is approved. See "Simulated payment (Bold)" below. Each `PLANS` entry carries two monthly amounts — `price` (cheaper,
-  under a yearly contract) and `priceMonthly` (month-to-month) — and an
+  payment is approved. See "Simulated payment (Bold)" below. The two monthly
+  amounts live in the plan's PACKAGE, not in `PLANS` (`shared/presets.json` →
+  `presets[].price` = month-to-month, `presets[].priceYearly` = under a 12-month
+  lease; the ACI Core is the base of the sum and every package's parts add up to
+  its month-to-month price exactly), and `planPrice(plan, billing)` — reading
+  `Store.planPrice()` — is the one place that resolves a plan+period into a
+  number, so the cards and "Configurar mi plan" cannot quote different figures.
+  An
   accessible `#billingSwitch` radiogroup ("Año"/"Mes", roving tabindex, arrow
   keys move AND activate) at the top of the Planes tab picks which one is
-  shown/quoted, via `planPrice(plan, billing)`, the one place that resolves a
-  plan+period into a number. The choice is `Store.settings().billing`
+  shown/quoted. The choice is `Store.settings().billing`
   (`'anual'`/`'mensual'`, default `'anual'` in `DEFAULT_SETTINGS`), so it
   persists and is shared with Usage's summary strip; switching it never
   touches `Store.settings().plan`. Each card also shows a caption under the
@@ -738,7 +743,14 @@ styled as their brand.
   come from the caller's `PLANS`/`PACKAGES`-sourced number (`planPrice()` for
   plans, `pkg.min` for packages — the same field `packagePriceParts()` reads),
   **never from the DOM or anything the user typed**: in the real integration
-  the browser must not be able to change what the backend charges.
+  the browser must not be able to change what the backend charges. That stored
+  `amount` is the catalog VALUE, which is **before IVA**: catalog prices are
+  pre-tax and every screen that shows one says so ("+ IVA" — plan cards, the
+  made-to-measure card, the confirm dialogs and all of "Configurar mi plan"), and
+  the INVOICE adds it — `Store.IVA_RATE` (0.19) and `Store.invoiceTotals(inv)` →
+  `{value, iva, total}` are the only place that arithmetic happens, so the
+  Billing table (total with its breakdown) and the payment modal (big total, plus
+  the value + IVA line) can never disagree.
 - **`Store.settleInvoice(id, 'Pagada'|'Rechazada')`** — the only door that
   settles an invoice. Same lock spirit as quotes: only a `Pendiente` invoice
   can be settled, and a settled one can never change again (throws

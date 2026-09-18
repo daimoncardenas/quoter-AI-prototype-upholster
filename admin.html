@@ -184,6 +184,9 @@
      * --red tokens used directly as text on white. */
     #invoiceRows .button.primary{padding:8px 14px}
     .invoice-status{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid currentColor;border-radius:20px;padding:4px 10px;font-size:.58rem;font-weight:700}
+    /* El desglose de la factura (valor de lista + IVA) vive bajo el monto: el número grande es el
+     * total que se cobra, y así no parece un valor cambiado. */
+    .invoice-iva{display:block;font-size:.58rem;font-weight:600;color:var(--text);margin-top:2px;white-space:nowrap}
     .invoice-status:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
     .invoice-status.pendiente{color:var(--amber)}
     .invoice-status.pagada{color:var(--green)}
@@ -1479,7 +1482,7 @@
         if(!cp)return;
         const billing=currentBilling();
         const ok=await askConfirm({title:'Confirmar pago',
-          message:`¿Confirmas el pago de tu plan a la medida por ${Store.money(cp.total)} COP / mes, ${CONFIRM_MODALITY[billing]}?`});
+          message:`¿Confirmas el pago de tu plan a la medida por ${Store.money(cp.total)} + IVA COP / mes, ${CONFIRM_MODALITY[billing]}?`});
         if(!ok)return;
         let inv;
         try{inv=Store.createInvoice({kind:'customplan',target:'a-medida',concept:'Plan a la medida',amount:cp.total,billing})}
@@ -1601,7 +1604,7 @@
       const pkg=PACKAGES.find(p=>p.id===btn.dataset.package);
       if(!pkg)return;
       const {full}=packagePriceParts(pkg);
-      const ok=await askConfirm({title:'Confirmar compra',message:`¿Confirmas la compra de ${pkg.name} por ${full}?`});
+      const ok=await askConfirm({title:'Confirmar compra',message:`¿Confirmas la compra de ${pkg.name} por ${full} + IVA?`});
       if(!ok)return;
       // El monto de la factura es pkg.min (el mismo número fuente que arma
       // packagePriceParts): nunca el texto del rango ni nada leído del DOM.
@@ -1647,8 +1650,11 @@
       $('#invoiceRows').innerHTML=rows.map(inv=>{
         const modality=inv.billing?(inv.billing==='mensual'?'Mes':'Año'):'—';
         const pay=inv.status==='Pendiente'?`<button type="button" class="button primary" data-pay-invoice="${esc(inv.id)}">Pagar</button>`:'';
+        /* El monto que se cobra es el TOTAL: el valor del catálogo + el IVA (19%). El desglose va
+         * en la misma celda para que el número grande no parezca un valor cambiado. */
+        const t=Store.invoiceTotals(inv);
         return `<tr><td><strong>${esc(inv.id)}</strong></td><td>${esc(inv.date)}</td><td>${esc(inv.concept)}</td>`+
-          `<td>${esc(Store.money(inv.amount))}</td><td>${esc(modality)}</td>`+
+          `<td>${esc(Store.money(t.total))}<small class="invoice-iva">valor ${esc(Store.money(t.value))} + IVA ${esc(Store.money(t.iva))}</small></td><td>${esc(modality)}</td>`+
           `<td><span class="invoice-status ${invoiceStatusClass(inv.status)}">${esc(inv.status)}</span></td>`+
           `<td>${esc(inv.reference)}</td><td>${pay}</td></tr>`;
       }).join('');
@@ -1666,9 +1672,13 @@
       payModalTrigger=document.activeElement;
       const modality=inv.billing
         ?`<p class="pay-detail">Modalidad: ${inv.billing==='mensual'?'Mes a mes':'Año'} · ${esc(BILLING_CAPTIONS[inv.billing])}</p>`:'';
+      /* El número grande es el TOTAL a pagar (valor + IVA 19%), y el desglose va debajo: el precio
+       * del catálogo es antes de IVA — así lo dicen las tarjetas — y la factura lo suma. */
+      const t=Store.invoiceTotals(inv);
       $('#payModalBody').innerHTML=
         `<h3 class="modal-section">${esc(inv.concept)}</h3>`+
-        `<p class="pay-amount">${esc(Store.money(inv.amount))}<span class="pay-period">${esc(invoicePeriodSuffix(inv))}</span></p>`+
+        `<p class="pay-amount">${esc(Store.money(t.total))}<span class="pay-period">${esc(invoicePeriodSuffix(inv))}</span></p>`+
+        `<p class="pay-detail">Valor ${esc(Store.money(t.value))} + IVA (19%) ${esc(Store.money(t.iva))}</p>`+
         modality+
         `<p class="pay-detail">Pasarela: Bold (simulado) · Referencia ${esc(inv.reference)}</p>`+
         `<p class="pay-detail">Enlace de pago (simulado): ${esc(inv.checkoutUrl)}</p>`+
