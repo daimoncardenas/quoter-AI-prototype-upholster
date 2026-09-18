@@ -111,6 +111,47 @@ await page.waitForTimeout(400);
 check('el detalle muestra las 3',
   await page.evaluate(()=>document.querySelectorAll('#quoteDetail .quote-gallery img').length), 3);
 
+console.log('\nLAS FOTOS SE ABREN EN GRANDE — y la que falta se nombra');
+/* La miniatura de 118 px no deja leer un daño, y hasta ahora el clic sobre la foto no hacía nada. */
+await page.click('#quoteDetail .quote-gallery button[data-photo="0"]');
+await page.waitForSelector('#photoModal.open');
+const primera = await page.evaluate(() => ({
+  src: document.getElementById('photoModalImg').src,
+  counter: document.getElementById('photoCounter').textContent,
+  alt: document.getElementById('photoModalImg').alt,
+  focoEnCierre: document.activeElement === document.querySelector('#photoModal [data-close]'),
+}));
+check('la primera foto se abre en grande, con su contador y el foco en el cierre',
+  [primera.src.startsWith('data:image/'), primera.counter, primera.alt.includes('COT-'), primera.focoEnCierre],
+  [true, '1 / 3', true, true]);
+await page.click('#photoNext');
+check('«Siguiente» pasa a la segunda sin cerrar nada',
+  await page.evaluate(() => document.getElementById('photoCounter').textContent), '2 / 3');
+await page.keyboard.press('ArrowRight');
+check('y el teclado también', await page.evaluate(() => document.getElementById('photoCounter').textContent), '3 / 3');
+check('en la última, «Siguiente» se apaga', await page.isDisabled('#photoNext'), true);
+await page.keyboard.press('Escape');
+check('Esc cierra el visor y deja el detalle abierto',
+  await page.evaluate(() => ({
+    visor: document.getElementById('photoModal').classList.contains('open'),
+    detalle: document.getElementById('quoteModal').classList.contains('open'),
+  })), { visor: false, detalle: true });
+/* Una foto que ya no está en este navegador no desaparece de la galería: se nombra. */
+await page.evaluate(async (qid) => {
+  const q = Store.get('quotes', qid.trim());
+  await Photos.remove(q.photoIds[1]);
+}, id);
+await page.click('#quoteModal [data-close]');
+await page.click(`[data-quote="${id}"]`);
+await page.waitForSelector('#quoteModal.open');
+await page.waitForTimeout(400);
+check('el hueco de la que falta se explica y la galería conserva el orden',
+  await page.$$eval('#quoteDetail .quote-gallery > *', els => els.map(e => e.tagName === 'BUTTON' ? 'foto' : 'hueco')),
+  ['foto', 'hueco', 'foto']);
+check('y el detalle dice cuántas faltan',
+  await page.$$eval('#quoteDetail .modal-hint', els => els.some(e => /1 de 3 fotografías no están en este navegador/.test(e.textContent))), true);
+check('quedan dos botones, cada uno abre la suya', await page.$$eval('#quoteDetail .quote-gallery button', els => els.length), 2);
+
 console.log('\nEL RANGO ES CONFIGURABLE');
 await page.click('#quoteModal [data-close]');
 // fresh() limpia localStorage, así que los ajustes van después, no antes

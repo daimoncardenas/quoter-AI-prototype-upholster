@@ -340,7 +340,16 @@
     .quote-inputs{margin:12px 0 0}
     .quote-inputs dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:.62rem}
     .quote-inputs dt{color:var(--muted);font-weight:700}
-    .quote-inputs dd{margin:0;color:var(--ink);overflow-wrap:anywhere}.service-lines{list-style:none;margin:0;padding:0;font-size:.68rem;line-height:1.5;color:var(--text)}.service-lines li{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}.service-lines li:last-child{border-bottom:0}.line-row{display:flex;gap:10px;align-items:center;cursor:pointer}.line-row input{width:16px;height:16px;margin:0;flex:0 0 auto}.service-lines .lock{color:var(--amber)}.quote-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:16px}.quote-gallery img{width:100%;height:118px;object-fit:cover;border:1px solid var(--line);display:block}.modal-hint{font-size:.64rem;color:var(--muted);margin:0 0 12px;line-height:1.5}.form-grid select[multiple]{padding:6px}.modal-section{font:600 1.05rem var(--font-heading);color:var(--ink);margin:20px 0 10px;padding-top:14px;border-top:1px solid var(--line)}.check.full,.modal-hint.full{grid-column:1/-1}.modal-hint.full{margin:-6px 0 0}.check{display:flex;gap:9px;align-items:center;font-weight:500;font-size:.68rem;color:var(--text)}.check input{width:auto;margin:0}.point-checks{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;max-height:220px;overflow:auto;margin-bottom:4px}.pair{display:flex;gap:8px}.pair input{flex:1}.modal-actions #deleteFurniture{margin-right:auto}.modal-body{padding:23px}.color-field{display:grid;grid-template-columns:50px 1fr;gap:10px}.color-field input[type=color]{height:42px;padding:2px}.photo-field{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center;margin-top:6px}.photo-thumb{height:68px;border:1px dashed var(--line);border-radius:3px;background:var(--soft) center/cover no-repeat;display:grid;place-items:center;font-size:.52rem;font-weight:600;color:var(--muted);text-align:center;padding:6px}.photo-thumb.filled{border-style:solid}.photo-thumb.filled span{display:none}.photo-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.photo-actions p{width:100%;margin:0;font-size:.56rem;font-weight:500;color:var(--muted);line-height:1.45}.swatch.has-photo:after{display:none}.modal-actions{padding:16px 23px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:9px}.toast{position:fixed;right:22px;bottom:calc(22px + var(--banner-h,0px));background:var(--ink);color:#fff;padding:14px 18px;box-shadow:var(--shadow);font-size:.68rem;transform:translateY(100px);opacity:0;transition:.25s;z-index:60;border-left:3px solid var(--gold)}.toast.show{transform:none;opacity:1}.mobile-menu{display:none;border:0;background:transparent;color:#fff;font-size:1.4rem}
+    .quote-inputs dd{margin:0;color:var(--ink);overflow-wrap:anywhere}.service-lines{list-style:none;margin:0;padding:0;font-size:.68rem;line-height:1.5;color:var(--text)}.service-lines li{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}.service-lines li:last-child{border-bottom:0}.line-row{display:flex;gap:10px;align-items:center;cursor:pointer}.line-row input{width:16px;height:16px;margin:0;flex:0 0 auto}.service-lines .lock{color:var(--amber)}.quote-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:16px}.quote-gallery img{width:100%;height:118px;object-fit:cover;border:1px solid var(--line);display:block}
+    /* Cada foto es un botón (se abre en grande) y el hueco de una que ya no está en este navegador
+     * se NOMBRA, en vez de dejar un rectángulo vacío o desaparecer de la galería. */
+    .quote-gallery button{padding:0;border:0;background:none;cursor:zoom-in;line-height:0;display:block;width:100%}
+    .quote-gallery button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+    .quote-gallery .photo-missing{height:118px;border:1px dashed var(--line);background:var(--soft);display:grid;place-items:center;padding:10px;font-size:.56rem;font-weight:600;color:var(--muted);text-align:center}
+    .photo-modal{width:min(1100px,96vw)}
+    .photo-modal img{width:100%;max-height:68vh;object-fit:contain;background:#111;display:block}
+    .photo-nav{justify-content:space-between;align-items:center}
+    .photo-counter{font-size:.62rem;color:var(--muted)}.modal-hint{font-size:.64rem;color:var(--muted);margin:0 0 12px;line-height:1.5}.form-grid select[multiple]{padding:6px}.modal-section{font:600 1.05rem var(--font-heading);color:var(--ink);margin:20px 0 10px;padding-top:14px;border-top:1px solid var(--line)}.check.full,.modal-hint.full{grid-column:1/-1}.modal-hint.full{margin:-6px 0 0}.check{display:flex;gap:9px;align-items:center;font-weight:500;font-size:.68rem;color:var(--text)}.check input{width:auto;margin:0}.point-checks{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;max-height:220px;overflow:auto;margin-bottom:4px}.pair{display:flex;gap:8px}.pair input{flex:1}.modal-actions #deleteFurniture{margin-right:auto}.modal-body{padding:23px}.color-field{display:grid;grid-template-columns:50px 1fr;gap:10px}.color-field input[type=color]{height:42px;padding:2px}.photo-field{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center;margin-top:6px}.photo-thumb{height:68px;border:1px dashed var(--line);border-radius:3px;background:var(--soft) center/cover no-repeat;display:grid;place-items:center;font-size:.52rem;font-weight:600;color:var(--muted);text-align:center;padding:6px}.photo-thumb.filled{border-style:solid}.photo-thumb.filled span{display:none}.photo-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.photo-actions p{width:100%;margin:0;font-size:.56rem;font-weight:500;color:var(--muted);line-height:1.45}.swatch.has-photo:after{display:none}.modal-actions{padding:16px 23px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:9px}.toast{position:fixed;right:22px;bottom:calc(22px + var(--banner-h,0px));background:var(--ink);color:#fff;padding:14px 18px;box-shadow:var(--shadow);font-size:.68rem;transform:translateY(100px);opacity:0;transition:.25s;z-index:60;border-left:3px solid var(--gold)}.toast.show{transform:none;opacity:1}.mobile-menu{display:none;border:0;background:transparent;color:#fff;font-size:1.4rem}
     /* The sidebar is fixed-height (100vh minus the header and the demo banner)
      * and scrolls, so anything that does not fit lays out BEHIND the fixed
      * banner — controls included. A tenth nav item ("Configuración de estilos",
@@ -625,6 +634,22 @@
        domain — see the SIMULATED PAYMENT block in the script below and
        CLAUDE.md's "Simulated payment (Bold)" section. -->
   <div class="modal-backdrop" id="payModal" role="dialog" aria-modal="true" aria-labelledby="payModalTitle"><div class="modal"><div class="modal-head"><h2 id="payModalTitle">Pago</h2><button type="button" class="close" data-close>×</button></div><div class="modal-body" id="payModalBody"></div><div class="modal-actions"><button type="button" class="button secondary" data-close>Cancelar</button><button type="button" class="button danger" id="payReject">Simular rechazo</button><button type="button" class="button primary" id="payApprove">Pagar (simular aprobación)</button></div></div></div>
+  <!-- Las fotos del cliente en grande. Se abre DESDE el detalle de la solicitud (por eso se anida) y
+       las flechas del teclado pasan de una a otra sin cerrar nada. -->
+  <div class="modal-backdrop" id="photoModal" role="dialog" aria-modal="true" aria-labelledby="photoModalTitle">
+    <div class="modal photo-modal">
+      <div class="modal-head"><h2 id="photoModalTitle">Fotografía de la solicitud</h2><button type="button" class="close" data-close aria-label="Cerrar la fotografía">×</button></div>
+      <div class="modal-body">
+        <img id="photoModalImg" alt="">
+        <p class="modal-hint" id="photoModalCaption"></p>
+      </div>
+      <div class="modal-actions photo-nav">
+        <button type="button" class="button secondary" id="photoPrev">← Anterior</button>
+        <span class="photo-counter" id="photoCounter" aria-live="polite"></span>
+        <button type="button" class="button secondary" id="photoNext">Siguiente →</button>
+      </div>
+    </div>
+  </div>
   <div class="toast" id="toast" role="status"></div>
   <!-- The legal disclaimer stays bound to the PACK name (the NOT_OFFICIAL_* copy token is rendered at generate time, never marked data-brand-name): an admin renaming the company must not make this notice untruthful. -->
   <aside class="demo-banner" id="demoBanner">
@@ -756,6 +781,49 @@
     $('#quoteRows').addEventListener('click',e=>{const b=e.target.closest('[data-quote]');if(b)openQuote(b.dataset.quote)});
 
     let currentQuote=null;
+    /* El visor de fotos: una miniatura de 118 px no deja leer una mancha ni un daño, y hasta ahora
+     * el clic sobre la foto no hacía nada. Vive DENTRO del detalle de la solicitud, así que se
+     * cierra solo (Esc, fondo o ×) sin llevarse el detalle, que sigue abierto debajo — el mismo
+     * trato que #payModal y #confirmModal, que también se anidan. */
+    let galeriaFotos=[],fotoActual=0,fotoOrigen=null;
+    function renderPhoto(){
+      const x=galeriaFotos[fotoActual];if(!x)return;
+      const q=Store.get('quotes',currentQuote)||{};
+      const total=(q.photoIds||[]).length||galeriaFotos.length;
+      $('#photoModalImg').src=x.f;
+      $('#photoModalImg').alt=`Fotografía ${x.i+1} de ${total} de la solicitud ${q.id||''}`.trim();
+      $('#photoModalCaption').textContent=`Fotografía ${x.i+1} de ${total} · ${(q.customer&&q.customer.name)||'Cliente'}`;
+      $('#photoCounter').textContent=`${fotoActual+1} / ${galeriaFotos.length}`;
+      $('#photoPrev').disabled=fotoActual===0;
+      $('#photoNext').disabled=fotoActual===galeriaFotos.length-1;
+    }
+    function openPhoto(i){
+      if(!galeriaFotos.length)return;
+      fotoActual=Math.max(0,Math.min(i,galeriaFotos.length-1));
+      const pos=galeriaFotos[fotoActual].i;
+      fotoOrigen=document.querySelector(`#quoteDetail .quote-gallery button[data-photo="${pos}"]`);
+      renderPhoto();
+      $('#photoModal').classList.add('open');
+      $('#photoModal [data-close]').focus();
+    }
+    function closePhoto(){
+      if(!$('#photoModal').classList.contains('open'))return false;
+      $('#photoModal').classList.remove('open');
+      if(fotoOrigen&&fotoOrigen.focus){fotoOrigen.focus();fotoOrigen=null}
+      return true;
+    }
+    function moverFoto(paso){
+      const siguiente=fotoActual+paso;
+      if(siguiente<0||siguiente>=galeriaFotos.length)return;
+      fotoActual=siguiente;renderPhoto();$('#photoModal [data-close]').focus();
+    }
+    $('#photoPrev').onclick=()=>moverFoto(-1);
+    $('#photoNext').onclick=()=>moverFoto(1);
+    document.addEventListener('keydown',e=>{
+      if(!$('#photoModal').classList.contains('open'))return;
+      if(e.key==='ArrowLeft'){e.preventDefault();moverFoto(-1)}
+      if(e.key==='ArrowRight'){e.preventDefault();moverFoto(1)}
+    });
     async function openQuote(id){
       const q=Store.get('quotes',id);if(!q)return;
       currentQuote=id;
@@ -770,11 +838,22 @@
       // El sobrante decrece cuando el consumo sube (16-15=1, pero 20-20=0), así
       // que un par puede llegar al revés. Un rango nunca se lee de mayor a menor.
       const rango=v=>{const a=[].concat(v).sort((x,y)=>x-y);return a[0]===a[a.length-1]?numM(a[0]):`${numM(a[0])}–${numM(a[a.length-1])}`};
-      const fotos=await Photos.getAll(q.photoIds||(q.photoId?[q.photoId]:[]));
+      /* La galería respeta el ORDEN de `photoIds` y dice cuántas faltan: `Photos.getAll` filtra las
+       * que no están y una galería más corta parecía una solicitud con menos fotos. Cada foto es un
+       * botón (se abre en grande) y cada hueco dice por qué está vacío. */
+      const ids=q.photoIds||(q.photoId?[q.photoId]:[]);
+      const fotos=await Promise.all(ids.map(id=>Photos.get(id)));
+      const conFoto=fotos.map((f,i)=>({f,i})).filter(x=>x.f);
+      const faltan=ids.length-conFoto.length;
+      const galeria=ids.length
+        ? `<div class="quote-gallery">${fotos.map((f,i)=>f
+            ? `<button type="button" data-photo="${i}" aria-label="Ver la fotografía ${i+1} de ${ids.length} en grande"><img src="${f}" alt="Fotografía ${i+1} enviada por el cliente"></button>`
+            : `<div class="photo-missing">Fotografía ${i+1} · no está en este navegador</div>`).join('')}</div>`+
+          (faltan?`<p class="modal-hint">${faltan} de ${ids.length} fotografías no están en este navegador (se borraron o se subieron desde otro).</p>`:'')
+        : `<p class="modal-hint">Esta solicitud no incluye fotografías.</p>`;
+      galeriaFotos=conFoto;
       $('#quoteDetail').innerHTML=
-        (fotos.length
-          ? `<div class="quote-gallery">${fotos.map((f,i)=>`<img src="${f}" alt="Fotografía ${i+1} enviada por el cliente">`).join('')}</div>`
-          : `<p class="modal-hint">Esta solicitud no incluye fotografías.</p>`)+
+        galeria+
         `<div class="form-grid">`+
         [['Solicitud',q.id],['Fecha',fmtDate(q.date)],['Cliente',(q.customer&&q.customer.name)||'—'],
          ['Correo',(q.customer&&q.customer.email)||'—'],['Celular',(q.customer&&q.customer.phone)||'—'],
@@ -818,6 +897,7 @@
              ['Calculada',est.calculatedAt||'—']]
               .map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')+
             `</dl></div>` : '');
+      $$('#quoteDetail .quote-gallery button').forEach(b=>b.onclick=()=>openPhoto(+b.dataset.photo));
       renderQuoteStatus(q);
       renderQuoteComments(q);
       $('#quoteModal').classList.add('open');
@@ -2176,17 +2256,20 @@
     $$('[data-close]').forEach(x=>x.onclick=()=>{
       if(x.closest('#confirmModal')){resolveConfirm(false);return}
       if(x.closest('#payModal')){closePayModal();return}
+      if(x.closest('#photoModal')){closePhoto();return}
       closeModals();
     });
     $$('.modal-backdrop').forEach(x=>x.addEventListener('click',e=>{
       if(e.target!==x)return;
       if(x.id==='confirmModal'){resolveConfirm(false);return}
       if(x.id==='payModal'){closePayModal();return}
+      if(x.id==='photoModal'){closePhoto();return}
       closeModals();
     }));
     document.addEventListener('keydown',e=>{
       if(e.key!=='Escape')return;
       if(openConfirm){resolveConfirm(false);return}
+      if(closePhoto())return;                 // el visor se cierra solo; el detalle sigue abierto
       closeModals();
     });
 

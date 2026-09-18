@@ -1801,7 +1801,15 @@
         return new Promise(function (resolve, reject) {
           var tx = db.transaction('photos', mode);
           var out = run(tx.objectStore('photos'));
-          tx.oncomplete = function () { resolve(out && out.result !== undefined ? out.result : out); };
+          tx.oncomplete = function () {
+            /* Un IDBRequest se resuelve SIEMPRE con su `result`: si no, una clave que no está
+             * devolvía el request entero — un objeto truthy — y `getAll` no podía filtrar nada
+             * (una foto ausente se pintaba como un <img> roto). `result` undefined es null. */
+            if (out && typeof IDBRequest !== 'undefined' && out instanceof IDBRequest) {
+              return resolve(out.result === undefined ? null : out.result);
+            }
+            resolve(out && out.result !== undefined ? out.result : out);
+          };
           tx.onerror = function () { reject(tx.error); };
         });
       });
@@ -1811,9 +1819,15 @@
       return Photos._tx('readwrite', function (s) { s.put(dataUrl, id); }).then(function () { return id; });
     },
 
+    /* Una clave que no está devuelve null, NO el IDBRequest: `_tx` resuelve con el propio request
+     * cuando su `result` es undefined, y eso es un objeto truthy. Sin esto `getAll` no filtraba
+     * nada y una foto que no está en este navegador se pintaba como un `<img>` roto — el rectángulo
+     * vacío que se veía como una foto oscura en el detalle de la solicitud. */
     get: function (id) {
       if (!id) return Promise.resolve(null);
-      return Photos._tx('readonly', function (s) { return s.get(id); }).catch(function () { return null; });
+      return Photos._tx('readonly', function (s) { return s.get(id); })
+        .then(function (v) { return v === undefined ? null : v; })
+        .catch(function () { return null; });
     },
 
     remove: function (id) {
