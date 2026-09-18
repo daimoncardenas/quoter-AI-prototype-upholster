@@ -1,6 +1,6 @@
 {
   "slug": "intertelas",
-  "_todo": "Design/brand taken from intertelas.com (2026-09-15): displayName, logo, theme and fonts below are real, sourced from the live site with Playwright (computed styles, loaded fonts, the actual logo asset). Demo data (seed.json's fabrics/servicePoints/sellers'-quote-counts/quotes, storageNamespace) is still PLACEHOLDER — nobody gave us Intertelas' real fabric catalog, service points or quotes yet. Backoffice logins are the shared demo set every client uses (shared/demo-users.json), not a per-client TODO. Replace seed.json before this client ships to anyone.",
+  "_todo": "Design/brand taken from intertelas.com (2026-09-15): displayName, logo, theme and fonts below are real, sourced from the live site with Playwright (computed styles, loaded fonts, the actual logo asset). Demo data (the shared catalogue in shared/demo-seed.json: fabrics/servicePoints/sellers'-quote-counts/quotes, plus storageNamespace) is still PLACEHOLDER — nobody gave us Intertelas' real fabric catalog, service points or quotes yet, and there is NO per-client seed.json: every client renders the same shared seed on purpose (tools/client-pack.mjs). Backoffice logins are the shared demo set every client uses (shared/demo-users.json), not a per-client TODO. When real data exists it goes into the shared seed, or a per-client path has to be added first — today there is none.",
   "displayName": "Intertelas",
   "shortName": "Intertelas",
   "assistantName": "Asistente Intertelas",

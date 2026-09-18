@@ -16,12 +16,11 @@ const MODES_DIR = 'modes';
  * subdirectories as client slugs, so a shared/ folder next to them would
  * otherwise be mistaken for one. */
 const SHARED_USERS_FILE = path.join('shared', 'demo-users.json');
-/* El catálogo de líneas de servicio es del PRODUCTO, no de cada cliente: lo define el plan
- * (`minPlan`), y el plan decide cuántas y cuáles tiene el cotizador de un cliente — Essential
- * una (la línea base que el cliente elige), Professional varias, Business todas. Antes cada
- * paquete declaraba su propia lista y un plan superior no desbloqueaba nada nuevo: con
- * Professional activo el cotizador seguía con una sola línea (reportado por Daimon dos veces,
- * "the plan define lines... period"). */
+/* El catálogo de líneas de servicio es del PRODUCTO, no de cada cliente ni de cada paquete:
+ * `minPlan` se conserva como dato de qué paquete lo traía, pero el plan no es la puerta (modelo
+ * v2, ver CLAUDE.md y docs/paquetes-y-precios.md) — quién está disponible hoy lo decide el
+ * negocio desde el backoffice, y el cotizador pregunta solo por esas líneas. Antes el paquete
+ * declaraba su propia lista y el plan la recortaba; ese candado ya no existe. */
 const SHARED_LINES_FILE = path.join('shared', 'service-lines.json');
 /* El seed de demo es UNO para todos los clientes: telas, puntos, vendedores(asignaciones y
  * conteos), cotizaciones y presupuestos son datos falsos con apariencia de reales, iguales en los

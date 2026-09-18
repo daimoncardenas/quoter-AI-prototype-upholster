@@ -6,8 +6,10 @@ Playwright (computed styles, loaded fonts, and the actual logo asset). Intertela
 is a prospective client of CARDYRAM — this is a private demo prototype prepared
 for them, not a commissioned build.
 
-`seed.json` and `storageNamespace` are still **invented placeholders** — nobody has
-provided Intertelas' real fabric catalog, service points or quotes yet. Backoffice
+`storageNamespace` is still an **invented placeholder**, and so is everything Intertelas
+would see as its own catalogue: nobody has provided Intertelas' real fabric catalog,
+service points or quotes yet — they run on the shared demo seed
+(`shared/demo-seed.json`), the same one every client uses, on purpose. Backoffice
 logins (emails, password) are **not** Intertelas' to invent: every client shares the
 same demo users from `shared/demo-users.json`, so there is nothing to replace there.
 Everything below that's still open only concerns the fabric/service-point/quote
@@ -51,13 +53,13 @@ demo data.
       success-tied pale greens (`successIconBg`/`successBorder`/`availabilityRing`/
       `statusSentBg`, derived from `theme.success` `#237a00`, not Macizo's green).
       See CLAUDE.md's white-label section for the full breakdown.
-- [ ] Real sender email (`seed.json` → `settings.senderEmail`) — the backoffice login
+- [ ] Real sender email (`client.json` → `senderEmail`) — the backoffice login
       domain/password stay the shared demo ones on purpose, this is only the "from"
       address on quote emails
-- [ ] Real fabric catalog, service points, and quotes (`seed.json`) — sellers'
-      identity (name/email/active) is shared across all clients
-      (`shared/demo-users.json`); only their `servicePointIds`/`quotes` count in
-      `seed.json` is Intertelas' to set. `servicePoints` addresses are explicit
+- [ ] Real fabric catalog, service points, and quotes — today they are the shared demo
+      seed (`shared/demo-seed.json`), identical for every client and with no per-client
+      file to replace. Sellers' identity (name/email/active) is shared too
+      (`shared/demo-users.json`). `servicePoints` addresses are explicit
       placeholders (`"Dirección por confirmar"`) — Intertelas' real service-point
       addresses were never provided, so nothing plausible-looking was invented.
 

@@ -131,8 +131,8 @@ const quoteId = await page.textContent('#requestNumber');
 check('customer gets a request number', /^COT-\d+$/.test(quoteId), true);
 /* La línea de servicio: con una sola línea habilitada el cotizador NO tiene el paso «¿qué
  * quieres hacer?» — entra derecho al paso 1 y la numeración se queda en 6 — y la cotización
- * igual guarda la línea; el backoffice la muestra. La lista vive en el paquete (client.json →
- * services) y el candado del plan en Store.services(). */
+ * igual guarda la línea; el backoffice la muestra. La lista es del producto
+ * (shared/service-lines.json) y la puerta vive en el negocio: Store.services()/servicesEnabled(). */
 const linea = await page.evaluate(id => {
   const q = Store.get('quotes', id);
   return {
@@ -550,7 +550,7 @@ check('average days to close matches Store',
 console.log('\nDASHBOARD METRICS — hand-computed from Mediterránea\'s seed, pinned to Bogotá');
 // The check above trusts the same formula the page uses, so it cannot catch
 // a wrong formula. This one is arithmetic done by hand against
-// clients/mediterranea/seed.json's 6 seeded quotes, in a FRESH context (pure
+// shared/demo-seed.json's 6 seeded quotes, in a FRESH context (pure
 // seed, nothing this suite created) pinned to America/Bogota so the
 // local-midnight parsing of q.date is deterministic regardless of the host's
 // own timezone.

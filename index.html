@@ -1411,7 +1411,8 @@ function renderCities(){
 }
 /* La pregunta por la línea es SU PROPIO paso (el 0), y solo cuando hay más de una: con una
  * sola línea el paso no existe — ni en el flujo, ni en el stepper, ni en la numeración — y el
- * cotizador entra derecho al paso 1. El candado del plan vive en Store.services(). */
+ * cotizador entra derecho al paso 1. El candado es del negocio, no del plan: apaga líneas desde
+ * el backoffice y `Store.servicesEnabled()` es lo que este paso pregunta. */
 const serviceOptions=Store.servicesEnabled();
 const hasServiceStep=serviceOptions.length>1;
 if(serviceOptions.length===1)state.service=serviceOptions[0];

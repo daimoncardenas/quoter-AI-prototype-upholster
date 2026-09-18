@@ -570,9 +570,10 @@
            * catálogo (shared/service-lines.json), no casos especiales del código. */
           pricing: s.pricing || 'tela',
           skips: (s.skips || []).slice(),
-          /* `withinPlan` = el plan lo permite; `enabled` = además el negocio la dejó prendida.
-           * Van separadas para que el backoffice pueda mostrar una línea bloqueada por plan sin
-           * confundirla con una apagada a mano (y sin reimplementar el rango de planes). */
+          /* `withinPlan` es siempre verdadero desde el modelo v2 (el plan dejó de ser la puerta:
+           * ver el comentario de arriba) — queda como campo para que el backoffice pueda decir de
+           * qué paquete venía una línea sin reimplementar el rango de planes. `enabled` es la
+           * única puerta viva: el negocio la apaga y la línea sale del cotizador. */
           withinPlan: withinPlan,
           enabled: withinPlan && off.indexOf(s.id) < 0
         });
@@ -1514,8 +1515,9 @@
   /* The pack's assistant presence (clients/<slug>/client.json `assistant`),
    * rendered by tools/generate.mjs and validated by tools/client-pack.mjs. */
   var ASSISTANT_DEFAULTS = {{ASSISTANT_DEFAULTS_JSON}};
-  /* El catálogo de líneas es del producto y el PLAN define cuáles entran: el paquete no declara
-   * líneas ni línea base, solo su marca. El `minPlan` de cada línea es el candado del plan. */
+  /* El catálogo de líneas es del producto, no del paquete: el pack no declara líneas ni línea
+   * base, solo su marca. Quién entra lo decide el negocio desde el backoffice (modelo v2); el
+   * `minPlan` de cada línea se conserva como dato de qué paquete lo traía, sin bloquear nada. */
   var SERVICE_LINES = {{SERVICE_LINES_JSON}};
   /* Los daños que pregunta una línea que los pide (hoy «reparación»): cada ítem suma un valor
    * fijo a la estimación (ver lineEstimate). */

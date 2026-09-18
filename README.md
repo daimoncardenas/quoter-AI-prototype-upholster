@@ -41,9 +41,13 @@ Copiar `clients/mediterranea/` a `clients/<slug>/` y reemplazar cada valor:
 
 - `client.json` — nombre, textos, `theme` (colores), `fonts` (tipografía), `logo`,
   y opcionalmente `colorMode` (ver abajo)
-- `seed.json` — telas, vendedores (solo `servicePointIds` y cantidad de cotizaciones;
-  el nombre y el correo son compartidos, ver abajo), puntos de atención, cotizaciones
 - `logo.png` o `logo.svg`
+
+Eso es todo el pack. **No hay `seed.json` por cliente**: la data de demo (telas, puntos
+de atención, asignaciones y conteos de vendedores, cotizaciones, presupuestos) es **una
+sola** para todos y vive en `shared/demo-seed.json` — se comparte a propósito, porque lo
+que se demuestra es la funcionalidad y el cliente que renderices no tiene que cambiar
+nada (ver `tools/client-pack.mjs`).
 
 Los usuarios de demo del backoffice (correos y contraseña) **son los mismos para
 todos los clientes** — viven en `shared/demo-users.json`, no en cada pack. No hace

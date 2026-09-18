@@ -4,13 +4,12 @@ Design/brand taken from macizocolombia.com (2026-09-14): `displayName`, `theme`,
 `fonts` and `logo` in `client.json` are real, sourced from the live site with
 Playwright (computed styles, loaded fonts, and the actual logo asset).
 
-`services` in `client.json` is a **proposal**, not Macizo's real line list: the
-three lines (retapizado · cambio de tela · reparación y restauración) are the
-implemented journey (`existente`) split by scope, and the plan that unlocks each
-one follows Cardyram's plans (Essential = one line, Professional = several).
-Before this pack is shown as Macizo's own, the lines must be checked against what
-Macizo actually sells and what each one is called in their own words
-(`docs/journeys.md`, §8).
+The service lines are **product data, not pack data**: they live in
+`shared/service-lines.json` (`docs/journeys.md`, §8) and who is available is decided by
+the business from the backoffice — a pack never declares lines, and the plan is not a
+gate (ver `CLAUDE.md`). Before this pack is shown as Macizo's own, the lines must be
+checked against what Macizo actually sells and what each one is called in their own
+words.
 
 The demo data is **not** a placeholder to fill: it is the shared seed
 (`shared/demo-seed.json`) — the same fake catalogue, service points, sellers and quotes on every

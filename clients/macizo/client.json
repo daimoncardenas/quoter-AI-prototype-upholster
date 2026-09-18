@@ -1,7 +1,7 @@
 {
   "slug": "macizo",
   "colorMode": "normal",
-  "_todo": "Design/brand taken from macizocolombia.com (2026-09-14): displayName, logo and theme below are real. Demo data (seed.json's fabrics/servicePoints/quotes, storageNamespace) is still PLACEHOLDER — nobody gave us real fabrics/sellers/quotes yet. Backoffice logins are the shared demo set every client uses (shared/demo-users.json), not a per-client TODO. Replace seed.json before this client ships to anyone.",
+  "_todo": "Design/brand taken from macizocolombia.com (2026-09-14): displayName, logo and theme below are real. Demo data (the shared catalogue in shared/demo-seed.json, storageNamespace) is still PLACEHOLDER — nobody gave us real fabrics/sellers/quotes yet, and there is NO per-client seed.json: every client renders the same shared seed on purpose (tools/client-pack.mjs). Backoffice logins are the shared demo set every client uses (shared/demo-users.json), not a per-client TODO. When real data exists it goes into the shared seed, or a per-client path has to be added first — today there is none.",
   "displayName": "Macizo Colombia",
   "shortName": "Macizo",
   "assistantName": "Asistente Macizo",
