@@ -128,12 +128,15 @@ for (const slug of SLUGS) {
   console.log(`\nEL ADMIN DE ${CLIENT} ABRE UPGRADE (planes estáticos, no datos del cliente) Y CAMBIA DE PLAN`);
   await page.click('button[data-page="upgrade"]');
   check('ve los tres planes', await page.evaluate(() => document.querySelectorAll('#plansGrid .plan-card').length), 3);
-  check('en orden Essential, Professional, Business',
+  check('en orden Taller, Empresa de muebles, Distribuidor (el nombre del paquete, no el interno)',
     await page.$$eval('#plansGrid .plan-card h2', els => els.map(e => e.textContent)),
-    ['Essential', 'Professional', 'Business']);
+    ['Taller', 'Empresa de muebles', 'Distribuidor']);
   check('Essential es el plan actual por defecto', await page.evaluate(() => Store.settings().plan), 'Essential');
 
   console.log(`\nEL SWITCH DE PERIODO DE ${CLIENT} CAMBIA LOS PRECIOS (styling de modo invertido incluido)`);
+  // Upgrade abre en «Configurar mi plan»: el switch de periodo y las tarjetas viven en la pestaña
+  // Planes, así que hay que entrar a ella — un elemento oculto no se deja clickear.
+  await page.click('#tabPlanes');
   const anualPrices = await page.$$eval('#plansGrid .plan-price', els => els.map(e => e.textContent));
   await page.click('#billingSwitch [data-billing="mensual"]');
   await page.waitForTimeout(150);
@@ -154,9 +157,9 @@ for (const slug of SLUGS) {
   await page.click('#payApprove');
   await page.waitForTimeout(200);
   check('mejorar a Professional lo deja como plan actual', await page.evaluate(() => Store.settings().plan), 'Professional');
-  check('la tarjeta de Professional queda marcada como actual, con botón deshabilitado',
+  check('la tarjeta de Empresa de muebles queda marcada como actual, con botón deshabilitado',
     await page.evaluate(() => {
-      const card = [...document.querySelectorAll('#plansGrid .plan-card')].find(c => c.querySelector('h2').textContent === 'Professional');
+      const card = [...document.querySelectorAll('#plansGrid .plan-card')].find(c => c.querySelector('h2').textContent === 'Empresa de muebles');
       const btn = card.querySelector('.plan-cta button');
       return { current: card.classList.contains('current'), cta: btn.textContent, disabled: btn.disabled };
     }),
@@ -189,22 +192,24 @@ for (const slug of SLUGS) {
   check('Sedes suma la Sede adicional comprada al límite de Professional (3 + 1)',
     await page.$eval('#usageGrid [data-metric="locations"] .usage-value', e => e.textContent.endsWith(' de 4')), true);
 
-  console.log(`\nLAS LÍNEAS DE SERVICIO DE ${CLIENT}: EL PLAN DECIDE CUÁLES SE OFRECEN`);
-  /* Las líneas las define el PLAN: el catálogo es del producto (shared/service-lines.json, que
-   * llega al cliente en `serviceLines`) y el paquete no declara ninguna. El plan vigente es
-   * Professional (se cambió arriba). */
-  const SERVICIO_RANK = { base: 0, Essential: 0, Professional: 1, Business: 2 };
+  console.log(`\nLAS LÍNEAS DE SERVICIO DE ${CLIENT}: LAS PRENDE EL NEGOCIO (el plan ya no las decide)`);
+  /* El catálogo es del producto (shared/service-lines.json, que llega al cliente en
+   * `serviceLines`) y el paquete no declara ninguna. Desde el modelo v2 el plan NO es la puerta:
+   * `requiredPlan` sigue siendo el dato de qué paquete la traía, pero `withinPlan` es siempre
+   * verdadero y lo único que apaga una línea es el negocio (`disabledLines`). Aquí no hay nada
+   * apagado, así que se ofrecen TODAS las líneas vivas — la misma regla que ya tiene
+   * tests/wiring.spec.mjs. */
   const lineasPagina = await page.evaluate(() => ({
     lista: Store.services().map(s => [s.id, s.label, s.requiredPlan, s.enabled]),
     habilitadas: Store.servicesEnabled().map(s => s.id),
   }));
   const vivas = client.serviceLines;
-  check('el backoffice lista las líneas vivas del catálogo con su plan',
+  check('el backoffice lista las líneas vivas del catálogo con su plan de origen, todas dentro',
     lineasPagina.lista,
-    vivas.map(s => [s.id, s.label, s.minPlan === 'base' ? 'Essential' : s.minPlan, SERVICIO_RANK[s.minPlan] <= SERVICIO_RANK['Professional']]));
-  check('y el cotizador habilita exactamente las que el plan cubre',
+    vivas.map(s => [s.id, s.label, s.minPlan === 'base' ? 'Essential' : s.minPlan, true]));
+  check('y el cotizador habilita exactamente las líneas vivas: el plan no filtra ninguna',
     lineasPagina.habilitadas,
-    vivas.filter(s => SERVICIO_RANK[s.minPlan] <= SERVICIO_RANK['Professional']).map(s => s.id));
+    vivas.map(s => s.id));
   check('la lista del backoffice muestra las líneas habilitadas',
     await page.$$eval('#serviceLines li strong', els => els.map(e => e.textContent)),
     vivas.map(s => s.label));
@@ -238,10 +243,9 @@ for (const slug of SLUGS) {
 
   /* La pregunta por la línea es un paso CONDICIONAL y PROPIO (el paso 0): con UNA línea
    * habilitada el paso no existe — el cotizador entra derecho al paso 1 y la numeración se
-   * queda en 6 — y con dos o más aparece, con la numeración en 7. El plan vive en el
-   * almacenamiento del navegador y esta pestaña es un contexto nuevo (arranca en el plan por
-   * defecto), así que se pone Professional a mano y se recarga: el candado se comprueba de
-   * punta a punta. */
+   * queda en 6 — y con dos o más aparece, con la numeración en 7. El plan ya no filtra líneas,
+   * pero sí es el nombre que la nota del paso dice ("Tu plan …"), así que se fija a mano para
+   * que la comprobación no dependa del plan por defecto de este contexto. */
   await indexPage.evaluate(() => Store.saveSettings({ plan: 'Professional' }));
   await indexPage.reload();
   /* Con el paso de la línea activo, la grilla de muebles (paso 1) está OCULTA: waitForSelector
@@ -256,11 +260,11 @@ for (const slug of SLUGS) {
     tarjetas: [...document.querySelectorAll('#serviceGrid .service-choice b')].map(e => e.textContent),
     nota: document.getElementById('servicePlanNote').textContent,
   }));
-  const esperadasIndex = vivas.filter(s => SERVICIO_RANK[s.minPlan] <= SERVICIO_RANK['Professional']).map(s => s.label);
+  const esperadasIndex = vivas.map(s => s.label);
   const hayPaso = esperadasIndex.length > 1;
   check('el paso «¿qué quieres hacer?» existe solo con más de una línea, y es su propio paso',
     { paso: pasoUno.paso, activo: pasoUno.activo, pasos: pasoUno.pasos, tarjetas: pasoUno.tarjetas, nota: pasoUno.nota },
-    hayPaso ? { paso: true, activo: '0', pasos: 'Paso 1 de 7', tarjetas: esperadasIndex, nota: `Tu plan Professional incluye ${esperadasIndex.length} líneas de servicio.` }
+    hayPaso ? { paso: true, activo: '0', pasos: 'Paso 1 de 7', tarjetas: esperadasIndex, nota: `Tu plan Empresa de muebles incluye ${esperadasIndex.length} líneas de servicio.` }
             : { paso: false, activo: '1', pasos: 'Paso 1 de 6', tarjetas: [], nota: '' });
   await indexPage.close();
 
