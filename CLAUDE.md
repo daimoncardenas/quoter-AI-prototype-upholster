@@ -47,8 +47,11 @@ Léelas antes de tocar nada. Son del dueño del producto y mandan sobre cualquie
    "precios reales o al menos creíbles", se investiga — no se ajusta a ojo, no se retira la fila,
    no se inventa un ancla para justificar el número.
 11. **El vocabulario es del dueño**: «motivo» (la línea), «interacciones de IA» (jamás «créditos»),
-   «Consumo» (la cuota del paquete) frente a «Capacidades» (el producto que se contrata),
-   «Configurar mi plan» (antes Mi ACI) y «Plan a la medida» (la tarjeta que se guarda en Planes).
+    «Consumo» (la cuota del paquete) frente a «Capacidades» (el producto que se contrata),
+    «Configurar mi plan» (antes Mi ACI) y «Plan a la medida» (la tarjeta que se guarda en Planes).
+    Los planes se llaman en pantalla **Taller / Empresa de muebles / Distribuidor** (el nombre del
+    paquete, `Store.planLabel()`): Essential / Professional / Business son el identificador interno
+    del dato y no se dibujan.
 
 ## Commands
 
@@ -136,6 +139,11 @@ rendered. Do not bundle, split into modules, or add a framework unless asked.
   can't see even if something forces the click. That plan copy is static product
   copy (a `PLANS` constant inside `admin.html`), identical for every client — it is
   NOT client data, so it does not live in `shared/demo-seed.json` or `Store`. What
+  the screen shows is the plan's PACKAGE name (`Store.planLabel()`, from
+  `shared/presets.json`): `PLANS[].name` is the data key, and `planLabel()`/
+  `planCopy()` translate it at render (title, CTA, confirm, invoice concept, plan
+  copy that names another plan), so Essential/Professional/Business never reach the
+  screen — `tests/wiring.spec.mjs` fails if one shows up in a card. What
   DOES belong in `Store` is which plan the client is currently on
   (`Store.settings().plan`, default `'Essential'` in `DEFAULT_SETTINGS` — same
   default for every client): each card's "Plan actual" label/CTA is derived from
@@ -340,7 +348,8 @@ context & actions" below).
   `requiredPlan` and `ignored` (stored override keys) — overrides are ignored,
   never deleted, so an upgrade brings them back (brand fonts/header semantics);
   `Store.saveAssistant()` throws "La presencia del asistente se configura desde
-  el plan Professional."; `Store.resetAssistant()` stays allowed. A plan change in
+  el plan Empresa de muebles." (el nombre que se ve, vía `Store.planLabel()`; la
+  constante sigue siendo `ASSISTANT_GATED_PLAN = 'Professional'`); `Store.resetAssistant()` stays allowed. A plan change in
   another tab re-applies the presence (storage event on settings). Every pack
   still ships `assistant.enabled: true`, so Essential shows the assistant.
 - **Backoffice**: "Presencia del asistente" — on/off switch, character radiogroup

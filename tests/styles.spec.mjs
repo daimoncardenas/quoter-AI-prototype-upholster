@@ -156,7 +156,7 @@ check('el plan es Essential', await page.evaluate(() => Store.settings().plan), 
 check('las dos fuentes están deshabilitadas', [await page.isDisabled('#brandHeadingFont'), await page.isDisabled('#brandBodyFont')], [true, true]);
 check('las dos opciones de encabezado también', await page.$$eval('input[name="brandVariant"]', rs => rs.map(r => r.disabled)), [true, true]);
 check('cada grupo avisa y ofrece mejorar el plan', await page.$$eval('#styles [data-brand-locked]', els => els.map(e => [!e.hidden, e.querySelector('span').textContent, e.querySelector('button').textContent])),
-  [[true, 'Disponible desde el plan Professional', 'Mejorar plan'], [true, 'Disponible desde el plan Professional', 'Mejorar plan']]);
+  [[true, 'Disponible desde el plan Empresa de muebles', 'Mejorar plan'], [true, 'Disponible desde el plan Empresa de muebles', 'Mejorar plan']]);
 await save(page); // guarda el logo claro (permitido en Essential)
 await page.click('#brandFontsCard [data-upgrade-plans]');
 check('"Mejorar plan" abre Upgrade en la pestaña Planes',

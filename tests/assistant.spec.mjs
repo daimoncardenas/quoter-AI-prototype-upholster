@@ -129,12 +129,12 @@ check('el plan por defecto es Essential', await page.evaluate(() => Store.settin
 check('Store dice que no es configurable y desde qué plan', await page.evaluate(() => { const a = Store.assistant(); return [Store.assistantConfigurable(), a.locked, a.requiredPlan]; }), [false, true, 'Professional']);
 check('la sección sigue visible para la administradora', await page.isVisible('#assistant .settings-grid'), true);
 check('muestra el aviso', await page.isVisible('#assistantLocked'), true);
-check('el aviso dice desde qué plan', (await page.textContent('#assistantLockedText')).includes('desde el plan Professional'), true);
+check('el aviso dice desde qué plan', (await page.textContent('#assistantLockedText')).includes('desde el plan Empresa de muebles'), true);
 check('todos los controles están deshabilitados y describidos por el aviso', await controls(), Array(7).fill([true, 'assistantLockedText']));
 check('muestra los valores efectivos (los del paquete)', await form(),
   { enabled: String(DEF.enabled), character: DEF.character, name: DEF.name, brandSuit: String(DEF.brandSuit) });
 check('Store.saveAssistant se niega en Essential', await page.evaluate(() => { try { Store.saveAssistant({ name: 'Camilo' }); return 'saved'; } catch (e) { return e.message; } }),
-  'La presencia del asistente se configura desde el plan Professional.');
+  'La presencia del asistente se configura desde el plan Empresa de muebles.');
 check('y no guardó nada', await stored(), null);
 await page.click('#assistantSeePlans');
 check('"Ver planes" lleva a Upgrade, pestaña Planes', await page.evaluate(() => [document.getElementById('upgrade').classList.contains('active'), document.getElementById('tabPlanes').getAttribute('aria-selected')]), [true, 'true']);

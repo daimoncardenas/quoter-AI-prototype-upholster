@@ -37,8 +37,11 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   allowed at any status including closed and never editable/deletable, and the
   dashboard's funnel/closed/acceptance-rate/average-days/per-seller metrics
   matching what `Store` actually holds. Also covers the "Upgrade" page: exactly
-  three plan cards in order (Essential/Professional/Business), each price built
-  through `Store.money` rather than hand-typed, the exact Incluye/Límites item
+  three plan cards in order, showing the plan's PACKAGE name (Taller / Empresa de
+  muebles / Distribuidor — `Store.planLabel()`; the internal
+  Essential/Professional/Business must not appear in any card), each price built
+  through `Store.money` rather than hand-typed and equal to the price of the same
+  package in "Configurar mi plan" (both read the catalog, Año and Mes), the exact Incluye/Límites item
   counts per plan, the integrations note below the cards, and the plan-change
   flow — the current plan (`Store.settings().plan`, default Essential) drives
   each card's label/CTA, a change asks for confirmation (an in-app `askConfirm()`

@@ -130,10 +130,13 @@
     .aci-preset b{font:600 .95rem var(--font-heading);color:var(--ink)}
     .aci-preset small{font-size:.62rem;color:var(--text);min-height:26px}
     .aci-preset em{font-style:normal;font-weight:700;font-size:.72rem;color:var(--ink)}
-    .aci-total{display:flex;align-items:baseline;gap:10px;margin:16px 0 0;border-top:1px solid var(--line);padding-top:14px}
+    .aci-total{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:16px 0 0;border-top:1px solid var(--line);padding-top:14px}
     .aci-total b{font:600 1.05rem var(--font-heading);color:var(--ink)}
     .aci-total span{margin-left:auto;font:600 1.35rem var(--font-heading);color:var(--ink)}
     .aci-total small{font-size:.6rem;color:var(--text);align-self:center}
+    /* La explicación del precio (paquete vs. suma de sus partes, y la modalidad) va en su propia
+     * línea, a la derecha: en la fila del total apretaba la cifra. */
+    .aci-total small.aci-total-note{flex:1 0 100%;text-align:right}
     .aci-save{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
     .aci-save-note{font-size:.72rem;color:var(--text);max-width:520px}
     .plan-item-price{color:var(--text);font-style:normal;font-size:.74rem}
@@ -471,7 +474,7 @@
       <section class="page" id="assistant">
         <div class="page-head"><div><span class="eyebrow">COTIZADOR</span><h1>Presencia del asistente</h1><p>El personaje que recibe y acompaña a tus clientes en el cotizador. Desactivarlo solo quita su presencia: el análisis con IA de los pasos 4 y 5 sigue funcionando.</p></div>
           <div class="save-block styles-actions"><a class="styles-link" href="index.html" target="_blank" rel="noopener">Ver cotizador ↗</a><button type="button" class="button secondary" id="resetAssistant">Restablecer asistente por defecto</button><button type="button" class="button primary" id="saveAssistant">Guardar asistente</button></div></div>
-        <div class="locked-note" id="assistantLocked" hidden><span id="assistantLockedText">La presencia del asistente se configura desde el plan Professional. Mientras tanto, tus clientes ven el asistente por defecto.</span><button type="button" class="button secondary" id="assistantSeePlans" data-upgrade-plans>Ver planes</button></div>
+        <div class="locked-note" id="assistantLocked" hidden><span id="assistantLockedText">La presencia del asistente se configura desde el plan Empresa de muebles. Mientras tanto, tus clientes ven el asistente por defecto.</span><button type="button" class="button secondary" id="assistantSeePlans" data-upgrade-plans>Ver planes</button></div>
         <div class="settings-grid">
           <article class="settings-card"><h2>Presencia</h2><p>Qué ven tus clientes mientras cotizan.</p>
             <div class="setting-row"><div><b id="assistantEnabledLabel">Mostrar el asistente en el cotizador</b><small>El personaje, su bienvenida, el botón Preguntar y el chat.</small></div><button type="button" class="toggle" id="assistantEnabled" role="switch" aria-checked="false" aria-labelledby="assistantEnabledLabel"></button></div>
@@ -515,11 +518,11 @@
               <ul class="contrast-list" id="brandContrast"></ul>
             </article>
             <article class="settings-card" id="brandFontsCard"><h2>Tipografía</h2><p>Fuentes de Google Fonts aprobadas para títulos y textos.</p>
-              <div class="locked-note" data-brand-locked hidden><span>Disponible desde el plan Professional</span><button type="button" class="button secondary" data-upgrade-plans>Mejorar plan</button></div>
+              <div class="locked-note" data-brand-locked hidden><span>Disponible desde el plan Empresa de muebles</span><button type="button" class="button secondary" data-upgrade-plans>Mejorar plan</button></div>
               <div class="form-grid"><label class="field">Fuente de títulos<select id="brandHeadingFont"></select></label><label class="field">Fuente de texto<select id="brandBodyFont"></select></label></div>
             </article>
             <article class="settings-card" id="brandHeaderCard"><h2>Encabezado</h2><p>Cómo se pinta el encabezado del cotizador y del backoffice.</p>
-              <div class="locked-note" data-brand-locked hidden><span>Disponible desde el plan Professional</span><button type="button" class="button secondary" data-upgrade-plans>Mejorar plan</button></div>
+              <div class="locked-note" data-brand-locked hidden><span>Disponible desde el plan Empresa de muebles</span><button type="button" class="button secondary" data-upgrade-plans>Mejorar plan</button></div>
               <div class="variant-options" role="radiogroup" aria-label="Estilo del encabezado">
                 <label class="variant-option"><input type="radio" name="brandVariant" value="normal"><span class="variant-mini" aria-hidden="true"></span><span class="variant-copy"><b>Normal</b><small>Encabezado con tu color principal y el logo para fondos oscuros.</small></span></label>
                 <label class="variant-option"><input type="radio" name="brandVariant" value="inverted"><span class="variant-mini is-inverted" aria-hidden="true"></span><span class="variant-copy"><b>Invertido</b><small>Encabezado blanco con el logo para fondos claros; los paneles toman tu color.</small></span></label>
@@ -1071,7 +1074,7 @@
      * que se prende en Configuraciones (disabledLines), así que las dos pantallas coinciden. */
     function renderMyAci(){
       const list=$('#serviceLines');if(!list)return;
-      const money=v=>'$'+Math.round(v||0).toLocaleString('es-CO');
+      const money=v=>Store.money(v||0);
       const aci=Store.myAci();
       const core=$('#aciCore');
       if(core)core.innerHTML=
@@ -1102,14 +1105,15 @@
       }
       const box=$('#aciPresets');
       if(box){
+        /* El precio del botón es el del PLAN (p.price, del catálogo): el paquete y su tarjeta en
+         * Planes muestran el mismo número. La suma de sus partes (p.composed) es el precio de
+         * lista, y no se enseña aquí: el total de abajo explica la diferencia cuando la hay. */
         box.innerHTML=aci.presets.map(p=>{
-          const suma=p.lines.reduce((t,id)=>{const s=aci.services.find(x=>x.id===id);return t+(s?s.price:0)},aci.core.price)
-            +p.capabilities.reduce((t,id)=>{const c=aci.capabilities.find(x=>x.id===id);return t+(c?c.price:0)},0);
           const q=p.quota?`${p.quota.quotes} cotizaciones · ${p.quota.users} usuario${p.quota.users===1?'':'s'} · ${p.quota.locations} sede${p.quota.locations===1?'':'s'}`:'';
           return `<button type="button" class="aci-preset${aci.presetActual&&aci.presetActual.id===p.id?' current':''}" data-preset="${esc(p.id)}">`+
             `<b>${esc(p.label)}</b><small>${esc(p.hint)}</small>`+
             (q?`<small class="aci-quota">${esc(q)}</small>`:'')+
-            `<em>${money(suma)} / ${esc(aci.period)}</em></button>`;
+            `<em>${money(p.price)} / ${esc(aci.period)}</em></button>`;
         }).join('');
         box.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{
           const p=Store.presets().presets.find(x=>x.id===b.dataset.preset);
@@ -1132,7 +1136,17 @@
         });
       });
       const total=$('#aciTotal');
-      if(total)total.innerHTML=`<b>Tu plan</b><span>${money(aci.total)} / ${esc(aci.period)}</span>${aci.demo?'<small>Precios demo del prototipo</small>':''}`;
+      if(total){
+        /* La suma de lo marcado ES el precio POR MES del paquete (Core + servicios + capacidades
+         * suman exacto lo que se paga cada mes): si lo marcado es un paquete del catálogo se dice
+         * su nombre, la condición mes a mes y, aparte, el precio del contrato de 12 meses. */
+        const nota=aci.presetActual
+          ?`Precio del paquete «${aci.presetActual.label}» · ${BILLING_CAPTIONS.mensual} · ${BILLING_CAPTIONS.anual} ${money(aci.presetActual.priceYearly)}`
+          :`A la medida: Core + servicios + capacidades, cada uno con su precio · ${BILLING_CAPTIONS.mensual}`;
+        total.innerHTML=`<b>Tu plan</b><span>${money(aci.total)} / ${esc(aci.period)}</span>`+
+          `<small class="aci-total-note">${esc(nota)}</small>`+
+          (aci.demo?'<small>Precios demo del prototipo</small>':'');
+      }
     }
 
     /* Campo de etiquetas, sin dependencias y reutilizable: escribir y Enter (o
@@ -1264,11 +1278,12 @@
      * seeded from a client pack's seed.json (which holds only THIS client's
      * data). Prices render through Store.money so the currency matches the
      * rest of the backoffice; the number itself is never hand-formatted.
-     * `price` is the monthly amount under a yearly contract ("Año" in the
-     * billing switch); `priceMonthly` is the higher month-to-month amount
-     * ("Mes") — see planPrice()/renderUpgrade() below. */
+     * Prices live in the plan's PACKAGE (shared/presets.json → presets[].price
+     * for month-to-month, presets[].priceYearly under a 12-month lease, read
+     * through Store.planPrice()), so both screens read the same number — see
+     * planPrice()/renderUpgrade() below. */
     const PLANS=[
-      {name:'Essential',price:299000,priceMonthly:399000,
+      {name:'Essential',
        quota:{quotes:30,aiCredits:75,storageGB:1,users:1,locations:1,historyMonths:3},
        audience:'Para tapiceros independientes y talleres pequeños con bajo volumen de cotizaciones.',
        features:[
@@ -1304,7 +1319,7 @@
          'Sin exportación de datos por cuenta propia.',
          'Sin integraciones.'
        ]},
-      {name:'Professional',price:699000,priceMonthly:899000,
+      {name:'Professional',
        quota:{quotes:90,aiCredits:300,storageGB:5,users:3,locations:3,historyMonths:12},
        audience:'Para talleres consolidados y pequeñas empresas de muebles.',
        intro:'Incluye todo lo de Essential, y además:',
@@ -1330,7 +1345,7 @@
          'Sin exportación CSV por cuenta propia.',
          'Una plantilla estándar de cotización.'
        ]},
-      {name:'Business',price:1290000,priceMonthly:1490000,
+      {name:'Business',
        quota:{quotes:300,aiCredits:1000,storageGB:15,users:10,locations:10,historyMonths:12},
        audience:'Para distribuidores, fábricas y empresas con varias sedes.',
        intro:'Incluye todo lo de Professional, y además:',
@@ -1368,7 +1383,16 @@
     // the full confirm sentence.
     const CONFIRM_MODALITY={anual:'con contrato de arrendamiento a 12 meses',mensual:'mes a mes y sin contrato'};
     function currentBilling(){return Store.settings().billing==='mensual'?'mensual':'anual'}
-    function planPrice(plan,billing){return billing==='mensual'?plan.priceMonthly:plan.price}
+    /* El precio sale del CATÁLOGO (el del paquete que carga el plan): la misma cifra que muestra
+     * «Configurar mi plan», para que las dos pantallas no puedan discrepar. */
+    function planPrice(plan,billing){return Store.planPrice(plan.name,billing)}
+    /* El nombre de un plan EN PANTALLA es el de su paquete (Store.planLabel, desde
+     * shared/presets.json): el nombre interno (Essential/Professional/Business) es dato, no copy.
+     * planLabel() lo traduce, y planCopy() hace lo mismo con el copy estático de PLANS que nombra
+     * planes («Incluye todo lo de Essential…», «…sobre el plan Essential.») para que en pantalla no
+     * quede ninguno. */
+    const planLabel=name=>Store.planLabel(name);
+    const planCopy=text=>String(text).replace(/\b(Essential|Professional|Business)\b/g,m=>planLabel(m));
     function renderUpgrade(){
       const currentName=Store.settings().plan||'Essential';
       const billing=currentBilling();
@@ -1380,14 +1404,14 @@
       });
       $('#plansGrid').innerHTML=PLANS.map((p,i)=>{
         const isCurrent=i===currentIdx;
-        const intro=p.intro?`<p class="plan-intro">${esc(p.intro)}</p>`:'';
-        const features=`<p class="plan-section-title first">Incluye</p>${intro}<ul class="plan-list incluye">${p.features.map(f=>`<li>${esc(f)}</li>`).join('')}</ul>`;
-        const limits=p.limits?`<p class="plan-section-title">Límites</p><ul class="plan-list limits">${p.limits.map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`:'';
+        const intro=p.intro?`<p class="plan-intro">${esc(planCopy(p.intro))}</p>`:'';
+        const features=`<p class="plan-section-title first">Incluye</p>${intro}<ul class="plan-list incluye">${p.features.map(f=>`<li>${esc(planCopy(f))}</li>`).join('')}</ul>`;
+        const limits=p.limits?`<p class="plan-section-title">Límites</p><ul class="plan-list limits">${p.limits.map(l=>`<li>${esc(planCopy(l))}</li>`).join('')}</ul>`:'';
         const label=isCurrent?'<p class="plan-current-label">Plan actual</p>':'';
         const cta=isCurrent?{cls:'button primary',text:'Tu plan actual',disabled:true}
-          :i>currentIdx?{cls:'button primary',text:`Mejorar a ${p.name}`,disabled:false}
-          :{cls:'button secondary',text:`Cambiar a ${p.name}`,disabled:false};
-        return `<article class="plan-card${isCurrent?' current':''}">${label}<h2>${esc(p.name)}</h2>`+
+          :i>currentIdx?{cls:'button primary',text:`Mejorar a ${planLabel(p.name)}`,disabled:false}
+          :{cls:'button secondary',text:`Cambiar a ${planLabel(p.name)}`,disabled:false};
+        return `<article class="plan-card${isCurrent?' current':''}">${label}<h2>${esc(planLabel(p.name))}</h2>`+
           `<p class="plan-price">${esc(Store.money(planPrice(p,billing)))} <span class="plan-price-period">COP / mes</span></p>`+
           `<p class="plan-billing-caption">${esc(BILLING_CAPTIONS[billing])}</p>`+
           `<p class="plan-audience">${esc(p.audience)}</p><hr class="plan-divider">`+
@@ -1463,10 +1487,10 @@
       const billing=currentBilling();
       const price=planPrice(plan,billing);
       const ok=await askConfirm({title:'Confirmar cambio de plan',
-        message:`¿Confirmas el cambio al plan ${name} por ${Store.money(price)} COP / mes, ${CONFIRM_MODALITY[billing]}?`});
+        message:`¿Confirmas el cambio al plan ${planLabel(name)} por ${Store.money(price)} COP / mes, ${CONFIRM_MODALITY[billing]}?`});
       if(!ok)return;
       let inv;
-      try{inv=Store.createInvoice({kind:'plan',target:name,concept:`Plan ${name}`,amount:price,billing})}
+      try{inv=Store.createInvoice({kind:'plan',target:name,concept:`Plan ${planLabel(name)}`,amount:price,billing})}
       catch(err){return toast(err.message)}
       renderInvoices();
       openPayModal(inv.id);
@@ -1706,7 +1730,7 @@
       });
       const limits={};
       Object.keys(plan.quota).forEach(k=>{limits[k]=plan.quota[k]+(extra[k]||0)});
-      return {plan:plan.name,price:plan.price,limits,extra};
+      return {plan:plan.name,price:planPrice(plan,currentBilling()),limits,extra};
     }
     const USAGE_METRICS=[
       {key:'quotes',label:'Cotizaciones completadas'},
@@ -1744,8 +1768,8 @@
       // Same planPrice() Upgrade's cards and plan-change confirm() use, so
       // this strip never quotes a different period than what's selected there.
       const price=planPrice(PLANS.find(p=>p.name===plan)||PLANS[0],currentBilling());
-      $('#usageLead').textContent=`Así va el uso de tu plan ${plan} este mes.`;
-      $('#usagePlanName').textContent=`Plan ${plan}`;
+      $('#usageLead').textContent=`Así va el uso de tu plan ${planLabel(plan)} este mes.`;
+      $('#usagePlanName').textContent=`Plan ${planLabel(plan)}`;
       $('#usagePlanPrice').textContent=`${Store.money(price)} COP / mes`;
       const cards=USAGE_METRICS.map(m=>{
         const u=used[m.key],limit=limits[m.key];
@@ -1936,11 +1960,14 @@
       const variant=headerOk?brandDraft.headerVariant:d.headerVariant;
       $$('input[name="brandVariant"]').forEach(r=>{r.checked=r.value===variant;r.disabled=!headerOk});
       $('#brandHeaderCard [data-brand-locked]').hidden=headerOk;
+      /* La nota de cada grupo bloqueado nombra el plan como se LEE (el paquete que lo habilita) y
+       * se deriva de la misma constante que decide el bloqueo: no pueden desincronizarse. */
+      $$('#styles [data-brand-locked] span').forEach(s=>{s.textContent=`Disponible desde el plan ${planLabel(Store.BRAND_GATED_PLAN)}`});
 
       const labels={fonts:'la tipografía',headerVariant:'el encabezado'};
       $('#brandGatedNote').hidden=!b.ignored.length;
       $('#brandGatedNote').textContent=b.ignored.length
-        ?`Tu plan ${plan} no incluye ${b.ignored.map(k=>labels[k]).join(' ni ')} personalizados: se usan los valores por defecto. Lo que guardaste no se borró y vuelve a aplicarse si mejoras tu plan.`:'';
+        ?`Tu plan ${planLabel(plan)} no incluye ${b.ignored.map(k=>labels[k]).join(' ni ')} personalizados: se usan los valores por defecto. Lo que guardaste no se borró y vuelve a aplicarse si mejoras tu plan.`:'';
       updateBrandPreview();
     }
 
@@ -2033,7 +2060,7 @@
       $('#assistantName').value=assistantDraft.name;
       $('#assistantNameError').hidden=true;
       $('#assistantLocked').hidden=!a.locked;
-      $('#assistantLockedText').textContent=`La presencia del asistente se configura desde el plan ${a.requiredPlan}. Mientras tanto, tus clientes ven el asistente por defecto.`;
+      $('#assistantLockedText').textContent=`La presencia del asistente se configura desde el plan ${planLabel(a.requiredPlan)}. Mientras tanto, tus clientes ven el asistente por defecto.`;
       [...ASSISTANT_CONTROLS.map(sel=>$(sel)),...$$('input[name="assistantCharacter"]')].forEach(el=>{
         el.disabled=a.locked;
         if(a.locked)el.setAttribute('aria-describedby','assistantLockedText');

@@ -27,8 +27,7 @@ await page.click('[data-preset="empresa"]');
 await page.check('input[data-cap="plantillas"]');
 const totalUI = (await page.textContent('#aciTotal span')).replace(/\s+/g,' ').trim();
 const totalEsperado = await page.evaluate(()=>Store.money(Store.myAci().total)+' / mes');
-const totalPanel = await page.evaluate(()=>'$'+Math.round(Store.myAci().total).toLocaleString('es-CO')+' / mes');
-check('el total de la pantalla es el compuesto por Store.myAci()', totalUI, totalPanel);
+check('el total de la pantalla es el de Store.myAci()', totalUI, totalEsperado.replace(/\s+/g,' ').trim());
 check('el botón de guardar existe y dice «Guardar configuración»',
   await page.textContent('#saveMyAci'), 'Guardar configuración');
 

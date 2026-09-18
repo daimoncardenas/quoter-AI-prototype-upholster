@@ -111,9 +111,9 @@ check('la administradora sí ve el nav item',
 await p.click('button[data-page="upgrade"]');
 check('y abre la página con los tres planes',
   await p.evaluate(()=>document.querySelectorAll('#plansGrid .plan-card').length), 3);
-check('en orden Essential, Professional, Business',
+check('en orden Taller, Empresa de muebles, Distribuidor (el nombre del paquete, no el interno)',
   await p.$$eval('#plansGrid .plan-card h2', els => els.map(e=>e.textContent)),
-  ['Essential','Professional','Business']);
+  ['Taller','Empresa de muebles','Distribuidor']);
 await p.click('button[data-page="dashboard"]');
 
 console.log('\nSALIR CIERRA LA SESIÓN');

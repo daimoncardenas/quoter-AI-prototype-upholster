@@ -755,6 +755,32 @@
      * único candado es el de siempre: al menos un servicio, porque una solicitud sin servicio no se
      * puede cotizar. Las cifras vienen marcadas como demo en el catálogo. */
     presets: function () { return clone(PRESETS); },
+    /* El paquete del catálogo que carga un plan (`plans` mapea plan → paquete) y, al revés, el
+     * plan de un paquete: la cuota y el precio de un plan viven en su paquete. */
+    presetForPlan: function (name) {
+      var id = (PRESETS.plans || {})[name];
+      return (PRESETS.presets || []).filter(function (p) { return p.id === id; })[0] || null;
+    },
+    planForPreset: function (id) {
+      var plans = PRESETS.plans || {};
+      return Object.keys(plans).filter(function (k) { return plans[k] === id; })[0] || null;
+    },
+    /* El nombre que LEE el dueño para un plan es el de su PAQUETE: una sola fuente para las dos
+     * páginas. El nombre interno (Essential/Professional/Business) es DATO — settings.plan,
+     * PLANS[].name, PLAN_ORDER — y solo se muestra si el catálogo no nombra ese plan. */
+    planLabel: function (name) {
+      var p = Store.presetForPlan(name);
+      return p ? p.label : name;
+    },
+    /* El precio de un plan ES el del paquete (presets[].price para mes a mes, .priceYearly para
+     * el contrato de arrendamiento a 12 meses): la tarjeta de Planes y «Configurar mi plan» leen
+     * ESTO MISMO, así que no pueden discrepar. `billing` es 'anual' o 'mensual'. */
+    planPrice: function (name, billing) {
+      var p = Store.presetForPlan(name);
+      if (!p) return 0;
+      var v = (billing === 'anual' && p.priceYearly != null) ? p.priceYearly : p.price;
+      return Math.max(0, +v || 0);
+    },
     /* Las capacidades del catálogo (dominio, analítica, asignación, marca blanca, plantillas, CSV,
      * integraciones, soporte…): cada una con SU valor y su estado, como los servicios. Se activan
      * de a una; los paquetes recomendados vienen con las suyas marcadas. */
@@ -781,7 +807,7 @@
       Store.setLines(p.lines);
       Store.saveSettings({ capabilities: (p.capabilities || []).slice() });
       var plans = PRESETS.plans || {};
-      var plan = Object.keys(plans).filter(function (k) { return plans[k] === id; })[0];
+      var plan = Store.planForPreset(id);
       if (plan && Store.settings().plan !== plan) Store.saveSettings({ plan: plan });
       return Store.myAci();
     },
@@ -792,9 +818,10 @@
         return { id: s.id, label: s.label, hint: s.hint || '', price: Math.max(0, +prices[s.id] || 0), enabled: s.enabled };
       });
       var capacidades = Store.capabilities();
-      var total = Math.max(0, +core.price || 0);
-      for (var i = 0; i < services.length; i++) { if (services[i].enabled) total += services[i].price; }
-      for (var j = 0; j < capacidades.length; j++) { if (capacidades[j].enabled) total += capacidades[j].price; }
+      /* La suma de las PARTES con sus precios de lista: lo que cuesta una combinación a la medida. */
+      var composed = Math.max(0, +core.price || 0);
+      for (var i = 0; i < services.length; i++) { if (services[i].enabled) composed += services[i].price; }
+      for (var j = 0; j < capacidades.length; j++) { if (capacidades[j].enabled) composed += capacidades[j].price; }
       /* Qué paquete del catálogo coincide EXACTAMENTE con lo marcado (o null si es a la medida): es
        * el nombre que el cliente puede leer — «Essential» es el plan interno que hoy carga la cuota,
        * y en Mi ACI ese nombre no se muestra (el producto ya no se vende por planes). La cuota sigue
@@ -807,19 +834,43 @@
       })[0] || null;
       var planPreset = (PRESETS.presets || []).filter(function (x) { return x.id === (PRESETS.plans || {})[Store.settings().plan]; })[0] || null;
       var cuota = presetActual && presetActual.quota ? presetActual.quota : (planPreset && planPreset.quota ? planPreset.quota : null);
+      /* Las PARTES suman EXACTO el precio POR MES del paquete (ver pricingNota del catálogo): el
+       * total de la pantalla es esa suma —la de lo que esté marcado—, así que cuando lo marcado es
+       * un paquete del catálogo coincide con el precio de su tarjeta en Planes. El precio del
+       * contrato de 12 meses (`priceYearly`) se muestra aparte, sin cambiar la suma. */
+      var presetPlan = presetActual ? Store.planForPreset(presetActual.id) : null;
+      var sumParts = function (p) {
+        var t = Math.max(0, +core.price || 0);
+        (p.lines || []).forEach(function (id) { t += Math.max(0, +prices[id] || 0); });
+        (p.capabilities || []).forEach(function (id) {
+          var c = (PRESETS.capabilities || []).filter(function (x) { return x.id === id; })[0];
+          t += c ? Math.max(0, +c.price || 0) : 0;
+        });
+        return t;
+      };
       return {
         core: { label: core.label, hint: core.hint || '', price: Math.max(0, +core.price || 0), includes: (core.includes || []).slice() },
         services: services,
         capabilities: capacidades,
         presets: (PRESETS.presets || []).map(function (p) {
+          var plan = Store.planForPreset(p.id);
           return { id: p.id, label: p.label, hint: p.hint || '', lines: (p.lines || []).slice(),
                    capabilities: (p.capabilities || []).slice(),
-                   quota: p.quota ? clone(p.quota) : null };
+                   quota: p.quota ? clone(p.quota) : null,
+                   /* El precio del botón es el del paquete por mes (el mismo número que la tarjeta
+                    * con «Mes») y `composed` la suma de sus partes: tienen que ser el mismo número. */
+                   plan: plan, price: plan ? Store.planPrice(plan, 'mensual') : sumParts(p),
+                   priceYearly: plan ? Store.planPrice(plan, 'anual') : 0, composed: sumParts(p) };
         }),
         quotaActual: cuota ? clone(cuota) : null,
-        /* El paquete del catálogo que coincide con lo marcado, o null si es a la medida. */
-        presetActual: presetActual ? { id: presetActual.id, label: presetActual.label } : null,
-        total: total,
+        /* El paquete del catálogo que coincide con lo marcado (o null si es a la medida), con su
+         * precio del mes y su precio de contrato para poder decirlos en el total. */
+        presetActual: presetActual ? { id: presetActual.id, label: presetActual.label, plan: Store.planForPreset(presetActual.id),
+                                       price: Store.planPrice(Store.planForPreset(presetActual.id), 'mensual'),
+                                       priceYearly: Store.planPrice(Store.planForPreset(presetActual.id), 'anual') } : null,
+        plan: presetPlan,
+        planLabel: presetPlan ? Store.planLabel(presetPlan) : null,
+        total: composed,
         currency: PRESETS.currency || 'COP',
         period: PRESETS.period || 'mes',
         demo: !!PRESETS.demo
@@ -906,7 +957,7 @@
      * is removed rather than stored. Throws (Spanish, user-facing) on an
      * invalid value instead of storing it. */
     saveAssistant: function (patch) {
-      if (!Store.assistantConfigurable()) throw new Error('La presencia del asistente se configura desde el plan ' + ASSISTANT_GATED_PLAN + '.');
+      if (!Store.assistantConfigurable()) throw new Error('La presencia del asistente se configura desde el plan ' + Store.planLabel(ASSISTANT_GATED_PLAN) + '.');
       patch = patch || {};
       var d = ASSISTANT_DEFAULTS, next = Store.assistantOverrides();
       ['enabled', 'brandSuit'].forEach(function (k) {

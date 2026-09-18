@@ -1497,7 +1497,7 @@ function renderServiceOptions(){
    * ocupa el panel. La nota de arriba dice cuántas incluye el plan vigente — así el salto entre
    * planes se ve en la pantalla. */
   const note=document.getElementById('servicePlanNote');
-  if(note)note.textContent=`Tu plan ${Store.settings().plan} incluye ${serviceOptions.length} líneas de servicio.`;
+  if(note)note.textContent=`Tu plan ${Store.planLabel(Store.settings().plan)} incluye ${serviceOptions.length} líneas de servicio.`;
   /* Una columna hasta tres líneas; de cuatro en adelante, dos: así la grilla llena el panel sin
    * dejar huecos ni obligar a desplazarse. `--rows` topa el alto de las tarjetas por filas: con
    * dos líneas no quedan tarjetas de 250 px con una sola frase dentro (medido). */

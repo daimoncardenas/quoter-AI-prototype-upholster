@@ -42,9 +42,9 @@ la primera versión** y se especifican después: son features, no líneas de cot
 Un botón por paquete; al pulsarlo se marcan sus casillas y el cliente puede desmarcar lo que no
 quiera. La matriz actual **no se pierde**: cada preset es hoy un plan.
 
-| Preset (botón)          | Marca hoy               | Líneas |
+| Paquete (botón)         | Nombre interno hoy      | Líneas |
 |-------------------------|-------------------------|--------|
-| Taller pequeño          | Essential               | 2      |
+| Taller                  | Essential               | 2      |
 | Empresa de muebles      | Professional            | 5      |
 | Distribuidor            | Business                | 8      |
 | **Armar mi ACI**        | (sin equivalente)       | a gusto |
@@ -54,6 +54,11 @@ Los nombres y los precios de arriba salen del texto que me pasaste
 `Core ACI $199.000`) y **están marcados como demo**: un número que describe realidad (un precio de
 venta) sale de ti o va rotulado como inventado. La composición de ejemplo del texto —Retapizado
 +$80.000, Suministro +$50.000, Lía +$120.000— es el formato del precio, no una tarifa aprobada.
+
+**El nombre del paquete es el nombre del plan en pantalla** (`Store.planLabel()`, una sola fuente en
+`shared/presets.json`): las tarjetas de Planes, Usage, las notas de plan bloqueado y la nota del paso
+de la línea dicen Taller / Empresa de muebles / Distribuidor. El nombre interno
+(Essential/Professional/Business) queda como dato y no se dibuja.
 
 ## 4. La aceptación (coherencia, medida)
 
@@ -148,16 +153,47 @@ lugar donde vive la cuota.
 
 ## 10. Resuelto (esta sesión)
 
-1. **Nombres**: Taller pequeño / Empresa de muebles / Distribuidor son el camino por defecto; los
-   nombres Essential / Professional / Business quedan solo como identificador interno de la cuota.
+1. **Nombres**: Taller / Empresa de muebles / Distribuidor son los que se ven —el nombre del
+   paquete— en las tarjetas de Planes, Usage y las notas de plan bloqueado; los nombres
+   Essential / Professional / Business quedan solo como identificador interno de la cuota
+   (`settings.plan`, `PLANS[].name`, `PLAN_ORDER`).
 2. **Precios**: los tuyos donde los diste (Core $199.000; suministro, retapizado, arquitectónica,
    asignación, analítica, asistentes adicionales) + investigados con fuente donde hacían falta
    (interacciones de IA, soporte), y los provisionales marcados en `shared/presets.json`.
 3. **La pantalla de Consumo** entró en esta entrega; los paquetes de capacidad se siguen comprando
    en Paquetes.
 
+### 10.1 La suma cuadra con el precio del mes (resuelto)
+
+Manda el precio POR MES (tu decisión del 18 de septiembre): la composición —`Core + servicios +
+capacidades`— suma EXACTO lo que se paga cada mes, y el precio del contrato de arrendamiento a 12
+meses es más bajo y se muestra aparte (el mismo plan, con el compromiso de un año). Las cifras viven
+una sola vez en `shared/presets.json` (`presets[].price` para el mes, `presets[].priceYearly` para el
+contrato) y `Store.planPrice()` las sirve a las dos pantallas.
+
+| Paquete | Mes a mes (lo que suma la composición) | Con contrato de 12 meses | La suma, parte por parte |
+|---|---|---|---|
+| Taller | $399.000 / mes | $299.000 / mes | 299.000 + 100.000 |
+| Empresa de muebles | $899.000 / mes | $699.000 / mes | 299.000 + 415.000 + 185.000 |
+| Distribuidor | $1.490.000 / mes | $1.290.000 / mes | 299.000 + 685.000 + 506.000 |
+
+La base es el **ACI Core, 299.000** (antes 199.000, por tu instrucción del 18 de septiembre): es lo que
+todo paquete incluye y de ahí para arriba suma cada uno. Lo que se movió además para que cuadrara
+(detalle y provenance en `pricingNota` del catálogo): suministro 50.000 (tu cifra, sin tocar),
+retapizado 80→50, cambio de tela 70→75, reparación 95→100, a la medida 130→140, proyecto comercial
+120→100, mantenimiento 85→70, marca blanca 45→25, plantillas 25→20, CSV 20→15, asistentes
+adicionales 100→96. Intactos de tu texto: arquitectónica 100.000, asignación 60.000, analítica
+80.000; investigados con fuente: soporte 190.000 y dominio 20.000.
+
+El total de «Configurar mi plan» es esa suma y lo dice con sus palabras: «Precio del paquete «Taller»
+· mes a mes, sin contrato · con contrato de arrendamiento a 12 meses $299.000». `tests/wiring.spec.mjs`
+sostiene la igualdad: si alguien mueve una cifra del catálogo, el test lo dice antes de que las dos
+cuentas se separen.
+
 ## 11. Vocabulario (el del dueño)
 
+- **Taller / Empresa de muebles / Distribuidor** — los nombres que se ven de los planes (son los del
+  paquete; `Store.planLabel()`). Essential / Professional / Business no se dibujan: son el dato.
 - **Consumo** — la cuota del paquete (cotizaciones, interacciones de IA, GB, usuarios, sedes).
 - **Capacidades** — el producto que se contrata, cada una con su valor.
 - **Configurar mi plan** — la pantalla (antes «Mi ACI»), con su botón Guardar configuración.
