@@ -98,6 +98,46 @@
     .plan-cta .button.primary{border:1px solid transparent}.plan-cta .button[disabled]{background:var(--soft);color:var(--ink);border:1px solid var(--line);cursor:default;opacity:1}
     @media(prefers-reduced-motion:reduce){.plan-card{transition:none}.plan-card:hover{transform:none}}
     .plans-note{font-size:.62rem;color:var(--text);line-height:1.55;margin:0;max-width:92ch}
+    /* «Armar mi ACI»: Core fijo, paquetes como atajo y servicios con su precio. */
+    .aci-core{display:block;border:1px solid var(--line);background:var(--tint-panel-wash,#faf8f3);padding:14px 16px;margin:0 0 6px}
+    .aci-head{display:flex;align-items:baseline;gap:10px}
+    .aci-head b{font:600 1rem var(--font-heading);color:var(--ink)}
+    .aci-head em{margin-left:auto;font-style:normal;font-weight:700;font-size:.78rem;color:var(--ink)}
+    .aci-includes{list-style:none;padding:0;margin:9px 0 0;display:grid;gap:4px}
+    .aci-includes li{font-size:.68rem;color:var(--text)}
+    .aci-section{margin:20px 0 9px;font:700 .6rem var(--font-heading);text-transform:uppercase;letter-spacing:.12em;color:var(--ink2)}
+    .aci-capacity{list-style:none;padding:0;margin:0;display:grid;gap:9px}
+    .aci-capacity li{display:flex;justify-content:space-between;gap:12px;font-size:.72rem;border-bottom:1px solid var(--line);padding-bottom:9px}
+    .aci-capacity em{font-style:normal;font-weight:700;color:var(--ink)}
+    .aci-quota{color:var(--ink2)!important;font-weight:600}
+    .aci-quota-actual{border:1px solid var(--line);background:var(--tint-panel-wash,#faf8f3);padding:11px 13px;margin:0 0 14px;border-radius:3px}
+    .aci-quota-actual li{display:block;border-bottom:0;padding-bottom:0}
+    .aci-quota-actual em{display:block;font-weight:600;font-size:.66rem;color:var(--text);text-align:left;margin-top:5px;line-height:1.5}
+    /* El valor de cada ítem (su precio, o su estado en Configuración) lleva clase propia: con
+     * `.modal-hint` el tema lo pintaba claro sobre claro y el cliente no veía ningún número —
+     * reportado TRES veces. La regla del repo: una caption solo es legible como su SUPERFICIE. */
+    .aci-value{color:var(--text);font-weight:600;font-size:.68rem;white-space:nowrap}
+    .aci-hint{display:block;font-size:.6rem;font-weight:400;color:var(--text);opacity:.75;margin-top:2px;max-width:56ch}
+    /* En Configuración la fila es el ROJO de marca y el tema no deja ahí un token legible
+     * (heredaba oscuro = 2.83:1, medido): el valor va claro sobre ese rojo, como en las tarjetas
+     * de plan (blanco sobre el mismo rojo = 5.48:1). */
+    .settings-card .aci-value{color:#fff;opacity:.95}
+    .aci-note{font-size:.62rem;color:var(--text);margin:10px 0 0}
+    .aci-presets{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 0 18px}
+    .aci-preset{display:grid;gap:3px;text-align:left;background:#fff;border:1px solid var(--line);padding:14px 15px;cursor:pointer;transition:transform .2s ease,box-shadow .2s ease}
+    .aci-preset:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(var(--rgb-shadow),.09)}
+    .aci-preset.current{box-shadow:inset 0 3px 0 var(--accent),0 14px 34px rgba(var(--rgb-shadow),.12)}
+    .aci-preset b{font:600 .95rem var(--font-heading);color:var(--ink)}
+    .aci-preset small{font-size:.62rem;color:var(--text);min-height:26px}
+    .aci-preset em{font-style:normal;font-weight:700;font-size:.72rem;color:var(--ink)}
+    .aci-total{display:flex;align-items:baseline;gap:10px;margin:16px 0 0;border-top:1px solid var(--line);padding-top:14px}
+    .aci-total b{font:600 1.05rem var(--font-heading);color:var(--ink)}
+    .aci-total span{margin-left:auto;font:600 1.35rem var(--font-heading);color:var(--ink)}
+    .aci-total small{font-size:.6rem;color:var(--text);align-self:center}
+    .aci-save{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
+    .aci-save-note{font-size:.72rem;color:var(--text);max-width:520px}
+    .plan-item-price{color:var(--text);font-style:normal;font-size:.74rem}
+    @media(max-width:1050px){.aci-presets{grid-template-columns:1fr}}
     .packages-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:stretch}
     .package-card{background:#fff;border:1px solid var(--line);padding:24px;display:flex;flex-direction:column;box-shadow:0 10px 34px rgba(var(--rgb-shadow),.045);transition:transform .2s ease,box-shadow .2s ease}
     .package-card:hover{transform:translateY(-3px);box-shadow:0 18px 44px rgba(var(--rgb-shadow),.1)}
@@ -383,18 +423,31 @@
         <div class="page-head"><div><span class="eyebrow">Reglas del cotizador</span><h1>Configuraciones de cotizador</h1><p>Ajusta estimaciones, mensajes y comportamiento general.</p></div><div class="save-block"><span class="unsaved" id="settingsDirty" hidden>Cambios sin guardar</span><button class="button primary" id="saveSettings">Guardar cambios</button></div></div>
         <div class="settings-grid"><article class="settings-card"><h2>Estimación de tela</h2><p>Márgenes generales del cálculo. El ancho del rollo y la forma de venta se definen en cada tela, porque cambian de una a otra.</p><div class="form-grid"><label class="field">Desperdicio adicional (%)<input type="number" id="setWaste" min="0" max="100"></label><label class="field">Margen de seguridad (%)<input type="number" id="setMargin" min="0" max="100"></label><label class="field">Tolerancia del rango (%)<input type="number" id="setTolerance" min="0" max="50"></label><label class="field">Moneda<select id="setCurrency"><option value="COP">COP — Peso colombiano</option><option value="USD">USD — Dólar</option></select></label></div></article>
           <article class="settings-card"><h2>Automatización</h2><p>Controla las acciones automáticas después de cada solicitud.</p><div class="setting-row"><div><b>Asignar por ubicación</b><small>Selecciona automáticamente al vendedor de la zona.</small></div><button class="toggle" id="setAutoAssign" aria-label="Asignar por ubicación"></button></div><div class="setting-row"><div><b>Enviar correo al cliente</b><small>Remite una copia inicial de la estimación.</small></div><button class="toggle" id="setEmailCopy" aria-label="Enviar correo"></button></div><div class="setting-row"><div><b>Validación visual con IA</b><small>Contrasta foto, tipo de mueble y medidas.</small></div><button class="toggle" id="setAiCheck" aria-label="Validación visual"></button></div></article>
-          <article class="settings-card wide"><h2>Líneas de servicio</h2><p>El plan define qué líneas existen aquí: Essential incluye dos — suministro de tela y retapizado —, Professional cinco y Business ocho. Marca las que este negocio presta: el cotizador solo pregunta por las marcadas, y con una sola marcada entra directo a ella.</p><ul class="service-lines" id="serviceLines"></ul></article>
+          <article class="settings-card wide"><h2>Líneas de servicio</h2><p>Lo que este negocio presta <b>hoy</b>: el cotizador solo pregunta por las líneas marcadas, y con una sola marcada entra directo a ella. Prender o apagar aquí no contrata nada — eso se elige en <b>Upgrade → Configurar mi plan</b>.</p><ul class="service-lines" id="serviceLinesCfg"></ul></article>
           <article class="settings-card wide"><h2>Opciones del cuestionario</h2><p>Listas que ve el cliente. Escribe una opción y pulsa Enter para agregarla; toca la × para quitarla.</p><div class="form-grid"><label class="field full">Necesidades de uso<div class="tag-input" id="setNeeds" data-placeholder="Agregar necesidad y Enter"></div></label><label class="field">Estilos<div class="tag-input" id="setStyles" data-placeholder="Agregar estilo y Enter"></div></label><label class="field">Gamas de color<div class="tag-input" id="setColors" data-placeholder="Agregar gama y Enter"></div></label><label class="field">Cortes de presupuesto por metro<div class="tag-input" id="setBudgets" data-type="number" data-placeholder="120000 y Enter"></div></label><label class="field">Cantidad máxima ofrecida<input id="setMaxQty" type="number" min="2" max="20"></label><p class="modal-hint full" id="coverageScope"></p><label class="field">Solo asiento y respaldo (% mín / máx)<span class="pair"><input id="setCovSeatsMin" type="number" min="1" max="100"><input id="setCovSeatsMax" type="number" min="1" max="100"></span></label><label class="field">Una parte específica (% mín / máx)<span class="pair"><input id="setCovPartMin" type="number" min="1" max="100"><input id="setCovPartMax" type="number" min="1" max="100"></span></label><p class="modal-hint full" id="coveragePieces"></p></div></article>
           <article class="settings-card wide"><h2>Mensajes y contacto</h2><p>Textos que verá el cliente al finalizar su solicitud.</p><div class="form-grid"><label class="field full">Mensaje de confirmación<textarea id="setMessage"></textarea></label><label class="field">Correo remitente<input type="email" id="setSender"></label><label class="field">Tiempo prometido de respuesta<select id="setResponse"><option>Durante el mismo día hábil</option><option>En menos de 24 horas</option><option>En menos de 48 horas</option></select></label></div></article></div>
       </section>
       <section class="page" id="upgrade">
         <div class="page-head"><div><span class="eyebrow">UPGRADE</span><h1>Upgrade</h1><p id="upgradeLead">Elige el plan que mejor se ajusta al tamaño de tu operación.</p></div></div>
         <div class="tabs" role="tablist" aria-label="Secciones de Upgrade">
-          <button type="button" class="tab" id="tabPlanes" role="tab" aria-selected="true" aria-controls="panelPlanes" data-tab="planes">Planes</button>
+          <button type="button" class="tab" id="tabMiAci" role="tab" aria-selected="true" aria-controls="panelMiAci" data-tab="miaci">Configurar mi plan</button>
+          <button type="button" class="tab" id="tabPlanes" role="tab" aria-selected="false" aria-controls="panelPlanes" tabindex="-1" data-tab="planes">Planes</button>
           <button type="button" class="tab" id="tabPaquetes" role="tab" aria-selected="false" aria-controls="panelPaquetes" tabindex="-1" data-tab="paquetes">Paquetes</button>
           <button type="button" class="tab" id="tabFacturacion" role="tab" aria-selected="false" aria-controls="panelFacturacion" tabindex="-1" data-tab="facturacion">Facturación</button>
         </div>
-        <div class="tabpanel" id="panelPlanes" role="tabpanel" aria-labelledby="tabPlanes">
+        <div class="tabpanel" id="panelMiAci" role="tabpanel" aria-labelledby="tabMiAci">
+          <p class="plans-note" style="margin:0 0 16px">El <b>ACI Core</b> es fijo. De ahí en adelante marca lo que tu negocio quiera cotizar: cada servicio agrega su recorrido, sus preguntas y sus fórmulas, y el precio se compone con lo que marques. Los paquetes son un atajo.</p>
+          <div class="aci-core" id="aciCore"></div>
+          <h4 class="aci-section">Paquetes recomendados</h4>
+          <div class="aci-presets" id="aciPresets"></div>
+          <h4 class="aci-section">Servicios que puede cotizar tu ACI</h4>
+          <ul class="service-lines" id="serviceLines"></ul>
+          <div id="aciCapacity"></div>
+          <div id="aciCapabilities"></div>
+          <p class="aci-total" id="aciTotal"></p>
+          <div class="save-block aci-save"><span class="aci-save-note">Guardá esta configuración y aparece en <b>Planes</b> como tu plan a la medida, con su botón de pago.</span><button type="button" class="button primary" id="saveMyAci">Guardar configuración</button></div>
+        </div>
+        <div class="tabpanel" id="panelPlanes" role="tabpanel" aria-labelledby="tabPlanes" hidden>
           <div class="billing-switch" id="billingSwitch" role="radiogroup" aria-label="Modalidad de contratación">
             <button type="button" class="billing-option" role="radio" aria-checked="true" tabindex="0" data-billing="anual">Año</button>
             <button type="button" class="billing-option" role="radio" aria-checked="false" tabindex="-1" data-billing="mensual">Mes</button>
@@ -996,27 +1049,90 @@
       $('#coveragePieces').hidden=!piezas.length;
     }
 
-    /* Cada línea que el PLAN habilita, con su checkbox: marcada = este negocio la presta.
-     * Apagarla la saca del cotizador (Store.setLineEnabled, que además impide quedarse sin
-     * ninguna); arriba del plan la línea se muestra bloqueada y con el plan que la habilita,
-     * para que se vea qué falta para ofrecerla (mismo espíritu que la presencia del asistente). */
+    /* Configuración: lo que este negocio presta HOY. Prender y apagar, sin precios: aquí no se
+     * contrata nada (eso es Upgrade → Mi ACI), solo se dice qué se ofrece. */
     function renderServiceLines(){
-      const list=$('#serviceLines');if(!list)return;
-      const plan=Store.settings().plan;
-      list.innerHTML=Store.services().map(s=>{
-        const dentro=s.withinPlan;
-        const estado=dentro?(s.enabled?'Habilitada':'Deshabilitada'):`requiere plan ${esc(s.requiredPlan)} — tu plan es ${esc(plan)}`;
-        return `<li><label class="line-row"><input type="checkbox" data-line="${esc(s.id)}"${s.enabled?' checked':''}${dentro?'':' disabled'}>`+
-          `<span><strong>${esc(s.label)}</strong> · ${esc(s.journey)}</span></label>`+
-          `<span class="${dentro?'modal-hint':'lock'}">${estado}</span></li>`;
-      }).join('')||'<li class="modal-hint">Tu plan no habilita líneas para este cotizador.</li>';
+      const list=$('#serviceLinesCfg');if(!list)return;
+      list.innerHTML=Store.services().map(s=>
+        `<li><label class="line-row"><input type="checkbox" data-line="${esc(s.id)}"${s.enabled?' checked':''}>`+
+        `<span><strong>${esc(s.label)}</strong></span></label>`+
+        `<span class="aci-value">${s.enabled?'Habilitada':'Deshabilitada'}</span></li>`).join('');
       list.querySelectorAll('input[data-line]').forEach(cb=>{
         cb.addEventListener('change',()=>{
           try{ const l=Store.setLineEnabled(cb.dataset.line,cb.checked); toast(`${l.label}: ${cb.checked?'habilitada':'deshabilitada'}`); }
           catch(err){ cb.checked=!cb.checked; toast(err.message); }
-          renderServiceLines();
+          renderServiceLines(); renderMyAci();
         });
       });
+    }
+
+    /* Mi ACI (Upgrade): el mercado. El Core es fijo, los paquetes recomendados son un atajo y cada
+     * servicio lleva su precio; abajo se compone el total. Es la cara comercial del mismo estado
+     * que se prende en Configuraciones (disabledLines), así que las dos pantallas coinciden. */
+    function renderMyAci(){
+      const list=$('#serviceLines');if(!list)return;
+      const money=v=>'$'+Math.round(v||0).toLocaleString('es-CO');
+      const aci=Store.myAci();
+      const core=$('#aciCore');
+      if(core)core.innerHTML=
+        `<div class="aci-head"><b>${esc(aci.core.label)}</b><em>${money(aci.core.price)} / ${esc(aci.period)}</em></div>`+
+        `<ul class="aci-includes">${(aci.core.includes||[]).map(x=>`<li>✓ ${esc(x)}</li>`).join('')}</ul>`;
+      /* Consumo: la cuota del paquete. Los paquetes de consumo comprados (25 cotizaciones,
+       * 100 interacciones, GB, usuario, sede) viven en la pestaña Paquetes, no aquí: el dueño
+       * señaló que repetirlos en Mi ACI era información duplicada. */
+      const cap=$('#aciCapacity');
+      if(cap){
+        const q=aci.quotaActual;
+        cap.innerHTML=`<h4 class="aci-section">Consumo</h4>`+
+          (q?`<ul class="aci-capacity aci-quota-actual"><li><span>${aci.presetActual?`Incluido en el paquete «${esc(aci.presetActual.label)}»`:'Incluido en tu cuenta (paquete a la medida)'}</span><em>${q.quotes} cotizaciones · ${q.aiCredits} interacciones de IA · ${q.storageGB} GB · ${q.users} usuario${q.users===1?'':'s'} · ${q.locations} sede${q.locations===1?'':'s'} · ${q.historyMonths} meses de historial</em></li></ul>`:'');
+      }
+      /* Capacidades: cada una se activa por su cuenta y con su valor (nada de «venía en»). */
+      const capa=$('#aciCapabilities');
+      if(capa){
+        capa.innerHTML=`<h4 class="aci-section">Capacidades</h4><ul class="service-lines">`+
+          aci.capabilities.map(c=>`<li><label class="line-row"><input type="checkbox" data-cap="${esc(c.id)}"${c.enabled?' checked':''}>`+
+            `<span><strong>${esc(c.label)}</strong>${c.hint?`<small class="aci-hint">${esc(c.hint)}</small>`:''}</span></label>`+
+            `<span class="aci-value">+${money(c.price)} / ${esc(aci.period)}</span></li>`).join('')+
+          `</ul>`;
+        capa.querySelectorAll('input[data-cap]').forEach(cb=>cb.addEventListener('change',()=>{
+          try{ Store.setCapability(cb.dataset.cap,cb.checked); }
+          catch(err){ cb.checked=!cb.checked; toast(err.message); }
+          renderMyAci(); renderServiceLines();
+        }));
+      }
+      const box=$('#aciPresets');
+      if(box){
+        box.innerHTML=aci.presets.map(p=>{
+          const suma=p.lines.reduce((t,id)=>{const s=aci.services.find(x=>x.id===id);return t+(s?s.price:0)},aci.core.price)
+            +p.capabilities.reduce((t,id)=>{const c=aci.capabilities.find(x=>x.id===id);return t+(c?c.price:0)},0);
+          const q=p.quota?`${p.quota.quotes} cotizaciones · ${p.quota.users} usuario${p.quota.users===1?'':'s'} · ${p.quota.locations} sede${p.quota.locations===1?'':'s'}`:'';
+          return `<button type="button" class="aci-preset${aci.presetActual&&aci.presetActual.id===p.id?' current':''}" data-preset="${esc(p.id)}">`+
+            `<b>${esc(p.label)}</b><small>${esc(p.hint)}</small>`+
+            (q?`<small class="aci-quota">${esc(q)}</small>`:'')+
+            `<em>${money(suma)} / ${esc(aci.period)}</em></button>`;
+        }).join('');
+        box.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{
+          const p=Store.presets().presets.find(x=>x.id===b.dataset.preset);
+          /* El paquete es un punto de partida: servicios + capacidades + cuota de una vez, y después
+           * el cliente agrega o quita lo que necesite (cada casilla tiene su valor). */
+          try{ Store.setBundle(p.id); toast(`Paquete «${p.label}» aplicado: puedes agregar o quitar lo que quieras.`); }
+          catch(err){ toast(err.message); }
+          renderMyAci(); renderServiceLines();
+        }));
+      }
+      list.innerHTML=aci.services.map(s=>
+        `<li><label class="line-row"><input type="checkbox" data-line="${esc(s.id)}"${s.enabled?' checked':''}>`+
+        `<span><strong>${esc(s.label)}</strong>${s.hint?`<small class="aci-hint">${esc(s.hint)}</small>`:''}</span></label>`+
+        `<span class="aci-value">${s.price?'+'+money(s.price)+' / '+esc(aci.period):'incluido'}</span></li>`).join('');
+      list.querySelectorAll('input[data-line]').forEach(cb=>{
+        cb.addEventListener('change',()=>{
+          try{ const l=Store.setLineEnabled(cb.dataset.line,cb.checked); toast(`${l.label}: ${cb.checked?'habilitada':'deshabilitada'}`); }
+          catch(err){ cb.checked=!cb.checked; toast(err.message); }
+          renderMyAci(); renderServiceLines();
+        });
+      });
+      const total=$('#aciTotal');
+      if(total)total.innerHTML=`<b>Tu plan</b><span>${money(aci.total)} / ${esc(aci.period)}</span>${aci.demo?'<small>Precios demo del prototipo</small>':''}`;
     }
 
     /* Campo de etiquetas, sin dependencias y reutilizable: escribir y Enter (o
@@ -1101,7 +1217,7 @@
       $('#setCovSeatsMin').value=s.coverageSeats[0];$('#setCovSeatsMax').value=s.coverageSeats[1];
       $('#setCovPartMin').value=s.coveragePartial[0];$('#setCovPartMax').value=s.coveragePartial[1];
       renderCoverageScope();
-      renderServiceLines();
+      renderServiceLines(); renderMyAci();
       $('#setAutoAssign').classList.toggle('on',!!s.autoAssignByZone);
       $('#setEmailCopy').classList.toggle('on',!!s.emailClientCopy);
       $('#setAiCheck').classList.toggle('on',!!s.aiPhotoCheck);
@@ -1178,7 +1294,7 @@
          '1 usuario interno.',
          '1 sede.',
          '30 cotizaciones completadas al mes.',
-         '75 créditos de IA al mes.',
+         '75 interacciones de IA al mes.',
          '1 GB de almacenamiento de imágenes y documentos.',
          '3 meses de historial de analítica.',
          'Una plantilla estándar de cotización.',
@@ -1197,7 +1313,7 @@
          'Hasta 3 usuarios internos.',
          'Hasta 3 sedes.',
          'Hasta 90 cotizaciones completadas al mes.',
-         'Hasta 300 créditos de IA al mes.',
+         'Hasta 300 interacciones de IA al mes.',
          '5 GB de almacenamiento.',
          '12 meses de historial de analítica.',
          'Varias categorías de servicio configurables.',
@@ -1222,7 +1338,7 @@
          'Hasta 10 usuarios internos.',
          'Hasta 10 sedes.',
          'Hasta 300 cotizaciones completadas al mes.',
-         'Hasta 1.000 créditos de IA al mes.',
+         'Hasta 1.000 interacciones de IA al mes.',
          '15 GB de almacenamiento.',
          'Reglas avanzadas de asignación de vendedores.',
          'Analítica por sede y por vendedor.',
@@ -1278,7 +1394,19 @@
           `${features}${limits}`+
           `<div class="plan-cta"><button type="button" class="${cta.cls}" data-plan="${esc(p.name)}"${cta.disabled?' disabled':''}>${esc(cta.text)}</button></div>`+
           `</article>`;
-      }).join('');
+      }).join('')+(()=>{
+        const cp=Store.customPlan();
+        if(!cp)return'';
+        const items=cp.lines.concat(cp.capabilities).map(x=>`<li>${esc(x.label)} <em class="plan-item-price">+${Store.money(x.price)} / ${esc(cp.period)}</em></li>`).join('');
+        const q=cp.quota?`<p class="plan-billing-caption">${cp.quota.quotes} cotizaciones · ${cp.quota.aiCredits} interacciones de IA · ${cp.quota.storageGB} GB · ${cp.quota.users} usuario${cp.quota.users===1?'':'s'} · ${cp.quota.locations} sede${cp.quota.locations===1?'':'s'}</p>`:'';
+        return `<article class="plan-card current">`+
+          `<p class="plan-current-label">${cp.paid?'Plan actual':'Tu configuración'}</p>`+
+          `<h2>Plan a la medida</h2>`+
+          `<p class="plan-price">${esc(Store.money(cp.total))} <span class="plan-price-period">COP / ${esc(cp.period)}</span></p>`+
+          `<p class="plan-audience">Armado por ti en «Configurar mi plan».</p><hr class="plan-divider">`+
+          `<p class="plan-section-title first">Incluye</p><ul class="plan-list incluye">${items||'<li>ACI Core</li>'}</ul>${q}`+
+          `<div class="plan-cta"><button type="button" class="button primary" data-pay-customplan><b>Pagar</b></button></div></article>`;
+      })();
       $('#plansNote').textContent=UPGRADE_NOTE;
     }
     // Switching the period never touches the current plan — it only changes
@@ -1313,6 +1441,21 @@
     // Pendiente y abre el pago simulado. El plan solo cambia si ese pago se
     // aprueba (ver SIMULATED PAYMENT más abajo).
     $('#plansGrid').addEventListener('click',async e=>{
+      const cpBtn=e.target.closest('[data-pay-customplan]');
+      if(cpBtn){
+        const cp=Store.customPlan();
+        if(!cp)return;
+        const billing=currentBilling();
+        const ok=await askConfirm({title:'Confirmar pago',
+          message:`¿Confirmas el pago de tu plan a la medida por ${Store.money(cp.total)} COP / mes, ${CONFIRM_MODALITY[billing]}?`});
+        if(!ok)return;
+        let inv;
+        try{inv=Store.createInvoice({kind:'customplan',target:'a-medida',concept:'Plan a la medida',amount:cp.total,billing})}
+        catch(err){return toast(err.message)}
+        renderInvoices();
+        openPayModal(inv.id);
+        return;
+      }
       const btn=e.target.closest('[data-plan]');
       if(!btn||btn.disabled)return;
       const name=btn.dataset.plan,plan=PLANS.find(p=>p.name===name);
@@ -1334,7 +1477,8 @@
      * the selected tab is in the Tab order, arrow keys move AND activate,
      * matching the standard tabs pattern). Static product copy again — no
      * seed/Store data — same reasoning as PLANS above. */
-    const UPGRADE_LEADS={planes:'Elige el plan que mejor se ajusta al tamaño de tu operación.',
+    const UPGRADE_LEADS={miaci:'Configura tu plan: el Core es fijo y cada servicio que marques se suma al cotizador y al precio.',
+      planes:'Elige el plan que mejor se ajusta al tamaño de tu operación.',
       paquetes:'Recarga funciones específicas sin cambiar de plan.',
       facturacion:'Historial de pagos simulados y facturas pendientes.'};
     function selectUpgradeTab(name){
@@ -1344,11 +1488,24 @@
         t.tabIndex=sel?0:-1;
       });
       $('#panelPlanes').hidden=name!=='planes';
+      $('#panelMiAci').hidden=name!=='miaci';
       $('#panelPaquetes').hidden=name!=='paquetes';
       $('#panelFacturacion').hidden=name!=='facturacion';
       $('#upgradeLead').textContent=UPGRADE_LEADS[name];
     }
     $$('#upgrade .tab').forEach(t=>t.onclick=()=>selectUpgradeTab(t.dataset.tab));
+    /* La pestaña por defecto de Upgrade es Mi ACI (el plan dejó de ser el producto): al cargar
+     * hay que aplicarla, o el panel de Planes queda visible y el epígrafe sigue hablando de planes. */
+    selectUpgradeTab('miaci');
+    // Guardar la configuración: snapshot de lo marcado + salto a Planes, donde queda la tarjeta
+    // «Plan a la medida» con su botón Pagar (mismo flujo de factura y Bold simulado).
+    $('#saveMyAci').onclick=()=>{
+      let cp;
+      try{cp=Store.saveCustomPlan()}catch(err){return toast(err.message)}
+      toast(`Configuración guardada: ${Store.money(cp.total)} / mes. La ves en Planes, lista para pagar.`);
+      renderUpgrade();
+      selectUpgradeTab('planes');
+    };
     $('#upgrade .tabs').addEventListener('keydown',e=>{
       if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
       // Anchored on the tab that actually has focus (e.target), not on
@@ -1376,7 +1533,7 @@
      * recharge, so it only ever increments, never toggles or resets. */
     const PACKAGES=[
       {id:'quotes-25',    name:'25 cotizaciones adicionales',            min:90000,             monthly:false, adds:{quotes:25}},
-      {id:'ai-credits-100',name:'100 créditos de IA adicionales',        min:70000, max:100000, monthly:false, adds:{aiCredits:100}},
+      {id:'ai-credits-100',name:'100 interacciones de IA adicionales',   min:70000, max:100000, monthly:false, adds:{aiCredits:100}},
       {id:'storage-5gb',  name:'5 GB de almacenamiento adicional',       min:40000,             monthly:true,  adds:{storageGB:5}},
       {id:'extra-user',   name:'Usuario adicional',                      min:50000,             monthly:true,  adds:{users:1}},
       {id:'extra-site',   name:'Sede adicional',                         min:80000, max:120000, monthly:true,  adds:{locations:1}}
@@ -1502,6 +1659,12 @@
         try{Store.saveSettings({plan:inv.target})}catch(err){return toast(err.message)}
         // The plan gates brand features (fonts, header variant): repaint with what it allows now.
         Brand.apply();
+      }else if(inv.kind==='customplan'){
+        // El plan a la medida ya está aplicado (la composición ES el estado actual): pagarlo solo
+        // lo marca como contratado para que la tarjeta se lea «Plan actual».
+        const cp=Store.customPlan();
+        if(cp)try{Store.saveSettings({customPlan:{...cp,paid:true}})}catch(err){return toast(err.message)}
+        Brand.apply();
       }else if(inv.kind==='package'){
         const packages={...(Store.settings().packages||{})};
         packages[inv.target]=(+packages[inv.target]||0)+1;
@@ -1558,7 +1721,7 @@
     // guardado nunca se lee como vacío: menos de 0,1 MB se muestra como 0,1 MB.
     const shownMB=b=>b>0?Math.max(.1,b/MB):0;
     const fmtBytes=b=>b<GB?`${decimal(shownMB(b))} MB`:`${decimal(b/GB)} GB`;
-    /* Valores reales donde el prototipo tiene datos: cotizaciones y créditos
+    /* Valores reales donde el prototipo tiene datos: cotizaciones e interacciones
      * del mes calendario LOCAL (ver Store.quotesThisMonth/aiCreditsUsed),
      * bytes reales de IndexedDB, usuarios y puntos activos. */
     async function usageNow(){

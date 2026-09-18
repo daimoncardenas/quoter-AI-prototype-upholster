@@ -233,6 +233,10 @@ export function generate(clientEnvValue = resolveClient(), outDir = 'generated')
     BRAND_DEFAULTS_JSON: json(brandDefaults),
     ASSISTANT_DEFAULTS_JSON: json(client.assistant),
     SERVICE_LINES_JSON: json(client.serviceLines),
+    DAMAGE_ITEMS_JSON: json(client.damageItems),
+    ASK_SPECS_JSON: json(client.askSpecs),
+    PRICING_RATES_JSON: json(client.pricingRates),
+    PRESETS_JSON: json(client.presets),
   };
 
   mkdirSync(outDir, { recursive: true });

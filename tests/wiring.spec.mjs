@@ -32,14 +32,31 @@ const priceMatchesRate = rate => page.evaluate(r => {
                              : `${Store.money(mn * r)} – ${Store.money(mx * r)}`;
   return document.getElementById('priceRange').textContent === esperado;
 }, rate);
+/* Camina hasta el paso pedido POR NOMBRE y no por número de clics: con los pasos opcionales (la
+ * línea, los daños y los que pide cada motivo) la numeración salta, y contar clics deja de ser
+ * fiable. 4 = Validación, 5 = Recomendación: los dos destinos que usa este suite (el primero es
+ * donde vive «Revisar mi información»). */
+const PASO_POR_NOMBRE = { 4: 'REVIEW', 5: 'RECOMMENDATION' };
 async function wizardTo(step, opts = {}) {
+  const destino = PASO_POR_NOMBRE[step];
   await page.setInputFiles('#furniturePhoto', png);
   await page.waitForFunction(() => state.photos.length >= 3);
-  if (step >= 2) await page.click('#nextButton');
-  if (step >= 3) { await page.fill('#width','210'); await page.fill('#height','85'); await page.fill('#depth','90'); await page.click('#nextButton'); }
-  if (step >= 4) { if (opts.city) await page.selectOption('#city', opts.city); await page.click('#nextButton'); }
-  if (step >= 5) { await page.click('#analyzeButton'); await page.waitForFunction(() => state.analyzed); await page.click('#nextButton'); }
-  if (step >= 6) await page.click('#nextButton');
+  for (let i = 0; i < 12; i++) {
+    const at = await page.evaluate(() => { const s = document.querySelector('.wizard-step.active'); return { id: s.dataset.brain || '', ask: s.dataset.ask || '' }; });
+    if (at.id === 'MEASUREMENTS') { await page.fill('#width','210'); await page.fill('#height','85'); await page.fill('#depth','90'); }
+    else if (at.id === 'PREFERENCES' && opts.city) await page.selectOption('#city', opts.city);
+    else if (at.id === 'REVIEW') { await page.click('#analyzeButton'); await page.waitForFunction(() => state.analyzed); }
+    if (at.id === destino) return;
+    /* Se espera a que el paso CAMBIE, no a un rato fijo: un `waitForTimeout` corto lee el paso
+     * viejo en un frame lento y el bucle vuelve a pulsar «Continuar» — avanza dos pasos y nunca
+     * encuentra su destino (murió aquí, con el mismo recorrido pasando a mano en una sonda). */
+    console.log(`    · wizardTo(${step}) en ${at.id || 'sin-id'} ${at.ask ? '(' + at.ask + ')' : ''}`);
+    const antes = await page.evaluate(() => document.querySelector('.wizard-step.active').dataset.step);
+    await page.click('#nextButton');
+    await page.waitForFunction(prev => document.querySelector('.wizard-step.active').dataset.step !== prev, antes).catch(() => {});
+  }
+  const donde = await page.evaluate(() => ({ activo: document.querySelector('.wizard-step.active').dataset.step, brain: document.querySelector('.wizard-step.active').dataset.brain || '', visibles: [...document.querySelectorAll('[data-step-dot]')].filter(l => !l.hidden).map(l => l.querySelector('b').textContent) }));
+  throw new Error(`wizardTo no llegó a ${destino}: quedó en ${JSON.stringify(donde)}`);
 }
 
 console.log('\nCATALOG — backoffice is the single source of truth');
@@ -88,7 +105,19 @@ check('and the uplift maths is the 1.21x we configured',
 console.log('\nSUBMIT A QUOTE -> IT LANDS IN THE BACKOFFICE, WITH THE PHOTO');
 await fresh('index.html');
 await wizardTo(4, { city: '12 de Octubre' });
-await page.click('#analyzeButton'); await page.waitForFunction(() => state.analyzed);
+console.log('    · estado antes del clic:', await page.evaluate(() => {
+  try {
+    const b = document.getElementById('analyzeButton');
+    if (!b) return `url=${location.pathname.split('/').pop()} no existe #analyzeButton | secciones=${document.querySelectorAll('.wizard-step').length} activo=${(document.querySelector('.wizard-step.active') || { dataset: {} }).dataset.step || 'ninguno'} pasosVisibles=${[...document.querySelectorAll('[data-step-dot]')].filter(x => !x.hidden).length}`;
+    const s = b.closest('.wizard-step');
+    const r = b.getBoundingClientRect();
+    let n = b; const culpables = [];
+    while (n && n !== document.body) { const c = getComputedStyle(n); if (c.display === 'none' || c.visibility === 'hidden' || n.hidden) culpables.push(String(n.id || n.className || n.tagName) + ':' + (n.hidden ? 'hidden' : c.display === 'none' ? 'display' : 'vis')); n = n.parentElement; }
+    return `url=${location.pathname.split('/').pop()} seccion=${s ? s.dataset.step + '/' + s.classList.contains('active') : 'sin .wizard-step'} estado=${state.step} rect=${Math.round(r.width)}x${Math.round(r.height)} display=${getComputedStyle(b).display} culpables=[${culpables.join(' | ')}]`;
+  } catch (e) { return 'THROW: ' + String(e).split('\n')[0]; }
+}));
+// wizardTo(4) ya dejó el paso REVIEW analizado (el helper pulsa #analyzeButton y espera
+// state.analyzed): volver a pulsarlo aquí fallaba porque el botón ya no existe tras analizar.
 await page.click('#nextButton');
 await page.click('.fabric-card:has-text("Velvet Siena")');
 await page.click('#nextButton');
@@ -162,6 +191,112 @@ check('apagar la última línea se rechaza',
 await page.evaluate(id => Store.setLineEnabled(id, true), aApagar);
 check('volver a marcarla la repone',
   await page.evaluate(id => Store.servicesEnabled().some(s => s.id === id), aApagar), true);
+
+/* La línea no es una etiqueta: decide qué pasos existen y qué suma la estimación. Reparación pide
+ * los daños (paso propio) y su valor entra al total; suministro cotiza solo material y ni siquiera
+ * tiene ese paso. Todo por la UI, como lo haría el cliente. */
+await page.evaluate(() => Store.saveSettings({ plan: 'Professional', disabledLines: [] }));
+const flujo = await page.context().newPage();
+flujo.on('pageerror', e => errs.push(String(e)));
+await openWizard(flujo, D);
+await flujo.setInputFiles('#furniturePhoto', png);
+await flujo.waitForFunction(() => state.photos.length >= 3);
+const estadoFlujo = () => flujo.evaluate(() => ({
+  paso: +document.querySelector('.wizard-step.active').dataset.step,
+  visible: document.getElementById('mobileStep').textContent,
+  dotDanos: !document.querySelector('[data-step-dot="2"]').hidden,
+  motivo: document.getElementById('journeyContext').hidden ? null : document.getElementById('journeyContextLabel').textContent,
+}));
+await flujo.click('#nextButton');
+check('con suministro no hay paso de daños y «Continuar» cae en Medidas',
+  await estadoFlujo(), { paso: 3, visible: 'Paso 3 de 7', dotDanos: false, motivo: 'Suministro de tela' });
+check('y su estimación es solo material',
+  await flujo.evaluate(() => { const e = Store.lineEstimate(Store.serviceById('suministro-tela'), [1000000, 1200000], []); return [e.laborPct, e.total]; }),
+  [0, [1000000, 1200000]]);
+await flujo.click('#backButton'); await flujo.waitForSelector('[data-step="1"].active');
+await flujo.click('#backButton'); await flujo.waitForSelector('[data-step="0"].active');
+await flujo.click('#serviceGrid .service-choice:has-text("Reparación y restauración")');
+check('elegir reparación avisa el motivo y abre su paso', (await estadoFlujo()).dotDanos, true);
+await flujo.click('#nextButton'); await flujo.waitForSelector('[data-step="1"].active');
+await flujo.click('#nextButton'); await flujo.waitForSelector('[data-step="2"].active');
+check('el paso de daños es el tercero de ocho', (await estadoFlujo()).visible, 'Paso 3 de 8');
+await flujo.click('#nextButton');
+check('sin marcar ningún daño no avanza, y lo explica',
+  [await flujo.$eval('.wizard-step.active', s => s.dataset.step), await flujo.$eval('#damageError', e => !e.hidden)], ['2', true]);
+await flujo.click('#damageGrid label:has-text("Estructura")');
+await flujo.click('#damageGrid label:has-text("Resortes")');
+check('los daños marcados suman al total y la mano de obra se declara',
+  await flujo.evaluate(() => {
+    const e = Store.lineEstimate(Store.serviceById('reparacion'), [1000000, 1200000], ['estructura', 'resortes']);
+    return [e.laborPct, e.damages, e.total];
+    // 1.000.000 × 1,6 + 320.000 y 1.200.000 × 1,6 + 320.000: mano de obra 60 % + los dos daños.
+  }), [60, 320000, [1920000, 2240000]]);
+await flujo.click('#nextButton'); await flujo.waitForSelector('[data-step="9"].active');
+await flujo.fill('#width','210'); await flujo.fill('#height','85'); await flujo.fill('#depth','90');
+await flujo.click('#nextButton'); await flujo.waitForSelector('[data-step="12"].active');
+await flujo.click('#nextButton'); await flujo.waitForSelector('[data-step="13"].active');
+await flujo.click('#analyzeButton'); await flujo.waitForSelector('#analysisChecks:not([hidden])');
+await flujo.click('#nextButton'); await flujo.waitForSelector('[data-step="14"].active');
+await flujo.click('#fabricGrid .fabric-card:nth-child(1)');
+check('el bloque de precio reparte material, mano de obra y reparaciones',
+  await flujo.evaluate(() => ({
+    caption: document.getElementById('priceCaption').textContent,
+    mano: document.getElementById('priceLabor').textContent.includes('≈60%'),
+    danos: document.getElementById('priceDamages').textContent.includes('Estructura y ensamble') && document.getElementById('priceDamages').textContent.includes('+$'),
+    total: document.getElementById('priceRange').textContent.includes('$'),
+  })), { caption: 'Estimación del motivo', mano: true, danos: true, total: true });
+/* El motivo acompaña al cliente y se puede cambiar: el aviso está en todos los pasos menos en el
+ * de la línea, que es donde se elige. */
+check('el aviso del motivo sigue en el último paso', (await estadoFlujo()).motivo, 'Reparación y restauración');
+await flujo.click('#journeyContextChange'); await flujo.waitForSelector('[data-step="0"].active');
+check('y su «cambiar» devuelve al paso de la línea', (await estadoFlujo()).motivo, null);
+await flujo.close();
+/* Los cuatro motivos que no van por tela: cada uno pide SUS pasos (declarados en el catálogo) y
+ * cotiza a su manera (Store.lineQuote). Se comprueba lo que el cliente ve y lo que se suma, con
+ * las tarifas demo del catálogo: si una cambia, el número de la comprobación cambia con ella. */
+{
+  await page.evaluate(() => Store.saveSettings({ plan: 'Business', disabledLines: [] }));
+  const motivos = [
+    { etiqueta: 'Mantenimiento y limpieza', pricing: 'pieza',
+      pasos: ['Tu línea de servicio', 'Tu mueble', 'Lo que necesita', 'Cómo llega al taller', 'Validación', 'Tu cotización'],
+      ctx: { furnitureId: 'sofa', quantity: 1, answers: { tratamientos: ['quitamanchas'], traslado: 'taller' } }, total: 320000 },
+    { etiqueta: 'Tapicería arquitectónica', pricing: 'm2',
+      pasos: ['Tu línea de servicio', 'La superficie', 'Cómo se monta', 'Validación', 'Recomendación', 'Tu cotización'],
+      ctx: { answers: { ancho: 300, alto: 200, papel: 'decorativo' }, fabricPerM2: 95000 }, total: 8400000 },
+    { etiqueta: 'Muebles a la medida', pricing: 'fabricacion',
+      pasos: ['Tu línea de servicio', 'Tu mueble', 'Medidas', 'Materiales y acabados', 'El tapizado', 'Preferencias', 'Validación', 'Recomendación', 'Tu cotización'],
+      ctx: { furnitureId: 'silla', materialRange: [0, 0], answers: { madera: 'pino', acabado: 'barniz', firmeza: 'media' } }, total: 628500 },
+    { etiqueta: 'Proyecto comercial', pricing: 'unidad',
+      pasos: ['Tu línea de servicio', 'Tu mueble', 'Qué piezas', 'La obra', 'Validación', 'Tu cotización'],
+      ctx: { boq: [{ furniture: 'poltrona', cantidad: 12 }], answers: { servicios: ['instalacion'] } }, total: 9070000 },
+  ];
+  for (const m of motivos) {
+    const pg = await page.context().newPage();
+    pg.on('pageerror', e => errs.push(String(e)));
+    await pg.goto(D + 'index.html');
+    await pg.waitForTimeout(250);
+    await pg.click(`#serviceGrid .service-choice:has-text("${m.etiqueta}")`);
+    const vista = await pg.evaluate(() => ({
+      pasos: [...document.querySelectorAll('[data-step-dot]')].filter(l => !l.hidden).map(l => l.querySelector('b').textContent),
+      pricing: state.service ? state.service.pricing : null,
+      estimado: Store.lineQuote(state.service, { furnitureId: 'silla', materialRange: [1112500, 1246000], answers: {}, boq: [] }).parts.length > 0,
+    }));
+    check(`«${m.etiqueta}» pide sus pasos, en su orden, y cotiza como ${m.pricing}`,
+      [vista.pasos, vista.pricing, vista.estimado], [m.pasos, m.pricing, true]);
+    check(`«${m.etiqueta}» suma ${Store.money(m.total)}`,
+      await pg.evaluate((c, id) => Store.lineQuote(Store.serviceById(id), c).total, m.ctx, m.pricing === 'pieza' ? 'mantenimiento' : m.pricing === 'm2' ? 'tapiceria-arquitectonica' : m.pricing === 'fabricacion' ? 'a-la-medida' : 'proyecto-comercial'),
+      [m.total, m.total]);
+    /* Un paso de pregunta se pinta desde su spec (chips, selectores, campos o filas). */
+    const pregunta = await pg.evaluate(() => {
+      const s = [...document.querySelectorAll('.wizard-step[data-ask]')].find(x => x.querySelector('[data-ask-body]').dataset.built);
+      if (!s) return null;
+      const box = s.querySelector('[data-ask-body]');
+      return { ask: s.dataset.ask, titulo: box.querySelector('h2') ? box.querySelector('h2').textContent : '', controles: box.querySelectorAll('input,select').length };
+    });
+    check(`«${m.etiqueta}» pinta su primera pregunta`, [!!pregunta, pregunta && pregunta.controles > 0], [true, true]);
+    await pg.close();
+  }
+}
 await page.click('button[data-page="quotes"]');
 const row = await page.textContent('#quoteRows');
 check('the quote appears in the backoffice table', row.includes(quoteId), true);
@@ -506,19 +641,19 @@ await openWizard(night, D);
 await night.setInputFiles('#furniturePhoto', png);
 await night.waitForFunction(() => state.photos.length >= 3);
 await night.click('#nextButton');
-await night.waitForSelector('[data-step="2"].active');
+await night.waitForSelector('[data-step="9"].active');
 await night.fill('#width', '210'); await night.fill('#height', '85'); await night.fill('#depth', '90');
 await night.click('#nextButton');
-await night.waitForSelector('[data-step="3"].active');
+await night.waitForSelector('[data-step="12"].active');
 await night.click('#nextButton');
-await night.waitForSelector('[data-step="4"].active');
+await night.waitForSelector('[data-step="13"].active');
 await night.click('#analyzeButton');
 await night.waitForSelector('#analysisChecks:not([hidden])');
 await night.click('#nextButton');
-await night.waitForSelector('[data-step="5"].active');
+await night.waitForSelector('[data-step="14"].active');
 await night.click('#fabricGrid .fabric-card:nth-child(1)');
 await night.click('#nextButton');
-await night.waitForSelector('[data-step="6"].active');
+await night.waitForSelector('[data-step="15"].active');
 await night.fill('#fullName', 'Prueba Nocturna');
 await night.fill('#email', 'noche@ejemplo.com');
 await night.fill('#phone', '3001112233');

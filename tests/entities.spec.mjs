@@ -15,7 +15,7 @@ check('los muebles salen del store, no del markup',
   await page.$$eval('.furniture-card', e=>e.map(c=>c.dataset.furniture)),
   ['Sofá','Sofá en L','Poltrona','Silla','Cabecero','Otro']);
 check('las necesidades salen del store',
-  await page.$$eval('.chip-grid input', e=>e.map(i=>i.value)),
+  await page.$$eval('#needsGrid input', e=>e.map(i=>i.value)),
   ['Mascotas','Fácil limpieza','Resistente al agua','Alto tráfico','Suave','Sol']);
 check('estilos, colores y presupuestos también',
   await page.evaluate(()=>[document.querySelectorAll('#style option').length,
@@ -87,7 +87,7 @@ await setTags(page,'#setStyles',['Nórdico','Industrial']);
 await page.fill('#setCovSeatsMin','50'); await page.fill('#setCovSeatsMax','55');
 await page.click('#saveSettings');
 await openWizard(page, D);
-check('las necesidades cambian', await page.$$eval('.chip-grid input',e=>e.map(i=>i.value)), ['Mascotas','Antialérgico']);
+check('las necesidades cambian', await page.$$eval('#needsGrid input',e=>e.map(i=>i.value)), ['Mascotas','Antialérgico']);
 check('los estilos cambian', await page.$$eval('#style option',e=>e.map(o=>o.textContent)), ['Nórdico','Industrial']);
 check('el multiplicador de cobertura cambia el cálculo', await page.evaluate(()=>{
   const c=document.getElementById('coverage');

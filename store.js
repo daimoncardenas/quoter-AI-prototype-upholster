@@ -71,6 +71,9 @@
     // prendido", así un cambio de plan nunca pierde la elección (mismo espíritu que las
     // anulaciones del asistente y de la marca). Nunca queda en cero: apagar la última se rechaza.
     disabledLines: [],
+    // Capacidades activadas (ids del catálogo `capabilities`): el hermano de disabledLines para lo
+    // que no es una línea de servicio — dominio, analítica, asignación, marca blanca, CSV, etc.
+    capabilities: [],
     // Per-month consumption the prototype has no record to derive from,
     // keyed by LOCAL calendar month ('YYYY-MM') — today only
     // { aiCredits: n }. See Store.spendAiCredit() for the tracking rule.
@@ -550,15 +553,23 @@
       var out = [];
       for (var i = 0; i < SERVICE_LINES.length; i++) {
         var s = SERVICE_LINES[i];
-        /* Dos candados, uno encima del otro: el PLAN decide qué líneas existen para este cliente
-         * (subir de plan AGREGA servicios al primer paso, bajar los quita) y el negocio decide
-         * CUÁLES de esas presta, apagándolas desde el backoffice. El catálogo es el mismo para
-         * todos los clientes. */
+        /* Modelo v2 (docs/paquetes-y-precios.md): el PLAN dejó de ser la puerta — el cliente arma
+         * su ACI marcando servicios, y los paquetes recomendados son un atajo. `requiredPlan` se
+         * conserva como dato (qué paquete lo traía) pero no bloquea nada; el único candado que
+         * queda es el del negocio, que apaga líneas desde el backoffice. */
         var required = s.minPlan === 'base' ? 'Essential' : s.minPlan;
-        var withinPlan = planAtLeast(plan, required);
+        var withinPlan = true;
         out.push({
           id: s.id, label: s.label, hint: s.hint || '', journey: s.journey,
           requiredPlan: required,
+          /* Lo que la línea suma a la estimación y lo que pregunta de más (ver lineEstimate y
+           * docs/journeys.md): la línea no es solo una etiqueta en la cotización. */
+          laborPct: Math.max(0, +s.laborPct || 0),
+          asks: (s.asks || []).slice(),
+          /* Cómo se cotiza esta línea y qué pasos del cotizador se salta: los dos son datos del
+           * catálogo (shared/service-lines.json), no casos especiales del código. */
+          pricing: s.pricing || 'tela',
+          skips: (s.skips || []).slice(),
           /* `withinPlan` = el plan lo permite; `enabled` = además el negocio la dejó prendida.
            * Van separadas para que el backoffice pueda mostrar una línea bloqueada por plan sin
            * confundirla con una apagada a mano (y sin reimplementar el rango de planes). */
@@ -575,9 +586,6 @@
     setLineEnabled: function (id, on) {
       var line = Store.serviceById(id);
       if (!line) throw new Error('Esa línea de servicio no existe en este cotizador.');
-      if (on && !planAtLeast(Store.settings().plan, line.requiredPlan)) {
-        throw new Error('La línea «' + line.label + '» se habilita desde el plan ' + line.requiredPlan + '.');
-      }
       var off = Store.settings().disabledLines.slice();
       if (on) off = off.filter(function (x) { return x !== id; });
       else if (off.indexOf(id) < 0) {
@@ -588,6 +596,149 @@
       return Store.serviceById(id);
     },
 
+    /* Los ítems de la pregunta por los daños, tal como los declara el catálogo. */
+    damageItems: function () {
+      return DAMAGE_ITEMS.map(function (d) {
+        return { id: d.id, label: d.label, hint: d.hint || '', cop: Math.max(0, +d.cop || 0) };
+      });
+    },
+
+    /* El tramo que la línea elegida aporta a la estimación, sobre el rango de material:
+     *   suministro            → solo material (laborPct 0): la tela es el producto
+     *   retapizado / cambio   → material + mano de obra (% del material, como se cotiza a mano)
+     *   reparación            → material + mano de obra + los daños marcados
+     * Así el número cambia de verdad al cambiar de línea, que es lo que el cotizador promete. */
+    lineEstimate: function (service, range, damageIds) {
+      var svc = service || {};
+      var laborPct = Math.max(0, +svc.laborPct || 0) / 100;
+      var lo = Math.max(0, +((range || [])[0]) || 0);
+      var hi = Math.max(lo, +((range || [])[1]) || 0);
+      var picked = [];
+      Store.damageItems().forEach(function (d) {
+        if ((damageIds || []).indexOf(d.id) >= 0) picked.push(d);
+      });
+      var damages = picked.reduce(function (a, d) { return a + d.cop; }, 0);
+      return {
+        material: [lo, hi],
+        laborPct: Math.round(laborPct * 100),
+        labor: [ceilTo(lo * laborPct, 0.1), ceilTo(hi * laborPct, 0.1)],
+        damages: damages,
+        picked: picked,
+        total: [ceilTo(lo * (1 + laborPct), 0.1) + damages, ceilTo(hi * (1 + laborPct), 0.1) + damages]
+      };
+    },
+
+    /* Las preguntas que un motivo declara (catálogo → asks) y las tarifas de cada oficio. El
+     * cotizador pinta el paso desde aquí: un solo render para todos los motivos. */
+    askSpecs: function () { return ASK_SPECS; },
+    askSpec: function (id) { return ASK_SPECS[id] || null; },
+    pricingRates: function () { return PRICING_RATES; },
+
+    /* Lo que la línea suma a la estimación, según cómo se cotiza su oficio:
+     *   tela         metros × precio + mano de obra (%) + daños marcados    (el motor de siempre)
+     *   pieza        tarifa por pieza × cantidad + tratamientos + traslado  (mantenimiento)
+     *   m2           área × (tela por m² + instalación) + papel + sustrato  (arquitectónica)
+     *   fabricacion  estructura(+madera/acabado/firmeza %) + herrajes + tela + fabricación % + entrega
+     *   unidad       Σ(precio unitario × cantidad) + instalación + desmontaje + logística (proyecto)
+     * Devuelve SIEMPRE { kind, parts:[{label, value:[lo,hi]}], total:[lo,hi] }, así el bloque de
+     * precio no sabe de oficios: pinta partes. */
+    lineQuote: function (service, ctx) {
+      ctx = ctx || {};
+      var svc = service || {};
+      var kind = svc.pricing || 'tela';
+      var R = PRICING_RATES || {};
+      var answers = ctx.answers || {};
+      var parts = [];
+      var money = function (n) { return Math.max(0, Math.round(+n || 0)); };
+      var at = function (block, key) { return (R[block] || {})[key]; };
+      var base = function (block) {
+        var t = at(block, 'base') || {};
+        return money(t[ctx.furnitureId] !== undefined ? t[ctx.furnitureId] : t.otro);
+      };
+      var picked = function (id, opts) {
+        var out = null;
+        (opts || []).forEach(function (o) { if (o.id === id) out = o; });
+        return out;
+      };
+      /* Suma los extras marcados: un `cop` por pieza y un `pct` sobre la base. */
+      var extras = function (opts, ids) {
+        var cop = 0, pct = 0, labels = [];
+        (opts || []).forEach(function (o) {
+          if ((ids || []).indexOf(o.id) >= 0) {
+            cop += money(o.cop); pct += (+o.pct || 0);
+            labels.push(o.cop ? o.label + ' ' + Store.money(o.cop) : o.label);
+          }
+        });
+        return { cop: cop, pct: pct, label: labels.join(' · ') };
+      };
+      var juntos = function (r) { return [r[0], r[1]]; };
+      var igual = function (v) { return [v, v]; };
+
+      if (kind === 'pieza') {
+        var qty = Math.max(1, +ctx.quantity || 1);
+        var b = base('pieza');
+        parts.push({ label: 'Limpieza por pieza' + (qty > 1 ? ' × ' + qty : ''), value: igual(b * qty) });
+        var ex = extras(at('pieza', 'extras'), answers.tratamientos);
+        if (ex.cop) parts.push({ label: ex.label, value: igual(ex.cop * qty) });
+        if (ex.pct) parts.push({ label: 'Tratamientos (+' + ex.pct + ' %)', value: igual(ceilTo(b * qty * ex.pct / 100, 0.1)) });
+        var tr = picked(answers.traslado, at('pieza', 'traslado'));
+        if (tr && tr.cop) parts.push({ label: tr.label, value: igual(money(tr.cop)) });
+      } else if (kind === 'm2') {
+        var m2 = ceilTo((+answers.ancho || 0) * (+answers.alto || 0) / 10000, 0.1);
+        var telaM2 = +ctx.fabricPerM2 > 0 ? +ctx.fabricPerM2 : money(at('m2', 'materialPerM2'));
+        var papel = picked(answers.papel, at('m2', 'papel'));
+        var perM2 = telaM2 + money(at('m2', 'installPerM2')) + (papel ? money(papel.cop) : 0);
+        parts.push({
+          label: m2.toFixed(1) + ' m² × ' + Store.money(perM2) + '/m²' + (papel ? ' · ' + papel.label : ''),
+          value: igual(ceilTo(m2 * perM2, 0.1))
+        });
+      } else if (kind === 'fabricacion') {
+        var F = R.fabricacion || {};
+        var b2 = base('fabricacion');
+        var madera = picked(answers.madera, F.maderas);
+        var acabado = picked(answers.acabado, F.acabados);
+        var firmeza = picked(answers.firmeza, F.firmezas);
+        var herr = extras(F.herrajes, answers.herrajes);
+        var pct = (madera ? +madera.pct || 0 : 0) + (acabado ? +acabado.pct || 0 : 0) + (firmeza ? +firmeza.pct || 0 : 0);
+        var estructura = ceilTo(b2 * (1 + pct / 100), 0.1);
+        parts.push({
+          label: 'Estructura' + (madera ? ' · ' + madera.label : '') + (acabado ? ' · ' + acabado.label : '') + (firmeza ? ' · firmeza ' + firmeza.label.toLowerCase() : ''),
+          value: igual(estructura)
+        });
+        if (herr.cop) parts.push({ label: herr.label, value: igual(herr.cop) });
+        var mat = ctx.materialRange || [0, 0];
+        parts.push({ label: 'Tela', value: juntos(mat) });
+        var pctFab = +F.fabricacionPct || 0;
+        parts.push({
+          label: 'Fabricación (' + pctFab + ' %)',
+          value: [ceilTo((estructura + herr.cop + mat[0]) * pctFab / 100, 0.1), ceilTo((estructura + herr.cop + mat[1]) * pctFab / 100, 0.1)]
+        });
+        if (money(F.entregaCop)) parts.push({ label: 'Entrega', value: igual(money(F.entregaCop)) });
+      } else if (kind === 'unidad') {
+        var U = R.unidad || {};
+        var units = 0, per = 0;
+        (ctx.boq || []).forEach(function (row) {
+          var c = Math.max(0, +row.cantidad || 0);
+          units += c;
+          per += money((U.base || {})[row.furniture]) * c;
+        });
+        parts.push({ label: 'Piezas (' + units + ')', value: igual(per) });
+        var serv = answers.servicios || [];
+        if (serv.indexOf('instalacion') >= 0) parts.push({ label: 'Instalación en sitio', value: igual(units * money(U.instalacionPorUnidad)) });
+        if (serv.indexOf('desmontaje') >= 0) parts.push({ label: 'Desmontaje de lo existente', value: igual(units * money(U.desmontajePorUnidad)) });
+        if (serv.length) parts.push({ label: 'Logística y entrega', value: igual(money(U.logisticaCop)) });
+      } else {
+        var e = Store.lineEstimate(service, ctx.materialRange || [0, 0], ctx.damages || []);
+        parts.push({ label: 'Material', value: juntos(e.material) });
+        if (e.laborPct > 0) parts.push({ label: 'Mano de obra (≈ ' + e.laborPct + ' %)', value: juntos(e.labor) });
+        if (e.damages > 0) parts.push({ label: 'Reparaciones', value: igual(e.damages) });
+      }
+
+      var lo = 0, hi = 0;
+      parts.forEach(function (p) { lo += p.value[0]; hi += p.value[1]; });
+      return { kind: kind, parts: parts, total: [lo, hi] };
+    },
+
     servicesEnabled: function (opts) {
       return Store.services(opts).filter(function (s) { return s.enabled; });
     },
@@ -596,6 +747,117 @@
       var all = Store.services();
       for (var i = 0; i < all.length; i++) { if (all[i].id === id) return all[i]; }
       return null;
+    },
+
+    /* ── Composición del paquete (modelo v2, docs/paquetes-y-precios.md) ────────────────────────
+     * El cliente no compra un plan: ARMA su ACI. El Core es fijo, los paquetes recomendados son un
+     * atajo (marcan sus líneas y desmarcan el resto) y los servicios se ajustan con casillas. El
+     * único candado es el de siempre: al menos un servicio, porque una solicitud sin servicio no se
+     * puede cotizar. Las cifras vienen marcadas como demo en el catálogo. */
+    presets: function () { return clone(PRESETS); },
+    /* Las capacidades del catálogo (dominio, analítica, asignación, marca blanca, plantillas, CSV,
+     * integraciones, soporte…): cada una con SU valor y su estado, como los servicios. Se activan
+     * de a una; los paquetes recomendados vienen con las suyas marcadas. */
+    capabilities: function () {
+      var on = Store.settings().capabilities || [];
+      return (PRESETS.capabilities || []).map(function (c) {
+        return { id: c.id, label: c.label, hint: c.hint || '', price: Math.max(0, +c.price || 0), enabled: on.indexOf(c.id) >= 0 };
+      });
+    },
+    setCapability: function (id, on) {
+      var existe = (PRESETS.capabilities || []).filter(function (c) { return c.id === id; })[0];
+      if (!existe) throw new Error('Esa capacidad no existe en este catálogo.');
+      var cur = (Store.settings().capabilities || []).slice();
+      if (on) { if (cur.indexOf(id) < 0) cur.push(id); }
+      else cur = cur.filter(function (x) { return x !== id; });
+      Store.saveSettings({ capabilities: cur });
+      return Store.capabilities();
+    },
+    /* Un paquete recomendado: sus servicios Y sus capacidades, y el plan que carga su cuota. Es un
+     * punto de partida, no una jaula: después el cliente marca o desmarca lo que necesite. */
+    setBundle: function (id) {
+      var p = (PRESETS.presets || []).filter(function (x) { return x.id === id; })[0];
+      if (!p) throw new Error('Ese paquete no existe en este catálogo.');
+      Store.setLines(p.lines);
+      Store.saveSettings({ capabilities: (p.capabilities || []).slice() });
+      var plans = PRESETS.plans || {};
+      var plan = Object.keys(plans).filter(function (k) { return plans[k] === id; })[0];
+      if (plan && Store.settings().plan !== plan) Store.saveSettings({ plan: plan });
+      return Store.myAci();
+    },
+    myAci: function () {
+      var prices = (PRESETS && PRESETS.servicePrices) || {};
+      var core = (PRESETS && PRESETS.core) || { label: 'ACI Core', hint: '', price: 0 };
+      var services = Store.services().map(function (s) {
+        return { id: s.id, label: s.label, hint: s.hint || '', price: Math.max(0, +prices[s.id] || 0), enabled: s.enabled };
+      });
+      var capacidades = Store.capabilities();
+      var total = Math.max(0, +core.price || 0);
+      for (var i = 0; i < services.length; i++) { if (services[i].enabled) total += services[i].price; }
+      for (var j = 0; j < capacidades.length; j++) { if (capacidades[j].enabled) total += capacidades[j].price; }
+      /* Qué paquete del catálogo coincide EXACTAMENTE con lo marcado (o null si es a la medida): es
+       * el nombre que el cliente puede leer — «Essential» es el plan interno que hoy carga la cuota,
+       * y en Mi ACI ese nombre no se muestra (el producto ya no se vende por planes). La cuota sigue
+       * al PAQUETE cuando lo marcado es uno del catálogo; en una combinación a la medida manda el
+       * plan interno. Una sola etiqueta: nadie ve un paquete con la cuota de otro. */
+      var on = Store.servicesEnabled().map(function (s) { return s.id; }).sort().join(',');
+      var onCap = capacidades.filter(function (c) { return c.enabled; }).map(function (c) { return c.id; }).sort().join(',');
+      var presetActual = (PRESETS.presets || []).filter(function (x) {
+        return (x.lines || []).slice().sort().join(',') === on && (x.capabilities || []).slice().sort().join(',') === onCap;
+      })[0] || null;
+      var planPreset = (PRESETS.presets || []).filter(function (x) { return x.id === (PRESETS.plans || {})[Store.settings().plan]; })[0] || null;
+      var cuota = presetActual && presetActual.quota ? presetActual.quota : (planPreset && planPreset.quota ? planPreset.quota : null);
+      return {
+        core: { label: core.label, hint: core.hint || '', price: Math.max(0, +core.price || 0), includes: (core.includes || []).slice() },
+        services: services,
+        capabilities: capacidades,
+        presets: (PRESETS.presets || []).map(function (p) {
+          return { id: p.id, label: p.label, hint: p.hint || '', lines: (p.lines || []).slice(),
+                   capabilities: (p.capabilities || []).slice(),
+                   quota: p.quota ? clone(p.quota) : null };
+        }),
+        quotaActual: cuota ? clone(cuota) : null,
+        /* El paquete del catálogo que coincide con lo marcado, o null si es a la medida. */
+        presetActual: presetActual ? { id: presetActual.id, label: presetActual.label } : null,
+        total: total,
+        currency: PRESETS.currency || 'COP',
+        period: PRESETS.period || 'mes',
+        demo: !!PRESETS.demo
+      };
+    },
+    /* El plan a la medida: un SNAPSHOT de la composición actual (servicios + capacidades + cuota +
+     * total) que el cliente guarda desde «Configurar mi plan». No cambia nada del cotizador — es
+     * la propuesta que aparece en Planes y que se manda a pagar con el mismo flujo de factura y
+     * Bold simulado que los planes del catálogo. */
+    customPlan: function () {
+      var c = Store.settings().customPlan;
+      return c && typeof c === 'object' ? clone(c) : null;
+    },
+    saveCustomPlan: function () {
+      var a = Store.myAci();
+      var pick = function (x) { return { id: x.id, label: x.label, price: x.price }; };
+      var snapshot = {
+        lines: a.services.filter(function (s) { return s.enabled; }).map(pick),
+        capabilities: a.capabilities.filter(function (c) { return c.enabled; }).map(pick),
+        quota: a.quotaActual ? clone(a.quotaActual) : null,
+        total: a.total,
+        period: a.period,
+        currency: a.currency,
+        paid: false,
+        savedAt: new Date().toISOString()
+      };
+      Store.saveSettings({ customPlan: snapshot });
+      return clone(snapshot);
+    },
+    /* Un clic en un paquete recomendado deja marcadas SUS líneas; se guarda lo que queda apagado
+     * (disabledLines), así que volver a mano no pierde nada. */
+    setLines: function (ids) {
+      ids = (ids || []).slice();
+      var all = Store.services();
+      var off = all.filter(function (s) { return ids.indexOf(s.id) < 0; }).map(function (s) { return s.id; });
+      if (off.length === all.length) throw new Error('Debe quedar al menos una línea habilitada.');
+      Store.saveSettings({ disabledLines: off });
+      return Store.servicesEnabled();
     },
 
     assistantCharacters: function () { return clone(ASSISTANT_CHARACTERS); },
@@ -1191,6 +1453,14 @@
   /* El catálogo de líneas es del producto y el PLAN define cuáles entran: el paquete no declara
    * líneas ni línea base, solo su marca. El `minPlan` de cada línea es el candado del plan. */
   var SERVICE_LINES = {{SERVICE_LINES_JSON}};
+  /* Los daños que pregunta una línea que los pide (hoy «reparación»): cada ítem suma un valor
+   * fijo a la estimación (ver lineEstimate). */
+  var DAMAGE_ITEMS = {{DAMAGE_ITEMS_JSON}};
+  /* Las preguntas de los motivos que no van por tela y las tarifas de cada oficio: los dos son
+   * datos de producto (shared/service-lines.json), no código. */
+  var ASK_SPECS = {{ASK_SPECS_JSON}};
+  var PRICING_RATES = {{PRICING_RATES_JSON}};
+  var PRESETS = {{PRESETS_JSON}};
   var ASSISTANT_KEY = 'assistant';
   var ASSISTANT_WELCOMED_KEY = 'assistantWelcomed';
   var ASSISTANT_NAME_MAX = 40;

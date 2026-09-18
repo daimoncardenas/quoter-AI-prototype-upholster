@@ -24,12 +24,26 @@
   const STEPS = [
     { n: 0, id: 'SERVICE', name: 'Tu línea de servicio' },
     { n: 1, id: 'FURNITURE', name: 'Tu mueble' },
-    { n: 2, id: 'MEASUREMENTS', name: 'Medidas' },
-    { n: 3, id: 'PREFERENCES', name: 'Preferencias' },
-    { n: 4, id: 'REVIEW', name: 'Validación' },
-    { n: 5, id: 'RECOMMENDATION', name: 'Recomendación' },
-    { n: 6, id: 'CONTACT', name: 'Tu cotización' }
+    { n: 2, id: 'DAMAGE', name: '¿Qué hay que reparar?' },
+    { n: 3, id: 'LIMPIEZA', name: '¿Qué hay que hacerle?' },
+    { n: 4, id: 'TRASLADO', name: '¿Vamos por él o lo traes?' },
+    { n: 5, id: 'SUPERFICIE', name: 'La superficie' },
+    { n: 6, id: 'ACUSTICA', name: 'Cómo se monta' },
+    { n: 7, id: 'BOQ', name: 'Qué necesita el proyecto' },
+    { n: 8, id: 'OBRA', name: 'La obra' },
+    { n: 9, id: 'MEASUREMENTS', name: 'Medidas' },
+    { n: 10, id: 'MATERIALES', name: 'Materiales y acabados' },
+    { n: 11, id: 'TAPIZADO', name: 'El tapizado' },
+    { n: 12, id: 'PREFERENCES', name: 'Preferencias' },
+    { n: 13, id: 'REVIEW', name: 'Validación' },
+    { n: 14, id: 'RECOMMENDATION', name: 'Recomendación' },
+    { n: 15, id: 'CONTACT', name: 'Tu cotización' }
   ];
+  /* Los pasos se NOMBRAN por su id, nunca por un número escrito a mano: con los tres pasos
+   * opcionales (la línea, los daños y los que pide cada motivo) la numeración corre, y un
+   * `step > 3` suelto deja de significar «después de Medidas» sin que nada avise. */
+  const nDe = id => (STEPS.find(s => s.id === id) || {}).n;
+  const MEDIDAS = nDe('MEASUREMENTS'), PREFERENCIAS = nDe('PREFERENCES'), REVISION = nDe('REVIEW'), CONTACTO = nDe('CONTACT');
 
   /* Every field the assistant may name. `step` is where its control lives.
    * `set` is the value kind SET_FIELD accepts; a field without `set` can only
@@ -37,19 +51,19 @@
   const FIELDS = {
     'furniture.type': { step: 1, label: 'Tipo de mueble' },
     'photos': { step: 1, label: 'Fotos del mueble' },
-    'measurements.width': { step: 2, label: 'Ancho total', set: 'integer', unit: 'cm' },
-    'measurements.height': { step: 2, label: 'Alto total', set: 'integer', unit: 'cm' },
-    'measurements.depth': { step: 2, label: 'Profundidad', set: 'integer', unit: 'cm' },
-    'measurements.quantity': { step: 2, label: 'Cantidad', set: 'integer' },
-    'measurements.coverage': { step: 2, label: 'Qué se tapiza', set: 'enum' },
-    'preferences.pets': { step: 3, label: 'Mascotas en casa', set: 'boolean' },
-    'preferences.style': { step: 3, label: 'Estilo', set: 'enum' },
-    'preferences.color': { step: 3, label: 'Gama de color', set: 'enum' },
-    'analysis': { step: 4, label: 'Revisar mi información' },
-    'contact.fullName': { step: 6, label: 'Nombre completo' },
-    'contact.email': { step: 6, label: 'Correo electrónico' },
-    'contact.phone': { step: 6, label: 'Celular o WhatsApp' },
-    'contact.consent': { step: 6, label: 'Autorización de datos' }
+    'measurements.width': { step: MEDIDAS, label: 'Ancho total', set: 'integer', unit: 'cm' },
+    'measurements.height': { step: MEDIDAS, label: 'Alto total', set: 'integer', unit: 'cm' },
+    'measurements.depth': { step: MEDIDAS, label: 'Profundidad', set: 'integer', unit: 'cm' },
+    'measurements.quantity': { step: MEDIDAS, label: 'Cantidad', set: 'integer' },
+    'measurements.coverage': { step: MEDIDAS, label: 'Qué se tapiza', set: 'enum' },
+    'preferences.pets': { step: PREFERENCIAS, label: 'Mascotas en casa', set: 'boolean' },
+    'preferences.style': { step: PREFERENCIAS, label: 'Estilo', set: 'enum' },
+    'preferences.color': { step: PREFERENCIAS, label: 'Gama de color', set: 'enum' },
+    'analysis': { step: REVISION, label: 'Revisar mi información' },
+    'contact.fullName': { step: CONTACTO, label: 'Nombre completo' },
+    'contact.email': { step: CONTACTO, label: 'Correo electrónico' },
+    'contact.phone': { step: CONTACTO, label: 'Celular o WhatsApp' },
+    'contact.consent': { step: CONTACTO, label: 'Autorización de datos' }
   };
 
   /* Named explicitly so a rejection says why. Money and quantities are always
@@ -177,8 +191,8 @@
     const measures = extractMeasurements(t);
     const qty = t.match(/(\d{1,2})\s*(puestos|plazas|sillas|cuerpos|unidades|cojines?)\b/);
     if (Object.keys(measures).length || (qty && !/cojin/.test(qty[2]))) {
-      if (step < 2) return reply('Anótalo: en Medidas podrás escribir esas medidas. Primero elige el mueble y sube las fotos.');
-      const actions = step > 2 ? [{ type: 'NAVIGATE_TO_STEP', step: 2 }] : [];
+      if (step < MEDIDAS) return reply('Anótalo: en Medidas podrás escribir esas medidas. Primero elige el mueble y sube las fotos.');
+      const actions = step > MEDIDAS ? [{ type: 'NAVIGATE_TO_STEP', step: MEDIDAS }] : [];
       for (const [field, value] of Object.entries(measures)) actions.push({ type: 'SET_FIELD', field, value });
       if (qty && !/cojin/.test(qty[2])) actions.push({ type: 'SET_FIELD', field: 'measurements.quantity', value: parseInt(qty[1], 10) });
       return reply(`Entendido. Puedo registrar esos datos de tu ${furniture} en Medidas si me lo confirmas.`, actions);
@@ -189,26 +203,27 @@
       const base = 'Con mascotas conviene una tela de fácil limpieza, trama cerrada y buena resistencia al rasguño.';
       if (pets === true) return reply(`${base} Ya tienes «Mascotas» marcado en tus preferencias, así que lo tendré en cuenta al recomendarte telas.`);
       if (pets === null) return reply(base);
-      if (step < 3) return reply(`${base} Cuando lleguemos a Preferencias te propondré marcarlo.`);
-      const actions = step > 3 ? [{ type: 'NAVIGATE_TO_STEP', step: 3 }] : [];
+      if (step < PREFERENCIAS) return reply(`${base} Cuando lleguemos a Preferencias te propondré marcarlo.`);
+      const actions = step > PREFERENCIAS ? [{ type: 'NAVIGATE_TO_STEP', step: PREFERENCIAS }] : [];
       actions.push({ type: 'SET_FIELD', field: 'preferences.pets', value: true });
       return reply(`${base} ¿Quieres que marque «Mascotas» en tus preferencias?`, actions);
     }
 
     if (/(definitiv|precio|valor|cuesta|cuanto|costo)/.test(t)) {
       const range = ctx && ctx.estimate && ctx.estimate.priceLabel;
-      return reply('No es definitivo: es un rango orientativo del material, antes de envío y mano de obra.' +
-        (range ? ` Hoy tu rango es ${range}.` : '') + ' Un asesor confirma cantidad, disponibilidad y precio antes de tu compra.');
+      return reply('No es definitivo: es una estimación orientativa de la línea que elegiste (tela' +
+        ', mano de obra y, si marcaste daños, reparaciones).' +
+        (range ? ` Hoy tu estimación es ${range}.` : '') + ' Un asesor confirma cantidad, disponibilidad y precio antes de tu compra.');
     }
 
     if (/(medid|medir|mido|mide)/.test(t)) {
       const howto = `Mide el ancho, el alto y la profundidad de tu ${furniture} en sus puntos más largos, en centímetros.`;
-      if (step === 2) {
+      if (step === MEDIDAS) {
         const empty = firstEmptyMeasure(ctx);
         return reply(howto + (empty ? ' Te llevo al primer campo que falta.' : ' Ya registraste las tres medidas.'),
           empty ? [{ type: 'FOCUS_FIELD', field: `measurements.${empty}` }] : []);
       }
-      if (step > 2) return reply(`${howto} Si quieres revisarlas, puedo volver contigo al paso de Medidas.`, [{ type: 'NAVIGATE_TO_STEP', step: 2 }]);
+      if (step > MEDIDAS) return reply(`${howto} Si quieres revisarlas, puedo volver contigo al paso de Medidas.`, [{ type: 'NAVIGATE_TO_STEP', step: MEDIDAS }]);
       return reply(`${howto} Las registrarás en el siguiente paso.`);
     }
 
@@ -283,7 +298,7 @@
       return {
         message: `En la revisión, ${joinEs(names)} quedó fuera de lo habitual para ${furniture}. Puedes seguir, o volver a Medidas para corregirlo.`,
         notice: 'Encontré algo en tus medidas. Tócame para verlo.',
-        proposedActions: [{ type: 'NAVIGATE_TO_STEP', step: 2 }]
+        proposedActions: [{ type: 'NAVIGATE_TO_STEP', step: MEDIDAS }]
       };
     }
     return null;

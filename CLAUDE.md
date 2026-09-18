@@ -243,6 +243,44 @@ habilitada el cotizador no pregunta: entra directo a ella. `Store.services()` de
 `withinPlan` (el plan la permite) y `enabled` (además el negocio la dejó prendida), separadas
 para que el backoffice muestre una línea bloqueada por plan sin confundirla con una apagada.
 
+La línea no es una etiqueta: declara `laborPct` (mano de obra sobre el material) y `asks` (lo que
+pregunta de más), y `Store.lineEstimate()` reparte material + mano de obra + daños. Suministro
+cotiza solo material; retapizado (60%) y cambio de tela (45%) suman mano de obra; reparación (60%
++ `asks:["danos"]`) abre el paso «¿Qué hay que reparar?» (`#damageStep`) con los `damageItems` y su
+valor, y el total los suma. Los pasos opcionales —la línea (0, sin más de una habilitada) y los
+daños (2, sin `asks`)— viven en `skippedSteps` y `showStep()` numera sobre los visibles: el flujo
+va de 6 a 8 pasos sin cuentas a mano en ningún otro lado. El motivo elegido acompaña al cliente
+por el resto del flujo (`#journeyContext`, con «cambiar»).
+
+**Los cuatro motivos que no van por tela (primera versión).** Una línea también declara `pricing`
+(`tela` | `pieza` | `m2` | `fabricacion` | `unidad`) y `skips` (los pasos del cotizador que no
+aplican, por id del cerebro). `Store.lineQuote(service, ctx)` despacha por `pricing` y devuelve
+SIEMPRE `{kind, parts:[{label,value:[lo,hi]}], total:[lo,hi]}`, así el bloque de precio pinta
+partes sin saber de oficios: mantenimiento (tarifa por pieza × cantidad + tratamientos + traslado),
+tapicería arquitectónica (m² × tela + instalación + papel), a la medida (estructura + madera/acabado/
+firmeza % + herrajes + tela + fabricación % + entrega) y proyecto comercial (Σ unidades × cantidad +
+instalación + desmontaje + logística). Las preguntas viven en `asks` del catálogo
+(`shared/service-lines.json`, validado por `validateAskSpecs()`), con grupos `chips`/`select`/
+`fields`/`rows`, y el wizard los PINTA desde ahí (`renderAskSteps()`): una pregunta nueva es data,
+no markup. Los ocho pasos nuevos van entre «Tu mueble» y «Medidas» (3..8) salvo materiales y
+tapizado, que van después de Medidas (10, 11) porque las medidas se piden antes que los materiales.
+Pendiente declarado: la estimación como paso propio para los motivos que se saltan la
+recomendación (hoy su total aparece en el resumen final), el mapa de copia por motivo (el h1 de la
+columna sigue diciendo «Cotiza la tela ideal para tu mueble») y unificar el paso de daños con el
+render de `asks`.
+
+**La barra lateral NO crece con los pasos.** La lista ya cedía con la ALTURA de la ventana
+(`clamp(...,vh,...)`), pero no con CUÁNTOS pasos hay: con los nueve de «a la medida» desbordaba y
+el hueco donde vive Lía —su canvas, que se dimensiona con los píxeles que la columna libera— se iba
+hacia abajo. `applyOptionalSteps()` escribe los pasos VISIBLES en `.journey[data-rows]` y el CSS
+aprieta de ocho en adelante (aire, `--dot`, tipografía del nombre y del subtítulo, y el `h1` en el
+nueve), así que «suministro de tela» (7 pasos) es el tamaño máximo de la barra y un motivo con más
+pasos hereda la densidad sin tocar el CSS. Medido con 7 vs 9 en la misma ventana: barra 108,852 px
+en las dos, lista 385 → 338 px, `scrollHeight == clientHeight` y el stage, canvas y `data-crown`
+idénticos (623,222 / 234×222 / 644 a 1440×900; 755,268 / 286×268 / 781 a 1920×1080). Checks:
+`tests/wizard.spec.mjs`, «LA BARRA NO CRECE CON LOS PASOS» — compara nueve contra siete, nunca
+contra un número escrito a mano.
+
 - `tools/client-pack.mjs` → `validateServiceLines()` (el catálogo compartido se valida a sí mismo:
   ids únicos, journeys y planes conocidos, al menos una línea `base`; el paquete no declara líneas,
   solo su marca, su `senderEmail` y sus namespaces).

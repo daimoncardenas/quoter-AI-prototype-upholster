@@ -299,7 +299,10 @@ await page.setInputFiles('#furniturePhoto', TRES);
 await page.waitForFunction(() => state.photos.length === 3);
 check('subir fotos publica cuántas hay', await ultimo('PHOTOS_CHANGED'), { count: 3 });
 await page.click('#nextButton');
-check('cambiar de paso publica cuál, con su id y su nombre', await ultimo('STEP_CHANGED'), { step: 2, id: 'MEASUREMENTS', name: 'Medidas' });
+/* El número del paso sale del propio cerebro: con los pasos opcionales (línea y daños) la
+ * numeración corre, y lo que se afirma aquí es que el evento trae el paso correcto con su id. */
+const pasoDe = id => page.evaluate(i => AssistantBrain.STEPS.find(s => s.id === i).n, id);
+check('cambiar de paso publica cuál, con su id y su nombre', await ultimo('STEP_CHANGED'), { step: await pasoDe('MEASUREMENTS'), id: 'MEASUREMENTS', name: 'Medidas' });
 for (const [id, valor] of [['width', 210], ['height', 85], ['depth', 90]]) {
   await page.fill('#' + id, String(valor));
   await page.evaluate(i => document.getElementById(i).dispatchEvent(new Event('change', { bubbles: true })), id);
@@ -311,8 +314,8 @@ for (const [id, valor] of [['width', 210], ['height', 85], ['depth', 90]]) {
   check('escribir una medida publica el campo y su valor', [porCampo['measurements.width'], porCampo['measurements.height'], porCampo['measurements.depth']], [210, 85, 90]);
 }
 await page.click('#nextButton');
-check('el paso 3 se anuncia igual', await ultimo('STEP_CHANGED'), { step: 3, id: 'PREFERENCES', name: 'Preferencias' });
-const chip = await page.evaluate(() => { const i = document.querySelectorAll('.chip-grid input')[0]; i.click(); return i.value; });
+check('el paso 3 se anuncia igual', await ultimo('STEP_CHANGED'), { step: await pasoDe('PREFERENCES'), id: 'PREFERENCES', name: 'Preferencias' });
+const chip = await page.evaluate(() => { const i = document.querySelectorAll('#needsGrid input')[0]; i.click(); return i.value; });
 check('marcar una preferencia publica cuál y cómo', await ultimo('PREFERENCES_CHANGED'), { field: 'needs', option: chip, checked: true });
 await page.selectOption('#style', { index: 0 });
 check('cambiar un selector publica el campo y su valor', (await ultimo('PREFERENCES_CHANGED')).field, 'style');

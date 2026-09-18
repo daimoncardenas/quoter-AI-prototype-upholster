@@ -1,20 +1,228 @@
 {
+  "damageItems": [
+    { "id": "estructura", "label": "Estructura y ensamble", "cop": 180000,
+      "hint": "Uniones flojas, patas que bailan, marco partido." },
+    { "id": "resortes", "label": "Resortes y cinchas", "cop": 140000,
+      "hint": "El asiento se hunde o suena al sentarse." },
+    { "id": "madera", "label": "Madera de la estructura", "cop": 120000,
+      "hint": "Piezas partidas, humedad o polilla en la madera." },
+    { "id": "acabados", "label": "Lustre y protección", "cop": 90000,
+      "hint": "Barniz, cera o protector sobre la madera vista." },
+    { "id": "revision", "label": "Que lo revisen (no estoy seguro)", "cop": 60000,
+      "hint": "Lo mira el tapicero y te confirma antes de cotizar." }
+  ],
+
+  "pricingRates": {
+    "pieza": {
+      "base": { "sofa": 260000, "sofa-l": 340000, "poltrona": 190000, "silla": 70000, "cabecero": 150000, "otro": 200000 },
+      "extras": [
+        { "id": "quitamanchas", "label": "Quitamanchas", "cop": 60000 },
+        { "id": "olores", "label": "Olores y mascotas", "cop": 80000 },
+        { "id": "proteccion", "label": "Protección (impermeabilizante)", "pct": 30 }
+      ],
+      "traslado": [
+        { "id": "domicilio", "label": "A domicilio", "cop": 40000 },
+        { "id": "taller", "label": "Lo llevo al taller", "cop": 0 }
+      ]
+    },
+    "m2": {
+      "materialPerM2": 95000,
+      "installPerM2": 45000,
+      "papel": [
+        { "id": "acustico", "label": "Absorción acústica", "cop": 30000 },
+        { "id": "decorativo", "label": "Decorativo", "cop": 0 },
+        { "id": "ambos", "label": "Los dos", "cop": 45000 }
+      ]
+    },
+    "fabricacion": {
+      "base": { "sofa": 900000, "sofa-l": 1200000, "poltrona": 650000, "silla": 300000, "cabecero": 500000, "otro": 700000 },
+      "maderas": [
+        { "id": "pino", "label": "Pino", "pct": 0 },
+        { "id": "cedro", "label": "Cedro", "pct": 20 },
+        { "id": "roble", "label": "Roble", "pct": 35 },
+        { "id": "mdf", "label": "MDF enchapado", "pct": -15 }
+      ],
+      "acabados": [
+        { "id": "barniz", "label": "Barniz", "pct": 10 },
+        { "id": "laca", "label": "Laca", "pct": 18 },
+        { "id": "pintura", "label": "Pintura", "pct": 8 }
+      ],
+      "herrajes": [
+        { "id": "bisagras", "label": "Bisagras", "cop": 60000 },
+        { "id": "correderas", "label": "Correderas", "cop": 90000 },
+        { "id": "manijas", "label": "Manijas", "cop": 45000 }
+      ],
+      "firmezas": [
+        { "id": "blanda", "label": "Blanda", "pct": -10 },
+        { "id": "media", "label": "Media", "pct": 0 },
+        { "id": "alta", "label": "Alta", "pct": 15 }
+      ],
+      "fabricacionPct": 45,
+      "entregaCop": 150000
+    },
+    "unidad": {
+      "base": { "sofa": 950000, "sofa-l": 1250000, "poltrona": 700000, "silla": 240000, "cabecero": 450000, "otro": 600000 },
+      "instalacionPorUnidad": 35000,
+      "logisticaCop": 250000,
+      "desmontajePorUnidad": 40000
+    }
+  },
+
+  "asks": {
+    "limpieza": {
+      "eyebrow": "Lo que necesita",
+      "title": "¿Qué hay que hacerle?",
+      "intro": "La limpieza profunda va siempre; marca lo que se sume.",
+      "groups": [
+        { "id": "tratamientos", "label": "Tratamientos", "type": "chips", "multi": true,
+          "options": [
+            { "id": "quitamanchas", "label": "Quitamanchas" },
+            { "id": "olores", "label": "Olores y mascotas" },
+            { "id": "proteccion", "label": "Protección" }
+          ] }
+      ]
+    },
+    "traslado": {
+      "eyebrow": "Cómo llega al taller",
+      "title": "¿Vamos por él o lo traes?",
+      "intro": "Recoger y devolver tiene su costo; llevarlo al taller sale más económico.",
+      "groups": [
+        { "id": "traslado", "label": "Traslado", "type": "chips",
+          "options": [
+            { "id": "domicilio", "label": "A domicilio" },
+            { "id": "taller", "label": "Lo llevo al taller" }
+          ] }
+      ]
+    },
+    "superficie": {
+      "eyebrow": "La superficie",
+      "title": "¿Qué vamos a tapizar?",
+      "intro": "Un muro, un techo o paneles sueltos: el precio va por metro cuadrado.",
+      "groups": [
+        { "id": "tipo", "label": "Superficie", "type": "chips",
+          "options": [
+            { "id": "muro", "label": "Muro" },
+            { "id": "techo", "label": "Techo" },
+            { "id": "paneles", "label": "Paneles sueltos" }
+          ] },
+        { "id": "area", "label": "Medidas del área", "type": "fields",
+          "fields": [
+            { "id": "ancho", "label": "Ancho", "unit": "cm", "min": 30, "max": 2000 },
+            { "id": "alto", "label": "Alto", "unit": "cm", "min": 30, "max": 1000 }
+          ] }
+      ]
+    },
+    "acustica": {
+      "eyebrow": "Cómo se monta",
+      "title": "¿Sobre qué va y cómo se fija?",
+      "intro": "El sustrato y el montaje deciden la instalación.",
+      "groups": [
+        { "id": "sustrato", "label": "Sustrato", "type": "chips",
+          "options": [
+            { "id": "yeso", "label": "Yeso" },
+            { "id": "madera", "label": "Madera" },
+            { "id": "concreto", "label": "Concreto" }
+          ] },
+        { "id": "montaje", "label": "Montaje", "type": "chips",
+          "options": [
+            { "id": "fijo", "label": "Fijo" },
+            { "id": "desmontable", "label": "Desmontable" }
+          ] },
+        { "id": "papel", "label": "Papel", "type": "chips",
+          "options": [
+            { "id": "acustico", "label": "Absorción acústica" },
+            { "id": "decorativo", "label": "Decorativo" },
+            { "id": "ambos", "label": "Los dos" }
+          ] }
+      ]
+    },
+    "materiales": {
+      "eyebrow": "Materiales y acabados",
+      "title": "¿Con qué lo fabricamos?",
+      "intro": "La madera y el acabado cambian el precio de la estructura.",
+      "groups": [
+        { "id": "madera", "label": "Madera", "type": "select", "source": "maderas" },
+        { "id": "acabado", "label": "Acabado", "type": "select", "source": "acabados" },
+        { "id": "herrajes", "label": "Herrajes", "type": "chips", "multi": true,
+          "options": [
+            { "id": "bisagras", "label": "Bisagras" },
+            { "id": "correderas", "label": "Correderas" },
+            { "id": "manijas", "label": "Manijas" }
+          ] }
+      ]
+    },
+    "tapizado": {
+      "eyebrow": "El tapizado",
+      "title": "¿Cómo quieres el relleno?",
+      "intro": "La firmeza decide la espuma del asiento.",
+      "groups": [
+        { "id": "firmeza", "label": "Firmeza", "type": "chips",
+          "options": [
+            { "id": "blanda", "label": "Blanda" },
+            { "id": "media", "label": "Media" },
+            { "id": "alta", "label": "Alta" }
+          ] }
+      ]
+    },
+    "boq": {
+      "eyebrow": "Qué piezas",
+      "title": "¿Qué necesita el proyecto?",
+      "intro": "Una fila por tipo de pieza y su cantidad. Las medidas exactas se confirman en la visita.",
+      "type": "rows",
+      "rowFields": [
+        { "id": "furniture", "label": "Pieza", "type": "select", "source": "furniture" },
+        { "id": "cantidad", "label": "Cantidad", "type": "number", "min": 1, "max": 500 }
+      ]
+    },
+    "obra": {
+      "eyebrow": "La obra",
+      "title": "¿Dónde es y qué hacemos allá?",
+      "intro": "Instalación, entrega y si hay que desmontar lo que está.",
+      "groups": [
+        { "id": "local", "label": "El local", "type": "chips",
+          "options": [
+            { "id": "hotel", "label": "Hotel" },
+            { "id": "restaurante", "label": "Restaurante" },
+            { "id": "oficina", "label": "Oficina" },
+            { "id": "local", "label": "Local" }
+          ] },
+        { "id": "servicios", "label": "En sitio", "type": "chips", "multi": true,
+          "options": [
+            { "id": "instalacion", "label": "Instalación" },
+            { "id": "entrega", "label": "Solo entrega" },
+            { "id": "desmontaje", "label": "Desmontar lo existente" }
+          ] }
+      ]
+    }
+  },
+
   "lines": [
     { "id": "suministro-tela", "label": "Suministro de tela", "journey": "suministro", "minPlan": "base",
+      "pricing": "tela", "laborPct": 0, "skips": [],
       "hint": "Te decimos cuántos metros necesita tu mueble y a qué precio la referencia que elijas." },
     { "id": "retapizado", "label": "Retapizado de muebles", "journey": "existente", "minPlan": "base",
+      "pricing": "tela", "laborPct": 60, "skips": [],
       "hint": "Cambiamos tela y rellenos de tu mueble, con la estructura como está." },
     { "id": "cambio-de-tela", "label": "Cambio de tela", "journey": "existente", "minPlan": "Professional",
+      "pricing": "tela", "laborPct": 45, "skips": [],
       "hint": "Solo la cubierta: la estructura y los rellenos siguen bien." },
     { "id": "reparacion", "label": "Reparación y restauración", "journey": "existente", "minPlan": "Professional",
+      "pricing": "tela", "laborPct": 60, "asks": ["danos"], "skips": [],
       "hint": "Estructura, resortes, madera y acabados, además de la tela." },
     { "id": "a-la-medida", "label": "Muebles a la medida", "journey": "nueva", "minPlan": "Professional",
+      "pricing": "fabricacion", "laborPct": 0, "asks": ["materiales", "tapizado"], "skips": [],
       "hint": "Fabricamos la pieza desde cero, con tus medidas y tus acabados." },
     { "id": "proyecto-comercial", "label": "Proyecto comercial", "journey": "proyecto", "minPlan": "Business",
+      "pricing": "unidad", "laborPct": 0, "asks": ["boq", "obra"],
+      "skips": ["measurements", "preferences", "recommendation"],
       "hint": "Cantidades, instalación y entrega para hoteles, oficinas y locales." },
     { "id": "tapiceria-arquitectonica", "label": "Tapicería arquitectónica", "journey": "proyecto", "minPlan": "Business",
+      "pricing": "m2", "laborPct": 0, "asks": ["superficie", "acustica"],
+      "skips": ["furniture", "measurements", "preferences"],
       "hint": "Paneles, muros y techos tapizados, con medidas y acabados de obra." },
     { "id": "mantenimiento", "label": "Mantenimiento y limpieza", "journey": "existente", "minPlan": "Business",
+      "pricing": "pieza", "laborPct": 0, "asks": ["limpieza", "traslado"],
+      "skips": ["measurements", "preferences", "recommendation"],
       "hint": "Limpieza profunda, tratamientos de protección y repaso de piezas en uso." }
   ]
 }

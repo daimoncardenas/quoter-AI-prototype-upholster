@@ -1,0 +1,53 @@
+{
+  "demo": true,
+  "nota": "Precios DEMO para el prototipo. La composición (Core + servicios) es el formato del modelo v2 (docs/paquetes-y-precios.md); las cifras NO son una tarifa aprobada. Los nombres de paquete y sus líneas sí son reales: son la matriz que ya vende el producto (Taller=Essential 2, Empresa=Professional 5, Distribuidor=Business 8).",
+  "currency": "COP",
+  "period": "mes",
+  "plans": { "Essential": "taller", "Professional": "empresa", "Business": "distribuidor" },
+  "quotaNota": "Las cuotas son las que ya prometen las tarjetas de plan (PLANS[] en admin.html): aquí se repiten para que el paquete signifique algo más que «cuántos oficios». No se inventó ninguna.",
+  "core": { "label": "ACI Core", "hint": "Lo que todo paquete incluye.", "price": 199000,
+    "includes": [
+      "Portal público de cotización",
+      "Backoffice",
+      "Registro de clientes",
+      "Motor de cotización básico",
+      "Logo, colores e información del negocio en el portal",
+      "Asistente conversacional (Lía / Tomás)",
+      "Flujo completo: fotografías, PDF, enlace de aceptación, estados y correo comercial",
+      "Analítica mensual básica, notificaciones por correo y actualizaciones del producto",
+      "Soporte por correo electrónico"
+    ] },
+  "pricingNota": "De dónde sale cada cifra. DEL TEXTO DEL DUEÑO: Core $199.000; Suministro de tela +$50.000; Retapizado +$80.000; Tapicería arquitectónica +$100.000; Asignación de vendedores +$60.000; Analítica comercial +$80.000; Configuraciones de asistentes adicionales +$100.000. PROVISIONALES míos, marcados y sin presentarse como tarifa: Cambio de tela 70.000; Reparación 95.000; A la medida 130.000; Proyecto comercial 120.000; Mantenimiento 85.000; Marca blanca 45.000. La IA no se vende como checkbox: va por interacciones dentro de la capacidad del paquete.",
+  "capabilitiesNota": "Nada se borra de la oferta: las capacidades que prometían los planes están aquí, cada una con lo que HACE (hint) y con su precio. La IA NO es checkbox: se cobra por INTERACCIONES, así que vive en la capacidad del paquete (75, 300 o 1.000 interacciones de IA al mes) y se amplía como cualquier otra capacidad. El ASISTENTE también es del Core (uno viene incluido); lo que se vende es cada configuración adicional +$100.000. Soporte +$190.000 (el piso de mantenimiento de una pyme: mentoracolombia). El resto son del texto del dueño o provisionales marcados.",
+  "capabilities": [
+    { "id": "dominio", "label": "Dominio propio o subdominio del cliente", "hint": "El cotizador vive en tu dominio, no en uno de CARDYRAM.", "price": 20000 },
+    { "id": "asignacion", "label": "Asignación de vendedores y reglas por zona", "hint": "Cada solicitud cae en el vendedor que le toca, sin repartir a mano.", "price": 60000 },
+    { "id": "analitica", "label": "Analítica comercial", "hint": "Embudo de ventas, desempeño por vendedor y por sede.", "price": 80000 },
+    { "id": "marca-blanca", "label": "Sin mención de CARDYRAM (marca blanca)", "hint": "Tu logo y tus colores en el cotizador y en el PDF, sin pie de CARDYRAM.", "price": 45000 },
+    { "id": "plantillas", "label": "Varias plantillas de cotización", "hint": "Una plantilla por tipo de trabajo, con sus campos y su formato.", "price": 25000 },
+    { "id": "export-csv", "label": "Exportación CSV de clientes y cotizaciones", "hint": "Descarga tus datos para contabilidad o tu CRM.", "price": 20000 },
+    { "id": "soporte", "label": "Soporte prioritario", "hint": "Respuesta prioritaria, antes que el correo estándar que ya trae el Core.", "price": 190000 },
+    { "id": "asistentes-extra", "label": "Configuraciones de asistentes adicionales", "hint": "Cada asistente nuevo para el mismo negocio (otro nombre, otro tono, otra función). El Core ya trae uno.", "price": 100000 }
+  ],
+  "servicePrices": {
+    "suministro-tela": 50000,
+    "retapizado": 80000,
+    "cambio-de-tela": 70000,
+    "reparacion": 95000,
+    "a-la-medida": 130000,
+    "proyecto-comercial": 120000,
+    "tapiceria-arquitectonica": 100000,
+    "mantenimiento": 85000
+  },
+  "presets": [
+    { "id": "taller", "label": "Taller pequeño", "hint": "Recomendado para comenzar", "lines": ["suministro-tela", "retapizado"],
+      "capabilities": [],
+      "quota": { "quotes": 30, "aiCredits": 75, "storageGB": 1, "users": 1, "locations": 1, "historyMonths": 3 } },
+    { "id": "empresa", "label": "Empresa de muebles", "hint": "Varios oficios en el mismo taller", "lines": ["suministro-tela", "retapizado", "cambio-de-tela", "reparacion", "a-la-medida"],
+      "capabilities": ["dominio", "asignacion", "analitica", "marca-blanca"],
+      "quota": { "quotes": 90, "aiCredits": 300, "storageGB": 5, "users": 3, "locations": 3, "historyMonths": 12 } },
+    { "id": "distribuidor", "label": "Distribuidor", "hint": "Todo el catálogo, proyectos y obra", "lines": ["suministro-tela", "retapizado", "cambio-de-tela", "reparacion", "a-la-medida", "proyecto-comercial", "tapiceria-arquitectonica", "mantenimiento"],
+      "capabilities": ["dominio", "plantillas", "export-csv", "soporte", "asignacion", "analitica", "marca-blanca", "asistentes-extra"],
+      "quota": { "quotes": 300, "aiCredits": 1000, "storageGB": 15, "users": 10, "locations": 10, "historyMonths": 12 } }
+  ]
+}

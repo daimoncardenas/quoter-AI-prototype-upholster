@@ -77,9 +77,12 @@ check('a single piece needs no count', await page.textContent('#summaryFurniture
 
 console.log('\nSTEP 4 — must not fail silently');
 await fresh(); await reach(4);
+const antesDelBloqueo = await page.evaluate(()=>state.step);
 await page.click('#nextButton');
 check('an error explains why it will not advance', await page.isVisible('#analysisError'), true);
-check('and it still blocks', await page.evaluate(()=>state.step), 4);
+/* Relativo a propósito: el paso de Validación dejó de ser el «4» cuando entraron los pasos de la
+ * línea y de los daños, y lo que importa es que NO avance, no el número que le tocó. */
+check('and it still blocks', await page.evaluate(()=>state.step), antesDelBloqueo);
 await page.click('#analyzeButton'); await page.waitForFunction(()=>state.analyzed);
 check('error clears once analysed', await page.isVisible('#analysisError'), false);
 
@@ -119,6 +122,31 @@ check('un mueble sin dibujo propio cae al genérico, no al del anterior',
     renderFurnitureDrawing('inventado-en-el-backoffice');
     return [caja.innerHTML === generico, caja.innerHTML !== sofa];
   }), [true, true]);
+
+console.log('\nLA BARRA NO CRECE CON LOS PASOS — el hueco de Lía queda igual');
+/* Su regla: «suministro de tela» es el tamaño MÁXIMO de la barra. Con nueve pasos (a la medida)
+ * la lista se aprieta y la barra, el pie y el hueco de Lía tienen que quedar en el mismo sitio.
+ * Se compara el caso de nueve contra el de siete en la MISMA ventana. */
+const barra = async (motivo) => {
+  await page.goto(D + 'index.html');
+  await page.evaluate(() => Store.saveSettings({ plan: 'Business', disabledLines: [] }));
+  await page.goto(D + 'index.html');
+  await page.waitForTimeout(400);
+  await page.click(`#serviceGrid .service-choice:has-text("${motivo}")`);
+  await page.waitForFunction(() => document.getElementById('assistantStage').classList.contains('ready'), null, { timeout: 8000 }).catch(() => {});
+  return page.evaluate(() => {
+    const j = document.querySelector('.journey'), st = document.getElementById('assistantStage');
+    const c = st.querySelector('canvas');
+    const r = e => { const x = e.getBoundingClientRect(); return [Math.round(x.top), Math.round(x.height)]; };
+    return { filas: j.dataset.rows, barra: r(j), stage: r(st), canvas: r(c), scroll: [j.scrollHeight, j.clientHeight] };
+  });
+};
+const siete = await barra('Suministro de tela');
+const nueve = await barra('Muebles a la medida');
+check('siete pasos: la barra entra sin scroll', [siete.filas, siete.scroll[0] === siete.scroll[1]], ['7', true]);
+check('nueve pasos: también entra sin scroll', [nueve.filas, nueve.scroll[0] === nueve.scroll[1]], ['9', true]);
+check('la barra mide lo mismo con siete y con nueve', nueve.barra, siete.barra);
+check('y el hueco de Lía (su canvas) no se mueve', [nueve.stage, nueve.canvas], [siete.stage, siete.canvas]);
 
 console.log('\npage errors: ' + (errs.length?errs.join(' | '):'none'));
 console.log(fails?`\n${fails} FAILING`:'\nALL PASS');

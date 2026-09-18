@@ -40,7 +40,7 @@ check('el mensaje se ajusta', await page.textContent('#photoError'), 'Agrega 1 f
 await subir([F('3')]);
 check('el error se limpia al llegar al mínimo', await page.isVisible('#photoError'), false);
 await page.click('#nextButton');
-check('con 3 avanza', await page.evaluate(()=>state.step), 2);
+check('con 3 avanza', await page.evaluate(()=>state.step), 9);
 
 console.log('\nEL MÁXIMO SON 7');
 await fresh();
@@ -115,7 +115,7 @@ await fresh();
 await page.evaluate(()=>Store.saveSettings({minPhotos:2,maxPhotos:4}));
 await subir([F('1'), F('2')]);
 await page.click('#nextButton');
-check('con el mínimo en 2, dos alcanzan', await page.evaluate(()=>state.step), 2);
+check('con el mínimo en 2, dos alcanzan', await page.evaluate(()=>state.step), 9);
 await page.click('#backButton');
 await subir(['3','1'].map(F));
 check('y el máximo en 4 se respeta', await page.evaluate(()=>state.photos.length), 4);

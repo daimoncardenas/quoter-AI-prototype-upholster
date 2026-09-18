@@ -298,7 +298,24 @@ lines at all): Essential enables the two `base` lines, so the line step is the w
 step (active step 0, "Paso 1 de 7", the plan named in the note above the list). Then it turns a
 line **off** from the backoffice's checkboxes (`#serviceLines input[data-line]`) and asserts the
 cotizador stops offering it, that the choice is only a `disabledLines` entry (nothing deleted),
-that turning off the LAST one is refused, and that re-enabling restores it. Then opens "Usage" and
+that turning off the LAST one is refused, and that re-enabling restores it. It then walks the
+**per-line flow**: with `Suministro de tela` there is no damage step and "Continuar" lands on
+Medidas (`Paso 3 de 7`), while `Reparación y restauración` opens its own step (`Paso 3 de 8`) where
+"Continuar" without a single damage marked neither advances nor stays silent; with two damages
+marked, `Store.lineEstimate` puts labour at 60 % and sums exactly `+$320.000` into the total, and
+the recommendation's price block spells out material, labour and repairs. The chosen **motivo**
+follows the customer through every step (`#journeyContext`) and its «cambiar» returns to the line
+step. It then walks the **four motivos that don't go through fabric** (plan raised to Business in
+that page): each asserts the exact steps it asks for, in order — `Mantenimiento y limpieza` shows
+La línea · Tu mueble · Lo que necesita · Cómo llega al taller · Validación · Tu cotización, while
+`Muebles a la medida` inserts Medidas BEFORE Materiales y acabados — plus its `pricing` kind and
+its total from `Store.lineQuote` (mantenimiento `$320.000`, arquitectónica `$8.400.000`, a la
+medida `$628.500`, proyecto `$9.070.000`, con las tarifas demo del catálogo), and that its first
+question renders its controls. It then asserts that the **sidebar does not grow with the number of
+steps**: with the plan on Business it measures the 7-step motivo (Suministro de tela) and the
+9-step one (Muebles a la medida) in the same window and requires the same `.journey` box, no
+internal scroll (`scrollHeight === clientHeight`), and an identical `#assistantStage` and canvas —
+the band Lía and the armchair are drawn into. Then opens "Usage" and
 asserts five progressbars plus the history card, every value well-formed
 (`<x> de <y>`), and Sedes reading `de 4` (Professional's 3 + the Sede bought).
 It also asserts the **service lines** of each pack: what `Store.services()`

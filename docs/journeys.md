@@ -53,6 +53,10 @@ Solo tres; doce servicios caben dentro de ellos como alcance u opción.
    Campos: tipo de mueble · fotos (3–7) · medidas aproximadas · puestos/cojines · estado
    actual · uso y estilo · tela + técnica deseada · punto de atención.
    Fórmula: mano de obra + tela (m² × precio) + espuma/rellenos + reparaciones + transporte.
+   **Estado: implementado en su primera parte.** La estimación reparte tela, mano de obra (% del
+   material, `laborPct` por línea) y, en reparación, los daños marcados uno por uno (`damageItems`).
+   Espuma/rellenos y transporte todavía no entran en el número: son las dos piezas que faltan de
+   esta fórmula, y no se disimulan con un porcentaje más.
 2. **A la medida** — mueble nuevo a especificación y personalización de un modelo (tela,
    patas, dimensiones, acabados). Sin catálogo propio: la base es la referencia del cliente o
    su propia pieza, y ACI cotiza el **delta**.
@@ -115,6 +119,11 @@ tradicional entra como opción por defecto — no como la línea misma.
 
 ## 4. Planes → líneas habilitadas
 
+> **Nota (v2 propuesta, sin aprobar):** este modelo está en revisión — ver
+> [`paquetes-y-precios.md`](paquetes-y-precios.md), donde los planes pasan a ser **paquetes
+> recomendados** y el cliente **arma su ACI** con casillas. Nada de lo de aquí abajo se toca hasta
+> que el dueño apruebe el v2.
+
 Los planes actuales (Essential 299k/año, Professional 699k/año, Business 1.29M/año) **ya
 venden esto** en su copy: Essential promete "una categoría de servicio", Professional "varias
 categorías de servicio configurables". Esta tabla lo vuelve real:
@@ -137,6 +146,15 @@ Reglas:
 - Con **una sola línea** habilitada el cotizador no pregunta «¿qué quieres hacer?»: entra directo
   a ella (el paso de la línea no existe, ni en el flujo ni en el stepper) y la cotización la
   guarda igual.
+- **La línea también decide los pasos y el precio.** Cada línea declara `laborPct` (la mano de obra
+  como porcentaje del material) y `asks` (lo que pregunta de más). Hoy: suministro cotiza **solo
+  material**; retapizado (60%) y cambio de tela (45%) suman mano de obra; y **reparación** (60% +
+  `asks:["danos"]`) abre un paso propio —«¿Qué hay que reparar?»— donde se marcan los daños, cada
+  uno con su valor (`damageItems`), y el total los suma. La estimación deja de ser el material con
+  una nota al pie: el bloque de precio muestra material, mano de obra, reparaciones y total.
+- **Los pasos opcionales se cuentan, no se numeran a mano**: `skippedSteps` reúne los que no
+  existen (el 0 sin más de una línea, el 2 sin daños) y `showStep()` numera sobre los visibles, así
+  que el flujo va de 6 a 8 pasos según la línea sin tocar ninguna cuenta en otro sitio.
 - Cada línea declara su `minPlan`. Un paquete **no puede** quedar sin líneas en Essential: la
   validación del paquete falla en voz alta (misma política que `validateAssistant`).
 - El backoffice muestra qué líneas están activas por plan y cuáles se pueden habilitar
@@ -191,3 +209,102 @@ facturación electrónica · logística propia. Nada de eso entra en ACI.
    zona) para que la demo no muestre números decorativos.
 3. Si la técnica tradicional se ofrece **siempre** o solo en ciertas líneas (define si la opción
    se muestra, se oculta o trae mínimo de horas).
+
+## 9. Los motivos que faltan — primera versión implementada
+
+Hoy un solo camino —«elijo tela para una pieza que ya existe»— recorría los ocho motivos. Los
+cuatro que faltaban no eran variantes de ese camino: cambian **qué se pregunta, qué se suma y qué
+se enseña al final**. Lo de abajo sale de cómo cotiza el oficio (fuentes en §9.6) y respeta las dos
+reglas de la casa: una pregunta por paso, y **no preguntar lo que no se usa** (igual de importante
+que no embutir: si el precio no lo lee, no se pregunta).
+
+**Estado**: los cuatro están implementados como primera versión (pasos, precio y saltos, con las
+tarifas demo del catálogo sujetas a las anclas de §8.2). Pendiente: la estimación como paso propio
+para los motivos que se saltan la recomendación —hoy su total se ve en el resumen final—, el mapa
+de copia por motivo y unificar el paso de daños con el render de `asks`.
+
+### 9.1 Mantenimiento y limpieza — se cotiza por PIEZA, no por tela
+
+    Pasos      0 Motivo · 1 Tu mueble (tipo + fotos) · 2 ¿Qué necesita? · 3 Domicilio o recogida
+               · 4 Validación · 5 Tu estimación · 6 Tus datos
+    Pregunta 2 Limpieza profunda · Quitamanchas · Olores y mascotas · Protección (impermeabilizante)
+    Estimación tarifa por pieza (según tipo/tamaño) × cantidad + los extras marcados
+               (el protector suma ~30 %) + domicilio/recogida
+    Modelo    `pricing: "pieza"` + una tabla de tarifas por tipo de mueble en el catálogo + `asks:["limpieza"]`
+    NO se pregunta  medidas exactas (el tipo y la cantidad ya fijan el tamaño), ni tela, ni estilo:
+    aquí no se elige tela, se limpia la que hay. La «Recomendación» desaparece como paso y su lugar
+    lo toma la estimación.
+
+### 9.2 Tapicería arquitectónica — se cotiza por m², no por mueble
+
+    Pasos      0 Motivo · 1 La superficie (muro · techo · paneles sueltos) · 2 Medidas del área
+               (ancho × alto) · 3 Sustrato y montaje · 4 Papel (acústico · decorativo · los dos)
+               · 5 Tela · 6 Validación · 7 Tu estimación · 8 Tus datos
+    Pregunta 3 Yeso · Madera · Concreto, y Fijo · Desmontable (velcro, imanes, clips)
+    Pregunta 4 Absorción acústica · Decorativo · Ambos, y el módulo del panel (60×120 · 60×60 · a medida)
+    Estimación m² × (material + instalación) + altura/andamio cuando el muro pasa de cierta altura
+    Modelo    `pricing: "m2"` + precios por m² y por módulo en el catálogo + `asks:["superficie"]`
+    NO se pregunta  profundidad (una superficie tiene dos medidas), ni cantidad de puestos, ni
+    cojines: el «mueble» es el muro. La tela sigue eligiéndose, pero por m² y no por metros de rollo.
+
+### 9.3 Muebles a la medida — se cotiza por MATERIALES + FABRICACIÓN
+
+    Pasos      0 Motivo · 1 Tu pieza (tipo + fotos de referencia) · 2 Medidas de fabricación
+               · 3 Materiales y acabados · 4 Tapizado · 5 Preferencias (uso y estilo de la tela)
+               · 6 Validación · 7 Tela · 8 Tu estimación · 9 Tus datos
+    Pregunta 3 Madera (pino · roble · cedro · MDF enchapado) · Acabado (barniz · laca · pintura)
+               · Herrajes (bisagras · correderas · manijas)
+    Pregunta 4 Espuma por firmeza (blanda · media · alta) y el acabado del tapizado
+    Estimación estructura (madera por pieza) + espuma + herrajes + acabado + tela (motor de siempre)
+               + fabricación (un % de los materiales, como se cobra en carpintería) + entrega
+    Modelo    `pricing: "fabricacion"` + piezas/tarifas de madera y de espuma en el catálogo +
+              `asks:["fabricacion"]`
+    NO se pregunta  si la estructura está bien (es nueva), ni daños, ni retapizado: la pieza nace.
+    Las fotos dejan de ser «tu mueble» y pasan a ser referencias del estilo buscado.
+
+### 9.4 Proyecto comercial — se cotiza por BOQ (unidades × cantidad + instalación)
+
+    Pasos      0 Motivo · 1 El local (hotel · restaurante · oficina · local) + ciudad
+               · 2 Qué piezas y cuántas (una lista que se agrega por filas) · 3 Especificaciones
+               (material · acabado · tela) · 4 Instalación y entrega · 5 Fotos del espacio
+               · 6 Validación · 7 Tu propuesta · 8 Tus datos
+    Estimación Σ (precio unitario por tipo × cantidad) + instalación + logística y entrega
+               + desmontaje de lo existente, si se pide
+    Modelo    `pricing: "unidad"` + `asks:["boq"]` (la primera interacción de varias filas del wizard)
+    NO se pregunta  medidas pieza por pieza (cada línea del BOQ lleva su tipo y su cantidad; las
+    medidas exactas se confirman en la visita) y el artefacto se llama **propuesta**, no precio de
+    lista: es la salida que el oficio usa para estos clientes, y sigue siendo una pre-cotización.
+
+### 9.5 Lo que hay que tocar en el modelo (una sola vez, para los cuatro)
+
+1. **El precio deja de ser uno solo.** Hoy `estimateByComponents` (metros de tela) + `lineEstimate`
+   (mano de obra % + daños) cubren la pieza existente. Los cuatro motivos piden un `pricing` por
+   línea: `tela` (lo de hoy), `pieza`, `m2`, `fabricacion`, `unidad` — y las tarifas viven en
+   `shared/service-lines.json` como datos de producto (valores demo, sujetos a las anclas de §8.2).
+2. **`asks` crece** con `limpieza`, `superficie`, `fabricacion` y `boq`. La maquinaria ya está:
+   `skippedSteps` + `pasosVisibles()` numeran solos, un paso opcional más es un candado más, no un
+   refactor.
+3. **La copia se vuelve por motivo**: el h1 de la columna («Cotiza la tela ideal para tu mueble»),
+   el texto del paso de validación (hoy habla de fotos y medidas plausibles) y el de la
+   recomendación. Un mapa de textos por línea, con el de tela como base.
+4. **Nada de esto toca la marca ni los datos de demo**: siguen siendo compartidos e iguales en los
+   tres paquetes.
+
+### 9.6 Fuentes (consultadas para esto)
+
+- Limpieza por pieza y protector como extra: tabla por tipo de mueble y «protector adding 25 to
+  30 %» — cleanmastercarpetcleaning.com/blog-posts/how-much-does-upholstery-cleaning-cost.
+- BOQ de mobiliario para hoteles (item · área · tipo de habitación · cantidad · medidas · material
+  · acabado · herrajes · tapizado · fase de entrega): volant-fitout.com/blog/hotel-furniture-procurement-guide
+  y los factores de presupuesto en mingsungroup.com/hotel-furniture-budget-breakdown.html.
+- Paneles tapizados por m², con instalación aparte y módulo 60×120: referencias de mercado
+  (MDF/yeso $600–1,200 por m² sin instalación; instalación $250–400 por m²).
+- A la medida: lista de piezas con cantidad y espesor (muebleando.com) y el manual de elaboración
+  de muebles de madera (OEI) para la elección de especie y acabado.
+
+### 9.7 Orden propuesto
+
+`mantenimiento` → `tapicería arquitectónica` → `a la medida` → `proyecto comercial`. Los dos
+primeros prueban lo que hoy no existe en ningún motivo (pieza sin tela; superficie en vez de
+mueble) y son los más baratos; `a la medida` reusa el motor de telas; el BOQ es el único que pide
+una interacción nueva (varias filas) y se hace al final, cuando el resto ya está probado.
