@@ -132,7 +132,12 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   passwords are never stored in the clear.
 - `photos.spec.mjs` — the 3-to-7 attachment range: that the wizard refuses to
   advance below the minimum, caps at the maximum, lets photos be removed, and
-  that every one of them reaches the backoffice.
+  that every one of them reaches the backoffice. It also covers the quote
+  detail's gallery: each photo opens in the `#photoModal` viewer (click, ←/→
+  keys, the counter, Esc closing the viewer and NOT the detail) and a photo that
+  is gone from this browser keeps its place as a named gap plus the "N de M
+  fotografías no están en este navegador" note — the case that used to render a
+  broken `<img>` (see the `Photos.get()` contract in the root CLAUDE.md).
 - `billing.spec.mjs` — the three fabric quantities (consumo/compra/facturable):
   that sale increments, supplier and order minimums, and a non-reusable
   remainder compute the right amount to bill, and explain why when it differs

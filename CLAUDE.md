@@ -115,7 +115,14 @@ rendered. Do not bundle, split into modules, or add a framework unless asked.
     `store.js` these are still `{{PLACEHOLDER}}` tokens, not literal arrays.
   - `Photos` — image blobs in IndexedDB (client's `photosDbName`, `med-photos` for
     Mediterránea). Records store photo **ids**, never data URLs, because a handful of
-    photos would exhaust `localStorage`.
+    photos would exhaust `localStorage`. `Photos.get()` resolves a missing key to
+    `null`, never to the raw `IDBRequest` (truthy!): with that bug `getAll()` could not
+    filter and an absent photo was painted as a broken `<img>` — the empty rectangle
+    that looked like a dark photo in the quote detail. The detail renders one entry per
+    id, in order: a photo that isn't in this browser is **named** ("no está en este
+    navegador") instead of silently dropped, and each one opens in the `#photoModal`
+    viewer (click, ←/→, Esc, backdrop). The viewer is nested inside the quote modal, so
+    it closes alone and leaves the detail open (same special case as `#payModal`).
   - `Auth` — the demo backoffice login (salted SHA-256 hashes, session in
     `sessionStorage`, role → visible sections).
   - `Store.brand*` + the `Brand` global — the **runtime brand**: the client pack
