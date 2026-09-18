@@ -25,8 +25,10 @@ Léelas antes de tocar nada. Son del dueño del producto y mandan sobre cualquie
    visible en el cotizador, y **cualquier pack debe comportarse igual**. Que una corrida de tests
    use Mediterránea, Macizo o Intertelas es irrelevante; que el flujo cambie con el cliente, es un
    bug.
-3. **El plan define lo que se ofrece** (`shared/service-lines.json`: cada línea declara su
-   `minPlan`); el pack solo aporta su `baseLine` y su marca. La oferta nunca vive en el pack.
+3. **El NEGOCIO define lo que ofrece** (`Upgrade → Configurar mi plan`): prender o apagar una línea
+   cambia lo que el cotizador pregunta, y con una sola marcada entra directo a ella. El plan **dejó
+   de decidir la oferta** (quedó como el nombre interno que carga la cuota del paquete), y el pack
+   solo aporta su marca: nada de la oferta vive en el pack.
 4. **Spec primero.** El diseño se escribe (docs/ + OK del dueño) **antes** del código, y los
    criterios de aceptación citan sus palabras textuales.
 5. **Desviarse se dice ANTES**, con el precio: "propongo desviarme por esto". Nunca se documenta
@@ -39,6 +41,14 @@ Léelas antes de tocar nada. Son del dueño del producto y mandan sobre cualquie
    `tests/README.md` + el doc de diseño + `generate` verde. Falta cualquiera, y no está terminado.
 9. **Commits**: convencional en español, hilos distintos en commits distintos, y no se commitea ni
    se empuja sin OK explícito.
+10. **Un precio es del dueño o está investigado; no se inventa.** Cada cifra del catálogo
+   (`shared/presets.json`) sale del texto del dueño o de una fuente citada en el propio archivo
+   (Colombia, 2026); las que quedan provisionales se marcan como tales ahí mismo. Cuando pide
+   "precios reales o al menos creíbles", se investiga — no se ajusta a ojo, no se retira la fila,
+   no se inventa un ancla para justificar el número.
+11. **El vocabulario es del dueño**: «motivo» (la línea), «interacciones de IA» (jamás «créditos»),
+   «Consumo» (la cuota del paquete) frente a «Capacidades» (el producto que se contrata),
+   «Configurar mi plan» (antes Mi ACI) y «Plan a la medida» (la tarjeta que se guarda en Planes).
 
 ## Commands
 
@@ -225,19 +235,21 @@ Couplings that are easy to break:
 
 ## Líneas de servicio (qué cotiza ACI)
 
-Lo que el cotizador ofrece se organiza en **líneas de servicio**, y **el plan es el que las
-define**: el catálogo es del producto (`shared/service-lines.json`) y cada línea declara el plan
-que la habilita (`minPlan`: `base` —la única que incluye Essential—, `Professional` o `Business`).
-Un paquete NO declara líneas: el catálogo es del producto y el plan decide cuáles entran. Essential
-incluye las dos líneas `base` (hoy suministro de tela y retapizado de muebles) — separadas a
-propósito: son dos trabajos distintos, uno es material y el otro oficio —, Professional suma las
-suyas y Business todas (proyecto comercial, tapicería arquitectónica, mantenimiento). De ahí que la
-pregunta del cotizador exista **desde Essential**: con más de una línea el cliente siempre elige, y
-subir de plan agrega servicios de forma visible.
+Lo que el cotizador ofrece se organiza en **líneas de servicio** (el «motivo»), y **el negocio es
+quien las prende**: `Upgrade → Configurar mi plan`. El catálogo sigue siendo del producto
+(`shared/service-lines.json`) y cada línea conserva su `minPlan`, pero el plan **dejó de decidir la
+oferta**: quedó como el nombre interno que carga la cuota del paquete. `Store.services()` devuelve
+las líneas del negocio con `withinPlan` siempre verdadero, y `setLineEnabled()` ya no rechaza por
+plan. Con más de una línea marcada el cliente elige; con una sola, el cotizador entra directo a
+ella. Los paquetes recomendados (Taller/Empresa/Distribuidor) son un atajo que marca líneas,
+capacidades y cuota de una vez — después el negocio agrega o quita lo que necesite, cada casilla con
+su valor.
 
-Encima de ese candado va el del negocio: "Líneas de servicio" (Configuraciones de cotizador) lista
-las líneas del plan con un **checkbox** y `Store.setLineEnabled()` apaga o prende cada una
-(`settings.disabledLines`, solo las apagadas: un cambio de plan nunca pierde la elección).
+"Líneas de servicio" (Configuraciones de cotizador) es la vista de ESE estado: un **checkbox** por
+línea con `Store.setLineEnabled()` (`settings.disabledLines`, solo las apagadas) y la etiqueta
+Habilitada/Deshabilitada. Prender o apagar aquí no contrata nada — contratar es «Configurar mi
+plan». El modelo completo (Core, capacidades con precio, cuota, guardar y pagar el plan a la medida,
+y la regla de los precios) vive en `docs/paquetes-y-precios.md`.
 Apagarlas todas se rechaza — una solicitud sin línea no se puede cotizar — y con una sola
 habilitada el cotizador no pregunta: entra directo a ella. `Store.services()` devuelve
 `withinPlan` (el plan la permite) y `enabled` (además el negocio la dejó prendida), separadas

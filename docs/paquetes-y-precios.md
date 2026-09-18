@@ -146,13 +146,30 @@ cuota: el paquete trae una cuota mensual y los paquetes de capacidad (25 cotizac
 No se borra la pestaña Planes hasta que (1) y (2) estén en Mi ACI: hoy esas tarjetas son el único
 lugar donde vive la cuota.
 
-## 10. Decisiones que necesito de ti
+## 10. Resuelto (esta sesión)
 
-1. **Nombres de los presets**: ¿Taller pequeño / Empresa de muebles / Distribuidor, o conservamos
-   Essential / Professional / Business como nombres de paquete?
-   *Mi recomendación: los nuevos nombres para el cliente y los viejos solo como identificador
-   interno, porque el nombre viejo arrastra la idea de «plan».*
-2. **Precios**: ¿los del texto como demo rotulada, o me pasas tus anclas ahora? *Con demo se puede
-   ver funcionando hoy mismo y se cambia en una línea.*
-3. **Capacidad**: ¿la pantalla de capacidad (cotizaciones/usuarios/sedes) entra en la misma
-   entrega o se queda como está? *Mi recomendación: se queda como está; una cosa por entrega.*
+1. **Nombres**: Taller pequeño / Empresa de muebles / Distribuidor son el camino por defecto; los
+   nombres Essential / Professional / Business quedan solo como identificador interno de la cuota.
+2. **Precios**: los tuyos donde los diste (Core $199.000; suministro, retapizado, arquitectónica,
+   asignación, analítica, asistentes adicionales) + investigados con fuente donde hacían falta
+   (interacciones de IA, soporte), y los provisionales marcados en `shared/presets.json`.
+3. **La pantalla de Consumo** entró en esta entrega; los paquetes de capacidad se siguen comprando
+   en Paquetes.
+
+## 11. Vocabulario (el del dueño)
+
+- **Consumo** — la cuota del paquete (cotizaciones, interacciones de IA, GB, usuarios, sedes).
+- **Capacidades** — el producto que se contrata, cada una con su valor.
+- **Configurar mi plan** — la pantalla (antes «Mi ACI»), con su botón Guardar configuración.
+- **Plan a la medida** — la tarjeta que aparece en Planes con el botón Pagar (factura + Bold
+  simulado, el mismo flujo que los planes del catálogo).
+- **Interacciones de IA** — jamás «créditos»: la IA se cobra por interacciones (cuota del paquete),
+  no como checkbox del marketplace.
+- **Soporte en dos niveles**: el correo del Core (incluido para todos) y el prioritario (capacidad
+  de pago, hoy solo en Distribuidor).
+
+## 12. La regla de los precios
+
+Un precio o es del dueño o está investigado con fuente citada en el archivo; los provisionales se
+marcan como tales ahí mismo. No se ajusta a ojo, no se retira la fila que molesta y no se inventa un
+ancla para justificar un número. (CLAUDE.md, regla 10.)
