@@ -18,6 +18,18 @@ quote counts, service points...), so it only passes end to end with
 `tests/client.mjs` rather than hardcoded, so the suite still runs — just
 without matching Mediterránea's fixtures — under a different `CLIENT`.
 
+- `evaluacion-retapizado.spec.mjs` — la **evaluación de una línea desde el lado del
+  cliente** (la mitad mecánica de la skill `retapizado-evaluacion`): recorre Retapizado
+  con formas de persona distintas (un sofá de tres puestos, una poltrona suelta, y la
+  misma poltrona **sin tocar el control de cantidad**) y comprueba la razón del motor
+  (material × 1,6, con las partes sumando el total), el modelo de cálculo que usa cada
+  mueble (piezas contra heurística), el nombre del artefacto, el snapshot congelado, que
+  **ninguna promesa prohibida** (transporte, plazo, garantía, relleno dentro de la cifra)
+  se cuele en lo que el cliente lee, y los límites declarados (el relleno no se valora, la
+  firmeza es un ask de otro motivo). Imprime el número de cada persona —y lo que ve quien
+  no cambia la cantidad— para que la mitad de juicio la haga un humano. Nace del contrato
+  `docs/lia-skills.md`: los criterios salen del catálogo y del motor, nunca de lo que el
+  evaluador supone.
 - `wizard.spec.mjs` — the public cotizador: fabric selection, the quantity
   estimate, step validation, and the furniture radiogroup's keyboard behaviour.
   It also walks a whole quote out the door (Retapizado, so the estimate is not

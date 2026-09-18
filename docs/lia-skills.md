@@ -58,4 +58,6 @@ La evaluación de cada línea **desde el lado del cliente** se hace con skills d
 repo y de su código: hoy existen `retapizado-evaluacion` (personas, señales, objeciones, recorridos,
 promesas prohibidas, criterios) y `retapizado-experto` (el conocimiento validado para juzgar
 respuestas y cifras). Son la plantilla a replicar por motivo; se crean de a una, validando la
-estructura antes de multiplicarla.
+estructura antes de multiplicarla. Su mitad mecánica ya vive en el repo y corre con el resto de la
+suite: `npm run test:evaluacion-retapizado` (`tests/evaluacion-retapizado.spec.mjs`) recorre el motivo
+con formas de persona distintas e imprime el informe; el juicio lo pone quien evalúa.
