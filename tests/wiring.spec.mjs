@@ -142,17 +142,17 @@ const linea = await page.evaluate(id => {
     guardada: q && q.service,
   };
 }, quoteId);
-/* La línea de servicio la decide el PLAN, y con más de una habilitada el cotizador tiene el paso
- * de la línea como primero: el stepper pasa a 7 y las tarjetas son las que el plan habilita (el
- * catálogo es del producto, así que la esperada se deriva de él, no de un nombre escrito a mano). */
-check('el paso de la línea existe y ofrece las líneas que el plan habilita',
+/* La línea de servicio la decide EL NEGOCIO (Upgrade → Configurar mi plan), no el plan: con más de
+ * una habilitada el cotizador tiene el paso de la línea como primero, el stepper pasa a 7 y las
+ * tarjetas son las que el negocio tiene habilitadas (el catálogo es del producto, así que la
+ * esperada se deriva de él, no de un nombre escrito a mano). */
+check('el paso de la línea existe y ofrece las líneas que el negocio tiene habilitadas',
   { paso: linea.paso, dots: linea.dots, habilitadas: linea.habilitadas.map(h => h.id) },
-  { paso: false, dots: 7, habilitadas: client.serviceLines.filter(s => s.minPlan === 'base').map(s => s.id) });
-/* La línea de servicio con la que se cotizó: el cotizador elige la primera que el plan habilita
- * (el plan manda, no el nombre de ninguna línea escrito a mano), y con más de una el paso de la
- * línea es el primero. */
+  { paso: false, dots: 7, habilitadas: client.serviceLines.map(s => s.id) });
+/* La línea de servicio con la que se cotizó: el cotizador elige la primera que el negocio tiene
+ * habilitada (el negocio manda, no el plan ni el nombre de ninguna línea escrito a mano), y con
+ * más de una el paso de la línea es el primero. */
 const lineaEsperada = client.serviceLines
-  .filter(s => s.minPlan === 'base')
   .map(s => ({ id: s.id, label: s.label, journey: s.journey }))[0];
 check('y la cotización guarda la línea con la que se cotizó', linea.guardada, lineaEsperada);
 check('and is told who will contact them (auto-assign by point: 12 de Octubre -> Laura)',
@@ -163,12 +163,12 @@ await openAdmin(page, D);
  * cotizador, volver a marcarla la repone, y apagar la última se rechaza — un cotizador sin
  * líneas no puede cotizar nada. */
 await page.click('button[data-page="settings"]');
-await page.waitForSelector('#serviceLines input[data-line]');
-const cajas = await page.$$eval('#serviceLines input[data-line]', els => els.map(e => [e.dataset.line, e.checked, e.disabled]));
-check('cada línea del catálogo trae su checkbox: marcadas las del plan, bloqueadas las de arriba',
-  cajas.length === client.serviceLines.length && cajas.every(([, on, bloqueada]) => on === !bloqueada), true);
+await page.waitForSelector('#serviceLinesCfg input[data-line]');
+const cajas = await page.$$eval('#serviceLinesCfg input[data-line]', els => els.map(e => [e.dataset.line, e.checked, e.disabled]));
+check('cada línea del catálogo trae su checkbox, marcada y sin bloqueos (el plan ya no las decide)',
+  cajas.length === client.serviceLines.length && cajas.every(([, on, bloqueada]) => on === true && bloqueada === false), true);
 const aApagar = cajas[0][0];
-await page.click(`#serviceLines input[data-line="${aApagar}"]`);
+await page.click(`#serviceLinesCfg input[data-line="${aApagar}"]`);
 check('apagarla la saca del cotizador',
   await page.evaluate(id => Store.servicesEnabled().some(s => s.id === id), aApagar), false);
 check('y queda registrada como apagada, sin borrar nada',
@@ -209,7 +209,7 @@ const estadoFlujo = () => flujo.evaluate(() => ({
 }));
 await flujo.click('#nextButton');
 check('con suministro no hay paso de daños y «Continuar» cae en Medidas',
-  await estadoFlujo(), { paso: 3, visible: 'Paso 3 de 7', dotDanos: false, motivo: 'Suministro de tela' });
+  await estadoFlujo(), { paso: 9, visible: 'Paso 3 de 7', dotDanos: false, motivo: 'Suministro de tela' });
 check('y su estimación es solo material',
   await flujo.evaluate(() => { const e = Store.lineEstimate(Store.serviceById('suministro-tela'), [1000000, 1200000], []); return [e.laborPct, e.total]; }),
   [0, [1000000, 1200000]]);
@@ -239,12 +239,17 @@ await flujo.click('#analyzeButton'); await flujo.waitForSelector('#analysisCheck
 await flujo.click('#nextButton'); await flujo.waitForSelector('[data-step="14"].active');
 await flujo.click('#fabricGrid .fabric-card:nth-child(1)');
 check('el bloque de precio reparte material, mano de obra y reparaciones',
-  await flujo.evaluate(() => ({
-    caption: document.getElementById('priceCaption').textContent,
-    mano: document.getElementById('priceLabor').textContent.includes('≈60%'),
-    danos: document.getElementById('priceDamages').textContent.includes('Estructura y ensamble') && document.getElementById('priceDamages').textContent.includes('+$'),
-    total: document.getElementById('priceRange').textContent.includes('$'),
-  })), { caption: 'Estimación del motivo', mano: true, danos: true, total: true });
+  await flujo.evaluate(() => {
+    /* El bloque lo pinta #priceParts desde lineQuote(): un span por parte (material, mano de obra,
+     * daños). #priceLabor/#priceDamages ya no existen; la verificación va sobre lo que se ve. */
+    const partes = [...document.querySelectorAll('#priceParts span')].map(s => s.textContent).join(' | ');
+    return {
+      caption: document.getElementById('priceCaption').textContent,
+      mano: /Mano de obra/.test(partes),
+      danos: /Da[ñn]os|Reparaci/.test(partes),
+      total: document.getElementById('priceRange').textContent.includes('$'),
+    };
+  }), { caption: 'Estimación del motivo', mano: true, danos: true, total: true });
 /* El motivo acompaña al cliente y se puede cambiar: el aviso está en todos los pasos menos en el
  * de la línea, que es donde se elige. */
 check('el aviso del motivo sigue en el último paso', (await estadoFlujo()).motivo, 'Reparación y restauración');
@@ -262,7 +267,7 @@ await flujo.close();
       ctx: { furnitureId: 'sofa', quantity: 1, answers: { tratamientos: ['quitamanchas'], traslado: 'taller' } }, total: 320000 },
     { etiqueta: 'Tapicería arquitectónica', pricing: 'm2',
       pasos: ['Tu línea de servicio', 'La superficie', 'Cómo se monta', 'Validación', 'Recomendación', 'Tu cotización'],
-      ctx: { answers: { ancho: 300, alto: 200, papel: 'decorativo' }, fabricPerM2: 95000 }, total: 8400000 },
+      ctx: { answers: { ancho: 300, alto: 200, papel: 'decorativo' }, fabricPerM2: 95000 }, total: 840000 },
     { etiqueta: 'Muebles a la medida', pricing: 'fabricacion',
       pasos: ['Tu línea de servicio', 'Tu mueble', 'Medidas', 'Materiales y acabados', 'El tapizado', 'Preferencias', 'Validación', 'Recomendación', 'Tu cotización'],
       ctx: { furnitureId: 'silla', materialRange: [0, 0], answers: { madera: 'pino', acabado: 'barniz', firmeza: 'media' } }, total: 628500 },
@@ -283,8 +288,8 @@ await flujo.close();
     }));
     check(`«${m.etiqueta}» pide sus pasos, en su orden, y cotiza como ${m.pricing}`,
       [vista.pasos, vista.pricing, vista.estimado], [m.pasos, m.pricing, true]);
-    check(`«${m.etiqueta}» suma ${Store.money(m.total)}`,
-      await pg.evaluate((c, id) => Store.lineQuote(Store.serviceById(id), c).total, m.ctx, m.pricing === 'pieza' ? 'mantenimiento' : m.pricing === 'm2' ? 'tapiceria-arquitectonica' : m.pricing === 'fabricacion' ? 'a-la-medida' : 'proyecto-comercial'),
+    check(`«${m.etiqueta}» suma ${await pg.evaluate(v => Store.money(v), m.total)}`,
+      await pg.evaluate(({ ctx, id }) => Store.lineQuote(Store.serviceById(id), ctx).total, { ctx: m.ctx, id: m.pricing === 'pieza' ? 'mantenimiento' : m.pricing === 'm2' ? 'tapiceria-arquitectonica' : m.pricing === 'fabricacion' ? 'a-la-medida' : 'proyecto-comercial' }),
       [m.total, m.total]);
     /* Un paso de pregunta se pinta desde su spec (chips, selectores, campos o filas). */
     const pregunta = await pg.evaluate(() => {
@@ -746,7 +751,15 @@ check('and the bytes are gone from IndexedDB',
 console.log('\nUPGRADE — los tres planes, en orden, con precios y conteos exactos');
 await openAdmin(page, D);
 await page.click('button[data-page="upgrade"]');
-check('Planes es la pestaña activa por defecto, con sus tarjetas visibles y Paquetes oculto',
+check('Upgrade abre en «Configurar mi plan» (el plan dejó de ser el producto)',
+  await page.evaluate(() => ({
+    selected: document.getElementById('tabMiAci').getAttribute('aria-selected'),
+    miaciHidden: document.getElementById('panelMiAci').hidden,
+    planesHidden: document.getElementById('panelPlanes').hidden
+  })),
+  { selected: 'true', miaciHidden: false, planesHidden: true });
+await page.click('#tabPlanes');
+check('al entrar a Planes, la pestaña queda activa con sus tarjetas visibles y Paquetes oculto',
   await page.evaluate(() => ({
     selected: document.getElementById('tabPlanes').getAttribute('aria-selected'),
     planesHidden: document.getElementById('panelPlanes').hidden,
@@ -803,6 +816,9 @@ check('clic en Mes cambia los tres precios, la leyenda y el aria-checked',
 await page.reload();
 await page.waitForSelector('#appShell:not([hidden])');
 await page.click('button[data-page="upgrade"]');
+// Un recargue devuelve Upgrade a su pestaña por defecto («Configurar mi plan»): para tocar el
+// switch de modalidad hay que entrar a Planes.
+await page.click('#tabPlanes');
 check('el periodo elegido (Mes) sobrevive a un recargo de página',
   await billingSwitchState(),
   {
@@ -900,6 +916,8 @@ check('la factura queda Pagada con paidAt',
 await page.reload();
 await page.waitForSelector('#appShell:not([hidden])');
 await page.click('button[data-page="upgrade"]');
+// Mismo caso: tras el recargue, Planes hay que abrirlo a mano.
+await page.click('#tabPlanes');
 check('el plan elegido sobrevive a un recargo de página',
   await page.evaluate(() => Store.settings().plan), 'Business');
 
@@ -973,7 +991,7 @@ check('los cinco paquetes, en orden, con el precio exacto construido con Store.m
   }))),
   await page.evaluate(() => [
     ['25 cotizaciones adicionales', `${Store.money(90000)} COP`],
-    ['100 créditos de IA adicionales', `${Store.money(70000)} – ${Store.money(100000)} COP`],
+    ['100 interacciones de IA adicionales', `${Store.money(70000)} – ${Store.money(100000)} COP`],
     ['5 GB de almacenamiento adicional', `${Store.money(40000)} COP / mes`],
     ['Usuario adicional', `${Store.money(50000)} COP / mes`],
     ['Sede adicional', `${Store.money(80000)} – ${Store.money(120000)} COP / mes`]
