@@ -161,7 +161,11 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   never overrides an explicit pick. Plus the local model's recommendation: it gets
   the declared rows and the catalogue, its order re-ranks the grid (unknown ids
   ignored), its reason is shown marked "IA local" and fence-judged, a promise falls
-  back to the deterministic order, and without a model nothing is painted
+  back to the deterministic order, and without a model nothing is painted. It also
+  pins the **order of the screen**: while the model is thinking the grid is not shown
+  (only the waiting row), the fabric cards and the metres block appear once the answer
+  is in, and a model that never answers hits `TOPE_RECOMENDACION_MS` (lowered in the
+  check) and leaves the deterministic order with the row saying so
   (`docs/recomendacion-con-ia.md`).
 - `auth.spec.mjs` — the backoffice login: that the gate actually blocks, that an
   adviser sees only their own requests and none of the administration sections

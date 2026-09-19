@@ -85,6 +85,8 @@ console.log('\nLA IA LOCAL RECOMIENDA: ORDENA LAS TELAS CON LO DECLARADO POR DEL
           if (!Array.isArray(mensajes) || !mensajes.every(m => m && m.role && Array.isArray(m.content)))
             throw new Error("Failed to read the 'content' property from 'LanguageModelMessage': Required member is undefined.");
           window.__pedido = mensajes;
+          /* Tarda un poco a propósito: así se puede mirar la pantalla MIENTRAS la IA ordena. */
+          await new Promise(r => setTimeout(r, 900));
           /* Un orden al revés del determinista: si la parrilla lo respeta, el orden es SUYO. */
           return '{"orden": ["3","5","2","1","4"], "razon": "La Bouclé Capri te va por el uso y el estilo que declaraste."}';
         }, destroy(){} }; } };
@@ -96,8 +98,17 @@ console.log('\nLA IA LOCAL RECOMIENDA: ORDENA LAS TELAS CON LO DECLARADO POR DEL
   await p.evaluate(() => { document.getElementById('style').value = 'Moderno';
     document.getElementById('color').value = 'Grises'; document.getElementById('budget').value = '160000';
     const s = document.querySelector('.wizard-step[data-brain="RECOMMENDATION"]'); showStep(+s.dataset.step); });
+  /* MIENTRAS la IA ordena: la parrilla no se enseña (el modelo doble tarda 900 ms). */
+  const esperando = await p.evaluate(() => ({ telas: document.getElementById('fabricGrid').hidden,
+    fila: /Pidiéndole una recomendación/.test(document.getElementById('aiPick').innerText),
+    filaVisible: !document.getElementById('aiPick').hidden,
+    /* El bloque de metros aparece CON las telas: mientras la IA ordena, no está. */
+    metros: (() => { const q = document.querySelector('.wizard-step.active .quote-preview'); return q ? q.offsetParent === null : true; })() }));
+  check('mientras la IA elige, las telas NO se enseñan: la parrilla está oculta y la fila lo dice',
+    [esperando.telas, esperando.fila, esperando.filaVisible, esperando.metros], [true, true, true, true]);
   await p.waitForFunction(() => /Bouclé Capri/.test(document.getElementById('aiPick').innerText), null, {timeout: 8000}).catch(()=>{});
   const est = await p.evaluate(() => ({
+    telas: document.getElementById('fabricGrid').hidden,
     fila: document.getElementById('aiPick').innerText,
     orden: [...document.querySelectorAll('#fabricGrid .fabric-card-body > b')].map(e => e.textContent),
     primera: (document.querySelector('#fabricGrid .fabric-card b') || {}).textContent || '',
@@ -107,6 +118,8 @@ console.log('\nLA IA LOCAL RECOMIENDA: ORDENA LAS TELAS CON LO DECLARADO POR DEL
   }));
   check('con modelo, la fila enseña lo que recomienda y va marcada IA local',
     [/Bouclé Capri/.test(est.fila), /IA local/i.test(est.fila)], [true, true]);
+  check('y al terminar, la parrilla aparece (las telas se enseñan DESPUÉS del análisis)',
+    est.telas, false);
   check('y lo declarado viaja al modelo: mueble, estilo y color, y el presupuesto por metro',
     [/Mueble: /.test(est.sistema), /Estilo y color: Moderno · Grises/.test(est.sistema), /160\.000 o menos/.test(est.sistema)],
     [true, true, true]);
@@ -144,6 +157,32 @@ console.log('\nLA IA LOCAL RECOMIENDA: ORDENA LAS TELAS CON LO DECLARADO POR DEL
   check('y la parrilla se queda con el orden determinista (el de la promesa no se aplicó)',
     [pan[0].startsWith('Bouclé Capri'), pan.join('|') === det.join('|')], [false, true]);
   if (pan.join('|') !== det.join('|')) console.log('        pantalla: ' + pan.join(' | ') + '\n        determinista: ' + det.join(' | '));
+  await p.close();
+}
+{
+  /* Un modelo que NUNCA contesta: la pantalla no puede quedarse sin telas. El tope de producción son
+   * 15 s; aquí se baja para probar la salida sin esperarlos. */
+  const p = await b.newPage(); p.on('pageerror', e => errs.push('tope: ' + e));
+  await p.addInitScript(() => {
+    Object.defineProperty(window, 'isSecureContext', { value: true });
+    window.LanguageModel = { availability: async () => 'available',
+      create: async () => ({ prompt: async () => new Promise(() => {}), destroy(){} }) };
+  });
+  await p.goto(D + 'index.html');
+  await p.evaluate(() => localStorage.clear());
+  await openWizard(p, D);
+  await p.evaluate(() => { TOPE_RECOMENDACION_MS = 300;   // el tope, corto: la salida se prueba rápido
+    const s = document.querySelector('.wizard-step[data-brain="RECOMMENDATION"]'); showStep(+s.dataset.step); });
+  await p.waitForFunction(() => /no pudo darte una recomendación/.test(document.getElementById('aiPick').innerText), null, { timeout: 5000 });
+  const trasTope = await p.evaluate(() => ({
+    telas: document.getElementById('fabricGrid').hidden,
+    fila: document.getElementById('aiPick').innerText,
+    tarjetas: document.querySelectorAll('#fabricGrid .fabric-card').length,
+    orden: [...document.querySelectorAll('#fabricGrid .fabric-card-body > b')].map(e => e.textContent),
+    det: Store.recommend(pedidoDeTelas()).map(r => `${r.fabric.name} · ${r.fabric.colorName}`) }));
+  check('si la IA no contesta dentro del tope, las telas vuelven con el orden determinista y la fila lo dice',
+    [trasTope.telas === false, trasTope.tarjetas > 0, /no pudo darte una recomendación/.test(trasTope.fila), trasTope.orden.join('|') === trasTope.det.join('|')],
+    [true, true, true, true]);
   await p.close();
 }
 {

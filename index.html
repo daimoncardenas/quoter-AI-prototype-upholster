@@ -102,6 +102,13 @@
   .wizard-step.active[data-brain="PREFERENCES"]>.preference-layout{flex:1 1 auto;grid-template-rows:1fr auto;align-content:safe center}
   .wizard-step.active[data-brain="PREFERENCES"] .choice-group{display:flex;flex-direction:column;justify-content:safe center;min-height:0}
   .wizard-step.active[data-brain="PREFERENCES"] .choice-group>.chip-grid{flex:1 1 auto;max-height:min(180px,22vh)}
+  /* Mientras la IA local ordena las telas: su fila espera centrada en el panel —con su movimiento— y
+   * el bloque de metros aparece con las telas, no antes. */
+  .wizard-step.active[data-brain="RECOMMENDATION"].esperando-telas{display:flex;flex-direction:column}
+  .wizard-step.active[data-brain="RECOMMENDATION"].esperando-telas>#aiPick{flex:1 1 auto;display:flex;align-items:center;justify-content:center}
+  .wizard-step.active[data-brain="RECOMMENDATION"].esperando-telas>#aiPick>div{width:100%;max-width:520px;background:var(--tint-panel-wash);border-left:3px solid var(--accent);padding:clamp(16px,2.6vh,26px) clamp(16px,2.2vw,26px)}
+  .wizard-step.active[data-brain="RECOMMENDATION"].esperando-telas>#aiPick>div>p{flex:1 1 auto}
+  .wizard-step.active[data-brain="RECOMMENDATION"].esperando-telas>.quote-preview{display:none}
 }
 .analysis-checks>div.warn>span{background:#fbefd9;color:var(--amber)}.analysis-checks p{margin:0}.analysis-checks b,.analysis-checks small{display:block}.analysis-checks b{font-size:.7rem;color:var(--ink)}.analysis-checks small{font-size:.62rem;color:var(--muted);margin-top:2px}
 .tag-ia{display:inline-block;margin-left:6px;background:var(--tint-tag-bg);color:var(--ink-2);padding:2px 6px;font-size:.5rem;border-radius:9px;font-style:normal;text-transform:uppercase;letter-spacing:.05em;vertical-align:middle}
@@ -1422,6 +1429,22 @@ function estimateBaseline(){
  * determinista de Store.recommend() se queda tal cual— y si el modelo está pero no da algo utilizable,
  * la fila lo dice en vez de callarse. */
 let ordenDeLaIA=null, recomendandoIA=false;
+/* El modelo local tarda segundos, pero una pantalla sin telas no puede durar para siempre: si no
+ * contesta dentro de este tope, la parrilla vuelve con el orden determinista y la fila lo dice.
+ * (La spec lo baja para probar esa salida sin esperar los 15 s.) */
+let TOPE_RECOMENDACION_MS=15000;
+const conTope=(p,ms)=>Promise.race([p,new Promise((_,no)=>setTimeout(()=>no(new Error('La IA local no contestó a tiempo')),ms))]);
+/* Las telas no se enseñan mientras la IA las está ordenando: la parrilla aparece cuando hay algo que
+ * enseñar —su orden, o el determinista con la fila diciendo que la recomendación no llegó—, y el
+ * bloque de metros aparece CON ellas (14–19 metros antes de ver la tela es una cifra sin contexto).
+ * Mientras tanto la fila espera centrada en el panel, con su movimiento. El dueño lo pidió con una
+ * captura: «you can see the fabrics below but at this moment the AI is choosing the recommendation...
+ * doesn't make sense show fabric before... make sense after of analysis». */
+function telasEnEspera(esperando){
+  const g=document.getElementById('fabricGrid');if(g)g.hidden=esperando;
+  const paso=document.querySelector('.wizard-step[data-brain="RECOMMENDATION"]');
+  if(paso)paso.classList.toggle('esperando-telas',esperando);
+}
 const TEXTO_RECOMENDACION_FALLO='La IA local no pudo darte una recomendación esta vez: el orden de abajo sigue tus preferencias.';
 const FILA_RECOMENDACION=(titulo,detalle,ok)=>`<div class="${ok?'':'warn'}"><span>${ok?'✓':'!'}</span>`+
   `<p><b>${esc(titulo)} <i class="tag-ia">IA local</i></b><small>${esc(detalle)}</small></p></div>`;
@@ -1469,10 +1492,11 @@ async function recomendarConIA(){
   const ranked=Store.recommend(pedidoDeTelas());
   if(!ranked.length)return;
   recomendandoIA=true;
+  telasEnEspera(true);
   pintarEsperaDeTelas();
   try{
-    const sesion=await IA_LOCAL.create({initialPrompts:[{role:'system',content:promptDeLaRecomendacion(ranked)}]});
-    const crudo=String(await sesion.prompt([{role:'user',content:[{type:'text',value:'Ordénalas para mí y dime por qué la primera.'}]}])).trim();
+    const sesion=await conTope(IA_LOCAL.create({initialPrompts:[{role:'system',content:promptDeLaRecomendacion(ranked)}]}),TOPE_RECOMENDACION_MS);
+    const crudo=String(await conTope(sesion.prompt([{role:'user',content:[{type:'text',value:'Ordénalas para mí y dime por qué la primera.'}]}]),TOPE_RECOMENDACION_MS)).trim();
     if(sesion.destroy)sesion.destroy();
     const dicho=leerLaRecomendacion(crudo);
     /* El cerco juzga la razón: con los precios del catálogo como lo único que el cliente tiene a la
@@ -1491,9 +1515,13 @@ async function recomendarConIA(){
   }catch(err){
     console.warn('[recomendación] la recomendación local no llegó',err);
     pintarLaRecomendacion('Recomendación de la IA local',TEXTO_RECOMENDACION_FALLO,false);
-  }finally{recomendandoIA=false}
+  }finally{recomendandoIA=false;telasEnEspera(false)}
 }
 function renderFabrics(){
+  /* Mientras la IA ordena, la parrilla existe pero no se enseña: el `finally` de recomendarConIA() la
+   * revela (con el orden de la IA si llegó, o el determinista). Fuera de esa espera, pintar telas es
+   * enseñarlas. */
+  if(!recomendandoIA)telasEnEspera(false);
   let ranked=Store.recommend(pedidoDeTelas());
   /* El orden de la IA local, si lo dio: solo puede REORDENAR las telas del catálogo (los ids que no
    * estén se ignoran), y las que no nombró quedan detrás en el orden determinista. */

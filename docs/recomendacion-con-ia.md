@@ -9,6 +9,12 @@ color y presupuesto, con sus motivos en cada tarjeta). Lo que faltaba era la voz
 
 - Al **entrar** al paso —una sola vez, no en cada cambio de preferencia— `recomendarConIA()` le pide al
   modelo local que **ordene** las telas del catálogo y diga por qué la primera le viene bien.
+- **Las telas no se enseñan hasta que la IA termina** (el dueño, con una captura del paso: «you can see the
+  fabrics below but at this moment the AI is choosing the recommendation... doesn't make sense show fabric
+  before... make sense after of analysis»). Mientras el modelo ordena, el paso enseña solo su fila de espera
+  —centrada en el panel, dentro de una caja con el filete de acento, con la barra llena— y la parrilla
+  aparece al terminar, ya ordenada. El bloque de «`14–19` metros de tela» es de las telas y aparece con
+  ellas: una cifra de consumo antes de ver la tela no tiene contexto.
 - Lo que recibe: **lo declarado**, con las mismas filas que el cliente acaba de leer en la revisión
   (`declaredRows()`: motivo, mueble, medidas, qué se tapiza, uso previsto, estilo y color, punto de
   atención), más el **presupuesto por metro** que indicó, y el catálogo activo con id, nombre, color,
@@ -21,13 +27,14 @@ color y presupuesto, con sus motivos en cada tarjeta). Lo que faltaba era la voz
   una cifra.
 - La fila va marcada **«IA local»** y espera con el mismo movimiento de la mirada (aro girando + barra).
 
-## Los tres desenlaces
+## Los cuatro desenlaces
 
 | | |
 |---|---|
-| Recomendación limpia | la fila la muestra y la parrilla se reordena |
-| El cerco la tumba, o no se pudo leer | la fila lo dice (`TEXTO_RECOMENDACION_FALLO`) y la parrilla se queda con el orden determinista |
-| No hay modelo | **no se pinta nada**: el orden de siempre, sin fingir una recomendación |
+| Recomendación limpia | la fila la muestra y la parrilla aparece **con su orden** |
+| El cerco la tumba, o no se pudo leer | la fila lo dice (`TEXTO_RECOMENDACION_FALLO`) y la parrilla aparece con el orden determinista |
+| El modelo no contesta dentro de `TOPE_RECOMENDACION_MS` (15 s) | igual que el anterior: las telas vuelven con el orden determinista y la fila lo dice — una pantalla sin telas no puede durar para siempre |
+| No hay modelo | **no se pinta nada** (ni espera): el orden de siempre, sin fingir una recomendación |
 
 Los precios de las tarjetas salen SIEMPRE del catálogo, nunca del texto del modelo.
 
@@ -36,10 +43,11 @@ Los precios de las tarjetas salen SIEMPRE del catálogo, nunca del texto del mod
 | Pieza | Qué es |
 |---|---|
 | `index.html` `recomendarConIA()` / `promptDeLaRecomendacion()` / `leerLaRecomendacion()` | la recomendación y su pedido |
+| `index.html` `telasEnEspera()` + `TOPE_RECOMENDACION_MS` | la parrilla oculta mientras la IA ordena (y su vuelta si no contesta) |
 | `index.html` `pedidoDeTelas()` | las preferencias declaradas, única fuente del orden determinista y del pedido |
 | `index.html` `#aiPick` + `FILA_RECOMENDACION` | la fila, con la espera compartida de `.mirada-gira`/`.mirada-espera` |
 | `index.html` `ordenDeLaIA` en `renderFabrics()` | el único poder del modelo: reordenar el catálogo |
-| `tests/recommend.spec.mjs` | sección «LA IA LOCAL RECOMIENDA…» (8 comprobaciones, con el cerco y sin modelo) |
+| `tests/recommend.spec.mjs` | sección «LA IA LOCAL RECOMIENDA…» (11 comprobaciones: el cerco, sin modelo, la espera sin telas y el tope) |
 
 ## Lo que queda abierto
 
