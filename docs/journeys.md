@@ -188,6 +188,15 @@ cuando existe es un **paso propio**, no un bloque dentro de otro.
   explica, propone ediciones validadas y navega. Vale para **todos** los journeys.
 - El catálogo cerrado de campos del asistente es por journey; lo que no está listado, no
   existe para él.
+- **El cotizador no avanza con una medida MUY fuera de lo habitual para el mueble.** El rango es el
+  mismo que el paso 4 revisa y que el asistente cita (`ranges` del catálogo de muebles), y con
+  margen: una medida tomada a ojo es aproximada, así que solo detiene «Continuar» —en el paso de
+  Medidas, con el número y el rango a la vista— lo que se aleja más de un 20 % del rango. El aviso
+  de la asistente sigue saliendo en el borde mismo de lo habitual, y sigue siendo aviso, no una
+  acción. Antes la IA avisaba y el cliente podía seguir con el dato absurdo (palabras de Daimon:
+  «even if the AI warn for the wrong.. the user still could send trash... please protect the inputs
+  too ... and block the button "continuar"..until the user modified and fix that»), y él mismo
+  afinó la regla después: «but can be average measures... dont necesary strict measures».
 - **Una línea no implementada sí se muestra**, porque la coherencia del plan es lo que se evalúa:
   subir de Professional a Business tiene que **agregar** un servicio al primer paso del cotizador
   (regla de Daimon: "si yo cambio de professional a business plan entonces por lógica deben

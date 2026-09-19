@@ -54,10 +54,17 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   chosen (`#furnitureOtherField`, keyed by the catalogue's id), the step refuses to advance
   without an answer (and says so), what was written is not rewritten by the code, the
   customer's words reach the assistant's context as `furnitureNote`, and with them written the
-  wizard goes on — `docs/mueble-otro.md` is the contract.
+  wizard goes on — `docs/mueble-otro.md` is the contract. Same step, the measurements: a value
+  MORE than 20 % beyond the furniture's usual ranges — the same `ranges` the step-4 review and the
+  assistant use — stops «Continuar» with its own error naming the number and the range, while an
+  approximate measure only a little outside (and the edge itself) passes (`docs/journeys.md` §6).
 - `review.spec.mjs` — step 4: that the checks report the photo's real
-  dimensions and the measurement ranges per furniture type, and never claim to
-  have recognised the furniture in the image.
+  dimensions and the measurement ranges per furniture type, and that the checks
+  never claim to have recognised the furniture in the image — plus the local
+  model's own **observation row**: the photo reaching it as a Blob together with
+  the declared rows the customer sees, the row marked "IA local", a promise
+  falling back to the neutral line, and no row at all without a model
+  (`docs/revision-con-ojos.md`).
 - `wiring.spec.mjs` — the loop between the two pages: a tela created in the
   backoffice reaching the cotizador, a submitted quote (with its photo) reaching
   the backoffice, and the backoffice settings driving the estimate. The submitted
@@ -147,7 +154,11 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   plus the needs, styles, colours, budgets and coverage multipliers.
 - `recommend.spec.mjs` — that the step-5 ranking actually uses the needs,
   style, colour and budget the customer chose, explains each suggestion, and
-  never overrides an explicit pick.
+  never overrides an explicit pick. Plus the local model's recommendation: it gets
+  the declared rows and the catalogue, its order re-ranks the grid (unknown ids
+  ignored), its reason is shown marked "IA local" and fence-judged, a promise falls
+  back to the deterministic order, and without a model nothing is painted
+  (`docs/recomendacion-con-ia.md`).
 - `auth.spec.mjs` — the backoffice login: that the gate actually blocks, that an
   adviser sees only their own requests and none of the administration sections
   (including the admin-only "Upgrade" plans page and "Usage" consumption page —

@@ -135,7 +135,8 @@ console.log('\nUNA PROPUESTA SE REVISA EN ORDEN, CONTRA EL ESTADO ACTUAL');
 }
 
 console.log('\nLO QUE SE LE MUESTRA AL CLIENTE ANTES DE CONFIRMAR');
-check('volver a un paso', brain.describeAction({ type: 'NAVIGATE_TO_STEP', step: MEDIDAS }, envFor(REVISION)), `Volver al paso ${MEDIDAS} · Medidas`);
+check('volver a un paso', brain.describeAction({ type: 'NAVIGATE_TO_STEP', step: MEDIDAS }, envFor(REVISION)),
+  `Volver al paso «${brain.STEPS.find(s => s.n === MEDIDAS).name}»`);
 check('llevar el foco a un campo', brain.describeAction({ type: 'FOCUS_FIELD', field: 'measurements.width' }, envFor()), 'Ir a «Ancho total»');
 check('marcar una casilla', brain.describeAction({ type: 'SET_FIELD', field: 'preferences.pets', value: true }, envFor(PREFERENCIAS)), 'Marcar «Mascotas en casa»');
 check('desmarcarla', brain.describeAction({ type: 'SET_FIELD', field: 'preferences.pets', value: false }, envFor(PREFERENCIAS)), 'Desmarcar «Mascotas en casa»');
@@ -232,7 +233,7 @@ check('con la solicitud enviada, silencio', brain.observe(ctxFor(REVISION, { sub
   });
   const aviso = brain.observe(conRangos, { type: 'MEASUREMENTS_CHANGED', payload: { field: 'measurements.depth', value: 543 } });
   check('una medida fuera de lo habitual se avisa al escribirla, no solo en el paso 4', aviso.message,
-    '543 cm de fondo es mucho para tu sofá: lo habitual está entre 70 y 120 cm. Puedes corregirlo, o dejarlo así y un asesor lo confirma.');
+    '543 cm de fondo es mucho para tu sofá: lo habitual está entre 70 y 120 cm. Corrígelo para continuar.');
   check('sin proponer acciones: corregirla es del cliente', aviso.proposedActions, []);
   check('y devuelve campo y valor, para que la página no lo repita', [aviso.field, aviso.value], ['measurements.depth', 543]);
   check('una que queda corta se avisa igual', brain.observe(conRangos, { type: 'MEASUREMENTS_CHANGED', payload: { field: 'measurements.width', value: 20 } }).message.includes('20 cm de ancho es poco para tu sofá'), true);

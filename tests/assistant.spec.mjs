@@ -445,6 +445,28 @@ const trasResponder = await page.evaluate(() => ({
 check('cuando llega la respuesta los puntos se van, el envío vuelve y queda el mensaje',
   [trasResponder.puntos, trasResponder.envio, trasResponder.respuesta], [0, false, true]);
 
+console.log('\nEL AVISO DE UNA MEDIDA RARA SE VE EN EL CHAT (AUNQUE NADIE HAYA PREGUNTADO)');
+await gotoWizard();
+await page.evaluate(() => Store.markAssistantWelcomed());
+await gotoWizard();
+/* El cliente abre el chat y llena el formulario: no ha escrito nada EN el chat todavía. */
+await page.click('.journey .help-card [data-open-chat]');
+await page.evaluate(() => { const c = document.querySelector('.furniture-card'); if (c) c.click(); });
+await page.setInputFiles('#furniturePhoto', TRES);
+await page.waitForFunction(() => state.photos.length >= 3);
+for (let i = 0; i < 4 && await page.evaluate(() => ACI.stepId(state.step) !== 'MEASUREMENTS'); i++) { await page.click('#nextButton'); await page.waitForTimeout(200); }
+await page.fill('#depth', '543');
+await page.evaluate(() => document.getElementById('depth').dispatchEvent(new Event('change', { bubbles: true })));
+await page.waitForFunction(() => [...document.querySelectorAll('#messages .message.bot')].some(m => /543 cm de fondo es mucho/.test(m.textContent)));
+const aviso = await page.evaluate(() => {
+  const m = [...document.querySelectorAll('#messages .message.bot')].find(x => /543 cm de fondo es mucho/.test(x.textContent));
+  return { escrito: !!m, visible: m ? getComputedStyle(m).display !== 'none' : false,
+           hayPregunta: document.querySelectorAll('#messages .message.user').length };
+});
+check('el aviso queda escrito en la conversación', aviso.escrito, true);
+check('y se ve sin desplegar «Ver toda la conversación»: no hay pregunta que lo tape',
+  [aviso.hayPregunta, aviso.visible], [0, true]);
+
 console.log('\nLA CONVERSACIÓN VIVE EN LA BARRA, NO ENCIMA DEL COTIZADOR');
 await gotoWizard();
 await page.waitForTimeout(300);

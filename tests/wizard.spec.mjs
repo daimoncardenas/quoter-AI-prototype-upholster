@@ -14,7 +14,13 @@ async function reach(step){
   await page.setInputFiles('#furniturePhoto', png);
   await page.waitForFunction(()=>state.photos.length>=3);
   if(step>=2) await page.click('#nextButton');
-  if(step>=3){ await page.fill('#width','210'); await page.fill('#height','85'); await page.fill('#depth','90'); await page.click('#nextButton'); }
+  if(step>=3){
+    /* Medidas dentro de lo habitual para el mueble activo: el cotizador ya no deja seguir con
+     * otras (ver «MEDIDAS FUERA DE LO HABITUAL...»), así que el fixture sale de sus rangos. */
+    const m=await page.evaluate(()=>{const r=ACI.context().measurements.ranges,medio=k=>Math.round((r[k][0]+r[k][1])/2);
+      return {width:medio('measurements.width'),height:medio('measurements.height'),depth:medio('measurements.depth')}});
+    await page.fill('#width',String(m.width)); await page.fill('#height',String(m.height)); await page.fill('#depth',String(m.depth));
+    await page.click('#nextButton'); }
   if(step>=4) await page.click('#nextButton');
   if(step>=5){ await page.click('#analyzeButton'); await page.waitForFunction(()=>state.analyzed); await page.click('#nextButton'); }
   if(step>=6) await page.click('#nextButton');
@@ -339,6 +345,32 @@ check('y lo escrito no se reescribe solo', escrito.valor, 'Banco de piano');
 check('el contexto del asistente lleva la descripción', escrito.nota, 'Banco de piano');
 await page.click('#nextButton');
 check('con la descripción escrita el cotizador sigue', (await enMueble()).paso>sinDescripcion.paso, true);
+
+console.log('\nMEDIDAS MUY FUERA DE LO HABITUAL NO DEJAN SEGUIR — LA IA AVISA Y EL PASO BLOQUEA');
+await fresh();
+await page.evaluate(()=>{const c=document.querySelector('#serviceGrid .service-choice');if(c)c.click()});
+await page.click('#nextButton');
+await page.evaluate(()=>{document.querySelector('.furniture-card').click()});   // Sofá
+await page.setInputFiles('#furniturePhoto', png);
+await page.waitForFunction(()=>state.photos.length>=3);
+for(let i=0;i<4 && await page.evaluate(()=>ACI.stepId(state.step)!=='MEASUREMENTS');i++){ await page.click('#nextButton'); await page.waitForTimeout(200); }
+const enMedidas=await page.evaluate(()=>state.step);
+await page.fill('#width','210'); await page.fill('#height','85');
+await page.fill('#depth','200');   // muy fuera: lo habitual va de 70 a 120 y el margen llega hasta 130
+await page.click('#nextButton');
+const bloqueado=await page.evaluate(()=>({
+  paso:state.step,
+  error:!document.getElementById('measureError').hidden,
+  texto:document.getElementById('measureError').textContent}));
+check('con una medida muy fuera de lo habitual no se avanza, y el paso dice por qué',
+  [bloqueado.paso===enMedidas, bloqueado.error], [true, true]);
+check('y el error trae el número y el rango habitual del mueble, del propio cotizador',
+  /El fondo de 200 cm está muy fuera de lo habitual para sofá \(lo habitual: 70 a 120 cm\)/.test(bloqueado.texto), true);
+/* La medida es aproximada, no exacta: quedar apenas fuera de lo habitual no detiene a nadie. */
+await page.fill('#depth','130');   // apenas fuera (120), dentro del margen del 20 % (±10)
+await page.click('#nextButton');
+check('una medida aproximada, apenas fuera de lo habitual, sí deja seguir',
+  (await page.evaluate(()=>state.step))>enMedidas, true);
 
 console.log('\npage errors: ' + (errs.length?errs.join(' | '):'none'));
 console.log(fails?`\n${fails} FAILING`:'\nALL PASS');

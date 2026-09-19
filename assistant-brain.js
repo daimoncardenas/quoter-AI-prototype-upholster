@@ -136,7 +136,7 @@
   }
 
   function describeAction(action, env) {
-    if (action.type === 'NAVIGATE_TO_STEP') return `Volver al paso ${action.step} · ${stepOf(action.step).name}`;
+    if (action.type === 'NAVIGATE_TO_STEP') return `Volver al paso «${stepOf(action.step).name}»`;
     const def = FIELDS[action.field];
     if (action.type === 'FOCUS_FIELD') return `Ir a «${def.label}»`;
     if (def.set === 'boolean') return action.value ? `Marcar «${def.label}»` : `Desmarcar «${def.label}»`;
@@ -287,7 +287,7 @@
         field: p.field,
         value,
         message: `${value} cm de ${palabra} es ${value > max ? 'mucho' : 'poco'} para tu ${mueble}: ` +
-          `lo habitual está entre ${min} y ${max} cm. Puedes corregirlo, o dejarlo así y un asesor lo confirma.`,
+          `lo habitual está entre ${min} y ${max} cm. Corrígelo para continuar.`,
         notice: 'Encontré algo en tus medidas. Tócame para verlo.',
         proposedActions: []
       };
@@ -299,7 +299,7 @@
       const names = odd.map(k => labels[k] || k);
       const furniture = String(ctx.selectedFurniture || 'mueble').toLowerCase();
       return {
-        message: `En la revisión, ${joinEs(names)} quedó fuera de lo habitual para ${furniture}. Puedes seguir, o volver a Medidas para corregirlo.`,
+        message: `En la revisión, ${joinEs(names)} quedó fuera de lo habitual para ${furniture}. Vuelve a Medidas para corregirlo: el cotizador no sigue con esa medida.`,
         notice: 'Encontré algo en tus medidas. Tócame para verlo.',
         proposedActions: [{ type: 'NAVIGATE_TO_STEP', step: MEDIDAS }]
       };

@@ -55,7 +55,9 @@
   }
 
   /* `estimacion` es el texto que el cliente tiene a la vista: cualquier otra cifra es inventada.
-   * `permitido` es lo que el negocio declaró (hoy: nada). */
+   * `permitido` es lo que el negocio declaró (hoy: nada). `sinTema` lo usa la mirada de la revisión:
+   * una DESCRIPCIÓN de la foto no tiene que "responder" a nada —las reglas de promesa, cifras y
+   * relleno sí valen—, y sin esta salida una descripción limpia se caía por no nombrar el motivo. */
   function revisar(texto, opciones) {
     const t = String(texto || '');
     const estimacion = String((opciones && opciones.estimacion) || '');
@@ -76,7 +78,8 @@
       .filter(function (c) { return !base || !base.includes(c.replace(/\s/g, '')); });
 
     const limpio = t.trim();
-    const tema = (limpio.length < 12 || SALUDOS.test(limpio)) ? []
+    const tema = (opciones && opciones.sinTema) ? []
+      : (limpio.length < 12 || SALUDOS.test(limpio)) ? []
       : (/[a-záéíóúñ]/i.test(limpio) && !TEMA.test(limpio) ? ['no habla del motivo ni de los datos del negocio'] : []);
 
     return { cifras: cifras, promesas: promesas, tema: tema, limpia: !cifras.length && !promesas.length && !tema.length };
