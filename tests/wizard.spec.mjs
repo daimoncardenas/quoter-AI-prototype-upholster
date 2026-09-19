@@ -311,6 +311,35 @@ check('y las entradas que produjeron el número quedan para poder auditarlo',
    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(String(guardada.estimate.calculatedAt))],
   ['object', true, true, true, true, true]);
 
+console.log('\n«OTRO» PIDE LA DESCRIPCIÓN — Y NO DEJA SEGUIR SIN ELLA');
+await fresh();
+/* El cotizador puede preguntar la línea primero: se elige la primera para caer en «Tu mueble». */
+await page.evaluate(()=>{const c=document.querySelector('#serviceGrid .service-choice');if(c)c.click()});
+await page.click('#nextButton');
+const enMueble=()=>page.evaluate(()=>({
+  paso:state.step,
+  campo:!document.getElementById('furnitureOtherField').hidden,
+  visible:!!document.getElementById('furnitureOtherField').offsetParent,
+  valor:document.getElementById('furnitureOther').value,
+  mueble:state.furniture,
+  nota:ACI.context().furnitureNote}));
+check('con un mueble normal el campo no existe', [(await enMueble()).campo,(await enMueble()).visible], [false,false]);
+await page.click('.furniture-card:has-text("Otro")');
+const conOtro=await enMueble();
+check('elegir «Otro» abre el campo para contarlo', [conOtro.campo, conOtro.visible, conOtro.mueble], [true, true, 'Otro']);
+await page.setInputFiles('#furniturePhoto', png);
+await page.waitForFunction(()=>state.photos.length>=3);
+await page.click('#nextButton');
+const sinDescripcion=await enMueble();
+check('sin la descripción no se avanza, y el error lo dice',
+  [sinDescripcion.paso===conOtro.paso, await page.isVisible('#furnitureOtherError')], [true, true]);
+await page.fill('#furnitureOther','Banco de piano');
+const escrito=await enMueble();
+check('y lo escrito no se reescribe solo', escrito.valor, 'Banco de piano');
+check('el contexto del asistente lleva la descripción', escrito.nota, 'Banco de piano');
+await page.click('#nextButton');
+check('con la descripción escrita el cotizador sigue', (await enMueble()).paso>sinDescripcion.paso, true);
+
 console.log('\npage errors: ' + (errs.length?errs.join(' | '):'none'));
 console.log(fails?`\n${fails} FAILING`:'\nALL PASS');
 await browser.close(); process.exit(fails?1:0);

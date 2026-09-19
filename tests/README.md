@@ -49,7 +49,12 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   to be `null` — checking its estimate step, what it says is pending and the frozen
   `pieza` snapshot that travels with the request. The progress bar is measured at
   8 and 10 rows (`scrollHeight === clientHeight`, Lía's gap unmoved):
-  `docs/journeys.md` §10 is the contract behind all of it.
+  `docs/journeys.md` §10 is the contract behind all of it. The furniture step's
+  **«Otro»** has its own section there: the description field exists only with that option
+  chosen (`#furnitureOtherField`, keyed by the catalogue's id), the step refuses to advance
+  without an answer (and says so), what was written is not rewritten by the code, the
+  customer's words reach the assistant's context as `furnitureNote`, and with them written the
+  wizard goes on — `docs/mueble-otro.md` is the contract.
 - `review.spec.mjs` — step 4: that the checks report the photo's real
   dimensions and the measurement ranges per furniture type, and never claim to
   have recognised the furniture in the image.

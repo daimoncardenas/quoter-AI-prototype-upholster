@@ -202,6 +202,21 @@ const errs = [];
   check('y la medida que acaba de escribir', ultimoTurno.includes(`medidas ${despues.ancho} ×`), true);
   check('sin recrear la sesión: la conversación no pierde el hilo',
     await p.evaluate(() => window.__sesiones), 1);
+  /* Y con «Otro» elegido, la descripción del cliente viaja pegada al mueble. */
+  await p.evaluate(() => {
+    const card = [...document.querySelectorAll('.furniture-card')].find(c => c.dataset.furniture === 'Otro');
+    card.click();
+    const campo = document.getElementById('furnitureOther');
+    campo.value = 'silla de barbería';
+    campo.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await p.evaluate(() => askAssistant('¿qué mueble tengo?'));
+  await p.waitForTimeout(600);
+  const turnoConOtro = await p.evaluate(() => window.__pedidos.at(-1));
+  check('«Otro» viaja con las palabras del cliente, no como un nombre vacío',
+    turnoConOtro.includes('Mueble: Otro (el cliente lo describe: «silla de barbería»)'), true);
+  check('y el contexto del asistente lleva esa descripción',
+    await p.evaluate(() => ACI.context().furnitureNote), 'silla de barbería');
   await p.close();
 }
 

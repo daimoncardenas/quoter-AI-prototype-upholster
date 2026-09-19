@@ -38,7 +38,15 @@
 .service-choice small{font-size:.7rem;color:var(--muted);margin-top:4px;line-height:1.45}
 .service-choice .go{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);opacity:.72;white-space:nowrap;border-bottom:1px solid currentColor;padding-bottom:1px}
 .service-choice:hover .go,.service-choice.selected .go{opacity:1}
-.service-choice.selected .go:after{content:" ✓"}.furniture-card{min-height:126px;background:white;border:1px solid var(--line);border-radius:4px;padding:18px;text-align:left;color:var(--ink);transition:.2s}.furniture-card:hover{border-color:var(--accent);transform:translateY(-2px)}.furniture-card.selected{border:2px solid var(--accent);background:var(--tint-selected-tint);box-shadow:0 10px 25px rgba(var(--rgb-accent),.10)}.furniture-icon{font:600 2.2rem var(--font-heading);display:block;color:var(--accent);height:43px}.furniture-card b,.furniture-card small{display:block}.furniture-card b{font:600 1.1rem var(--font-heading)}.furniture-card small{font-size:.68rem;color:var(--muted);margin-top:4px}.upload-zone{margin-top:18px;border:1px dashed var(--tint-dashed-border);border-radius:4px;min-height:118px;padding:18px;background:var(--tint-upload-zone-bg);display:flex;align-items:center}.upload-zone.dragging{border-color:var(--accent);background:var(--tint-selected-tint)}.upload-copy{width:100%;display:flex;align-items:center;gap:16px}.upload-copy>div{flex:1}.upload-copy b{font-size:.82rem;color:var(--ink)}.upload-copy p{font-size:.68rem;color:var(--muted);margin:5px 0 0}.upload-icon{width:45px;height:45px;border-radius:50%;display:grid;place-items:center;background:var(--tint-icon-circle-bg);color:var(--ink);font-size:1.35rem}.upload-zone{flex-direction:column;align-items:stretch;gap:14px}.photo-strip{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}.photo-strip:empty{display:none}.photo-thumb{position:relative;width:58px;height:54px;border-radius:3px;background-size:cover;background-position:center;border:1px solid var(--line)}.photo-thumb button{position:absolute;top:-6px;right:-6px;width:19px;height:19px;border-radius:50%;border:0;background:var(--ink);color:#fff;font-size:.68rem;line-height:1;display:grid;place-items:center;padding:0}.photo-thumb button:hover{background:#a94848}.photo-count{font-size:.63rem;color:var(--muted);align-self:center}.secondary-button,.back-button,.primary-button{border:0;border-radius:2px;padding:13px 19px;font-weight:700;font-size:.75rem;transition:.2s}.secondary-button{background:white;color:var(--ink);border:1px solid var(--tint-secondary-border)}.secondary-button:hover{border-color:var(--accent)}.primary-button{background:var(--ink);color:#fff;box-shadow:0 8px 18px rgba(var(--rgb-shadow),.15)}.primary-button:hover{background:var(--ink-2);transform:translateY(-1px)}.primary-button:disabled{opacity:.45;cursor:not-allowed;transform:none}.field-error{color:#a64040;font-size:.72rem;margin:7px 0}.measure-guide{display:grid;grid-template-columns:minmax(260px,.9fr) 1.2fr;gap:38px}.measure-visual{background:var(--ink);border-radius:4px;color:#fff;padding:28px}.furniture-drawing{height:210px;margin:25px 16px 40px;position:relative}.drawing-shape{height:100%;display:grid;place-items:center;box-sizing:border-box;padding:0 30px}.drawing-shape svg{width:100%;height:100%;color:rgba(255,255,255,.62)}.drawing-shape svg [fill=solid]{fill:var(--ink-2)}.furniture-drawing>span{position:absolute;font-size:.62rem;color:var(--gold-light);letter-spacing:.06em}.width-line{left:25%;bottom:-28px}.height-line{left:-18px;top:35%;transform:rotate(-90deg)}.depth-line{right:-13px;top:-20px}.measure-visual p{font-size:.68rem;line-height:1.55;color:var(--tint-measure-visual-text)}.measure-fields,.select-grid,.contact-fields{display:grid;grid-template-columns:1fr 1fr;gap:18px}.measure-fields label,.select-grid label,.contact-fields label{font-size:.72rem;font-weight:700;color:var(--ink);position:relative}.field-note{position:static;display:block;margin-top:6px;font-size:.62rem;font-weight:500;color:var(--muted);line-height:1.4}.measure-fields label>span.unit{position:absolute;right:13px;bottom:15px;color:var(--tint-unit-label);font-weight:500}.measure-fields input,.measure-fields select,.select-grid select,.contact-fields input{width:100%;margin-top:8px;border:1px solid var(--line);background:white;border-radius:2px;padding:14px;color:var(--text);font-size:.8rem;min-height:47px}.measure-fields input:invalid:not(:placeholder-shown),.contact-fields input:invalid:not(:placeholder-shown){border-color:#b55}.preference-layout{display:grid;gap:30px}.choice-group h3{font:600 1.25rem var(--font-heading);color:var(--ink);margin:0 0 13px}
+/* «Otro» no dice qué mueble es: el cotizador lo pregunta en el paso del mueble y la respuesta
+   del cliente es la que viaja (al contexto del asistente). «Otro» a secas no le dice nada a nadie. */
+.furniture-other{margin-top:14px;display:grid;gap:8px}
+.furniture-other[hidden]{display:none}
+.furniture-other label{font-size:.72rem;font-weight:700;color:var(--ink)}
+.furniture-other label small{display:block;margin-top:5px;font-size:.62rem;font-weight:500;color:var(--muted);line-height:1.45}
+.furniture-other input{width:100%;margin-top:4px;border:1px solid var(--line);background:white;border-radius:2px;padding:14px;color:var(--text);font-size:.8rem;min-height:47px}
+.service-choice.selected .go:after{content:" ✓"}.furniture-card{min-height:126px;background:white;border:1px solid var(--line);border-radius:4px;padding:18px;text-align:left;color:var(--ink);transition:.2s}.furniture-card:hover{border-color:var(--accent);transform:translateY(-2px)}.furniture-card.selected{border:2px solid var(--accent);background:var(--tint-selected-tint);box-shadow:0 10px 25px rgba(var(--rgb-accent),.10)}.furniture-icon{font:600 2.2rem var(--font-heading);display:block;color:var(--accent);height:43px}.furniture-card b,.furniture-card small{display:block}.furniture-card b{font:600 1.1rem var(--font-heading)}.furniture-card small{font-size:.68rem;color:var(--muted);margin-top:4px}.upload-zone{margin-top:18px;border:1px dashed var(--tint-dashed-border);border-radius:4px;min-height:118px;padding:18px;background:var(--tint-upload-zone-bg);display:flex;align-items:center}.upload-zone.dragging{border-color:var(--accent);background:var(--tint-selected-tint)}.upload-copy{width:100%;display:flex;align-items:center;gap:16px}.upload-copy>div{flex:1}.upload-copy b{font-size:.82rem;color:var(--ink)}.upload-copy p{font-size:.68rem;color:var(--muted);margin:5px 0 0}.upload-icon{width:45px;height:45px;border-radius:50%;display:grid;place-items:center;background:var(--tint-icon-circle-bg);color:var(--ink);font-size:1.35rem}.upload-zone{flex-direction:column;align-items:stretch;gap:14px}.photo-strip{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}.photo-strip:empty{display:none}.photo-thumb{position:relative;width:58px;height:54px;border-radius:3px;background-size:cover;background-position:center;border:1px solid var(--line)}.photo-thumb button{position:absolute;top:-6px;right:-6px;width:19px;height:19px;border-radius:50%;border:0;background:var(--ink);color:#fff;font-size:.68rem;line-height:1;display:grid;place-items:center;padding:0}.photo-thumb button:hover{background:#a94848}.photo-count{font-size:.63rem;color:var(--muted);align-self:center}.secondary-button,.back-button,.primary-button{border:0;border-radius:2px;padding:13px 19px;font-weight:700;font-size:.75rem;transition:.2s}.secondary-button{background:white;color:var(--ink);border:1px solid var(--tint-secondary-border)}.secondary-button:hover{border-color:var(--accent)}.primary-button{background:var(--ink);color:#fff;box-shadow:0 8px 18px rgba(var(--rgb-shadow),.15)}.primary-button:hover{background:var(--ink-2);transform:translateY(-1px)}.primary-button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.field-error{color:#a64040;font-size:.72rem;margin:7px 0}.measure-guide{display:grid;grid-template-columns:minmax(260px,.9fr) 1.2fr;gap:38px}.measure-visual{background:var(--ink);border-radius:4px;color:#fff;padding:28px}.furniture-drawing{height:210px;margin:25px 16px 40px;position:relative}.drawing-shape{height:100%;display:grid;place-items:center;box-sizing:border-box;padding:0 30px}.drawing-shape svg{width:100%;height:100%;color:rgba(255,255,255,.62)}.drawing-shape svg [fill=solid]{fill:var(--ink-2)}.furniture-drawing>span{position:absolute;font-size:.62rem;color:var(--gold-light);letter-spacing:.06em}.width-line{left:25%;bottom:-28px}.height-line{left:-18px;top:35%;transform:rotate(-90deg)}.depth-line{right:-13px;top:-20px}.measure-visual p{font-size:.68rem;line-height:1.55;color:var(--tint-measure-visual-text)}.measure-fields,.select-grid,.contact-fields{display:grid;grid-template-columns:1fr 1fr;gap:18px}.measure-fields label,.select-grid label,.contact-fields label{font-size:.72rem;font-weight:700;color:var(--ink);position:relative}.field-note{position:static;display:block;margin-top:6px;font-size:.62rem;font-weight:500;color:var(--muted);line-height:1.4}.measure-fields label>span.unit{position:absolute;right:13px;bottom:15px;color:var(--tint-unit-label);font-weight:500}.measure-fields input,.measure-fields select,.select-grid select,.contact-fields input{width:100%;margin-top:8px;border:1px solid var(--line);background:white;border-radius:2px;padding:14px;color:var(--text);font-size:.8rem;min-height:47px}.measure-fields input:invalid:not(:placeholder-shown),.contact-fields input:invalid:not(:placeholder-shown){border-color:#b55}.preference-layout{display:grid;gap:30px}.choice-group h3{font:600 1.25rem var(--font-heading);color:var(--ink);margin:0 0 13px}
 .journey-context{display:flex;align-items:center;gap:10px;margin:0 0 16px;flex-wrap:wrap}
 .journey-context>span{text-transform:uppercase;letter-spacing:.13em;font-weight:700;font-size:.62rem;color:var(--muted)}
 .journey-context b{font:600 .95rem var(--font-heading);color:var(--ink)}
@@ -326,6 +334,14 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
           <div class="furniture-grid" role="radiogroup" aria-label="Tipo de mueble"></div>
           <input type="hidden" id="furnitureType" value="Sofá">
 
+          <!-- «Otro» no dice qué mueble es: se pregunta aquí, con las palabras del cliente, y sin
+               respuesta no se avanza (validStep). Solo existe con esa opción elegida. -->
+          <div class="furniture-other" id="furnitureOtherField" hidden>
+            <label for="furnitureOther">¿Cuál es el mueble? <small>«Otro» no le dice nada al taller: cuéntanos qué vas a tapizar.</small></label>
+            <input type="text" id="furnitureOther" maxlength="80" placeholder="Ej. banco de piano, silla de barbería…">
+          </div>
+          <p class="field-error" id="furnitureOtherError" hidden></p>
+
           <div class="upload-zone" id="uploadZone">
             <input id="furniturePhoto" type="file" accept="image/*" multiple hidden>
             <div class="upload-copy">
@@ -537,8 +553,9 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
     <p class="demo-author">Hecho por <b>CARDYRAM</b></p>
   </aside>
 {{ASSISTANT_BRAIN_SCRIPT}}
+{{ASSISTANT_FENCE_SCRIPT}}
   <script>
-const state={step:1,furniture:'Sofá',photos:[],analyzed:false,fabric:null,fabricTouched:false,service:null,damages:[]};
+const state={step:1,furniture:'Sofá',furnitureNote:'',photos:[],analyzed:false,fabric:null,fabricTouched:false,service:null,damages:[]};
 const steps=[...document.querySelectorAll('.wizard-step')];
 const nextButton=document.getElementById('nextButton');
 const backButton=document.getElementById('backButton');
@@ -553,7 +570,6 @@ const money=n=>Store.money(n);
 const ESTIMATE_ENGINE_VERSION=1;
 // Furniture types, their consumption rules and their plausible measurement
 // ranges are all defined in the backoffice; nothing about them lives here.
-{{ASSISTANT_FENCE_SCRIPT}}
 let furnitureRules={},measureRanges={};
 const MEASURE_LABELS={width:'ancho',height:'alto',depth:'fondo'};
 // The catalog lives in the backoffice. Read it on every render so a tela
@@ -612,6 +628,8 @@ const ACI=(()=>{
       submitted:!!state.submitted,
       service:state.service?{id:state.service.id,label:state.service.label,journey:state.service.journey}:null,
       selectedFurniture:state.furniture,
+      // «Otro» no dice qué mueble es: la descripción del cliente es la que lo dice (y solo con esa opción).
+      furnitureNote:esMuebleOtro()?byId('furnitureOther').value.trim()||null:null,
       measurements:{width:num('width'),height:num('height'),depth:num('depth'),
         quantity:{value:+seats.value||1,label:selText(seats)},cushions:cojines(),coverage:byId('coverage').value,
         // Lo que el propio cotizador considera habitual para este mueble (lo usa
@@ -759,6 +777,7 @@ function renderFurnitureOptions(){
   furnitureCards.forEach(card=>card.addEventListener('click',()=>selectFurniture(card)));
   if(!list.some(f=>f.name===state.furniture))state.furniture=list.length?list[0].name:'';
   document.getElementById('furnitureType').value=state.furniture;
+  syncOtherFurniture();
 }
 
 function renderPreferenceOptions(){
@@ -848,12 +867,31 @@ function renderQuantityOptions(){
   renderFurnitureDrawing(rule.id);
 }
 
+/* «Otro» no dice qué mueble es, así que el cotizador lo pregunta: el campo existe solo con esa
+ * opción elegida —decidido por el id del catálogo, no por el nombre: el backoffice puede
+ * renombrarla— y lo que escriba el cliente viaja en el contexto del asistente
+ * (ACI.context().furnitureNote) además de quedarse para volver a él si cambia de opción. */
+function esMuebleOtro(){ const r=furnitureRules[state.furniture]; return !!(r&&r.id==='otro'); }
+function syncOtherFurniture(){
+  const campo=document.getElementById('furnitureOtherField');
+  const input=document.getElementById('furnitureOther');
+  if(!campo)return;
+  campo.hidden=!esMuebleOtro();
+  if(input.value!==state.furnitureNote)input.value=state.furnitureNote;
+  if(campo.hidden)document.getElementById('furnitureOtherError').hidden=true;
+}
+document.getElementById('furnitureOther').addEventListener('input',e=>{
+  state.furnitureNote=e.target.value.trim();
+  if(state.furnitureNote)document.getElementById('furnitureOtherError').hidden=true;
+});
+
 function selectFurniture(card){
   furnitureCards.forEach(c=>{const on=c===card;c.classList.toggle('selected',on);c.setAttribute('aria-checked',String(on));c.tabIndex=on?0:-1});
   state.furniture=card.dataset.furniture;
   document.getElementById('furnitureType').value=state.furniture;
   document.querySelectorAll('[data-furniture-label]').forEach(x=>x.textContent=state.furniture.toLowerCase());
   renderQuantityOptions();
+  syncOtherFurniture();
   ACI.emit('FURNITURE_SELECTED',{furniture:state.furniture,furnitureId:(furnitureRules[state.furniture]||{}).id||null});
 }
 // A radiogroup has to be navigable with the arrow keys, not just Tab.
@@ -935,6 +973,13 @@ function validStep(){
       serviceError.textContent='Elige qué quieres hacer para continuar.';
       serviceError.hidden=false;document.getElementById('serviceGrid').scrollIntoView({behavior:'smooth',block:'center'});return false}}
   if(state.step===1){
+    if(esMuebleOtro()&&!document.getElementById('furnitureOther').value.trim()){
+      const err=document.getElementById('furnitureOtherError');
+      err.textContent='Cuéntanos cuál es el mueble para continuar: «Otro» no dice qué hay que tapizar.';
+      err.hidden=false;
+      document.getElementById('furnitureOther').focus({preventScroll:true});
+      document.getElementById('furnitureOtherField').scrollIntoView({behavior:'smooth',block:'center'});
+      return false}
     const {min}=photoLimits();
     if(state.photos.length<min){
       const faltan=min-state.photos.length;
