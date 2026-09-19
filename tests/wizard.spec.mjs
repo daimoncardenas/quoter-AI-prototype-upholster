@@ -372,6 +372,38 @@ await page.click('#nextButton');
 check('una medida aproximada, apenas fuera de lo habitual, sí deja seguir',
   (await page.evaluate(()=>state.step))>enMedidas, true);
 
+console.log('\nLOS PASOS DE PREGUNTA REPARTEN EL PANEL — TARJETAS GRANDES, SIN HUECO ABAJO');
+/* El diseño: el paso de pregunta llena el panel, las tarjetas de opción crecen hasta su tope y lo
+ * que sobra se centra dentro del grupo (la mitad de aire arriba del bloque, la mitad abajo). Se mide
+ * aquí, a 1280×720 (el viewport de la suite): antes de esto las tarjetas medían 52 px de alto y el
+ * paso del relleno dejaba 244 px muertos entre las tarjetas y «Continuar». */
+const medirGrupo = () => page.evaluate(() => {
+  const act = document.querySelector('.wizard-step.active');
+  const grupo = act.querySelector('.choice-group'), h3 = grupo.querySelector('h3');
+  const grid = grupo.querySelector('.chip-grid'), tarjeta = grid.querySelector('span');
+  const g = grupo.getBoundingClientRect(), gr = grid.getBoundingClientRect(), t = h3.getBoundingClientRect();
+  return { paso: act.dataset.step, tarjeta: Math.round(tarjeta.getBoundingClientRect().height),
+    arriba: Math.round(t.top - g.top), abajo: Math.round(g.bottom - gr.bottom) };
+});
+const abrirEnElPaso = async (linea, paso) => {
+  await page.goto(D + 'index.html');
+  await page.evaluate((db) => { localStorage.clear(); indexedDB.deleteDatabase(db); }, PHOTOS_DB);
+  await page.reload();
+  await page.click(`#serviceGrid .service-choice:has-text("${linea}")`);
+  await page.click('#nextButton');
+  await page.evaluate((n) => showStep(n), paso);
+  await page.waitForTimeout(250);
+  return medirGrupo();
+};
+const tapizado = await abrirEnElPaso('Muebles a la medida', 11);
+check('las tarjetas de opción son altas de verdad (no la tira de 52 px de antes)',
+  tapizado.tarjeta >= 150, true);
+check('y el bloque se centra: el aire de arriba y el de abajo se diferencian en menos de 12 px',
+  Math.abs(tapizado.arriba - tapizado.abajo) <= 12, true);
+const limpieza = await abrirEnElPaso('Mantenimiento y limpieza', 3);
+check('el mismo reparto en otro motivo (mantenimiento y limpieza)',
+  [limpieza.tarjeta >= 150, Math.abs(limpieza.arriba - limpieza.abajo) <= 12], [true, true]);
+
 console.log('\npage errors: ' + (errs.length?errs.join(' | '):'none'));
 console.log(fails?`\n${fails} FAILING`:'\nALL PASS');
 await browser.close(); process.exit(fails?1:0);

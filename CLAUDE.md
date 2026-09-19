@@ -314,6 +314,19 @@ idénticos (623,222 / 234×222 / 644 a 1440×900; 755,268 / 286×268 / 781 a 192
 `tests/wizard.spec.mjs`, «LA BARRA NO CRECE CON LOS PASOS» — compara nueve contra siete, nunca
 contra un número escrito a mano.
 
+**Los pasos de pregunta llenan el panel (diseño).** El dueño lo pidió con una captura: «several steps
+… has big empty spaces without reason … you can fix with card or select that can more big.. but with
+sense of aesthetics … is only design». Las tarjetas de opción crecen con la ventana
+(`min-height: clamp(50px,6.4vh,72px)` y la fila estira hasta `min(210px,26vh)`) y el bloque del grupo
+se centra con `safe center`, así que lo que sobra se reparte arriba y abajo en vez de acumularse contra
+«Continuar». Medido a 1341×768: el paso del relleno pasó de tarjetas de 291×52 con 278 px muertos a
+tarjetas de 290×200 con 66 px de aire ya centrado (materiales 104 → 19, daños 216 → 82, preferencias
+216 → 19, el mueble 99 → 34). Los dos selectores de materiales van en dos columnas y los campos
+numéricos de los pasos de pregunta tienen el alto de todos los demás campos del cotizador. Checks:
+`tests/wizard.spec.mjs`, «LOS PASOS DE PREGUNTA REPARTEN EL PANEL» (tarjeta ≥ 150 px y
+|aire arriba − aire abajo| ≤ 12 px, en dos motivos distintos). Tabla completa y regla:
+`docs/equilibrio-de-pasos.md`.
+
 - `tools/client-pack.mjs` → `validateServiceLines()` (el catálogo compartido se valida a sí mismo:
   ids únicos, journeys y planes conocidos, al menos una línea `base`; el paquete no declara líneas,
   solo su marca, su `senderEmail` y sus namespaces).

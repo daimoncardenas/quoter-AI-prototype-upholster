@@ -58,6 +58,10 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   MORE than 20 % beyond the furniture's usual ranges — the same `ranges` the step-4 review and the
   assistant use — stops «Continuar» with its own error naming the number and the range, while an
   approximate measure only a little outside (and the edge itself) passes (`docs/journeys.md` §6).
+  It closes measuring the **layout of the question steps** their own way: option cards at least 150 px
+  tall and the group's block centred (|air above − air below| ≤ 12 px), on two motivos — the rule is
+  that a step with a question fills the panel instead of stacking its cards at the top and leaving the
+  void above «Continuar» (`docs/equilibrio-de-pasos.md`).
 - `review.spec.mjs` — step 4: that the checks report the photo's real
   dimensions and the measurement ranges per furniture type, and that the checks
   never claim to have recognised the furniture in the image — plus the local
