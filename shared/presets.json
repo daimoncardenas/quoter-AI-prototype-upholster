@@ -1,6 +1,6 @@
 {
   "demo": true,
-  "nota": "Precios DEMO para el prototipo. La composición (Core + servicios) es el formato del modelo v2 (docs/paquetes-y-precios.md); las cifras NO son una tarifa aprobada. Los nombres de paquete y sus líneas sí son reales: son la matriz que ya vende el producto (Taller=Essential 2, Empresa=Professional 5, Distribuidor=Business 8).",
+  "nota": "Precios DEMO para el prototipo. La composición (Core + servicios) es el formato del modelo v2 (docs/paquetes-y-precios.md); las cifras NO son una tarifa aprobada salvo las que el dueño fijó en su texto de «Planes ACI» (19 de septiembre: 399.000 / 899.000 / 1.490.000 al mes; 299.000 / 799.000 / 1.390.000 al año; activación inicial de una mensualidad). Los nombres de paquete y sus líneas sí son reales: son la matriz que ya vende el producto (Taller=Essential 2, Empresa=Professional 5, Distribuidor=Business 8) — OJO: el texto del dueño dice «hasta 4 líneas» en Empresa, así que el 5 es una decisión de composición pendiente de su palabra.",
   "currency": "COP",
   "period": "mes",
   "plans": { "Essential": "taller", "Professional": "empresa", "Business": "distribuidor" },
@@ -40,15 +40,15 @@
     "tapiceria-arquitectonica": 100000,
     "mantenimiento": 70000
   },
-  "precioNota": "Manda el precio POR MES: la composición (Core + servicios + capacidades) suma EXACTO el precio mes a mes del paquete — 399.000 / 899.000 / 1.490.000 — que es el que se paga cada mes y el que se ve en la tarjeta con «Mes». El de contrato de arrendamiento a 12 meses es MÁS BAJO (299.000 / 699.000 / 1.290.000, `priceYearly`) y se muestra aparte: el mismo plan, con el compromiso de un año. La tarjeta de Planes y «Configurar mi plan» leen lo mismo (`Store.planPrice`).",
+  "precioNota": "Manda el precio POR MES: la composición (Core + servicios + capacidades) suma EXACTO el precio mes a mes del paquete — 399.000 / 899.000 / 1.490.000 — que es el que se paga cada mes y el que se ve en la tarjeta con «Mes». El de contrato de arrendamiento a 12 meses es MÁS BAJO y se muestra aparte: 299.000 / 799.000 / 1.390.000 (`priceYearly`, cifras del dueño del 19 de septiembre) — el mismo plan, con el compromiso de un año. La tarjeta de Planes y «Configurar mi plan» leen lo mismo (`Store.planPrice`). `activation` es la activación inicial: una mensualidad (399.000 / 899.000 / 1.490.000), que se paga al contratar mes a mes y va INCLUIDA en la contratación anual (condiciones generales del dueño, 19 de septiembre).",
   "presets": [
-    { "id": "taller", "label": "Taller", "hint": "Recomendado para comenzar", "price": 399000, "priceYearly": 299000, "lines": ["suministro-tela", "retapizado"],
+    { "id": "taller", "label": "Taller", "hint": "Recomendado para comenzar", "price": 399000, "priceYearly": 299000, "activation": 399000, "lines": ["suministro-tela", "retapizado"],
       "capabilities": [],
       "quota": { "quotes": 30, "aiCredits": 75, "storageGB": 1, "users": 1, "locations": 1, "historyMonths": 3 } },
-    { "id": "empresa", "label": "Empresa de muebles", "hint": "Varios oficios en el mismo taller", "price": 899000, "priceYearly": 699000, "lines": ["suministro-tela", "retapizado", "cambio-de-tela", "reparacion", "a-la-medida"],
+    { "id": "empresa", "label": "Empresa de muebles", "hint": "Varios oficios en el mismo taller", "price": 899000, "priceYearly": 799000, "activation": 899000, "lines": ["suministro-tela", "retapizado", "cambio-de-tela", "reparacion", "a-la-medida"],
       "capabilities": ["dominio", "asignacion", "analitica", "marca-blanca"],
       "quota": { "quotes": 90, "aiCredits": 300, "storageGB": 5, "users": 3, "locations": 3, "historyMonths": 12 } },
-    { "id": "distribuidor", "label": "Distribuidor", "hint": "Todo el catálogo, proyectos y obra", "price": 1490000, "priceYearly": 1290000, "lines": ["suministro-tela", "retapizado", "cambio-de-tela", "reparacion", "a-la-medida", "proyecto-comercial", "tapiceria-arquitectonica", "mantenimiento"],
+    { "id": "distribuidor", "label": "Distribuidor", "hint": "Todo el catálogo, proyectos y obra", "price": 1490000, "priceYearly": 1390000, "activation": 1490000, "lines": ["suministro-tela", "retapizado", "cambio-de-tela", "reparacion", "a-la-medida", "proyecto-comercial", "tapiceria-arquitectonica", "mantenimiento"],
       "capabilities": ["dominio", "plantillas", "export-csv", "soporte", "asignacion", "analitica", "marca-blanca", "asistentes-extra"],
       "quota": { "quotes": 300, "aiCredits": 1000, "storageGB": 15, "users": 10, "locations": 10, "historyMonths": 12 } }
   ]

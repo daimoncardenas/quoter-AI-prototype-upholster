@@ -792,6 +792,13 @@
       var v = (billing === 'anual' && p.priceYearly != null) ? p.priceYearly : p.price;
       return Math.max(0, +v || 0);
     },
+    /* La activación inicial del paquete (una mensualidad, texto del dueño del 19/09: se paga al
+     * contratar mes a mes y va INCLUIDA en la contratación anual). Vive en el paquete, como el precio,
+     * para que la tarjeta de Planes y «Configurar mi plan» no puedan discrepar. */
+    planActivation: function (name) {
+      var p = Store.presetForPlan(name);
+      return p ? Math.max(0, +p.activation || 0) : 0;
+    },
     /* Las capacidades del catálogo (dominio, analítica, asignación, marca blanca, plantillas, CSV,
      * integraciones, soporte…): cada una con SU valor y su estado, como los servicios. Se activan
      * de a una; los paquetes recomendados vienen con las suyas marcadas. */

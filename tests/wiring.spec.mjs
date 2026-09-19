@@ -824,7 +824,7 @@ const preciosDePaquetesYPlanes = () => page.evaluate(() => {
 });
 check('Año: las tarjetas muestran el precio del contrato y los paquetes el del mes',
   await preciosDePaquetesYPlanes(),
-  { planes: ['299000', '699000', '1290000'], paquetes: ['399000', '899000', '1490000'] });
+  { planes: ['299000', '799000', '1390000'], paquetes: ['399000', '899000', '1490000'] });
 /* La suma de las PARTES tiene que dar EXACTO el precio POR MES del paquete (Core + sus servicios
  * + sus capacidades): si alguien mueve una cifra del catálogo, esta comprobación lo dice en voz
  * alta en vez de dejar dos cuentas que no cuadran. */
@@ -860,24 +860,44 @@ check('ninguna tarjeta de plan muestra el nombre interno, ni en el título ni en
   [0, 0, 0]);
 check('cada precio se arma con Store.money, no a mano',
   await page.$$eval('#plansGrid .plan-price', els => els.map(e => e.textContent)),
-  await page.evaluate(() => [299000, 699000, 1290000].map(n => Store.money(n) + ' + IVA COP / mes')));
+  await page.evaluate(() => [299000, 799000, 1390000].map(n => Store.money(n) + ' + IVA COP / mes')));
 /* El precio del catálogo es ANTES de IVA y las tarjetas tienen que decirlo: cada una lleva su
  * «+ IVA» pegado a la cifra (el dueño: «esto es importante»). */
 check('cada tarjeta dice «+ IVA» junto a su precio',
   await page.$$eval('#plansGrid .plan-card .plan-iva', els => els.map(e => e.textContent)),
   ['+ IVA', '+ IVA', '+ IVA']);
-check('conteo de ítems — Essential: 17 incluye + 12 límites, Professional: 15 incluye + 3 límites, Business: 11',
+check('conteo de ítems — Taller: 17 Incluye + 7 Capacidad + 6 No incluye, Empresa: 11 + 7 + 4, Distribuidor: 7 + 7 + 4',
   await page.$$eval('#plansGrid .plan-card', cards => cards.map(c => {
     const lists = c.querySelectorAll('.plan-list');
-    return { incluye: lists[0].children.length, limites: lists[1] ? lists[1].children.length : 0 };
+    return { incluye: lists[0].children.length, capacidad: lists[1].children.length, noIncluye: lists[2].children.length };
   })),
-  [{ incluye: 17, limites: 12 }, { incluye: 15, limites: 3 }, { incluye: 11, limites: 0 }]);
-check('los límites de Professional son exactamente estos tres, en este orden',
+  [{ incluye: 17, capacidad: 7, noIncluye: 6 }, { incluye: 11, capacidad: 7, noIncluye: 4 }, { incluye: 7, capacidad: 7, noIncluye: 4 }]);
+check('los «No incluye» de Empresa de muebles son exactamente estos cuatro, en este orden',
   await page.$$eval('#plansGrid .plan-card', cards => {
-    const limitsList = cards[1].querySelectorAll('.plan-list')[1];
+    const limitsList = cards[1].querySelectorAll('.plan-list')[2];
     return [...limitsList.children].map(li => li.textContent);
   }),
-  ['Sin integraciones estandarizadas.', 'Sin exportación CSV por cuenta propia.', 'Una plantilla estándar de cotización.']);
+  ['Exportación CSV por cuenta propia.', 'Integraciones.', 'Migraciones diferentes de la importación inicial incluida.', 'Fórmulas, flujos o reglas desarrollados exclusivamente para el cliente.']);
+/* La activación inicial es del texto de planes del dueño (19/09): el monto vive en el paquete
+ * (Store.planActivation) y la modalidad decide cómo se lee — se paga mes a mes, va incluida en Año. */
+check('con Año, las tres tarjetas dicen que la activación inicial va incluida en el contrato',
+  await page.$$eval('#plansGrid .plan-activation', els => els.map(e => e.textContent)),
+  ['Activación inicial incluida con el contrato a 12 meses.',
+   'Activación inicial incluida con el contrato a 12 meses.',
+   'Activación inicial incluida con el contrato a 12 meses.']);
+check('y cada tarjeta puede desplegar lo que la activación incluye, con su lista del texto del dueño',
+  await page.$$eval('#plansGrid .plan-details', els => els.map(e => [e.querySelector('summary').textContent, e.querySelectorAll('li').length])),
+  [['La activación incluye', 8], ['La activación incluye', 10], ['La activación incluye', 10]]);
+check('bajo las tarjetas van las dos hojas del texto: Desarrollo exclusivo y Condiciones generales',
+  await page.evaluate(() => {
+    const f = document.querySelector('#panelPlanes .plans-footnotes');
+    return { titulos: [...f.querySelectorAll('h3')].map(h => h.textContent),
+             exclusivo: f.querySelector('p').textContent.replace(/\s+/g, ' ').trim(),
+             condiciones: f.querySelectorAll('.plan-list li').length };
+  }),
+  { titulos: ['Desarrollo exclusivo', 'Condiciones generales'],
+    exclusivo: 'Las nuevas funcionalidades, módulos, automatizaciones o cambios que no formen parte del producto estándar se cotizan bajo Embedded FDE.',
+    condiciones: 11 });
 check('el aviso de integraciones aparece bajo las tarjetas',
   await page.textContent('#plansNote'),
   'La activación de integraciones, los cargos de proveedores externos, los costos de uso y los desarrollos a la medida no están incluidos en la licencia mensual, salvo que se indique expresamente en la propuesta comercial.');
@@ -893,7 +913,7 @@ check('por defecto Año está seleccionado, con los tres precios anuales y "con 
   await billingSwitchState(),
   {
     checked: [['anual', 'true'], ['mensual', 'false']],
-    prices: await page.evaluate(() => [299000, 699000, 1290000].map(n => Store.money(n) + ' + IVA COP / mes')),
+    prices: await page.evaluate(() => [299000, 799000, 1390000].map(n => Store.money(n) + ' + IVA COP / mes')),
     captions: ['con contrato de arrendamiento a 12 meses', 'con contrato de arrendamiento a 12 meses', 'con contrato de arrendamiento a 12 meses']
   });
 
@@ -910,6 +930,9 @@ check('clic en Mes cambia los tres precios, la leyenda y el aria-checked',
 check('Mes: las tarjetas y los paquetes recomendados dicen el mismo precio',
   await preciosDePaquetesYPlanes(),
   { planes: ['399000', '899000', '1490000'], paquetes: ['399000', '899000', '1490000'] });
+check('y en Mes cada tarjeta dice el monto de su activación inicial, leído del paquete',
+  await page.$$eval('#plansGrid .plan-activation', els => els.map(e => e.textContent.replace(/\s+/g, ' '))),
+  await page.evaluate(() => [399000, 899000, 1490000].map(n => `Activación inicial: ${Store.money(n)} + IVA, una sola vez al contratar.`.replace(/\s+/g, ' '))));
 
 await page.reload();
 await page.waitForSelector('#appShell:not([hidden])');
@@ -972,7 +995,7 @@ const invoicesBeforePlan = await page.evaluate(() => Store.all('invoices').lengt
 await page.click('#plansGrid [data-plan="Business"]');
 const dialogMsg = await page.textContent('#confirmModalBody');
 check('el modal menciona el plan, el precio y la modalidad de arrendamiento anual',
-  dialogMsg, `¿Confirmas el cambio al plan Distribuidor por ${await page.evaluate(() => Store.money(1290000))} + IVA COP / mes, con contrato de arrendamiento a 12 meses?`);
+  dialogMsg, `¿Confirmas el cambio al plan Distribuidor por ${await page.evaluate(() => Store.money(1390000))} + IVA COP / mes, con contrato de arrendamiento a 12 meses?`);
 await page.click('#confirmCancel');
 check('cancelar deja a Essential como plan actual, y no crea ninguna factura',
   [await page.evaluate(() => Store.settings().plan), await page.evaluate(() => Store.all('invoices').length)],
@@ -987,23 +1010,23 @@ check('el plan sigue en Essential mientras la factura está Pendiente',
 const planInvoice = await page.evaluate(() => Store.all('invoices')[0]);
 check('la factura queda Pendiente, con el monto de PLANS/planPrice() (nunca algo tecleado), la modalidad y el proveedor simulado',
   { status: planInvoice.status, amount: planInvoice.amount, kind: planInvoice.kind, target: planInvoice.target, billing: planInvoice.billing, provider: planInvoice.provider, paidAt: planInvoice.paidAt },
-  { status: 'Pendiente', amount: 1290000, kind: 'plan', target: 'Business', billing: 'anual', provider: 'BOLD (simulado)', paidAt: null });
+  { status: 'Pendiente', amount: 1390000, kind: 'plan', target: 'Business', billing: 'anual', provider: 'BOLD (simulado)', paidAt: null });
 check('la referencia y la URL de pago son obviamente falsas: simulado://, nunca checkout.bold.co ni ningún dominio real',
   /^simulado:\/\/pago\//.test(planInvoice.checkoutUrl) && planInvoice.reference.startsWith(`QAI-${planInvoice.id}-`), true);
 const planPayBody = await page.textContent('#payModalBody');
 check('el modal trae el concepto, el monto, la modalidad anual y la referencia',
-  [planPayBody.includes('Plan Distribuidor'), planPayBody.includes(await page.evaluate(() => Store.money(1290000))), planPayBody.includes('Año'), planPayBody.includes(planInvoice.reference)],
+  [planPayBody.includes('Plan Distribuidor'), planPayBody.includes(await page.evaluate(() => Store.money(1390000))), planPayBody.includes('Año'), planPayBody.includes(planInvoice.reference)],
   [true, true, true, true]);
 check('el modal muestra la etiqueta obligatoria de simulación, tal cual',
   planPayBody.includes('Simulación de pago · este prototipo no procesa pagos reales.'), true);
 /* El precio del catálogo es ANTES de IVA: la factura lo SUMA (19%) y el modal enseña el total a
  * pagar con su desglose — el mismo número que la tabla de Facturación. */
 check('el modal desglosa valor + IVA (19%) y el número grande es el total a pagar',
-  [planPayBody.includes(`Valor ${await page.evaluate(() => Store.money(1290000))}`),
+  [planPayBody.includes(`Valor ${await page.evaluate(() => Store.money(1390000))}`),
    planPayBody.includes('IVA (19%)'),
-   planPayBody.includes(await page.evaluate(() => Store.money(245100))),
+   planPayBody.includes(await page.evaluate(() => Store.money(264100))),
    await page.$eval('#payModalBody .pay-amount', e => e.textContent.replace(/[^\d]/g, ''))],
-  [true, true, true, '1535100']);
+  [true, true, true, '1654100']);
 
 console.log('\nUPGRADE — aprobar el pago simulado paga la factura y RECIÉN AHÍ aplica el cambio de plan, con su propio toast');
 await page.click('#payApprove');
@@ -1267,7 +1290,7 @@ await openUsage();
 await up.waitForFunction(() => document.getElementById('usageLead').textContent.includes('Empresa de muebles'));
 check('the header and summary name the new plan and its price',
   await up.evaluate(() => [document.getElementById('usageLead').textContent, document.getElementById('usagePlanName').textContent, document.getElementById('usagePlanPrice').textContent]),
-  ['Así va el uso de tu plan Empresa de muebles este mes.', 'Plan Empresa de muebles', await up.evaluate(() => Store.money(699000) + ' COP / mes')]);
+  ['Así va el uso de tu plan Empresa de muebles este mes.', 'Plan Empresa de muebles', await up.evaluate(() => Store.money(799000) + ' COP / mes')]);
 check('users limit = Professional 3 + 1 purchased, and the card says where the extra comes from',
   await meter('users').then(m => [m.value, m.extra]), [`${usageStore.users} de 4`, 'Incluye 1 de paquetes']);
 check('a meter no package touched says nothing about packages', (await meter('locations')).extra, null);

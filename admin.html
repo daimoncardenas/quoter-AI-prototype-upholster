@@ -82,6 +82,22 @@
     .plan-divider{border:0;border-top:1px solid var(--line);margin:0 0 16px}
     .plan-section-title{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--ink);margin:16px 0 8px;padding-top:14px;border-top:1px solid var(--line)}
     .plan-section-title.first{margin-top:0;padding-top:0;border-top:0}
+    /* La promesa del plan, su activación y el detalle de lo que la activación incluye (texto del
+     * dueño, 19/09). El detalle va plegado: son listas largas y las tres tarjetas juntas quedaban
+     * kilométricas. */
+    .plan-promise{font:600 .82rem/1.35 var(--font-heading);color:var(--ink);margin:2px 0 10px}
+    .plan-activation{font-size:.62rem;color:var(--text);line-height:1.5;margin:0 0 12px;background:var(--tint-panel-wash);border-left:3px solid var(--accent);padding:9px 11px}
+    .plan-details{margin:14px 0 0;border-top:1px solid var(--line);padding-top:12px}
+    .plan-details summary{cursor:pointer;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--ink);list-style:none}
+    .plan-details summary::-webkit-details-marker{display:none}
+    .plan-details summary:before{content:'+ ';color:var(--accent)}
+    .plan-details[open] summary:before{content:'− '}
+    .plan-details .plan-list{margin-top:10px}
+    .plans-footnotes{margin-top:26px;border:1px solid var(--line);background:#fff;padding:22px 24px}
+    .plans-footnotes h3{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--ink);margin:0 0 8px}
+    .plans-footnotes h3:not(:first-child){margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+    .plans-footnotes p{font-size:.66rem;line-height:1.55;color:var(--text);margin:0 0 4px;max-width:78ch}
+    .plans-footnotes .plan-list{margin-top:6px}
     .plan-intro{font-size:.64rem;font-weight:700;color:var(--text);margin:0 0 8px}
     .plan-list{list-style:none;margin:0;padding:0;display:grid;gap:7px}
     .plan-list li{font-size:.65rem;color:var(--text);line-height:1.45;padding-left:18px;position:relative}
@@ -487,6 +503,28 @@
             <button type="button" class="billing-option" role="radio" aria-checked="false" tabindex="-1" data-billing="mensual">Mes</button>
           </div>
           <div class="plans-grid" id="plansGrid"></div>
+          <!-- Las dos hojas del texto de planes del dueño (19/09): lo que se cotiza aparte y las
+               condiciones que valen para los tres planes. Copy estático de producto, igual para todos
+               los paquetes: por eso vive aquí y no en un seed. -->
+          <section class="plans-footnotes">
+            <h3>Desarrollo exclusivo</h3>
+            <p>Las nuevas funcionalidades, módulos, automatizaciones o cambios que no formen parte del
+              producto estándar se cotizan bajo <b>Embedded FDE</b>.</p>
+            <h3>Condiciones generales</h3>
+            <ul class="plan-list limits">
+              <li>Todos los valores se expresan en pesos colombianos y no incluyen IVA.</li>
+              <li>El pago mensual no exige permanencia, pero requiere el pago de la activación inicial.</li>
+              <li>La contratación anual tiene una duración mínima de 12 meses e incluye la activación inicial.</li>
+              <li>La activación inicial no corresponde a cuotas de compra del software.</li>
+              <li>Las capacidades no utilizadas durante el mes no se acumulan.</li>
+              <li>Los límites adicionales de usuarios, sedes, cotizaciones, almacenamiento o interacciones de IA se cotizan según la necesidad.</li>
+              <li>Las estimaciones generadas por ACI son preliminares y pueden requerir validación humana.</li>
+              <li>Los precios, productos, fórmulas y reglas dependen de la información suministrada y aprobada por el cliente.</li>
+              <li>Las actualizaciones estándar del producto están incluidas.</li>
+              <li>Los desarrollos exclusivos, integraciones no estandarizadas y modificaciones particulares se cotizan por separado.</li>
+              <li>La disponibilidad y el alcance de las integraciones dependen de los sistemas externos involucrados.</li>
+            </ul>
+          </section>
           <p class="plans-note" id="plansNote"></p>
         </div>
         <div class="tabpanel" id="panelPaquetes" role="tabpanel" aria-labelledby="tabPaquetes" hidden>
@@ -1411,82 +1449,139 @@
     const PLANS=[
       {name:'Essential',
        quota:{quotes:30,aiCredits:75,storageGB:1,users:1,locations:1,historyMonths:3},
+       promise:'Cotiza profesionalmente sin depender únicamente de WhatsApp.',
        audience:'Para tapiceros independientes y talleres pequeños con bajo volumen de cotizaciones.',
+       activationIncludes:[
+         'Configuración inicial de la cuenta.',
+         'Personalización con logo, colores e información del negocio.',
+         'Creación del usuario administrador.',
+         'Configuración de una sede.',
+         'Activación de las dos líneas de servicio incluidas.',
+         'Configuración de preguntas, tipos de mueble y fórmulas estándar.',
+         'Configuración del correo comercial.',
+         'Sesión remota de puesta en marcha.'
+       ],
        features:[
-         'Página de cotización con tu marca, alojada en un subdominio de CARDYRAM.',
-         'Logo, colores e información de tu negocio.',
-         'Dos categorías de servicio: tapicería de muebles y suministro de tela.',
+         'Página pública de cotización con tu marca.',
+         'Alojamiento en un subdominio de CARDYRAM.',
+         'Dos líneas de servicio estándar: tapicería de muebles y suministro de tela.',
          'Tipos de mueble y preguntas de medidas estándar.',
          'Carga de fotografías del cliente.',
          'Fórmulas estándar de cálculo de materiales y precios.',
-         'Validación y recomendaciones asistidas por IA, con uso limitado.',
-         'Captura de datos de contacto del cliente.',
-         'Cotizaciones enviadas a un correo comercial.',
+         'Validación y recomendaciones asistidas por IA.',
+         'Captura de datos de contacto.',
+         'Envío de las solicitudes a un correo comercial.',
          'PDF de la estimación o cotización.',
          'Enlace de aceptación para el cliente.',
          'Estados básicos de cotización.',
-         'Valor de las cotizaciones aceptadas.',
+         'Registro del valor de las cotizaciones aceptadas.',
          'Analítica mensual básica.',
          'Notificaciones por correo electrónico.',
          'Actualizaciones estándar del producto.',
          'Soporte por correo electrónico.'
        ],
-       limits:[
+       capacity:[
          '1 usuario interno.',
          '1 sede.',
-         '30 cotizaciones completadas al mes.',
-         '75 interacciones de IA al mes.',
-         '1 GB de almacenamiento de imágenes y documentos.',
+         'Hasta 30 cotizaciones completadas al mes.',
+         'Hasta 75 interacciones de IA al mes.',
+         '1 GB de almacenamiento.',
          '3 meses de historial de analítica.',
-         'Una plantilla estándar de cotización.',
-         'Mención de CARDYRAM en el pie de página.',
-         'Sin dominio propio.',
-         'Sin reglas de asignación de vendedores.',
-         'Sin exportación de datos por cuenta propia.',
-         'Sin integraciones.'
+         'Una plantilla estándar de cotización.'
+       ],
+       limits:[
+         'Dominio propio.',
+         'Eliminación de la mención de CARDYRAM.',
+         'Reglas de asignación de vendedores.',
+         'Exportación CSV.',
+         'Integraciones.',
+         'Fórmulas o procesos desarrollados exclusivamente para el cliente.'
        ]},
       {name:'Professional',
        quota:{quotes:90,aiCredits:300,storageGB:5,users:3,locations:3,historyMonths:12},
-       audience:'Para talleres consolidados y pequeñas empresas de muebles.',
+       promise:'Organiza tus oportunidades, vendedores y servicios comerciales.',
+       audience:'Para talleres consolidados y pequeñas empresas de muebles que necesitan administrar diferentes servicios, vendedores o puntos de atención.',
        intro:'Incluye todo lo de Essential, y además:',
+       activationIncludes:[
+         'Configuración inicial de la cuenta.',
+         'Personalización completa con la identidad de la empresa.',
+         'Configuración del dominio o subdominio del cliente.',
+         'Creación de hasta 3 usuarios internos.',
+         'Configuración de hasta 3 sedes.',
+         'Activación de hasta 4 líneas de servicio estándar.',
+         'Configuración de preguntas y reglas condicionales estándar.',
+         'Configuración inicial de vendedores y zonas.',
+         'Importación inicial de hasta 50 productos o referencias mediante la plantilla de CARDYRAM.',
+         'Sesión remota de puesta en marcha.'
+       ],
        features:[
          'Dominio propio o subdominio del cliente.',
+         'Hasta 4 líneas de servicio estándar activas.',
+         'Preguntas condicionales según las respuestas del cliente.',
+         'Reglas estándar de cálculo condicional.',
+         'Asignación de vendedores.',
+         'Gestión de catálogo, productos y telas.',
+         'Analítica del embudo comercial.',
+         'Reportes de desempeño por vendedor.',
+         '12 meses de historial de analítica.',
+         'Eliminación de la mención de CARDYRAM.',
+         'Soporte con prioridad sobre el plan Essential.'
+       ],
+       capacity:[
          'Hasta 3 usuarios internos.',
          'Hasta 3 sedes.',
          'Hasta 90 cotizaciones completadas al mes.',
          'Hasta 300 interacciones de IA al mes.',
          '5 GB de almacenamiento.',
-         '12 meses de historial de analítica.',
-         'Varias categorías de servicio configurables.',
-         'Preguntas y reglas de cálculo condicionales.',
-         'Asignación de vendedores.',
-         'Analítica del embudo comercial.',
-         'Reportes de desempeño por vendedor.',
-         'Gestión de catálogo y telas.',
-         'Sin mención de CARDYRAM.',
-         'Soporte con prioridad sobre el plan Essential.'
+         'Hasta 4 líneas de servicio estándar.',
+         'Una plantilla estándar de cotización.'
        ],
        limits:[
-         'Sin integraciones estandarizadas.',
-         'Sin exportación CSV por cuenta propia.',
-         'Una plantilla estándar de cotización.'
+         'Exportación CSV por cuenta propia.',
+         'Integraciones.',
+         'Migraciones diferentes de la importación inicial incluida.',
+         'Fórmulas, flujos o reglas desarrollados exclusivamente para el cliente.'
        ]},
       {name:'Business',
        quota:{quotes:300,aiCredits:1000,storageGB:15,users:10,locations:10,historyMonths:12},
-       audience:'Para distribuidores, fábricas y empresas con varias sedes.',
+       promise:'Centraliza la operación comercial de varias sedes y equipos de venta.',
+       audience:'Para distribuidores, fábricas y empresas con varias sedes que necesitan gestionar un mayor volumen de oportunidades y medir los resultados de cada operación.',
        intro:'Incluye todo lo de Professional, y además:',
+       activationIncludes:[
+         'Configuración inicial de la organización.',
+         'Personalización completa con la identidad de la empresa.',
+         'Configuración del dominio o subdominio del cliente.',
+         'Creación de hasta 10 usuarios internos.',
+         'Configuración de hasta 10 sedes.',
+         'Activación de las 8 líneas de servicio estándar disponibles.',
+         'Configuración inicial de vendedores, sedes, zonas y reglas de asignación.',
+         'Importación inicial de hasta 200 productos o referencias mediante la plantilla de CARDYRAM.',
+         'Configuración de hasta 3 plantillas estándar de cotización.',
+         'Dos sesiones remotas de puesta en marcha.'
+       ],
        features:[
-         'Hasta 10 usuarios internos.',
-         'Hasta 10 sedes.',
-         'Hasta 300 cotizaciones completadas al mes.',
-         'Hasta 1.000 interacciones de IA al mes.',
-         '15 GB de almacenamiento.',
+         'Las 8 líneas de servicio estándar disponibles.',
          'Reglas avanzadas de asignación de vendedores.',
          'Analítica por sede y por vendedor.',
          'Varias plantillas de cotización.',
          'Exportación CSV de clientes y cotizaciones.',
          'Acceso a las integraciones estandarizadas disponibles.',
          'Soporte prioritario.'
+       ],
+       capacity:[
+         'Hasta 10 usuarios internos.',
+         'Hasta 10 sedes.',
+         'Hasta 300 cotizaciones completadas al mes.',
+         'Hasta 1.000 interacciones de IA al mes.',
+         '15 GB de almacenamiento.',
+         'Hasta 8 líneas de servicio estándar.',
+         'Hasta 3 plantillas estándar de cotización.'
+       ],
+       limits:[
+         'Desarrollo de integraciones nuevas o exclusivas.',
+         'Migraciones masivas o depuración de información.',
+         'Desarrollo de módulos exclusivos.',
+         'Fórmulas, flujos o reglas particulares que no formen parte de las capacidades estándar de ACI.'
        ]}
     ];
     const UPGRADE_NOTE='La activación de integraciones, los cargos de proveedores externos, los costos de uso y los desarrollos a la medida no están incluidos en la licencia mensual, salvo que se indique expresamente en la propuesta comercial.';
@@ -1532,16 +1627,27 @@
         const isCurrent=i===currentIdx;
         const intro=p.intro?`<p class="plan-intro">${esc(planCopy(p.intro))}</p>`:'';
         const features=`<p class="plan-section-title first">Incluye</p>${intro}<ul class="plan-list incluye">${p.features.map(f=>`<li>${esc(planCopy(f))}</li>`).join('')}</ul>`;
-        const limits=p.limits?`<p class="plan-section-title">Límites</p><ul class="plan-list limits">${p.limits.map(l=>`<li>${esc(planCopy(l))}</li>`).join('')}</ul>`:'';
+        const capacity=p.capacity?`<p class="plan-section-title">Capacidad</p><ul class="plan-list limits">${p.capacity.map(c=>`<li>${esc(planCopy(c))}</li>`).join('')}</ul>`:'';
+        const limits=p.limits?`<p class="plan-section-title">No incluye</p><ul class="plan-list limits">${p.limits.map(l=>`<li>${esc(planCopy(l))}</li>`).join('')}</ul>`:'';
+        /* La activación inicial: se paga al contratar mes a mes y va INCLUIDA en el contrato anual
+         * (texto del dueño, 19/09). El monto sale del paquete —Store.planActivation—, así que la
+         * tarjeta y «Configurar mi plan» no pueden discrepar. */
+        const act=Store.planActivation(p.name);
+        const activation=act?(billing==='anual'
+          ? `<p class="plan-activation">Activación inicial <b>incluida</b> con el contrato a 12 meses.</p>`
+          : `<p class="plan-activation">Activación inicial: <b>${esc(Store.money(act))} + IVA</b>, una sola vez al contratar.</p>`):'';
+        const activationDetails=p.activationIncludes?`<details class="plan-details"><summary>La activación incluye</summary><ul class="plan-list">${p.activationIncludes.map(x=>`<li>${esc(planCopy(x))}</li>`).join('')}</ul></details>`:'';
         const label=isCurrent?'<p class="plan-current-label">Plan actual</p>':'';
         const cta=isCurrent?{cls:'button primary',text:'Tu plan actual',disabled:true}
           :i>currentIdx?{cls:'button primary',text:`Mejorar a ${planLabel(p.name)}`,disabled:false}
           :{cls:'button secondary',text:`Cambiar a ${planLabel(p.name)}`,disabled:false};
         return `<article class="plan-card${isCurrent?' current':''}">${label}<h2>${esc(planLabel(p.name))}</h2>`+
+          `<p class="plan-promise">${esc(p.promise)}</p>`+
           `<p class="plan-price">${esc(Store.money(planPrice(p,billing)))} <span class="plan-iva">+ IVA</span> <span class="plan-price-period">COP / mes</span></p>`+
           `<p class="plan-billing-caption">${esc(BILLING_CAPTIONS[billing])}</p>`+
+          `${activation}`+
           `<p class="plan-audience">${esc(p.audience)}</p><hr class="plan-divider">`+
-          `${features}${limits}`+
+          `${features}${capacity}${limits}${activationDetails}`+
           `<div class="plan-cta"><button type="button" class="${cta.cls}" data-plan="${esc(p.name)}"${cta.disabled?' disabled':''}>${esc(cta.text)}</button></div>`+
           `</article>`;
       }).join('')+(()=>{
@@ -1628,7 +1734,7 @@
      * matching the standard tabs pattern). Static product copy again — no
      * seed/Store data — same reasoning as PLANS above. */
     const UPGRADE_LEADS={miaci:'Configura tu plan: el Core es fijo y cada servicio que marques se suma al cotizador y al precio.',
-      planes:'Elige el plan que mejor se ajusta al tamaño de tu operación.',
+      planes:'Elige el nivel de operación y las capacidades comerciales que necesita tu empresa. Todos los planes incluyen acceso a ACI, actualizaciones estándar y alojamiento administrado por CARDYRAM.',
       paquetes:'Recarga funciones específicas sin cambiar de plan.',
       facturacion:'Historial de pagos simulados y facturas pendientes.'};
     function selectUpgradeTab(name){
