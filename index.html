@@ -142,6 +142,16 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
 .message.aci-proposal ul{margin:6px 0 8px;padding-left:16px}
 .message.aci-proposal li{margin:2px 0}
 .message.aci-proposal .quick-questions button:disabled{opacity:.55;cursor:default}
+/* Mientras piensa, el chat lo dice: un turno sin señal se lee como chat roto (el modelo
+ * local puede tardar segundos). Tres puntos en la burbuja del asistente y el envío bloqueado
+ * hasta que llegue la respuesta; con movimiento reducido los puntos se dibujan quietos. */
+.message.typing{display:flex;align-items:center;justify-content:center;gap:4px;min-width:56px;min-height:15px}
+.message.typing i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:typing-dot 1.1s infinite ease-in-out}
+.message.typing i:nth-child(2){animation-delay:.18s}
+.message.typing i:nth-child(3){animation-delay:.36s}
+@keyframes typing-dot{0%,70%,100%{opacity:.28;transform:translateY(0)}35%{opacity:1;transform:translateY(-2px)}}
+@media(prefers-reduced-motion:reduce){.message.typing i{animation:none;opacity:.6}}
+#chatForm button[disabled]{opacity:.45;cursor:default}
 .aci-highlight{outline:3px solid rgba(var(--rgb-accent),.55)!important;outline-offset:3px;transition:outline-color .3s}
 .chat-fab[data-unread]::after{content:"";position:absolute;top:6px;right:8px;width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 2px var(--ink)}
 @media(min-width:651px){
@@ -543,6 +553,7 @@ const money=n=>Store.money(n);
 const ESTIMATE_ENGINE_VERSION=1;
 // Furniture types, their consumption rules and their plausible measurement
 // ranges are all defined in the backoffice; nothing about them lives here.
+{{ASSISTANT_FENCE_SCRIPT}}
 let furnitureRules={},measureRanges={};
 const MEASURE_LABELS={width:'ancho',height:'alto',depth:'fondo'};
 // The catalog lives in the backoffice. Read it on every render so a tela
@@ -1488,11 +1499,117 @@ function propose(actions){
   if(chatPanel.classList.contains('open'))yes.focus({preventScroll:true});
 }
 propose.seq=0;
-function askAssistant(text){
-  if(!assistantOn()||!String(text).trim())return;
-  addMessage(text,'user');
-  setTimeout(()=>{const out=AssistantBrain.respond(ACI.context(),text);addMessage(out.message,'bot');propose(out.proposedActions)},350);
+/* ── Lía con el modelo local, cuando el navegador lo trae ─────────────────────────────
+ * El chat sigue teniendo el cerebro simulado (assistant-brain.js) como respuesta por
+ * defecto: es lo que funciona con doble clic y lo que la demo muestra hoy. Si la página
+ * se sirve por localhost en un Chrome con modelo local, además Lía conversa: el modelo
+ * escribe con el contexto de la casa, el cerco (assistant-fence.js) revisa CADA respuesta
+ * y, si el turno lo rompe, se muestra la respuesta preparada del cerebro. El modelo nunca
+ * tiene la última palabra sobre lo que lee el cliente, y nada sale de este equipo. */
+const IA_LOCAL = (() => (typeof LanguageModel !== 'undefined' ? LanguageModel : (globalThis.ai && globalThis.ai.languageModel) || null))();
+let sesionIA = null, disponibilidadIA = 'unavailable';
+
+/* Lía usa el modelo SOLO si ya está listo en el equipo (availability() === 'available'). En
+ * 'downloadable' no se toca: bajar cuatro gigas no puede ser el precio de abrir una cotización. */
+function iaDisponible(){ return !!IA_LOCAL && !!window.isSecureContext && disponibilidadIA === 'available'; }
+
+/* La nota del panel dice la verdad de cada modo. */
+function notaDelChat(){
+  const el = document.querySelector('.chat-sim-note'); if (!el) return;
+  if (iaDisponible()) {
+    el.textContent = 'Asistente con IA local (modelo de Chrome, en este equipo): lo que escribas no sale de este navegador.';
+  } else if (disponibilidadIA === 'downloadable' || disponibilidadIA === 'downloading') {
+    el.textContent = 'Respuestas simuladas: este equipo tiene el modelo local listo para activarse (se descarga una vez desde el navegador).';
+  } else {
+    el.textContent = 'Respuestas simuladas: este prototipo no usa inteligencia artificial real.';
+  }
 }
+if (IA_LOCAL && IA_LOCAL.availability) {
+  IA_LOCAL.availability().then(a => { disponibilidadIA = a; notaDelChat(); }).catch(() => { disponibilidadIA = 'unavailable'; notaDelChat(); });
+} else { notaDelChat(); }
+
+/* Lo que Lía ES, y dura toda la conversación: persona, tono, el nombre del documento y las reglas
+ * que no puede romper. Los HECHOS del caso NO viven aquí: viajan en cada turno
+ * (`estadoDelCotizador`), porque el modelo recuerda lo que se le dijo una vez y el cliente cambia
+ * de paso, de línea y de medidas mientras conversa. */
+function promptDeLaCasa(){
+  return [
+    'Eres el asistente de un taller de tapicería y atiendes por chat a un cliente que está llenando una cotización.',
+    'Respondes en español de Colombia, tuteando, en una o dos frases, sin listas ni encabezados.',
+    'En cada mensaje recibes el ESTADO ACTUAL DEL COTIZADOR. Es lo único que sabes del caso y vale más que cualquier cosa dicha antes en la conversación: si un dato no está ahí, no lo sabes.',
+    'Si el cliente pregunta qué tiene seleccionado, qué eligió o por dónde va, contéstale con el paso, la línea y el mueble que diga ese estado.',
+    'Repite los datos del estado con sus MISMAS palabras: si el mueble dice «Otro», di «Otro» — nunca lo cambies por un mueble que te parezca probable.',
+    'El documento se llama precotización: es preliminar y un asesor lo cierra.',
+    'REGLAS QUE NO PUEDES ROMPER: no inventes precios ni cifras distintas de la estimación; no prometas transporte, recogida, plazos de entrega, garantías ni descuentos; no digas que el relleno o la espuma están incluidos o valorados; no digas que cambiaste precios, metros o el estado de la solicitud; no hables de otros clientes ni de pedidos que no sean este.',
+  ].join('\n');
+}
+
+/* Los HECHOS de este turno, contados como se los contaría un tapicero a su propio asistente.
+ * Sin datos inventados: si algo no está en el contexto (ACI.context()), no se dice. */
+function estadoDelCotizador(c){
+  const est = c.estimate || {};
+  const partes = [
+    `Paso del cliente: «${(c.currentStep && c.currentStep.name) || ''}»${c.submitted ? ', y ya envió su solicitud' : ''}.`,
+    `Línea que está cotizando: «${(c.service && c.service.label) || 'todavía sin elegir'}».`,
+    `Mueble: ${c.selectedFurniture || 'sin elegir'}${c.furnitureNote ? ` (el cliente lo describe: «${c.furnitureNote}»)` : ''}${c.measurements ? ` · medidas ${c.measurements.width || '—'} × ${c.measurements.height || '—'} × ${c.measurements.depth || '—'} cm (${(c.measurements.quantity || {}).label || ''}, ${c.measurements.coverage || ''})` : ''}.`,
+  ];
+  if (c.measurements && c.measurements.ranges) partes.push(`Lo habitual para este mueble, según el propio cotizador: ${JSON.stringify(c.measurements.ranges)}.`);
+  if (c.photos) partes.push(`Fotos cargadas: ${c.photos.count} (el cotizador pide entre ${c.photos.min} y ${c.photos.max}).`);
+  if (c.analysis && c.analysis.done) partes.push(`Revisión del formulario: ${(c.analysis.warnings || []).concat(c.analysis.oddMeasures || []).join('; ') || 'sin observaciones'}. Si el cliente pregunta por su formulario, dile lo que dice esa revisión.`);
+  if (c.fabric) partes.push(`Tela elegida: ${c.fabric.name}${c.fabric.colorName ? ' (' + c.fabric.colorName + ')' : ''}${c.fabric.auto ? ', sugerida por el cotizador' : ''}.`);
+  partes.push(`Estimación vigente: ${est.priceLabel || 'todavía sin calcular'}${(est.parts || []).length ? ' · se compone de ' + est.parts.map(p => p.label + ' ' + (p.text || '')).join(' + ') : ''}.`);
+  if ((est.pending || []).length) partes.push(`Queda pendiente de confirmar por un asesor: ${est.pending.map(p => p.label || p).join(', ')}.`);
+  return partes.join('\n');
+}
+
+/* Una respuesta del modelo, solo si pasa el cerco. Si no, devuelve null y responde el cerebro.
+ * UNA sesión por conversación (la historia se conserva), y el estado viaja en el prompt de cada
+ * turno: el cliente puede cambiar de paso, de línea o de medidas y la respuesta siguiente ya lo
+ * sabe, sin volver a crear la sesión. */
+async function respuestaLocal(texto){
+  const c = ACI.context();
+  if (!sesionIA) sesionIA = await IA_LOCAL.create({ initialPrompts: [{ role: 'system', content: promptDeLaCasa() }], temperature: 0.3 });
+  const crudo = String(await sesionIA.prompt(`ESTADO ACTUAL DEL COTIZADOR\n${estadoDelCotizador(c)}\n\nEl cliente dice: «${String(texto)}»`)).trim();
+  const v = CercoAsistente.revisar(crudo, { estimacion: (c.estimate || {}).priceLabel || '' });
+  return v.limpia ? { message: crudo, proposedActions: [] } : null;
+}
+
+/* Mientras piensa, el chat lo dice. Un turno largo sin señal se lee como chat roto —y el modelo
+ * local puede tardar segundos la primera vez—, así que la espera se dibuja como burbuja del
+ * asistente (tres puntos) y el envío queda bloqueado hasta que llegue la respuesta: un solo
+ * turno vivo a la vez. Los puntos se quedan un mínimo, para que una respuesta instantánea no
+ * los haga parpadear. */
+let turnoEnCurso = false;
+const ESPERA_MINIMA_MS = 450;
+function burbujaDeEspera(){
+  const m = document.createElement('div');
+  m.className = 'message bot typing';
+  m.setAttribute('role','status');
+  m.setAttribute('aria-label', (Store.assistant().name || 'El asistente') + ' está escribiendo…');
+  m.innerHTML = '<i aria-hidden="true"></i><i aria-hidden="true"></i><i aria-hidden="true"></i>';
+  return m;
+}
+async function askAssistant(text){
+  if(!assistantOn()||!String(text).trim()||turnoEnCurso)return;
+  turnoEnCurso = true;
+  addMessage(text,'user');
+  const espera = burbujaDeEspera();
+  messagesBox.appendChild(espera); espera.scrollIntoView({behavior:'smooth',block:'nearest'});
+  const enviar = document.querySelector('#chatForm button');
+  if (enviar) enviar.disabled = true;
+  const desde = Date.now();
+  const listo = async () => {
+    const falta = ESPERA_MINIMA_MS - (Date.now() - desde);
+    if (falta > 0) await new Promise(r => setTimeout(r, falta));
+    espera.remove(); if (enviar) enviar.disabled = false; turnoEnCurso = false;
+  };
+  const responderSimulado = async () => { const out=AssistantBrain.respond(ACI.context(),text); await listo(); addMessage(out.message,'bot'); propose(out.proposedActions); };
+  if (!iaDisponible()) { setTimeout(responderSimulado,350); return; }
+  let out = null;
+  try { out = await respuestaLocal(text); } catch (err) { out = null; }
+  if (out) { await listo(); addMessage(out.message,'bot'); } else await responderSimulado();
+}
+notaDelChat();
 document.querySelectorAll('#messages .quick-questions button').forEach(b=>b.addEventListener('click',()=>askAssistant(b.textContent)));
 document.getElementById('chatForm').addEventListener('submit',e=>{e.preventDefault();const input=document.getElementById('chatInput');const value=input.value;input.value='';askAssistant(value)});
 // Proactive, only for inconsistencies the wizard itself found, and never while the customer types.

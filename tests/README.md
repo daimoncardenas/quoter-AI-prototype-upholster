@@ -250,6 +250,11 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   draws nothing (height 0). And that the conversation never covers her: the panel's
   bottom edge stops above her head (`data-heady` + the `--chat-band` cap), it keeps a
   usable height, and she stays in front (fixed, `z-index:3`) of the static panel.
+  It also asserts what the chat says while it works: asking draws the waiting bubble
+  (`.message.bot.typing`, `role="status"`, "<name> está escribiendo…") and disables the send
+  button, a second question asked in the same breath is ignored (one turn at a time), and
+  when the answer lands the dots are gone, the send button is back and the bot's message is
+  there — a slow chat that says nothing reads as a broken one (`docs/chat-en-espera.md`).
   The presence-side notice is checked there too: it appears as her card floating just
   above her crown (never far from her, never behind her body, never reaching the
   wizard) while the sidebar's intro and progress step aside for those seconds
@@ -302,6 +307,23 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   that is still parked). Still no pixel assertions, the
   3D layer stays optional by
   design.
+- `assistant-ia-local.spec.mjs` — Lía with a model that lives in the browser (the one Chrome
+  brings on the customer's machine). First the fence's own list, judged on its own: a figure
+  that is not the live estimate, a promise against an honest denial ("El cambio de espuma no
+  está incluido" is not a promise), and an answer that does not answer at all. Then four page
+  scenarios against a stubbed `LanguageModel`: with no model the note says the responses are
+  simulated and the simulated brain answers; with `available` the note says local AI, the
+  system prompt carries the character and the rules while the cotizador's STATE travels in every
+  turn — step, line (named with the page's own label, never hand-written in the test), furniture
+  and measurements, so a briefing cannot answer for a state that moved
+  (`docs/contexto-del-modelo.md`) — and the answer is shown only when it passes the fence — a
+  promise of transport or an answer about bananas falls back to the simulated brain; with
+  `downloadable` the note explains the model can be activated and NO session is created, so
+  opening a quote can never trigger the download. Another scenario changes the line and types a
+  measurement with the conversation open and asserts the NEXT turn carries both while the
+  session is NOT rebuilt (one session per conversation: the history survives). A final scenario
+  makes the model take 900 ms and asserts the waiting bubble is on screen while it thinks — send
+  button disabled — and that both go away with the answer (`docs/chat-en-espera.md`).
 - `sealed.spec.mjs` — the encrypted delivery build: since that gate is
   currently disabled at the owner's request, this checks that `dist/` ships in
   the clear rather than encrypted. It tests the packaging, not the prototype.

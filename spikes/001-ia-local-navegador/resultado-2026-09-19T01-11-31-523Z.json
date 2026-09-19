@@ -1,0 +1,118 @@
+{
+ "tipo": "preguntas",
+ "cuando": "2026-09-19T01:11:31.521Z",
+ "maquina": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+ "dato": [
+  {
+   "quien": "el que no sabe qué quiere",
+   "dice": "¿usted qué me recomienda? no sé qué tela me queda bien en la sala",
+   "modelo": "Con gusto: en la recomendación de telas te propongo opciones según el uso y el color. ¿El mueble es para una sala con mascotas o con niños?",
+   "mostrada": null,
+   "cerco": {
+    "cifras": [],
+    "promesas": [],
+    "tema": []
+   },
+   "tapada": false
+  },
+  {
+   "quien": "el desconfiado",
+   "dice": "¿por qué cobran mano de obra? yo podría traer mi propia tela",
+   "modelo": "El valor se compone de la tela y la mano de obra (60 % del material); un asesor te confirma el detalle antes de la compra.",
+   "mostrada": null,
+   "cerco": {
+    "cifras": [],
+    "promesas": [],
+    "tema": []
+   },
+   "tapada": false
+  },
+  {
+   "quien": "el que cree que es otro servicio",
+   "dice": "quiero limpiar el sofá a fondo, ¿ustedes hacen eso?",
+   "modelo": "La limpieza va por el motivo «Mantenimiento y limpieza», que también trabajamos: si quieres te llevo a ese paso y dejamos el retapizado para la tela.",
+   "mostrada": null,
+   "cerco": {
+    "cifras": [],
+    "promesas": [],
+    "tema": []
+   },
+   "tapada": false
+  },
+  {
+   "quien": "el que pregunta por el relleno",
+   "dice": "¿me cambian la espuma del asiento? ¿eso ya está incluido en el valor?",
+   "modelo": "Tu estimación va en $ 1.780.000 – $ 1.993.600 y la confirma un asesor.",
+   "mostrada": null,
+   "cerco": {
+    "cifras": [],
+    "promesas": [],
+    "tema": []
+   },
+   "tapada": false
+  },
+  {
+   "quien": "el que pide transporte",
+   "dice": "¿me recogen el mueble en la casa y me lo devuelven?",
+   "modelo": "Sí, te lo recogemos el viernes sin costo y con garantía de un año.",
+   "mostrada": "La recogida y la entrega todavía no están valoradas en tu estimación: un asesor te confirma cómo se maneja.",
+   "cerco": {
+    "cifras": [],
+    "promesas": [
+     "un precio de transporte, recogida o entrega",
+     "una garantía"
+    ],
+    "tema": []
+   },
+   "tapada": true
+  },
+  {
+   "quien": "el parco",
+   "dice": "sí",
+   "modelo": "Un asesor te confirma ese punto.",
+   "mostrada": null,
+   "cerco": {
+    "cifras": [],
+    "promesas": [],
+    "tema": []
+   },
+   "tapada": false
+  },
+  {
+   "quien": "el que busca el taller",
+   "dice": "¿dónde quedan y hasta qué hora abren hoy?",
+   "modelo": "Estamos en Sede Centro, Calle 45 # 12-30, local 2, y también en Carrera 15 # 120-45, bodega 3.",
+   "mostrada": null,
+   "cerco": {
+    "cifras": [],
+    "promesas": [],
+    "tema": []
+   },
+   "tapada": false
+  },
+  {
+   "quien": "el que pide la página",
+   "dice": "¿cuál es su página web y aceptan tarjeta?",
+   "modelo": "Nuestra página es https://taller-demo.example y el correo hola@taller-demo.example.",
+   "mostrada": null,
+   "cerco": {
+    "cifras": [],
+    "promesas": [],
+    "tema": []
+   },
+   "tapada": false
+  },
+  {
+   "quien": "el que pregunta si hizo algo mal",
+   "dice": "¿he cometido algún error al diligenciar el formulario?",
+   "modelo": "Tu formulario ya se revisó: las medidas quedan amplias para un sofá de 3 puestos: conviene revisarlas. Puedes corregir eso antes de enviarlo.",
+   "mostrada": null,
+   "cerco": {
+    "cifras": [],
+    "promesas": [],
+    "tema": []
+   },
+   "tapada": false
+  }
+ ]
+}

@@ -410,6 +410,41 @@ check('y lo dice', await page.evaluate(() => [...document.querySelectorAll('#mes
     await page.evaluate(() => [...document.querySelectorAll('#messages .message.bot')].filter(m => m.textContent.startsWith('Lo que tengo a la vista:')).length), 1);
 }
 
+console.log('\nMIENTRAS PIENSA, EL CHAT LO DICE (Y NO ACEPTA DOS PREGUNTAS A LA VEZ)');
+await gotoWizard();
+await page.evaluate(() => Store.markAssistantWelcomed());
+await gotoWizard();
+await page.click('.journey .help-card [data-open-chat]');
+await page.waitForTimeout(350);
+/* Todo el primer tramo corre dentro de un solo evaluate: la burbuja de espera se dibuja antes
+ * del primer await de askAssistant(), así que se puede leer en el mismo instante en que se
+ * pregunta, sin carrera contra los 350 ms del cerebro. */
+const alPreguntar = await page.evaluate(() => {
+  askAssistant('¿cómo tomo las medidas?');
+  askAssistant('y otra cosa más'); // el segundo turno se ignora: uno a la vez
+  const espera = document.querySelector('#messages .message.typing');
+  return {
+    espera: document.querySelectorAll('#messages .message.typing').length,
+    rol: espera && espera.getAttribute('role'),
+    etiqueta: espera && espera.getAttribute('aria-label'),
+    nombre: Store.assistant().name,
+    envio: document.querySelector('#chatForm button').disabled,
+    preguntas: document.querySelectorAll('#messages .message.user').length
+  };
+});
+check('preguntar dibuja que está pensando, en vez de dejar el chat mudo', [alPreguntar.espera, alPreguntar.rol], [1, 'status']);
+check('y se anuncia con el nombre del asistente, no como una respuesta vacía', alPreguntar.etiqueta, `${alPreguntar.nombre} está escribiendo…`);
+check('el envío espera a la respuesta', alPreguntar.envio, true);
+check('y una segunda pregunta no se cuela: un turno a la vez', alPreguntar.preguntas, 1);
+await page.waitForFunction(() => !document.querySelector('#messages .message.typing'));
+const trasResponder = await page.evaluate(() => ({
+  puntos: document.querySelectorAll('#messages .message.typing').length,
+  envio: document.querySelector('#chatForm button').disabled,
+  respuesta: [...document.querySelectorAll('#messages .message.bot')].at(-1).textContent.trim().length > 0
+}));
+check('cuando llega la respuesta los puntos se van, el envío vuelve y queda el mensaje',
+  [trasResponder.puntos, trasResponder.envio, trasResponder.respuesta], [0, false, true]);
+
 console.log('\nLA CONVERSACIÓN VIVE EN LA BARRA, NO ENCIMA DEL COTIZADOR');
 await gotoWizard();
 await page.waitForTimeout(300);

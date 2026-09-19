@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Spike · IA local para el asistente: negocio, formulario, cerco y conversación</title>
+<style>
+  :root { color-scheme: light; }
+  body { font: 15px/1.55 system-ui, sans-serif; margin: 0; padding: 28px 32px 60px; max-width: 940px; color: #17212b; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 30px 0 8px; padding-top: 14px; border-top: 1px solid #e3e7ec; }
+  .sub { color: #5b6673; margin: 0 0 14px; }
+  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+  pre { background: #f6f8fa; padding: 10px 12px; border-radius: 8px; overflow: auto; white-space: pre-wrap; }
+  .estado { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }
+  .ok { background: #e5f6ea; color: #17663a; } .no { background: #fdeaea; color: #8c1d1d; } .ojo { background: #fdf3e0; color: #7a4b06; }
+  .q, .conv { border: 1px solid #e3e7ec; border-radius: 10px; padding: 12px 15px; margin: 10px 0; }
+  .q b, .conv b { display: block; margin-bottom: 4px; }
+  .turno { margin: 8px 0 0; padding-left: 10px; border-left: 3px solid #eef1f5; }
+  .cliente { color: #17212b; } .modelo { color: #31527d; } .casa { color: #7a4b06; }
+  .chip { display: inline-block; font-size: 12.5px; padding: 2px 8px; border-radius: 999px; margin-right: 6px; }
+  .chip-ok { background: #e5f6ea; color: #17663a; } .chip-mal { background: #fdeaea; color: #8c1d1d; }
+  button { font: inherit; padding: 7px 14px; border-radius: 8px; border: 1px solid #c9d1d9; background: #fff; cursor: pointer; }
+  button.prim { background: #17212b; color: #fff; border-color: #17212b; }
+  textarea { width: 100%; min-height: 64px; font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid #c9d1d9; }
+  small.nota { color: #5b6673; display: block; margin-top: 6px; }
+  details { margin-top: 6px; } summary { cursor: pointer; color: #5b6673; }
+</style>
+</head>
+<body>
+  <h1>IA local detrás del asistente: negocio + formulario + cerco + conversación</h1>
+  <p class="sub">Spike 001 · ¿puede el asistente conversar sin problema sobre el negocio y sobre lo que el cliente
+  ya escribió, sin inventar precios ni prometer lo que el taller no ha declarado? Nada sale de este equipo y no
+  hay claves.</p>
+
+  <h2>1 · ¿Este navegador puede?</h2>
+  <div id="capacidad"><span class="estado ojo">mirando…</span></div>
+  <pre id="detalle" hidden></pre>
+
+  <h2>2 · Lo que el asistente lee en cada turno</h2>
+  <p class="sub">El mismo texto se le entrega al modelo que corre aquí y al de la prueba por consola
+  (<code>conversacion.mjs</code>): negocio, catálogo y formulario. Es lo que le permite hablar de SUS datos.</p>
+  <details><summary>Ver el contexto completo</summary><pre id="sistema"></pre></details>
+
+  <h2>3 · Las preguntas que hoy no tienen respuesta</h2>
+  <p class="sub">Las cinco del testing de la línea, más las tres que ahora sí puede contestar el archivo del negocio.</p>
+  <div id="preguntas"></div>
+  <p><button class="prim" id="preguntar">Preguntar (modelo si hay; si no, el sustituto)</button></p>
+  <small class="nota">Cada respuesta pasa por el cerco: cifras que no sean la estimación, promesas que la
+  empresa no declaró, y respuestas que no hablan del motivo. Si un turno lo rompe, se muestra una respuesta
+  aprobada en su lugar — el modelo nunca tiene la última palabra sobre lo que lee el cliente.</small>
+
+  <h2>4 · Conversaciones de varios turnos</h2>
+  <p class="sub">Lo que se prueba no son preguntas sueltas: son conversaciones. Cada turno se revisa igual.</p>
+  <div id="conversaciones"></div>
+
+  <h2>5 · El cerco, con el texto que le pegues</h2>
+  <textarea id="manual" placeholder="Pegá aquí una respuesta y mirá si el cerco la deja pasar."></textarea>
+  <p><button id="evaluar">Evaluar</button></p>
+  <div id="veredicto-manual"></div>
+
+<script type="module">
+import { cerco, contexto, CONVERSACIONES, cumple, aprobadaPara, crearSustituto, FORMULARIO_DEMO } from './comun.mjs';
+
+/* Todo lo que produce la página se devuelve al servidor del spike, para poder leerlo desde fuera.
+ * Nada sale de este equipo: el servidor es el que sirve esta misma página. */
+const entregar = (tipo, dato) => fetch('/guardar', { method: 'POST', headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ tipo, cuando: new Date().toISOString(), maquina: navigator.userAgent, dato }, null, 1) }).catch(() => {});
+
+const empresa = await (await fetch('./empresa.json')).json();
+const catalogo = await (await fetch('/shared/service-lines.json')).json();
+const lineas = catalogo.lines;
+const linea = { label: 'Retapizado de muebles', artefacto: 'Precotización de retapizado' };
+const formulario = FORMULARIO_DEMO;
+const permitido = Object.fromEntries(Object.entries(empresa.declarado).map(([k, v]) => [k, v !== null]));
+const SISTEMA = contexto({ empresa, lineas, linea, formulario });
+const sustituto = crearSustituto({ empresa, formulario });
+document.getElementById('sistema').textContent = SISTEMA;
+
+/* ---- 1 · Capacidad ---- */
+const api = () => (typeof LanguageModel !== 'undefined' ? LanguageModel : (globalThis.ai && globalThis.ai.languageModel) || null);
+let sesion = null, modoModelo = false;
+(async () => {
+  const A = api();
+  const info = [
+    `navegador: ${navigator.userAgent.replace(/^Mozilla\/5\.0 /, '').slice(0, 90)}`,
+    `API de modelo local (LanguageModel): ${A ? 'presente' : 'ausente'}`,
+    `WebGPU: ${navigator.gpu ? 'disponible' : 'no disponible'}`,
+    `contexto seguro: ${window.isSecureContext ? 'sí' : 'NO — abriste el archivo como file://'}`,
+  ];
+  let estado = 'sin API';
+  if (A && A.availability) { try { estado = await A.availability(); } catch (e) { estado = 'err: ' + e.message; } }
+  info.push(`estado del modelo: ${estado}`);
+  document.getElementById('detalle').textContent = info.join('\n');
+  const el = document.getElementById('capacidad');
+  if (!A) el.innerHTML = '<span class="estado ojo">sin modelo local: responde el sustituto</span> — el cerco y las conversaciones se prueban igual';
+  else if (estado === 'unavailable') el.innerHTML = '<span class="estado no">el modelo no está disponible en este equipo</span>';
+  else el.innerHTML = `<span class="estado ok">modelo local: ${estado}</span>`;
+})();
+
+/* El que responde: el modelo local si está (y si acepta el contexto), y si no el sustituto de siempre.
+ * CADA conversación tiene su propia sesión: así recuerda su propio hilo y no arrastra lo que se habló en
+ * otra. Una sola sesión para todo mezclaba las conversaciones entre sí. */
+const sesiones = new Map();
+async function responder(texto, hilo = 'preguntas', reiniciar = false) {
+  const A = api();
+  if (reiniciar) sesiones.delete(hilo);
+  if (A && !sesiones.has(hilo)) {
+    try {
+      sesiones.set(hilo, await A.create({ initialPrompts: [{ role: 'system', content: SISTEMA }], temperature: 0.3 }));
+      modoModelo = true;
+    } catch (e) { modoModelo = false; }
+  }
+  const s = sesiones.get(hilo);
+  if (modoModelo && s) { try { return String(await s.prompt(texto)).trim(); } catch (e) { modoModelo = false; } }
+  return sustituto(texto);
+}
+
+const chips = (r, segura) => [
+  r.cifras.length ? `<span class="chip chip-mal">cifra que no es de su estimación: ${r.cifras.join(', ')}</span>` : '<span class="chip chip-ok">ninguna cifra inventada</span>',
+  r.promesas.length ? `<span class="chip chip-mal">promesa no declarada: ${r.promesas.join(' · ')}</span>` : '<span class="chip chip-ok">ninguna promesa no declarada</span>',
+  r.tema.length ? `<span class="chip chip-mal">${r.tema.join(' · ')}</span>` : '<span class="chip chip-ok">habla del motivo o de sus datos</span>',
+].join('');
+
+/* ---- 3 · Las preguntas ---- */
+const PREGUNTAS = [
+  ['el que no sabe qué quiere', '¿usted qué me recomienda? no sé qué tela me queda bien en la sala'],
+  ['el desconfiado', '¿por qué cobran mano de obra? yo podría traer mi propia tela'],
+  ['el que cree que es otro servicio', 'quiero limpiar el sofá a fondo, ¿ustedes hacen eso?'],
+  ['el que pregunta por el relleno', '¿me cambian la espuma del asiento? ¿eso ya está incluido en el valor?'],
+  ['el que pide transporte', '¿me recogen el mueble en la casa y me lo devuelven?'],
+  ['el parco', 'sí'],
+  ['el que busca el taller', '¿dónde quedan y hasta qué hora abren hoy?'],
+  ['el que pide la página', '¿cuál es su página web y aceptan tarjeta?'],
+  ['el que pregunta si hizo algo mal', '¿he cometido algún error al diligenciar el formulario?'],
+];
+document.getElementById('preguntas').innerHTML = PREGUNTAS.map(([q, t], i) => `
+  <div class="q"><b>${q}</b><div>«${t}»</div><div id="r${i}"><em>— sin preguntar todavía —</em></div><div class="chips" id="c${i}"></div></div>`).join('');
+
+const correrPreguntas = async () => {
+  const todo = [];
+  for (let i = 0; i < PREGUNTAS.length; i++) {
+    const resp = document.getElementById('r' + i), ch = document.getElementById('c' + i);
+    resp.textContent = 'pensando… (la primera vez descarga el modelo)';
+    const propuesta = await responder(PREGUNTAS[i][1]);
+    const r = cerco(propuesta, permitido);
+    const cae = !r.limpia;
+    resp.innerHTML = `<div class="turno"><span class="modelo">modelo:</span> ${propuesta}</div>` +
+      (cae ? `<div class="turno casa">se muestra (respuesta aprobada): ${aprobadaPara(PREGUNTAS[i][1])}</div>` : '');
+    ch.innerHTML = chips(r, !cae);
+    todo.push({ quien: PREGUNTAS[i][0], dice: PREGUNTAS[i][1], modelo: propuesta, mostrada: cae ? aprobadaPara(PREGUNTAS[i][1]) : null, cerco: { cifras: r.cifras, promesas: r.promesas, tema: r.tema }, tapada: cae });
+  }
+  await entregar('preguntas', todo);
+};
+document.getElementById('preguntar').onclick = correrPreguntas;
+
+/* ---- 4 · Conversaciones ---- */
+document.getElementById('conversaciones').innerHTML = CONVERSACIONES.map((c, i) => `
+  <div class="conv"><b>${c.quien}</b>
+    <div>${c.turnos.map(t => '«' + t.dice + '»').join(' → ')}</div>
+    <p><button data-conv="${i}">Correr esta conversación</button></p>
+    <div id="hilo${i}"></div>
+  </div>`).join('');
+
+document.querySelectorAll('[data-conv]').forEach(b => b.onclick = async () => {
+  const i = +b.dataset.conv, conv = CONVERSACIONES[i], hilo = document.getElementById('hilo' + i);
+  hilo.innerHTML = '';
+  const hilos = [];
+  for (const [k, t] of conv.turnos.entries()) {
+    const propuesta = await responder(t.dice, 'conv' + i, k === 0);   // su propia sesión, arrancada de cero
+    const r = cerco(propuesta, permitido);
+    const falta = cumple(propuesta, t.debe, { empresa, formulario });
+    const cae = !r.limpia || !!falta;
+    hilo.insertAdjacentHTML('beforeend', `
+      <div class="turno"><span class="cliente">cliente:</span> ${t.dice}
+        <div class="modelo">modelo: ${propuesta}</div>
+        ${cae ? `<div class="casa">se muestra (respuesta aprobada): ${aprobadaPara(t.dice)}</div>` : ''}
+        <div class="chips">${r.limpia ? '<span class="chip chip-ok">cerco: limpia</span>'
+          : `<span class="chip chip-mal">cerco: ${[...r.cifras.map(c => 'cifra ' + c), ...r.promesas, ...r.tema].join(' · ')}</span>`}${
+          falta ? `<span class="chip chip-mal">contexto: ${falta}</span>` : '<span class="chip chip-ok">usó el contexto</span>'}</div>
+      </div>`);
+  }
+});
+
+/* Con ?auto=1 la página corre las preguntas sola al abrir, y manda lo que produjo. */
+if (new URLSearchParams(location.search).get('auto') === '1') correrPreguntas().then(() => document.getElementById('preguntar').scrollIntoView({ block: 'center' }));
+
+/* ---- 5 · El cerco a mano ---- */
+document.getElementById('evaluar').onclick = () => {
+  const t = document.getElementById('manual').value.trim();
+  const r = cerco(t, permitido);
+  document.getElementById('veredicto-manual').innerHTML = !t ? '<p><em>Pegá algo primero.</em></p>' : `
+    <p><span class="estado ${r.limpia ? 'ok' : 'no'}">${r.limpia ? 'el cerco la deja pasar' : 'el cerco la detiene'}</span></p>
+    <div class="chips">${chips(r)}</div>`;
+};
+</script>
+</body>
+</html>

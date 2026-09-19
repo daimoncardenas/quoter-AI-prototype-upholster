@@ -1,0 +1,35 @@
+{
+  "nota": "Datos de DEMOSTRACIÓN, agnósticos, como el catálogo compartido del prototipo. No describen a ningún taller real: el negocio los reemplaza en su onboarding, igual que sus precios (ver docs/onboarding-precios.md). Mientras un dato esté en null, el asistente NO puede afirmarlo: el cerco lo bloquea.",
+  "nombre": "Taller Demo",
+  "descripcion": "Taller de tapicería de muebles: retapizado, cambio de tela, reparación, muebles a la medida, proyectos comerciales y mantenimiento.",
+  "pagina": "https://taller-demo.example",
+  "correo": "hola@taller-demo.example",
+  "sedes": [
+    {
+      "id": "centro",
+      "nombre": "Sede Centro",
+      "direccion": "Calle 45 # 12-30, local 2",
+      "ciudad": "Bogotá",
+      "horarios": { "lunes_a_viernes": "8:00 a 18:00", "sabado": "9:00 a 14:00", "domingo": null },
+      "telefono": "+57 601 000 0000",
+      "whatsapp": "+57 300 000 0000"
+    },
+    {
+      "id": "norte",
+      "nombre": "Sede Norte",
+      "direccion": "Carrera 15 # 120-45, bodega 3",
+      "ciudad": "Bogotá",
+      "horarios": { "lunes_a_viernes": "9:00 a 17:00", "sabado": "10:00 a 13:00", "domingo": null },
+      "telefono": "+57 601 000 0001",
+      "whatsapp": "+57 300 000 0001"
+    }
+  ],
+  "declarado": {
+    "formasDePago": "Efectivo, transferencia y tarjeta en la sede",
+    "tiemposDeEntrega": null,
+    "garantia": null,
+    "transporte": null,
+    "descuentos": null
+  },
+  "_sobre_declarado": "Lo que el negocio declara, el asistente puede decirlo. Lo que está en null, no: el cerco bloquea cualquier afirmación sobre eso. El día que el taller escriba aquí «Recogida y entrega en Bogotá, $ 80.000», la frase deja de estar prohibida sin tocar una línea de código."
+}

@@ -1,0 +1,119 @@
+{
+ "tipo": "preguntas",
+ "cuando": "2026-09-19T01:15:25.650Z",
+ "maquina": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36",
+ "dato": [
+  {
+   "quien": "el que no sabe qué quiere",
+   "dice": "¿usted qué me recomienda? no sé qué tela me queda bien en la sala",
+   "modelo": "¡Hola! Entiendo que estás buscando la tela perfecta para tu sofá nuevo. Con el lino Verona que elegiste, queda muy bien, es una opción elegante y duradera. Si quieres explorar antes, podemos revisar otras telas que tenemos disponibles para que encuentres la que más te guste para tu sala. 😊",
+   "mostrada": null,
+   "cerco": {
+    "cifras": [],
+    "promesas": [],
+    "tema": []
+   },
+   "tapada": false
+  },
+  {
+   "quien": "el desconfiado",
+   "dice": "¿por qué cobran mano de obra? yo podría traer mi propia tela",
+   "modelo": "¡Hola! Entiendo tu pregunta, la mano de obra es importante porque incluye el tiempo y la habilidad de nuestros tapiceros para hacer un trabajo bien hecho. Si quieres traer tu propia tela, podemos discutirlo, pero la mano de obra seguiría aplicando. ¡Lo podemos conversar cuando vengas a la sede! 😊",
+   "mostrada": null,
+   "cerco": {
+    "cifras": [],
+    "promesas": [],
+    "tema": []
+   },
+   "tapada": false
+  },
+  {
+   "quien": "el que cree que es otro servicio",
+   "dice": "quiero limpiar el sofá a fondo, ¿ustedes hacen eso?",
+   "modelo": "¡Hola! Sí, hacemos mantenimiento y limpieza de tapicerías, así que podemos revisar el estado de tu sofá y darte una idea de cómo lo podemos dejar impecable. Si quieres, puedo agendar una visita para que podamos evaluarlo mejor. 😊",
+   "mostrada": null,
+   "cerco": {
+    "cifras": [],
+    "promesas": [],
+    "tema": []
+   },
+   "tapada": false
+  },
+  {
+   "quien": "el que pregunta por el relleno",
+   "dice": "¿me cambian la espuma del asiento? ¿eso ya está incluido en el valor?",
+   "modelo": "¡Hola! El cambio de espuma no está incluido en la cotización que tenemos, pero podemos revisarlo para evaluar el estado actual y darte un presupuesto adicional si es necesario. Puedes venir a cualquiera de nuestras sedes para que podamos analizarlo mejor. 😊",
+   "mostrada": "El relleno y la espuma todavía no entran en el valor: tu estimación cubre tela y mano de obra.",
+   "cerco": {
+    "cifras": [],
+    "promesas": [
+     "el relleno o la espuma dentro de la cifra"
+    ],
+    "tema": []
+   },
+   "tapada": true
+  },
+  {
+   "quien": "el que pide transporte",
+   "dice": "¿me recogen el mueble en la casa y me lo devuelven?",
+   "modelo": "¡Hola! Actualmente no ofrecemos servicio de transporte para recoger y devolver los muebles, pero podemos ayudarte a coordinar una opción si es necesario. Si quieres, puedo revisar las opciones con más detalle cuando vengas a visitar nuestras sedes. 😊",
+   "mostrada": "La recogida y la entrega todavía no están valoradas en tu estimación: un asesor te confirma cómo se maneja.",
+   "cerco": {
+    "cifras": [],
+    "promesas": [
+     "un precio de transporte, recogida o entrega"
+    ],
+    "tema": []
+   },
+   "tapada": true
+  },
+  {
+   "quien": "el parco",
+   "dice": "sí",
+   "modelo": "¡Perfecto! Entonces, ¿qué sede te vendría mejor para que podamos revisar tu sofá y conversar sobre las opciones que tenemos? Estamos en Bogotá, en el Centro o en la Norte. 😊",
+   "mostrada": null,
+   "cerco": {
+    "cifras": [],
+    "promesas": [],
+    "tema": []
+   },
+   "tapada": false
+  },
+  {
+   "quien": "el que busca el taller",
+   "dice": "¿dónde quedan y hasta qué hora abren hoy?",
+   "modelo": "¡Hola! La sede del Centro está en Calle 45 # 12-30, local 2, y estamos abiertos hoy de 8:00 a 18:00. Si prefieres la sede Norte, está en Carrera 15 # 120-45, bodega 3, y abrimos de 9:00 a 17:00. 😊",
+   "mostrada": null,
+   "cerco": {
+    "cifras": [],
+    "promesas": [],
+    "tema": []
+   },
+   "tapada": false
+  },
+  {
+   "quien": "el que pide la página",
+   "dice": "¿cuál es su página web y aceptan tarjeta?",
+   "modelo": "¡Claro que sí! Puedes encontrar más información en nuestra página web: [https://taller-demo.example](https://taller-demo.example). Y sí, aceptamos tarjeta en ambas sedes. 😊",
+   "mostrada": null,
+   "cerco": {
+    "cifras": [],
+    "promesas": [],
+    "tema": []
+   },
+   "tapada": false
+  },
+  {
+   "quien": "el que pregunta si hizo algo mal",
+   "dice": "¿he cometido algún error al diligenciar el formulario?",
+   "modelo": "¡Hola! No te preocupes, es completamente normal revisar el formulario, así aseguramos que todos los detalles estén correctos. Podríamos revisar juntos las medidas del sofá, ¿te parece si lo hacemos?😊",
+   "mostrada": null,
+   "cerco": {
+    "cifras": [],
+    "promesas": [],
+    "tema": []
+   },
+   "tapada": false
+  }
+ ]
+}

@@ -6,7 +6,7 @@
     "generate": "node tools/generate.mjs",
     "dev": "node tools/dev.mjs",
     "pretest": "node tools/generate.mjs",
-    "test": "node tests/wizard.spec.mjs && node tests/photos.spec.mjs && node tests/evaluacion-retapizado.spec.mjs && node tests/wiring.spec.mjs && node tests/review.spec.mjs && node tests/entities.spec.mjs && node tests/recommend.spec.mjs && node tests/auth.spec.mjs && node tests/billing.spec.mjs && node tests/plan-medida.spec.mjs && node tests/components.spec.mjs && node tests/points.spec.mjs && node tests/styles.spec.mjs && node tests/assistant-brain.spec.mjs && node tests/assistant.spec.mjs && node tests/sealed.spec.mjs",
+    "test": "node tests/wizard.spec.mjs && node tests/photos.spec.mjs && node tests/wiring.spec.mjs && node tests/review.spec.mjs && node tests/entities.spec.mjs && node tests/recommend.spec.mjs && node tests/auth.spec.mjs && node tests/billing.spec.mjs && node tests/plan-medida.spec.mjs && node tests/components.spec.mjs && node tests/points.spec.mjs && node tests/styles.spec.mjs && node tests/assistant-brain.spec.mjs && node tests/assistant.spec.mjs && node tests/assistant-ia-local.spec.mjs && node tests/sealed.spec.mjs",
     "test:wizard": "node tests/wizard.spec.mjs",
     "test:evaluacion-retapizado": "node tests/evaluacion-retapizado.spec.mjs",
     "test:wiring": "node tests/wiring.spec.mjs",
@@ -25,7 +25,8 @@
     "test:sealed": "node tests/sealed.spec.mjs",
     "test:clients": "node tests/clients.spec.mjs",
     "test:plan-medida": "node tests/plan-medida.spec.mjs",
-    "build:assistant": "node tools/build-assistant-assets.mjs"
+    "build:assistant": "node tools/build-assistant-assets.mjs",
+    "test:assistant-ia-local": "node tests/assistant-ia-local.spec.mjs"
   },
   "devDependencies": {
     "playwright": "^1.62.1"
