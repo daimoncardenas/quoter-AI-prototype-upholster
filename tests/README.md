@@ -62,13 +62,35 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   tall and the group's block centred (|air above − air below| ≤ 12 px), on two motivos — the rule is
   that a step with a question fills the panel instead of stacking its cards at the top and leaving the
   void above «Continuar» (`docs/equilibrio-de-pasos.md`).
+  It also pins the **error said by the assistant**: confirming an impossible measurement puts her
+  bubble on screen right away —no «Continuar» click— carrying the very same sentence as the step's
+  line, signed with her name, with the 3D layer turning her head to the field that failed; with the
+  assistant off the line stands alone and no bubble is painted (`docs/errores-con-lia.md`).
+
+  Incluye también «LA LÍNEA SIN MUEBLE NO DECLARA MUEBLE»: recorriendo «Tapicería
+  arquitectónica» con sus propias preguntas, su revisión no tiene filas de fotos ni de
+  medidas ni habla de «fuera de lo habitual», su resumen declara el motivo y sus preguntas
+  pero no un mueble, y el contexto del asistente va igual de limpio.
+
+  Incluye «UNA LÍNEA NUEVA NO HEREDA LO DECLARADO PARA LA ANTERIOR»: al cambiar de
+  línea de servicio (p. ej. a «Tapicería arquitectónica») el mueble vuelve al de fábrica, las
+  medidas y los campos quedan vacíos, las fotos se sueltan, las preferencias vuelven a su punto
+  de partida y las filas que ve el asistente no llevan nada de la otra línea; re-pulsar la misma
+  línea conserva lo declarado. El porqué, en `docs/cambio-de-linea.md`.
 - `review.spec.mjs` — step 4: that the checks report the photo's real
   dimensions and the measurement ranges per furniture type, and that the checks
   never claim to have recognised the furniture in the image — plus the local
   model's own **observation row**: the photo reaching it as a Blob together with
-  the declared rows the customer sees, the row marked "IA local", a promise
+  the declared rows the customer sees, the row signed with her name, a promise
   falling back to the neutral line, and no row at all without a model
-  (`docs/revision-con-ojos.md`).
+  (`docs/revision-con-ojos.md`) — and the **document in her hands**: while the
+  photo look runs she holds a blank white sheet with both hands (measured: the
+  sheet's painted size, both hands within a palm of its edges and in front of its
+  plane, the fingertips landing on its edges (5–9 cm from the centre: if they cross
+  to the middle the gesture stops reading as a hold), her face tilted 15–30° into
+  it, the sheet hung from the measured midpoint of the wrists) and puts
+  it away when the answer lands. The pose is applied and undone INSIDE the frame,
+  so the suite reads only what the layer publishes (`docs/el-documento-de-lia.md`).
 - `wiring.spec.mjs` — the loop between the two pages: a tela created in the
   backoffice reaching the cotizador, a submitted quote (with its photo) reaching
   the backoffice, and the backoffice settings driving the estimate. The submitted
@@ -153,6 +175,11 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   pinned to 21:30 on Sept 30 in Bogotá, already
   October in UTC — all six seeded September quotes still counting.
 
+  Y «solo lleva al contexto los datos de sus pasos»: para cada línea que no va por tela,
+  las banderas del contexto (`asksFurniture`, `asksMeasurements`, `asksPreferences`,
+  `asksRecommendation`) coinciden con los pasos del catálogo y lo ausente viaja en `null`
+  (`docs/contexto-por-linea.md`).
+
 - `entities.spec.mjs` — that every option the cotizador shows comes from the
   store: furniture types with their consumption rules and measurement ranges,
   plus the needs, styles, colours, budgets and coverage multipliers.
@@ -160,10 +187,11 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   style, colour and budget the customer chose, explains each suggestion, and
   never overrides an explicit pick. Plus the local model's recommendation: it gets
   the declared rows and the catalogue, its order re-ranks the grid (unknown ids
-  ignored), its reason is shown marked "IA local" and fence-judged, a promise falls
+  ignored), its reason is shown signed with her name and fence-judged, a promise falls
   back to the deterministic order, and without a model nothing is painted. It also
   pins the **order of the screen**: while the model is thinking the grid is not shown
-  (only the waiting row), the fabric cards and the metres block appear once the answer
+  (only the waiting row and, in her hands, the same blank sheet she reads during the photo
+  look), the fabric cards and the metres block appear once the answer
   is in, and a model that never answers hits `TOPE_RECOMENDACION_MS` (lowered in the
   check) and leaves the deterministic order with the row saying so
   (`docs/recomendacion-con-ia.md`).
@@ -348,6 +376,10 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   session is NOT rebuilt (one session per conversation: the history survives). A final scenario
   makes the model take 900 ms and asserts the waiting bubble is on screen while it thinks — send
   button disabled — and that both go away with the answer (`docs/chat-en-espera.md`).
+
+  Y que escribir una medida NO recrea la sesión del modelo (el hilo sigue), mientras que
+  CAMBIAR DE LÍNEA sí la destruye: la pregunta siguiente abre una sesión nueva y su turno ya no
+  lleva la medida de la línea anterior (`docs/cambio-de-linea.md`).
 - `sealed.spec.mjs` — the encrypted delivery build: since that gate is
   currently disabled at the owner's request, this checks that `dist/` ships in
   the clear rather than encrypted. It tests the packaging, not the prototype.

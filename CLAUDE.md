@@ -265,6 +265,23 @@ ella. Los paquetes recomendados (Taller/Empresa/Distribuidor) son un atajo que m
 capacidades y cuota de una vez — después el negocio agrega o quita lo que necesite, cada casilla con
 su valor.
 
+**Cambiar de línea empieza de cero.** Pulsar una línea distinta de la que ya estaba
+elegida (`!!state.service && state.service.id !== s.id`) llama a `resetProjectForLine()`: lo declarado para la anterior —mueble,
+medidas, fotos, preferencias, daños, preguntas propias de la línea, tela y revisión— no viaja a la
+nueva, porque el contexto que recibe el asistente (`ACI.context()`, `declaredRows()`) sale de `state`
+y de los campos del formulario. Se limpian los campos a su valor de fábrica, se sueltan las fotos, se
+descarta `sesionIA` (su historial guarda la línea vieja) y se rehace la estimación. Los datos de
+contacto no se tocan: son de la persona, no del proyecto. Volver a pulsar la MISMA línea no borra
+nada. El detalle y su porqué viven en `docs/cambio-de-linea.md`.
+
+**El contexto lleva lo que la línea pregunta, y nada más.** Los pasos de cada línea salen del
+catálogo (`skips` por paso, `asks` por pregunta) y de ahí salen también `pideMueble()`,
+`pideMedidas()`, `pidePreferencias()` y `pideRecomendacion()`: donde no hay paso, `ACI.context()`
+lleva `null` (con las banderas `asks*` para distinguir «no aplica» de «sin elegir»), `declaredRows()`
+no arma esa fila y `runReview()` no la juzga. El dueño lo vio en «Tapicería arquitectónica» —una línea
+sin mueble— con el resumen declarando un sofá y la revisión avisando de medidas fuera de rango.
+El detalle, en `docs/contexto-por-linea.md`.
+
 "Líneas de servicio" (Configuraciones de cotizador) es la vista de ESE estado: un **checkbox** por
 línea con `Store.setLineEnabled()` (`settings.disabledLines`, solo las apagadas) y la etiqueta
 Habilitada/Deshabilitada. Prender o apagar aquí no contrata nada — contratar es «Configurar mi
@@ -378,6 +395,19 @@ context & actions" below).
   constante sigue siendo `ASSISTANT_GATED_PLAN = 'Professional'`); `Store.resetAssistant()` stays allowed. A plan change in
   another tab re-applies the presence (storage event on settings). Every pack
   still ships `assistant.enabled: true`, so Essential shows the assistant.
+- **Su nombre, donde antes decía «IA local».** La atribución de lo que hace el modelo local va a su
+  nombre (`asistenteNombre()` y `etiquetaIA()` en `index.html`, del pack; sin asistente vuelven a «la IA
+  local del equipo»): la etiqueta de las filas de la mirada y de la recomendación, la espera («Mirando
+  tus fotos» / «Lía está analizando tus fotografías»), los desenlaces y la nota del chat (que sigue
+  diciendo que NO es una persona). El dueño: «replace all text in the application where says "AI local"
+  or "local AI" or "AI"». El backoffice no se toca por ahora (su palabra).
+- **Los errores los dice ella, y al instante.** `decirError(el, texto, campo)` pinta la línea del paso
+  (que es la que no depende del asistente) y publica el MISMO texto como aviso (`aci:notice`), que es
+  el canal de su burbuja: aparece sin que el cliente pulse nada —al confirmar el campo (`change`) en las
+  medidas, y al pulsar «Continuar» en el resto de los bloqueos— y la capa 3D gira su cabeza hacia el
+  campo (`detail.campo`). El anzuelo «Tócame para verlo» del cerebro (`observe`) se eliminó: el aviso ES
+  el mensaje. El dueño: «the idea is show the error in the dialogue inmediatly.... that is dont wait
+  that user do click». Diseño y criterios: `docs/errores-con-lia.md`.
 - **Backoffice**: "Presencia del asistente" — on/off switch, character radiogroup
   (picking the other character swaps a name still equal to the previous
   suggestion), name, "traje con el color de tu marca" switch, save, and a reset
@@ -440,8 +470,15 @@ context & actions" below).
   looks at the armchair, and that look holds ~1.2 s so the click that caused it
   cannot take it away). Idle, she looks at the step title — a new step clears the
   previous glance, so she turns to the new section instead of the "Continuar" button
-  — and tilts her head up-and-away while the step-4 review runs ("thinking" is a
-  pose, not a clip — none exists for it). Head/neck/body capped at ~43°; faces the
+  — tilts her head up-and-away while the step-4 LOCAL review runs (1.2 s, no bar: "thinking"
+  is a pose, not a clip — none exists for it) and, while the two waits WITH a bar run (the
+  photo look and the fabric recommendation), **holds a blank white sheet and reads it**:
+  a procedural pose applied after the mixer, blended in/out over ~0.6 s, with the sheet hung
+  from `Torso` (the arms hang from there too, so the grip survives the clip's sway) and its
+  place measured every frame from the midpoint of both wrists. Angles, measurements and the
+  traps (the rig's arms are NOT mirrored at rest; the inward swing must be applied while the
+  arm hangs; a gesture clip is dropped when the reading starts) live in
+  `docs/el-documento-de-lia.md`. Head/neck/body capped at ~43°; faces the
   customer while the chat is open (a reaction still wins there, a click does not).
   **Anti-Clippy budget**: the events of one customer action are coalesced (60 ms), a
   reaction is not followed by another for 4 s, none fire while the customer is typing
@@ -456,7 +493,10 @@ context & actions" below).
   `#assistantStage`: `data-reactions` / `data-reactions-suppressed` (counters),
   `data-reaction` (the last one), `data-glance` (`'selection'`, `'uploader'`,
   `'armchair'`, or the control's id/value — what she is looking at), `data-thinking`,
-  `data-chair-fabric`, `data-heady` / `data-crown` (her head and the top of her
+  `data-reading`, `data-look-src` (`glance | talking | reading | thinking | step | none`),
+  `data-sheet-px` / `data-sheet-gap` / `data-sheet-head` / `data-sheet-mid` / `data-sheet-hands` /
+  `data-sheet-color` (the sheet, published from INSIDE the frame: the pose is undone before
+  anything outside the layer could measure it), `data-chair-fabric`, `data-heady` / `data-crown` (her head and the top of her
   hair), `data-seat` / `data-hip` (the armchair's seat line and where her hip
   actually lands), `data-pose` (see the next bullet) and `data-idle-ms` (*writable*:
   shortens the wait below so the suite doesn't sit through a real minute) — read by

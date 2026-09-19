@@ -219,6 +219,11 @@ check('y su estimación es solo material',
 await flujo.click('#backButton'); await flujo.waitForSelector('[data-step="1"].active');
 await flujo.click('#backButton'); await flujo.waitForSelector('[data-step="0"].active');
 await flujo.click('#serviceGrid .service-choice:has-text("Reparación y restauración")');
+/* Cambiar de línea empieza de cero (docs/cambio-de-linea.md): las fotos que se subieron para
+ * «Suministro de tela» se sueltan con lo demás, así que el cliente las vuelve a subir para su
+ * motivo nuevo. Sin esto el paso 1 no deja seguir y el recorrido se queda ahí. */
+await flujo.setInputFiles('#furniturePhoto', png);
+await flujo.waitForFunction(() => state.photos.length >= 3);
 check('elegir reparación avisa el motivo y abre su paso', (await estadoFlujo()).dotDanos, true);
 await flujo.click('#nextButton'); await flujo.waitForSelector('[data-step="1"].active');
 await flujo.click('#nextButton'); await flujo.waitForSelector('[data-step="2"].active');
@@ -291,6 +296,29 @@ await flujo.close();
     }));
     check(`«${m.etiqueta}» pide sus pasos, en su orden, y cotiza como ${m.pricing}`,
       [vista.pasos, vista.pricing, vista.estimado], [m.pasos, m.pricing, true]);
+    /* Y lo que NO pregunta no viaja: el contexto del asistente (y con él su turno y su resumen) solo
+     * lleva los datos de los pasos que la línea tiene. El dueño lo vio en «Tapicería arquitectónica»:
+     * sin paso de mueble, Lía hablaba igual de un sofá y la revisión avisaba de medidas fuera de
+     * rango para un mueble que nadie eligió (docs/contexto-por-linea.md). */
+    const ctxLinea = await pg.evaluate(() => {
+      const c = ACI.context();
+      const filas = [...document.querySelectorAll('#aiSummary dt')].map(d => d.textContent.trim());
+      return { mueble: c.selectedFurniture, medidas: c.measurements, prefs: c.preferences, fotos: c.photos,
+        tela: c.fabric, pide: [c.asksFurniture, c.asksMeasurements, c.asksPreferences, c.asksRecommendation], filas };
+    });
+    const pasos = m.pasos.join(' | ');
+    check(`«${m.etiqueta}» solo lleva al contexto los datos de sus pasos`,
+      [ctxLinea.pide,
+       ctxLinea.mueble === null, ctxLinea.medidas === null, ctxLinea.prefs === null, ctxLinea.fotos === null,
+       pasos.includes('Tu mueble') === (ctxLinea.mueble !== null),
+       pasos.includes('Medidas') === (ctxLinea.medidas !== null),
+       pasos.includes('Preferencias') === (ctxLinea.prefs !== null),
+       /* Con la parrilla fuera del recorrido no puede haber tela elegida; con la parrilla dentro,
+        * que haya o no tela depende de en qué paso esté el cliente (aquí, recién elegida la línea). */
+       pasos.includes('Recomendación') || ctxLinea.tela === null],
+      [[pasos.includes('Tu mueble'), pasos.includes('Medidas'), pasos.includes('Preferencias'), pasos.includes('Recomendación')],
+       !pasos.includes('Tu mueble'), !pasos.includes('Medidas'), !pasos.includes('Preferencias'), !pasos.includes('Tu mueble'),
+       true, true, true, true]);
     check(`«${m.etiqueta}» suma ${await pg.evaluate(v => Store.money(v), m.total)}`,
       await pg.evaluate(({ ctx, id }) => Store.lineQuote(Store.serviceById(id), ctx).total, { ctx: m.ctx, id: m.pricing === 'pieza' ? 'mantenimiento' : m.pricing === 'm2' ? 'tapiceria-arquitectonica' : m.pricing === 'fabricacion' ? 'a-la-medida' : 'proyecto-comercial' }),
       [m.total, m.total]);

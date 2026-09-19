@@ -322,7 +322,7 @@ check('cambiar un selector publica el campo y su valor', (await ultimo('PREFEREN
 
 console.log('\nSIN LA AUTORIZACIÓN MARCADA EL ASISTENTE NO VE DATOS PERSONALES');
 check('lo que puede leer es el estado del cotizador, y nada más', await page.evaluate(() => Object.keys(ACI.context()).sort()),
-  ['analysis', 'consent', 'currentStep', 'estimate', 'fabric', 'furnitureNote', 'measurements', 'photos', 'preferences', 'selectedFurniture', 'service', 'submitted', 'tenant']);
+  ['analysis','asksFurniture','asksMeasurements','asksPreferences','asksRecommendation', 'consent', 'currentStep', 'estimate', 'fabric', 'furnitureNote', 'measurements', 'photos', 'preferences', 'selectedFurniture', 'service', 'submitted', 'tenant']);
 await page.evaluate(() => {
   document.getElementById('fullName').value = 'Natalia Peña';
   document.getElementById('email').value = 'n@example.com';
@@ -562,7 +562,8 @@ if (!stageOk) {
     return {
       visible: !bub.hidden && getComputedStyle(bub).display !== 'none',
       quien: bub.querySelector('.bubble-who').textContent.trim() === nombre,
-      texto: bub.querySelector('.bubble-text').textContent,
+      /* El aviso dice el MENSAJE, no un anzuelo: la MISMA frase que la línea del paso (dueño, 19/09). */
+      textoEsElError: bub.querySelector('.bubble-text').textContent === document.getElementById('measureError').textContent,
       sobreSuCabeza: hueco >= 2 && hueco <= 14,
       barraGuardada: getComputedStyle(intro).opacity === '0' && getComputedStyle(pasos).opacity === '0',
       pasosNoRecibenClic: (() => {
@@ -572,7 +573,7 @@ if (!stageOk) {
       sinReacomodo: Math.round(Number(document.getElementById('assistantStage').dataset.crown)) === coronilla,
       dentroDeLaBarra: r.left >= jr.left - 1 && r.right <= jr.right + 1 && r.right <= w.left + 1
     };
-  }, [nombreAsistente, coronilla]), { visible: true, quien: true, texto: 'Encontré algo en tus medidas. Tócame para verlo.', sobreSuCabeza: true, barraGuardada: true, pasosNoRecibenClic: true, sinReacomodo: true, dentroDeLaBarra: true });
+  }, [nombreAsistente, coronilla]), { visible: true, quien: true, textoEsElError: true, sobreSuCabeza: true, barraGuardada: true, pasosNoRecibenClic: true, sinReacomodo: true, dentroDeLaBarra: true });
   // El relevo es instantáneo: el progreso no puede tardar un cuadro en irse (su `transition`
   // heredado hacía que el aviso apareciera y la barra se fuera ~250 ms después: un parpadeo).
   check('la barra se guarda en el mismo instante en que aparece el aviso (sin parpadeo)', await page.evaluate(() => {

@@ -85,8 +85,9 @@ console.log('\nLA IA LOCAL RECOMIENDA: ORDENA LAS TELAS CON LO DECLARADO POR DEL
           if (!Array.isArray(mensajes) || !mensajes.every(m => m && m.role && Array.isArray(m.content)))
             throw new Error("Failed to read the 'content' property from 'LanguageModelMessage': Required member is undefined.");
           window.__pedido = mensajes;
-          /* Tarda un poco a propósito: así se puede mirar la pantalla MIENTRAS la IA ordena. */
-          await new Promise(r => setTimeout(r, 900));
+          /* Tarda un poco a propósito: así se puede mirar la pantalla MIENTRAS la IA ordena
+           * (y la hoja de Lía alcanza su pose: la levanta en ~0,6 s). */
+          await new Promise(r => setTimeout(r, 1600));
           /* Un orden al revés del determinista: si la parrilla lo respeta, el orden es SUYO. */
           return '{"orden": ["3","5","2","1","4"], "razon": "La Bouclé Capri te va por el uso y el estilo que declaraste."}';
         }, destroy(){} }; } };
@@ -94,18 +95,33 @@ console.log('\nLA IA LOCAL RECOMIENDA: ORDENA LAS TELAS CON LO DECLARADO POR DEL
   await p.goto(D + 'index.html');
   await p.evaluate(() => localStorage.clear());
   await openWizard(p, D);
+  /* La capa 3D tarda en levantar (modelos + WebGL): sin ella no hay hoja que mirar. */
+  await p.waitForFunction(() => document.querySelector('#assistantStage')?.dataset.pose === 'standing', null, { timeout: 15000 });
   /* A la recomendación por el atajo del paso: el orden de las telas no depende del paseo. */
   await p.evaluate(() => { document.getElementById('style').value = 'Moderno';
     document.getElementById('color').value = 'Grises'; document.getElementById('budget').value = '160000';
     const s = document.querySelector('.wizard-step[data-brain="RECOMMENDATION"]'); showStep(+s.dataset.step); });
-  /* MIENTRAS la IA ordena: la parrilla no se enseña (el modelo doble tarda 900 ms). */
+  /* MIENTRAS la IA ordena: la parrilla no se enseña (el modelo doble tarda 1,6 s). La hoja
+   * y los brazos necesitan su tiempo: el peso de la pose sube desde 0 en ~0,6 s. */
+  await p.waitForTimeout(1100);
   const esperando = await p.evaluate(() => ({ telas: document.getElementById('fabricGrid').hidden,
     fila: /Pidiéndole una recomendación/.test(document.getElementById('aiPick').innerText),
     filaVisible: !document.getElementById('aiPick').hidden,
     /* El bloque de metros aparece CON las telas: mientras la IA ordena, no está. */
-    metros: (() => { const q = document.querySelector('.wizard-step.active .quote-preview'); return q ? q.offsetParent === null : true; })() }));
+    metros: (() => { const q = document.querySelector('.wizard-step.active .quote-preview'); return q ? q.offsetParent === null : true; })(),
+    /* Y ella está leyendo su documento: la espera de las telas es una de las dos esperas con barra. */
+    hoja: (() => { const st = document.getElementById('assistantStage').dataset;
+      const [w, h] = (st.sheetPx || '0x0').split('x').map(Number);
+      const [l, r] = (st.sheetGap || '1|1').split('|').map(Number);
+      return { reading: st.reading, w, h, l, r }; })() }));
   check('mientras la IA elige, las telas NO se enseñan: la parrilla está oculta y la fila lo dice',
     [esperando.telas, esperando.fila, esperando.filaVisible, esperando.metros], [true, true, true, true]);
+  /* El papel es media carta (20x28 px a esta ventana) y la manopla de este rig mide ~4 cm: los
+   * mismos umbrales que la revisión (menos de 7 cm de la muñeca al canto, tamaño de verdad). */
+  check('mientras ordena las telas, ella lee su documento con las dos manos (la espera con barra)',
+    [esperando.hoja.reading, esperando.hoja.w >= 16, esperando.hoja.h >= 22,
+     esperando.hoja.l < 0.07, esperando.hoja.r < 0.07],
+    ['on', true, true, true, true]);
   await p.waitForFunction(() => /Bouclé Capri/.test(document.getElementById('aiPick').innerText), null, {timeout: 8000}).catch(()=>{});
   const est = await p.evaluate(() => ({
     telas: document.getElementById('fabricGrid').hidden,
@@ -116,13 +132,18 @@ console.log('\nLA IA LOCAL RECOMIENDA: ORDENA LAS TELAS CON LO DECLARADO POR DEL
     sistema: window.__sistema,
     pedido: (window.__pedido[0].content.filter(x => x.type === 'text').map(x => x.value).join('\n'))
   }));
-  check('con modelo, la fila enseña lo que recomienda y va marcada IA local',
-    [/Bouclé Capri/.test(est.fila), /IA local/i.test(est.fila)], [true, true]);
+  check('con modelo, la fila enseña lo que recomienda y va firmada por ella',
+    [/Bouclé Capri/.test(est.fila), /lía/i.test(est.fila)], [true, true]);
   check('y al terminar, la parrilla aparece (las telas se enseñan DESPUÉS del análisis)',
     est.telas, false);
   check('y lo declarado viaja al modelo: mueble, estilo y color, y el presupuesto por metro',
     [/Mueble: /.test(est.sistema), /Estilo y color: Moderno · Grises/.test(est.sistema), /160\.000 o menos/.test(est.sistema)],
     [true, true, true]);
+  /* Y al llegar la recomendación, el documento se guarda (el peso de la pose se deja en ~0,6 s). */
+  await p.waitForTimeout(1200);
+  check('cuando llega la recomendación, el documento se guarda',
+    await p.evaluate(() => { const st = document.getElementById('assistantStage').dataset;
+      return [st.reading, st.sheetPx]; }), ['off', '']);
   check('y en el prompt van las telas del catálogo, con su id, su precio y sus etiquetas',
     [/- 4: Náutica Bari · Gris océano/.test(est.sistema), /por metro/.test(est.sistema), /- 3: Bouclé Capri · Marfil/.test(est.sistema)],
     [true, true, true]);

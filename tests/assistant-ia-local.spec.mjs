@@ -79,8 +79,10 @@ const errs = [];
   });
   await p.goto(D + 'index.html'); await p.waitForTimeout(400);
   await p.evaluate(() => openChat());
-  check('con modelo la nota lo dice, en vez de fingir que es simulado',
-    (await p.innerText('.chat-sim-note')).includes('IA local'), true);
+  /* La nota nombra a Lía y sigue diciendo que NO es una persona (la honestidad no se toca: el
+   * dueño pidió cambiar la etiqueta «IA local», no fingir que hay alguien detrás). */
+  check('con modelo la nota la nombra y dice que no es una persona, en vez de fingir que es simulado',
+    (await p.innerText('.chat-sim-note')).includes('Lía responde con el modelo local del navegador (no es una persona)'), true);
   await p.evaluate(() => { window.__cola = ['Elige la tela con calma y te digo cómo va tu estimación si quieres.']; });
   await p.evaluate(() => askAssistant('¿cómo voy?'));
   await p.waitForTimeout(1200);
@@ -173,11 +175,13 @@ const errs = [];
     Object.defineProperty(window, 'isSecureContext', { value: true });
     window.__pedidos = [];
     window.__sesiones = 0;
+    window.__destruidas = 0;
     window.LanguageModel = {
       availability: async () => 'available',
       create: async () => {
         window.__sesiones++;
-        return { prompt: async (texto) => { window.__pedidos.push(texto); return 'Listo: con esa tela y esas medidas lo tengo claro.'; } };
+        return { prompt: async (texto) => { window.__pedidos.push(texto); return 'Listo: con esa tela y esas medidas lo tengo claro.'; },
+                 destroy: () => { window.__destruidas++; } };
       }
     };
   });
@@ -185,23 +189,43 @@ const errs = [];
   await p.evaluate(() => openChat());
   await p.evaluate(() => askAssistant('¿qué tengo seleccionado?'));
   await p.waitForTimeout(600);
-  /* El cliente elige otra línea y escribe una medida, como lo haría en el formulario. */
-  const despues = await p.evaluate(() => {
+  /* Como un cliente: primero elige el motivo —es el primer paso de la pantalla— y después declara.
+   * El hilo de la conversación se conserva mientras solo escriba una medida. */
+  const conMedida = await p.evaluate(() => {
     const cards = [...document.querySelectorAll('#serviceGrid .service-choice')];
-    const otra = cards.find(c => !c.classList.contains('selected')) || cards[0];
-    if (otra) otra.click();
+    const primera = cards.find(c => !c.classList.contains('selected')) || cards[0];
+    if (primera) primera.click();
     const ancho = document.getElementById('width');
     if (ancho) { ancho.value = '233'; ancho.dispatchEvent(new Event('input', { bubbles: true })); ancho.dispatchEvent(new Event('change', { bubbles: true })); }
     return { linea: (ACI.context().service || {}).label || 'todavía sin elegir', ancho: (ACI.context().measurements || {}).width };
   });
   await p.evaluate(() => askAssistant('¿y ahora qué tengo seleccionado?'));
   await p.waitForTimeout(600);
+  const turnoMedida = await p.evaluate(() => window.__pedidos.at(-1));
+  check('el turno siguiente lleva la medida que el cliente acaba de escribir',
+    turnoMedida.includes(`medidas ${conMedida.ancho} ×`), true);
+  check('sin recrear la sesión: escribir una medida no pierde el hilo',
+    await p.evaluate(() => window.__sesiones), 1);
+  /* Y ahora SÍ cambia de línea: lo declarado para la anterior no viaja (el reset lo borra) y la
+   * conversación se suelta, porque su historial guarda la línea vieja. */
+  const despues = await p.evaluate(() => {
+    const cards = [...document.querySelectorAll('#serviceGrid .service-choice')];
+    const otra = cards.find(c => !c.classList.contains('selected')) || cards[0];
+    if (otra) otra.click();
+    return { linea: (ACI.context().service || {}).label || 'todavía sin elegir',
+      ancho: (ACI.context().measurements || {}).width, fotos: (ACI.context().photos || {}).count };
+  });
+  await p.evaluate(() => askAssistant('¿y ahora qué tengo seleccionado?'));
+  await p.waitForTimeout(600);
   const ultimoTurno = await p.evaluate(() => window.__pedidos.at(-1));
   check('el turno siguiente lleva la línea que el cliente acaba de elegir',
     ultimoTurno.includes(`Línea que está cotizando: «${despues.linea}»`), true);
-  check('y la medida que acaba de escribir', ultimoTurno.includes(`medidas ${despues.ancho} ×`), true);
-  check('sin recrear la sesión: la conversación no pierde el hilo',
-    await p.evaluate(() => window.__sesiones), 1);
+  check('cambiar de línea suelta la conversación: la pregunta siguiente abre una sesión nueva',
+    await p.evaluate(() => window.__sesiones), 2);
+  check('y la sesión de la línea anterior se destruye',
+    await p.evaluate(() => window.__destruidas), 1);
+  check('el turno de la línea nueva ya no lleva la medida de la anterior',
+    [!despues.ancho, ultimoTurno.includes('233')], [true, false]);
   /* Y con «Otro» elegido, la descripción del cliente viaja pegada al mueble. */
   await p.evaluate(() => {
     const card = [...document.querySelectorAll('.furniture-card')].find(c => c.dataset.furniture === 'Otro');

@@ -404,6 +404,195 @@ const limpieza = await abrirEnElPaso('Mantenimiento y limpieza', 3);
 check('el mismo reparto en otro motivo (mantenimiento y limpieza)',
   [limpieza.tarjeta >= 150, Math.abs(limpieza.arriba - limpieza.abajo) <= 12], [true, true]);
 
+console.log('\nEL ERROR LO DICE ELLA EN SU BURBUJA, AL INSTANTE (SIN PULSAR NADA)');
+/* El dueño: «the idea is show the error in the dialogue inmediatly.... that is dont wait that user do
+ * click». Se prueba en Medidas: al confirmar el campo (`change`), el aviso de ella ya está pintado y
+ * dice la MISMA frase que la línea del paso. */
+await fresh();
+await page.evaluate(()=>{document.querySelector('.furniture-card').click()});
+await page.setInputFiles('#furniturePhoto', png);
+await page.waitForFunction(()=>state.photos.length>=3);
+for(let i=0;i<4 && await page.evaluate(()=>ACI.stepId(state.step)!=='MEASUREMENTS');i++){ await page.click('#nextButton'); await page.waitForTimeout(200); }
+/* La burbuja la pinta la capa 3D: hay que esperar a que esté en pie (no se finge el aviso). */
+await page.waitForFunction(()=>(document.querySelector('.assistant-stage')||{}).dataset&&document.querySelector('.assistant-stage').dataset.pose==='standing',null,{timeout:10000}).catch(()=>{});
+const alInstante = await page.evaluate(()=>new Promise(res=>{
+  const dichos=[];
+  addEventListener('aci:notice',e=>dichos.push({text:(e.detail||{}).text,campo:!!(e.detail&&e.detail.campo)}));
+  /* Ancho y alto válidos (si no, el paso frena antes por el campo vacío y no hay error que decir). */
+  const set=(id,v)=>{const x=document.getElementById(id);x.value=v;x.dispatchEvent(new Event('change',{bubbles:true}))};
+  set('width','210'); set('height','85');
+  const el=document.getElementById('depth'); el.value='400'; el.dispatchEvent(new Event('change',{bubbles:true}));
+  setTimeout(()=>{const bl=document.getElementById('assistantBubble');
+    res({dichos, linea:document.getElementById('measureError').textContent, visible:!bl.hidden,
+      burbuja:bl.querySelector('.bubble-text').textContent, firma:bl.querySelector('.bubble-who').textContent,
+      gira:(document.querySelector('.assistant-stage')||{}).dataset?document.querySelector('.assistant-stage').dataset.glance:null,
+      paso:state.step});},1200);
+}));
+check('al confirmar la medida imposible el aviso ya está en pantalla, sin pulsar Continuar',
+  [alInstante.visible, alInstante.paso===9, alInstante.dichos.length>0], [true, true, true]);
+check('y el aviso dice la MISMA frase que la línea del paso',
+  [alInstante.burbuja.trim(), alInstante.linea.trim()], [alInstante.linea.trim(), alInstante.linea.trim()]);
+check('con su firma y girando la cabeza hacia el campo que falla',
+  [alInstante.firma, alInstante.gira], ['Lía', 'depth']);
+const sinAsistente = await page.evaluate(()=>new Promise(res=>{
+  /* Se parte de una pantalla limpia: el aviso de la comprobación anterior se cierra a mano. */
+  document.querySelector('#assistantBubble .bubble-close').click();
+  const original=Store.assistant; Store.assistant=()=>({enabled:false,name:'Lía'});
+  document.getElementById('measureError').hidden=true;
+  document.getElementById('nextButton').click();
+  setTimeout(()=>{const bl=document.getElementById('assistantBubble');
+    const out={visible:!bl.hidden, linea:document.getElementById('measureError').hidden?'':document.getElementById('measureError').textContent};
+    Store.assistant=original; res(out);},900);
+}));
+check('sin asistente la línea sigue sola y no hay aviso (no se finge una voz)',
+  [sinAsistente.visible, /fuera de lo habitual/.test(sinAsistente.linea)], [false, true]);
+
+/* --------------------------------------------------------------------------------------------
+ * CAMBIAR DE LÍNEA EMPIEZA DE CERO
+ * El dueño: «when user change line of service... dont save.. because this contaminate the context
+ * for the AI». Lo declarado para una línea —mueble, medidas, fotos, preferencias, tela y
+ * revisión— no viaja a la siguiente: el asistente lee ese contexto (ACI.context(), declaredRows())
+ * y con datos de la otra línea contesta de otro mueble.
+ * -------------------------------------------------------------------------------------------- */
+console.log('\nUNA LÍNEA NUEVA NO HEREDA LO DECLARADO PARA LA ANTERIOR');
+await fresh();
+/* Punto de partida de fábrica: contra esto se compara después. */
+const fabrica = await page.evaluate(() => ({
+  mueble: document.querySelector('.furniture-card').dataset.furniture,
+  estilo: document.getElementById('style').value,
+  color: document.getElementById('color').value }));
+const muebleOtro = await page.evaluate(() => {
+  const cards = [...document.querySelectorAll('.furniture-card')];
+  const otra = cards.find(c => !c.classList.contains('selected'));
+  otra.click(); return otra.dataset.furniture; });
+await page.setInputFiles('#furniturePhoto', png);
+await page.waitForFunction(() => state.photos.length >= 3);
+await page.click('#nextButton');
+const medio = await page.evaluate(() => { const r = ACI.context().measurements.ranges;
+  const m = k => Math.round((r[k][0] + r[k][1]) / 2);
+  return { width: m('measurements.width'), height: m('measurements.height'), depth: m('measurements.depth') }; });
+await page.fill('#width', String(medio.width));
+await page.fill('#height', String(medio.height));
+await page.fill('#depth', String(medio.depth));
+await page.click('#nextButton');
+await page.evaluate(() => {
+  const c = document.querySelector('#needsGrid input'); if (c && !c.checked) c.click();
+  const s = document.getElementById('style'); s.selectedIndex = Math.min(2, s.options.length - 1);
+  const col = document.getElementById('color'); col.selectedIndex = Math.min(1, col.options.length - 1); });
+
+const declarado = await page.evaluate(() => {
+  const c = ACI.context();
+  return { linea: (c.service || {}).label, medida: String(c.measurements.width), mueble: c.selectedFurniture,
+    fotos: c.photos.count, needs: c.preferences.needs.length, estilo: c.preferences.style }; });
+check('(fixture) la línea anterior queda con lo suyo declarado',
+  [declarado.mueble === muebleOtro, declarado.fotos >= 3, declarado.medida !== '0', declarado.needs > 0],
+  [true, true, true, true]);
+
+/* Volver a pulsar la MISMA línea no borra nada: no hay cambio que empezar de cero. Se hace sobre
+ * la línea que tiene lo declarado (si borrara, el mueble desaparecería del contexto). */
+await page.click('#journeyContextChange');
+await page.waitForTimeout(250);
+const mismaLinea = await page.evaluate(() => {
+  const card = [...document.querySelectorAll('#serviceGrid .service-choice')].find(c => c.classList.contains('selected')) || document.querySelectorAll('#serviceGrid .service-choice')[0];
+  card.click(); return card.querySelector('b').textContent.trim(); });
+await page.waitForTimeout(300);
+check('re-pulsar la misma línea conserva lo declarado (no hay cambio de línea)',
+  [await page.evaluate(() => ACI.context().selectedFurniture), mismaLinea], [declarado.mueble, declarado.linea]);
+
+/* Cambiar a «Tapicería arquitectónica» (la línea que el dueño nombró). El paso de la línea ya
+ * está abierto: el re-pulsar anterior dejó ahí al cliente. */
+await page.waitForTimeout(150);
+const lineaNueva = await page.evaluate(() => {
+  const card = [...document.querySelectorAll('#serviceGrid .service-choice')].find(c => /arquitect/i.test(c.textContent));
+  card.click(); return card.querySelector('b').textContent.trim(); });
+await page.waitForTimeout(400);
+const limpio = await page.evaluate(() => {
+  const c = ACI.context();
+  const m = c.measurements || {}, p = c.preferences || {}, f = c.photos || {};
+  return { linea: (c.service || {}).label, mueble: c.selectedFurniture, ancho: m.width,
+    alto: m.height, fondo: m.depth, fotos: f.count, needs: (p.needs || []).length,
+    estilo: p.style, color: p.color, analisis: c.analysis.done,
+    campoW: document.getElementById('width').value, campoH: document.getElementById('height').value,
+    campoD: document.getElementById('depth').value, campos: document.querySelectorAll('#needsGrid input:checked').length,
+    tira: document.getElementById('photoStrip').children.length,
+    revisa: document.getElementById('analysisTitle').textContent, aiPick: document.getElementById('aiPick').hidden,
+    resumen: document.getElementById('aiSummary').textContent.replace(/\s+/g, ' ').trim() }; });
+
+check('la línea nueva es la que el cliente acaba de elegir', limpio.linea, lineaNueva);
+check('la línea que no pregunta mueble no lleva mueble al contexto (antes llevaba el de fábrica)',
+  [limpio.mueble, limpio.mueble === declarado.mueble], [null, false]);
+check('las medidas declaradas no pasan a la línea nueva',
+  [!limpio.ancho, !limpio.alto, !limpio.fondo, limpio.campoW, limpio.campoH, limpio.campoD], [true, true, true, '', '', '']);
+check('las fotos se sueltan (tira vacía y contexto sin fotos: esta línea no las pide)',
+  [limpio.fotos, limpio.tira], [null, 0]);
+check('las preferencias no viajan (esta línea no las pregunta)',
+  [limpio.needs, limpio.campos, limpio.estilo, limpio.color], [0, 0, null, null]);
+check('la revisión no queda hecha para la línea nueva',
+  [limpio.analisis, limpio.revisa, limpio.aiPick], [false, 'Listo para revisar', true]);
+check('y las filas que ve el asistente no llevan nada de la otra línea',
+  [/Motivo/.test(limpio.resumen), /Mueble/.test(limpio.resumen), /Fotografías/.test(limpio.resumen),
+   limpio.resumen.includes(String(declarado.medida))],
+  [true, false, false, false]);
+
+
+/* --------------------------------------------------------------------------------------------
+ * LA LÍNEA QUE NO PREGUNTA TAMPOCO DECLARA
+ * «Tapicería arquitectónica» no tiene paso de mueble, ni de medidas, ni de preferencias: el
+ * cliente no los elige — y aun así el resumen y la revisión hablaban de un sofá y avisaban de
+ * medidas fuera de rango. Lo que la línea no pregunta no puede aparecer ni viajar al asistente.
+ * -------------------------------------------------------------------------------------------- */
+console.log('\nLA LÍNEA SIN MUEBLE NO DECLARA MUEBLE (REVISIÓN Y CONTEXTO)');
+await fresh();
+await page.evaluate(() => {
+  const card = [...document.querySelectorAll('#serviceGrid .service-choice')].find(c => /arquitect/i.test(c.textContent));
+  card.click(); });
+await page.waitForTimeout(350);
+/* Caminar hasta la validación respondiendo lo que cada paso pida: los pasos son los suyos
+ * (chips y campos de sus preguntas), no los del recorrido del mueble. */
+const responder = () => page.evaluate(() => {
+  document.querySelectorAll('.wizard-step.active .chip-grid').forEach(g => {
+    if (!g.querySelector('input:checked')) { const l = g.querySelector('label'); if (l) l.click(); } });
+  document.querySelectorAll('.wizard-step.active input[type="number"]').forEach(i => {
+    if (!i.value) { i.value = '200'; i.dispatchEvent(new Event('input', { bubbles: true })); i.dispatchEvent(new Event('change', { bubbles: true })); } });
+});
+for (let i = 0; i < 10 && !(await page.isVisible('#analyzeButton')); i++) {
+  await responder();
+  const freno = await page.evaluate(() => ({
+    paso: (() => { const a = document.querySelector('.wizard-step.active'); return a ? (a.dataset.ask || a.dataset.brain || a.id) : '?'; })(),
+    next: document.getElementById('nextButton').disabled,
+    error: [...document.querySelectorAll('.wizard-step.active [id$="Error"]')].filter(e => !e.hidden).map(e => e.textContent).join(' | '),
+  }));
+  console.log('    · ' + JSON.stringify(freno));
+  if (freno.next) break;
+  await page.click('#nextButton'); await page.waitForTimeout(250);
+}
+await responder();
+await page.click('#analyzeButton');
+await page.waitForFunction(() => state.analyzed);      // el botón se retira al terminar la revisión
+await page.waitForTimeout(150);
+const revision = await page.evaluate(() => {
+  const c = ACI.context();
+  return {
+    titulo: document.getElementById('analysisTitle').textContent,
+    filas: [...document.querySelectorAll('#analysisChecks > div')].map(d => (d.querySelector('b') || {}).textContent || ''),
+    resumen: [...document.querySelectorAll('#aiSummary dt')].map(d => d.textContent.trim()),
+    todo: document.getElementById('analysisChecks').textContent,
+    contexto: [c.selectedFurniture, c.measurements, c.preferences, c.photos, c.fabric],
+  };
+});
+check('su revisión no habla de fotos ni de medidas (no hay esos pasos)',
+  [revision.filas.some(t => /Fotograf/.test(t)), revision.filas.some(t => /Medidas/.test(t)),
+   /fuera de lo habitual/.test(revision.todo), revision.filas.length],
+  [false, false, false, 1]);
+check('y sigue diciendo lo que sí importa: que hay con qué estimar',
+  [revision.filas.some(t => /Datos suficientes/.test(t)), /Revisión lista/.test(revision.titulo)], [true, true]);
+check('su resumen declara el motivo y sus propias preguntas, no un mueble ni unas medidas',
+  [revision.resumen.includes('Motivo'), revision.resumen.includes('Mueble'), revision.resumen.includes('Medidas'),
+   revision.resumen.includes('Estilo y color'), revision.resumen.includes('Fotografías')],
+  [true, false, false, false, false]);
+check('y el contexto del asistente va tan limpio como el resumen',
+  revision.contexto, [null, null, null, null, null]);
+
 console.log('\npage errors: ' + (errs.length?errs.join(' | '):'none'));
 console.log(fails?`\n${fails} FAILING`:'\nALL PASS');
 await browser.close(); process.exit(fails?1:0);

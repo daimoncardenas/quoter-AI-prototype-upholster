@@ -23,6 +23,12 @@
  * Test hooks on #assistantStage: data-reactions / data-reactions-suppressed
  * (counters), data-reaction (last one), data-glance (what she is looking at:
  * 'selection' | 'uploader' | 'armchair' | the control's id or value), data-thinking,
+ * data-reading (holding and reading her sheet while the system works), data-sheet-px /
+ * data-sheet-gap (what the sheet measures on screen and how far each hand is from it),
+ * data-sheet-head (how far her face is tilted down, in degrees; the look is applied and
+ * undone inside the frame, so this is the only way to measure it from outside),
+ * data-sheet-mid / data-sheet-hands (the sheet's centre and both wrists, in metres, world),
+ * data-look-src (which branch won the look: glance | talking | reading | thinking | step | none),
  * data-chair-fabric.
  *
  * three.js comes from cdn.jsdelivr.net through the importmap in <head>. The module
@@ -70,8 +76,6 @@ const HANDS_MS = 1400; // how long the head stays on what the customer just touc
 const HANDS_MIN_MS = 350; // minimum spacing between those turns (attentive, never twitchy)
 const COALESCE_MS = 60; // events published by one customer action arrive within this window
 const REACTION_COOLDOWN_MS = 4000;
-// Looking up and away, the classic "let me think" (radians; no clip exists for it).
-const THINKING = { pose: { yaw: -0.35, pitch: -0.22 } };
 /* A minute without a single sign of life —no mouse, no keyboard, no touch— and she walks
  * to her armchair and sits down; any sign brings her back. Sitting is a POSE, not a clip
  * (none exists for it): the legs are bent after the mixer, like the wave and the look. */
@@ -147,6 +151,89 @@ const SIT_YAW_EXTRA = 0.32; // tres cuartos hacia el cliente, en el mismo sentid
 const sitYaw = () => (chair?.pivot?.rotation.y || 0) + SIT_YAW_EXTRA;
 const SIT_BONES = ['UpperLeg.L', 'UpperLeg.R', 'LowerLeg.L', 'LowerLeg.R', 'Torso', 'Shoulder.L', 'Shoulder.R', 'UpperArm.L', 'UpperArm.R', 'LowerArm.L', 'LowerArm.R'];
 
+/* ----------------------------------------------------------- la hoja -- */
+/* Mientras el sistema trabaja —la mirada de la revisión y la recomendación de telas— ella
+ * SOSTIENE UNA HOJA BLANCA Y LA LEE; cuando llega la respuesta la deja y vuelve a su pose.
+ * Ningún clip del rig lee (solo quedan Idle, Idle_Neutral, Wave, Interact y Walk), así que
+ * la pose es procedural: se aplica DESPUÉS del mixer, con los huesos guardados y devueltos
+ * como la de sentarse. La hoja cuelga del Torso, y los brazos también, así que el agarre no
+ * se desarma con el vaivén del clip; por eso NO se le da vaivén propio a los brazos.
+ * El dueño lo pidió el 19/09: «Lia at this moment can have a document on her hands.. and
+ * simulate read these documents… is white.. is simulating while the bar progressive and
+ * loading animation is working at the same time.... when exist response then come back to
+ * normal behaviour». Diseño y medidas: docs/el-documento-de-lia.md. */
+const SHEET = {
+  /* Media carta (0.16 × 0.22), no A4: a 26 px de ancho el papel domina la figura y las manos
+   * (10 px cada una) quedan de adorno — «the character get the sheet with her dolls.. not with her
+   * hands», dicho con la captura del navegador. Con el papel más chico las manos pesan en la
+   * lectura, y el canto sigue cayendo donde caen las muñecas (±0.08). */
+  w: 0.160, h: 0.220,
+  /* El centro va POR DEBAJO del punto medio de las manos: la parte visible de la manopla cuelga
+   * del hueso unos 5 cm, y con el centro por encima el papel quedaba «high on the chest» con las
+   * manos colgando debajo (visto a tamaño de cliente). */
+  gripY: -0.020,
+  /* El centro va por detrás del punto medio para que el PLANO pase por las manos: la hoja se
+   * inclina hacia su cara, así que su borde de abajo se adelanta (h/2·sen(tilt) = 0.087) y con
+   * el centro a 0 las manos quedaban 9 cm detrás del papel (medido con data-sheet-gap). */
+  gripZ: -0.050,
+  tilt: 0.62,             // radianes hacia ella: el borde de arriba se le acerca a la cara
+  /* Filo gris de 2.5 mm: con 9 mm el objeto se leía como «a small closed book/tablet» (el canto
+   * doblado al lado), no como una hoja. Un pelo de filo basta para separarla del fondo. */
+  back: 0.0025,
+  fold: 0.030             // el hueco del papel entre las manos: a 26 px de ancho, 1.6 cm no se ven
+};
+const SHEET_BACK = 0xd9d4cb;   // el filo (una hoja blanca sobre fondo blanco no se ve)
+/* El papel NO puede ser blanco puro: con las luces de la escena (hemisférica 2.2 + direccional 2.4)
+ * un albedo 0xffffff se satura en todas las caras y el pliegue no se ve — el dueño lo vio como «a
+ * flat white rectangle… pasted». Con un blanco cálido un poco por debajo, la luz del pliegue cae en
+ * rango visible y la hoja se lee como papel (19/09: «seems postize»). */
+const SHEET_PAPER = 0xe9e6e0;
+/* El «pensar» de siempre: mira arriba y afuera (no hay clip para eso). Es lo que hace durante
+ * el repaso local del paso de revisión, cuando todavía no hay hoja en las manos. */
+const THINKING = { pose: { yaw: -0.35, pitch: -0.22 } };
+/* Las manos: con la muñeca sin girar, los dedos quedaban planos SOBRE la cara del papel y el
+ * resultado se leía como un collage («the hands dont catch the sheet», 19/09). Se giran las
+ * muñecas para que la palma mire al papel y se cierran los dedos alrededor: la punta por delante
+ * del plano y la palma por detrás es lo que se ve como «agarra». La métrica es
+ * `data-sheet-fingers`: cuántas de las diez puntas quedan por DELANTE del papel y dentro de su
+ * borde (0 = no lo está tocando, 10 = envuelto). */
+const FINGERS = {
+  /* Los dedos apuntan hacia adelante (el antebrazo ya los deja así): se cierran sobre el eje
+   * HORIZONTAL (x del mundo, el mismo para las dos manos: hacia abajo y de vuelta al puño, como
+   * cuando se engancha el canto del papel). Girarlos sobre el eje vertical —lo primero que probé—
+   * los barría hacia adentro y las dos manos terminaban juntas en el medio: «clasped in the
+   * middle», reportado con una captura el 19/09. */
+  /* Un cierre SUAVE: con el cierre fuerte (0.5-0.66) las puntas se iban por detrás del plano
+   * (dedos contados en el agarre: 10 → 2) y el gesto dejaba de verse. Con 0.25–0.32 las puntas
+   * quedan sobre la cara del papel, cerca del canto. */
+  curl: [['Index2', 0.75], ['Index3', 0.7], ['Middle2', 0.8], ['Middle3', 0.72],
+         ['Ring2', 0.7], ['Ring3', 0.66], ['Pinky2', 0.65], ['Pinky3', 0.6]],
+  thumb: [['Thumb1', 0], ['Thumb2', 0]],
+  tips: ['Index4', 'Middle4', 'Ring4', 'Pinky4', 'Thumb3'],
+  axis: 'x'
+};
+const READING = {
+  /* Ángulos ADITIVOS sobre la pose del clip, en ejes del mundo: [eje, radianes] por hueso,
+   * aplicados en orden. Medidos con la sonda sobre el render (docs/el-documento-de-lia.md). */
+  /* Del barrido sobre el render (tmp-barrido2, 19/09): las manos van a los COSTADOS de la
+   * hoja —a la altura de su mitad, asomando por fuera— para que el agarre se lea a 26 px de
+   * ancho, y el rig NO es simétrico en reposo (los brazos de Quaternius traen otra
+   * orientación en cada lado), así que el derecho lleva su desvío (x −0.55 vs −0.47) para que
+   * las dos manos caigan a la misma altura. Medido: ±0.13 m, 1.285 m de alto, 0.34–0.39 por
+   * delante. */
+  L: [ ['UpperArm.L', 'x', -0.55], ['UpperArm.L', 'y', -0.65], ['LowerArm.L', 'x', -1.05] ],
+  R: [ ['UpperArm.R', 'x', -0.47], ['UpperArm.R', 'y', 0.73], ['LowerArm.R', 'x', -1.05] ],
+  /* Giro de muñeca y cierre de dedos, por lado (los dedos van con signo espejo: el eje del
+   * mundo es el mismo para las dos manos, así que el lado derecho invierte el signo). */
+  /* La muñeca gira sobre el EJE DE LA CÁMARA (z): la palma mira al papel sin mover los dedos de
+   * adelante. El giro sobre el vertical (y) era el que los barría hacia el centro. */
+  wristRoll: { L: [['Wrist.L', 'y', 0.20], ['Wrist.L', 'z', -0.35]], R: [['Wrist.R', 'y', -0.30], ['Wrist.R', 'z', 0.35]] },
+  readBones: ['Shoulder.L', 'Shoulder.R', 'UpperArm.L', 'UpperArm.R', 'LowerArm.L', 'LowerArm.R', 'Wrist.L', 'Wrist.R'],
+  pitch: 0.30,            // mira la hoja sin clavar la cara (0.62 → 0.46 → 0.30: «too down still»)
+  scan: 0.055, scanMs: 3400,   // y la recorre: un barrido lento, de ida y vuelta
+  bob: 0.022, bobMs: 2100      // con la respiración del cuello
+};
+
 const $ = id => document.getElementById(id);
 const stage = $('assistantStage'), hit = $('assistantHit'), bubble = $('assistantBubble'), chatPanel = $('chatPanel');
 const journey = document.querySelector('.journey');
@@ -162,6 +249,8 @@ let bubbleTimer = null, running = false, broken = false;
 let glance = null, thinking = false, queuedReaction = null, queueTimer = null;
 let reactionCount = 0, suppressedCount = 0, budget = null;
 let loadingKind = null;
+let reading = false;   // ¿está leyendo la hoja? (la mirada y la recomendación la encienden)
+let readWeight = 0;    // y cuánto de esa pose está puesta: se levanta y se deja, no salta
 /* Idle-and-sit: `pose` is what the tests read; `sitSeq` is the step of the walk over
  * there, sitting down, or the way back. `bodyYaw` is the sequence's own turn, which the
  * look adds to instead of overwriting (each walking leg faces where it goes; she sits and
@@ -193,7 +282,9 @@ const fail = err => {
   hideLayer();
   if (bubble) bubble.hidden = true;
   if (helpCard) helpCard.querySelector('.text-button')?.style.removeProperty('margin-right');
-  console.warn('Assistant presence disabled:', err && err.message ? err.message : err);
+  /* El stack, no solo el mensaje: un fallo dentro del tick llega aquí sin número de línea y
+   * «Cannot read properties of null» no dice DÓNDE — con el stack se caza en un paso. */
+  console.warn('Assistant presence disabled:', err && err.stack ? err.stack : (err && err.message ? err.message : err));
 };
 
 /* Vuelve a su sitio, de pie: al desmontar la capa, apagarla o fallar, nadie queda
@@ -573,6 +664,19 @@ function setThinking(on) {
   if (stage) stage.dataset.thinking = thinking ? 'on' : 'off';
 }
 
+/* La hoja se enseña y se guarda con el mismo gesto: en cuanto llega la respuesta (o el
+ * cliente apaga la presencia) vuelve a su pose, sin quedarse con el papel en el aire. */
+function setReading(on) {
+  reading = !!on;
+  if (stage) stage.dataset.reading = reading ? 'on' : 'off';
+  /* Si está saludando (Wave) o en un gesto (Interact) cuando el sistema se pone a trabajar, la
+   * pose de lectura caería ENCIMA del clip y las manos quedarían donde el gesto las dejó —
+   * medido: 0.167 m del papel en vez de 0.03. Se vuelve al reposo y la hoja se levanta limpia. */
+  const activo = current?.active?.getClip?.().name;
+  if (reading && /^(Wave|Interact)$/.test(activo || '')) play('Idle_Neutral', 0.25);
+  if (!reading && stage) { stage.dataset.sheetPx = ''; stage.dataset.sheetGap = ''; }
+}
+
 /* ----------------------------------------------------------- what she sees -- */
 
 /* What the customer TOUCHES is an intention, so it is worth a head turn; where the
@@ -612,6 +716,10 @@ function onAciEvent(detail) {
   if (type === 'FABRIC_SELECTED') applyChairFabric(payload);
   if (type === 'ANALYSIS_STARTED') setThinking(true);
   if (type === 'ANALYSIS_COMPLETED') setThinking(false);
+  /* La hoja en las manos es de los DOS momentos con barra: la mirada de la foto y la
+   * recomendación de telas. El repaso local (ANALYSIS_*, 1,2 s) no: ese es pensar, no leer. */
+  if (type === 'LOOK_STARTED' || type === 'RECOMMENDATION_STARTED') setReading(true);
+  if (type === 'LOOK_COMPLETED' || type === 'RECOMMENDATION_COMPLETED') setReading(false);
   // A new step is a new place: look at it instead of at the "Continuar" just clicked.
   if (type === 'STEP_CHANGED') { glance = null; if (stage) delete stage.dataset.glance; }
   const reaction = REACTIONS[type];
@@ -634,7 +742,10 @@ function flushReaction() {
     glance = { source: 'reaction', rect: reaction.rect, until: now + (reaction.ms || GLANCE_MS), lock: now + GLANCE_LOCK_MS };
     if (stage) stage.dataset.glance = reaction.look || reaction.name;
   }
-  if (reaction.clip) play(reaction.clip, 0.25);
+  /* Con la hoja en las manos no se reproduce un clip que mueva los brazos: la pose de lectura
+   * se aplica ENCIMA del clip y el agarre se desarma (medido: se iba a 0.25 m de la mano).
+   * El giro de cabeza de la reacción sí se hace: ella mira, pero no suelta el papel. */
+  if (reaction.clip && readWeight < 0.5) play(reaction.clip, 0.25);
   stage.dataset.reaction = reaction.name;
   stage.dataset.reactions = String(++reactionCount);
 }
@@ -774,6 +885,20 @@ async function loadCharacter(kind) {
     sh.getWorldPosition(A); el.getWorldPosition(B); wr.getWorldPosition(C);
     current.armSeg[side] = { upper: A.distanceTo(B), fore: B.distanceTo(C) };
   }
+  /* La hoja que lee mientras el sistema trabaja: dos planos colgados del Torso (ver la
+   * sección «lectura»). Nace oculta y con la matriz a mano: su sitio se mide una sola vez,
+   * en la primera lectura, con la pose ya puesta — `placeSheet()`. */
+  current.sheetParent = findBone(root, 'Torso');
+  current.readBones = Object.fromEntries(READING.readBones.map(n => [n, findBone(root, n)]).filter(([, b]) => b));
+  /* Los dedos y las puntas: se cierran alrededor del papel y se guardan/develven con el resto
+   * (ver FINGERS). Sin las puntas no se puede medir el agarre (`data-sheet-fingers`). */
+  const fingerNames = [...new Set([...FINGERS.curl.map(([n]) => n), ...FINGERS.thumb.map(([n]) => n), ...FINGERS.tips])];
+  current.fingerBones = Object.fromEntries(['L', 'R'].flatMap(sd => fingerNames.map(n => [`${n}.${sd}`, findBone(root, `${n}.${sd}`)]))
+    .filter(([, b]) => b));
+  current.tipBones = Object.fromEntries(['L', 'R'].flatMap(sd => FINGERS.tips.map(n => [`${n}.${sd}`, findBone(root, `${n}.${sd}`)]))
+    .filter(([, b]) => b));
+  current.sheet = makeSheet(current.sheetParent);
+
   /* --- TEMPORAL: API de diagnóstico (banco de pruebas del zapato; NO commitear) ---
    * Se expone solo si la página la pide (`#assistantStage[data-dbg-api]`) y sirve para mirar la
    * jerarquía REAL de three.js — mallas, esqueleto, materiales, cámara — y para aislar piezas.
@@ -966,16 +1091,18 @@ function lookTarget() {
   // while the chat is open — then she faces them, not the form behind them.
   if (glance && performance.now() < glance.until && (glance.source === 'reaction' || state !== 'talking')) {
     const r = glance.rect();
-    if (r) return r;
+    if (r) { if (stage) stage.dataset.lookSrc = 'glance'; return r; }
   }
-  if (state === 'talking') return null;
-  if (thinking) return THINKING;
+  if (state === 'talking') { if (stage) stage.dataset.lookSrc = 'talking'; return null; }
+  if (reading) { if (stage) stage.dataset.lookSrc = 'reading'; return readingLook(performance.now()); }
+  if (thinking) { if (stage) stage.dataset.lookSrc = 'thinking'; return THINKING; }
   const el = document.querySelector('.wizard-step.active .step-heading h2');
+  if (stage) stage.dataset.lookSrc = el ? 'step' : 'none';
   return el ? el.getBoundingClientRect() : null;
 }
 
 const _m = () => new THREE.Matrix4();
-let M, AXIS, DQ, WORLD_Y, WORLD_X;
+let M, AXIS, DQ, WORLD_Y, WORLD_X, WORLD_Z;
 // Rotates a bone about an arbitrary WORLD axis, expressed in the bone's own frame (survives
 // any scale or mirroring in the rig). A mirrored gesture or a leg IK plane turned by the
 // body's yaw needs an axis that is not X or Y.
@@ -1030,6 +1157,205 @@ function renderOnce() {
   try { draw(); } catch (err) { fail(err); }
 }
 
+/* ---------------------------------------------------------------- lectura -- */
+
+/* El papel: un plano blanco con un filo gris detrás. Sobre el fondo blanco de la página una
+ * hoja blanca sola no se ve — el filo (una hoja un pelo más grande, un pelo detrás) le da el
+ * contorno. Sin renglones ni texto: el dueño la pidió blanca («is white»). */
+/* Un plano recto se lee como un cartón pegado al cuerpo; el papel cuelga de las dos manos y
+ * se hunde un poco en el medio, así que la malla se curva (y con la curva, la luz la sombrea:
+ * sin eso la hoja se veía «superimposed», reportado con una captura). */
+function sheetGeometry(w, h, fold) {
+  const g = new THREE.PlaneGeometry(w, h, 16, 2);
+  const pos = g.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const k = pos.getX(i) / (w / 2);
+    pos.setZ(i, pos.getZ(i) - (fold || 0) * (1 - k * k));
+  }
+  g.computeVertexNormals();
+  return g;
+}
+
+/* El sombreado va PINTADO en una textura: con la luz de la escena (hemisférica 2.2 + direccional
+ * 2.4) cualquier albedo claro satura en blanco en todas las caras y el pliegue de la malla no se ve
+ * — el dueño lo vio como «a flat white rectangle… pasted». La textura deja caer la luz del pliegue
+ * (y las orillas) al rango visible: el papel se lee blanco con su sombra, no un rectángulo plano. */
+function sheetTexture() {
+  const c = document.createElement('canvas'); c.width = 64; c.height = 128;
+  const g = c.getContext('2d');
+  const pliegue = g.createLinearGradient(0, 0, 64, 0);
+  pliegue.addColorStop(0, '#ffffff'); pliegue.addColorStop(0.40, '#ffffff');
+  pliegue.addColorStop(0.50, '#8f8a83');          // la línea del pliegue
+  pliegue.addColorStop(0.60, '#ffffff'); pliegue.addColorStop(1, '#ffffff');
+  g.fillStyle = pliegue; g.fillRect(0, 0, 64, 128);
+  const orillas = g.createLinearGradient(0, 0, 0, 128);
+  orillas.addColorStop(0, 'rgba(60,52,44,0.22)'); orillas.addColorStop(0.22, 'rgba(60,52,44,0)');
+  orillas.addColorStop(0.78, 'rgba(60,52,44,0)'); orillas.addColorStop(1, 'rgba(60,52,44,0.26)');
+  g.fillStyle = orillas; g.fillRect(0, 0, 64, 128);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+function makeSheet(parent) {
+  const group = new THREE.Group();
+  const edge = new THREE.Mesh(
+    sheetGeometry(SHEET.w + SHEET.back * 2, SHEET.h + SHEET.back * 2, SHEET.fold),
+    new THREE.MeshStandardMaterial({ color: SHEET_BACK, roughness: 1, metalness: 0, side: THREE.DoubleSide }));
+  const paper = new THREE.Mesh(
+    sheetGeometry(SHEET.w, SHEET.h, SHEET.fold),
+    new THREE.MeshStandardMaterial({ color: SHEET_PAPER, map: sheetTexture(), roughness: 0.82, metalness: 0, side: THREE.DoubleSide }));
+  edge.position.z = -0.0008;
+  group.add(edge, paper);
+  group.name = 'readingSheet';
+  group.matrixAutoUpdate = false;   // su matriz se mide una vez; después solo la mueve su padre
+  group.visible = false;
+  group.userData.paper = paper;
+  if (parent) parent.add(group);
+  return group;
+}
+
+/* Los pañoles de la lectura: three se importa en carga (arriba THREE es null), así que se
+ * crean la primera vez que se usan, no al evaluar el módulo. */
+let _sheetLocal, _sheetDesired, _sheetInv, _sheetQ, _sheetOne, _sheetV;
+function sheetScratch() {
+  if (_sheetLocal) return;
+  _sheetLocal = new THREE.Matrix4(); _sheetDesired = new THREE.Matrix4(); _sheetInv = new THREE.Matrix4();
+  _sheetQ = new THREE.Quaternion(); _sheetOne = new THREE.Vector3(1, 1, 1); _sheetV = new THREE.Vector3();
+}
+const _X_AXIS = { x: 0, y: 1, z: 2 };
+
+/* Dónde queda la hoja: su matriz en el espacio del Torso (su padre), midiendo CADA CUADRO el
+ * punto medio de las manos ya posadas — así la hoja sube con ellas mientras la pose se
+ * levanta y no queda colgada en el aire si la primera medida cae en un mal cuadro (que es
+ * exactamente lo que pasó: 1.48 m de alto, medido a mitad de la despedida del saludo). Los
+ * brazos cuelgan del Torso igual que la hoja, así que el agarre no se desarma con el vaivén
+ * del clip; el cuerpo gira al mirar y la hoja gira con él. */
+function placeSheet() {
+  const sheet = current?.sheet, parent = current?.sheetParent;
+  if (!sheet || !parent) return;
+  sheetScratch();
+  current.body.updateMatrixWorld(true);
+  /* La hoja va DONDE ESTÁN LAS MANOS, no donde uno supone que están: se mide el punto medio
+   * de las dos muñecas ya posadas y ahí se cuelga el papel (un pelo más arriba y más atrás,
+   * porque se lo inclina hacia la cara). Así el agarre no depende de acertar una constante. */
+  const manoL = new THREE.Vector3(), manoR = new THREE.Vector3();
+  current.wristL?.getWorldPosition(manoL);
+  current.wristR?.getWorldPosition(manoR);
+  _sheetV.copy(manoL).add(manoR).multiplyScalar(0.5);
+  _sheetInv.copy(current.body.matrixWorld).invert();
+  _sheetV.applyMatrix4(_sheetInv);
+  _sheetV.y += SHEET.gripY;
+  _sheetV.z += SHEET.gripZ;
+  _sheetLocal.compose(_sheetV, _sheetQ.setFromEuler(new THREE.Euler(-SHEET.tilt, 0, 0)), _sheetOne);
+  _sheetDesired.multiplyMatrices(current.body.matrixWorld, _sheetLocal);
+  _sheetInv.copy(parent.matrixWorld).invert();
+  _sheetInv.copy(parent.matrixWorld).invert();
+  sheet.matrix.multiplyMatrices(_sheetInv, _sheetDesired);
+  sheet.matrixWorldNeedsUpdate = true;
+  sheet.visible = true;
+}
+
+/* La pose de lectura: aditiva sobre lo que dejó el mixer, en ejes del mundo, hueso por hueso
+ * (los ángulos están en READING, medidos sobre el render). */
+const READING_AXES = () => [WORLD_X, WORLD_Y, WORLD_Z];   // en el orden de _X_AXIS
+function applyReadingPose(dt) {
+  if (!readWeight && !reading) return;                 // ni pose puesta ni por poner
+  readWeight += ((reading ? 1 : 0) - readWeight) * (1 - Math.exp(-dt * 3.5));
+  if (readWeight < 0.001) { readWeight = 0; return; }
+  if (!current?.readBones) return;
+  const axes = READING_AXES();
+  const turn = (bone, axis, angle) => { if (bone) rotateAboutWorld(bone, axes[_X_AXIS[axis]], angle * readWeight); };
+  for (const side of ['L', 'R']) {
+    for (const [name, axis, angle] of READING[side]) turn(current.readBones[name], axis, angle);
+    /* La muñeca: la palma mira al papel (y = el giro que trae el pulgar adelante). */
+    for (const [name, axis, angle] of READING.wristRoll[side]) turn(current.readBones[name], axis, angle);
+    /* Y los dedos se cierran alrededor: el eje del mundo es el mismo para las dos manos, así que
+     * el signo se espeja ({'L': 1, 'R': -1}). */
+    for (const [name, angle] of [...FINGERS.curl, ...FINGERS.thumb]) {
+      turn(current.fingerBones[`${name}.${side}`], FINGERS.axis, angle);
+    }
+  }
+}
+
+/* Mientras lee, mira la hoja —no el techo— y la recorre con un barrido lento, como quien
+ * sigue los renglones; el «pensar» mirando arriba y afuera se retiró con la hoja. */
+function readingLook(now) {
+  const t = (now / READING.scanMs) * Math.PI * 2;
+  return { pose: { yaw: Math.sin(t) * READING.scan, pitch: READING.pitch + Math.sin(t * 0.61) * READING.bob } };
+}
+
+/* Lo que la suite puede leer sin tocar three: cuánto mide la hoja DIBUJADA (en píxeles, con
+ * la inclinación de la cámara incluida) y a qué distancia está cada muñeca de su borde — el
+ * agarre medido, no supuesto. */
+function publishSheet() {
+  if (!stage || !current?.sheet || !layout) return;
+  const sheet = current.sheet;
+  if (readWeight <= 0.02 || !sheet.visible) {
+    for (const k of ['Px', 'Gap', 'Head', 'Mid', 'Hands', 'Color', 'Fingers', 'Wristz', 'Tipsx', 'Thumbs']) stage.dataset['sheet' + k] = '';
+    return;
+  }
+  sheetScratch();
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const [cx, cy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    _sheetV.set(cx * SHEET.w / 2, cy * SHEET.h / 2, 0).applyMatrix4(sheet.matrixWorld).project(camera);
+    const px = ( _sheetV.x * 0.5 + 0.5) * layout.width;
+    const py = (-_sheetV.y * 0.5 + 0.5) * layout.height;
+    minX = Math.min(minX, px); maxX = Math.max(maxX, px);
+    minY = Math.min(minY, py); maxY = Math.max(maxY, py);
+  }
+  const gap = bone => {
+    if (!bone) return NaN;
+    _sheetV.setFromMatrixPosition(bone.matrixWorld).applyMatrix4(_sheetInv.copy(sheet.matrixWorld).invert());
+    const dx = Math.max(-SHEET.w / 2 - _sheetV.x, 0, _sheetV.x - SHEET.w / 2);
+    const dy = Math.max(-SHEET.h / 2 - _sheetV.y, 0, _sheetV.y - SHEET.h / 2);
+    return Math.hypot(dx, dy, _sheetV.z);
+  };
+  stage.dataset.sheetPx = `${Math.round(maxX - minX)}x${Math.round(maxY - minY)}`;
+  stage.dataset.sheetGap = `${gap(current.wristL).toFixed(3)}|${gap(current.wristR).toFixed(3)}`;
+  /* Cuánto baja la cara: la mirada se aplica y se deshace DENTRO del cuadro, así que desde
+   * fuera solo se puede medir lo que ella publique aquí (positivo = mira abajo). */
+  current.head.getWorldQuaternion(_sheetQ);
+  _sheetV.set(0, 0, 1).applyQuaternion(_sheetQ);
+  stage.dataset.sheetHead = (Math.asin(Math.max(-1, Math.min(1, -_sheetV.y))) * 180 / Math.PI).toFixed(0);
+  /* Dónde quedaron la hoja y las manos en ESTE cuadro (metros, mundo): el agarre medido, que
+   * la suite puede comprobar sin tocar three. */
+  const p3 = o => { const v = new THREE.Vector3(); o.getWorldPosition(v); return `${v.x.toFixed(3)},${v.y.toFixed(3)},${v.z.toFixed(3)}`; };
+  stage.dataset.sheetColor = '#' + sheet.userData.paper.material.color.getHexString();
+  /* El agarre, medido: cuántas de las diez puntas de los dedos quedan por DELANTE del papel y
+   * dentro de su borde. 0 = no lo está tocando; 10 = envuelto. */
+  let delante = 0;
+  const inv = _sheetInv.copy(sheet.matrixWorld).invert();
+  const tipsX = [];
+  for (const tip of Object.values(current.tipBones || {})) {
+    _sheetV.setFromMatrixPosition(tip.matrixWorld).applyMatrix4(inv);
+    if (_sheetV.z > 0 && Math.abs(_sheetV.x) < SHEET.w / 2 + 0.02 && Math.abs(_sheetV.y) < SHEET.h / 2 + 0.02) {
+      delante++;
+      tipsX.push(Math.abs(_sheetV.x));
+    }
+  }
+  stage.dataset.sheetFingers = String(delante);
+  /* Hasta dónde llegan las puntas hacia el centro (|x| mínimo y máximo, metros): con las manos
+   * en los bordes las puntas quedan cerca del canto (0.07–0.12); si bajan de ~0.05 las dos
+   * manos se juntan en el medio y el gesto deja de leerse como «sostener» (visto: «clasped in
+   * the middle»). */
+  stage.dataset.sheetTipsx = tipsX.length ? `${Math.min(...tipsX).toFixed(3)}|${Math.max(...tipsX).toFixed(3)}` : '';
+  /* Los pulgares, aparte: son los que tienen que verse SOBRE la cara del papel (los dedos van
+   * por detrás, envueltos). Se publican su z y su |x| en el marco del papel. */
+  const pulgares = ['Thumb3.L', 'Thumb3.R'].map(n => current.tipBones?.[n]).filter(Boolean).map(tip => {
+    _sheetV.setFromMatrixPosition(tip.matrixWorld).applyMatrix4(inv);
+    return `${_sheetV.z.toFixed(3)},${Math.abs(_sheetV.x).toFixed(3)}`;
+  });
+  stage.dataset.sheetThumbs = pulgares.join('|');
+  /* Y cuánto sobresalen las manos por DELANTE del plano del papel (metros, + = por delante):
+   * a este tamaño el agarre es la silueta — una mano detrás del papel no se ve. */
+  const zFuera = bone => { if (!bone) return NaN;
+    _sheetV.setFromMatrixPosition(bone.matrixWorld).applyMatrix4(inv); return _sheetV.z; };
+  stage.dataset.sheetWristz = `${zFuera(current.wristL).toFixed(3)}|${zFuera(current.wristR).toFixed(3)}`;
+  stage.dataset.sheetMid = p3(sheet);
+  stage.dataset.sheetHands = current.wristL && current.wristR ? `${p3(current.wristL)}|${p3(current.wristR)}` : '';
+}
+
 function tick() {
   if (!running) return;
   requestAnimationFrame(tick);
@@ -1047,9 +1373,19 @@ function tick() {
      * would pile up every frame. */
     const posed = [current.neck, current.head];
     if (sitWeight > 0.001) posed.push(...Object.values(current.sitBones), ...(current.feet || []));
-    const saved = posed.map(b => [b, b.quaternion.clone(), b.position.clone()]);
+    if ((reading || readWeight > 0.001) && current.readBones) {
+      posed.push(...Object.values(current.readBones), ...Object.values(current.fingerBones || {}));
+    }
+    const saved = posed.map(b => [b, b.quaternion.clone(), b.position.clone(), b.scale.clone()]);
     updateLook(dt);
     applySitPose();
+    applyReadingPose(dt);
+    if (current.sheet) current.sheet.visible = readWeight > 0.02;   // aparece con las manos
+    if (readWeight > 0.02) {
+      placeSheet();                           // pegada a las manos de ESTE cuadro
+      current.body.updateMatrixWorld(true);   // y al día para publicar
+      publishSheet();
+    } else if (stage?.dataset.sheetPx) publishSheet();
     if (sitWeight > 0.001) placeHands(sitWeight);
     if (sitWeight > 0.001 && sitGeom) placeFeet(sitWeight);
     /* El empujón de prueba de la suite: la mete hacia el sillón sin pasar por la
@@ -1175,7 +1511,7 @@ function tick() {
       stage.dataset.dbgBoxes = JSON.stringify(acc);
     }
     draw();
-    for (const [b, q, p] of saved) { b.quaternion.copy(q); b.position.copy(p); }
+    for (const [b, q, p, s2] of saved) { b.quaternion.copy(q); b.position.copy(p); if (s2) b.scale.copy(s2); }
   } catch (err) { fail(err); }
 }
 
@@ -1627,7 +1963,7 @@ async function start() {
   _ray = new THREE.Raycaster();
   await loadPhysics();
   stage.dataset.phys = phys ? 'rapier' : 'sin-colisiones';
-  WORLD_Y = new THREE.Vector3(0, 1, 0); WORLD_X = new THREE.Vector3(1, 0, 0);
+  WORLD_Y = new THREE.Vector3(0, 1, 0); WORLD_X = new THREE.Vector3(1, 0, 0); WORLD_Z = new THREE.Vector3(0, 0, 1);
   if (!chair) await loadChair();
   if (!current || current.kind !== cfg.character) await loadCharacter(cfg.character);
   applyBrandSuit(cfg.brandSuit);
@@ -1641,6 +1977,10 @@ async function start() {
   if (reducedMotion) renderOnce();
   else if (!running) { running = true; requestAnimationFrame(tick); }
   if (!Store.assistantWelcomed()) setTimeout(() => { if (!broken && layout) welcome(); }, 600);
+  /* El estado de la lectura se publica desde el arranque: «off» es una respuesta (no hay
+   * documento en las manos), no un atributo que falte — la suite lo distingue. */
+  stage.dataset.reading = 'off'; stage.dataset.thinking = 'off';
+  for (const k of ['Px', 'Gap', 'Head', 'Mid', 'Hands', 'Color', 'Fingers', 'Wristz', 'Tipsx', 'Thumbs']) stage.dataset['sheet' + k] = '';
 }
 
 function refresh() {
@@ -1676,6 +2016,16 @@ addEventListener('aci:notice', e => {
   bubble.hidden = false;
   placeNotice();
   journey?.classList.add('noticing'); // el progreso se guarda mientras el aviso está
+  /* El aviso viaja con el campo que falla (detail.campo): ella gira la cabeza hacia él, como
+   * cuando el cliente toca un control. `source: 'reaction'` para que el giro gane al título
+   * del paso mientras el aviso está en pantalla. */
+  const campo = e.detail && e.detail.campo;
+  if (campo && typeof campo.getBoundingClientRect === 'function') {
+    const el = campo.closest?.('label,input,select,textarea,button') || campo;
+    const ahora = performance.now();
+    glance = { source: 'reaction', rect: () => el.getBoundingClientRect(), until: ahora + NOTICE_MS, lock: ahora + 300 };
+    if (stage) stage.dataset.glance = glanceLabel(el);
+  }
   requestAnimationFrame(() => bubble.classList.add('show'));
   const ask = helpCard?.querySelector('.text-button');
   if (ask) ask.dataset.unread = '';
@@ -1692,7 +2042,7 @@ for (const ev of ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart'
 // Saved in the backoffice (another tab) or repainted by Brand/Assistant.apply(): follow it.
 addEventListener('assistantchange', () => {
   const cfg = Store.assistant();
-  if (!cfg.enabled) { hideLayer(); hideBubble(); running = false; glance = null; setThinking(false); return; }
+  if (!cfg.enabled) { hideLayer(); hideBubble(); running = false; glance = null; setThinking(false); setReading(false); return; }
   if (current) applyBrandSuit(cfg.brandSuit);
   refresh();
 });

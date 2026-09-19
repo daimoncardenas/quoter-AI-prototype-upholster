@@ -288,7 +288,6 @@
         value,
         message: `${value} cm de ${palabra} es ${value > max ? 'mucho' : 'poco'} para tu ${mueble}: ` +
           `lo habitual está entre ${min} y ${max} cm. Corrígelo para continuar.`,
-        notice: 'Encontré algo en tus medidas. Tócame para verlo.',
         proposedActions: []
       };
     }
@@ -300,7 +299,6 @@
       const furniture = String(ctx.selectedFurniture || 'mueble').toLowerCase();
       return {
         message: `En la revisión, ${joinEs(names)} quedó fuera de lo habitual para ${furniture}. Vuelve a Medidas para corregirlo: el cotizador no sigue con esa medida.`,
-        notice: 'Encontré algo en tus medidas. Tócame para verlo.',
         proposedActions: [{ type: 'NAVIGATE_TO_STEP', step: MEDIDAS }]
       };
     }

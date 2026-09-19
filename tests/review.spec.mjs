@@ -145,7 +145,7 @@ console.log('\nLA REVISIÓN MIRA LA FOTO (IA LOCAL) Y LA RELACIONA CON LO DECLAR
     .map(d => d.querySelector('dt').textContent + ': ' + d.querySelector('dd').textContent));
   check('y lo declarado en el cotizador viaja entero con la mirada',
     declarado.length > 0 && declarado.every(x => sistema.includes('- ' + x)), true);
-  check('y la mirada va marcada como IA local, no como juicio de la casa', /IA local/i.test(fila), true);
+  check('y la mirada va firmada por ella, no como juicio de la casa', /lía/i.test(fila), true);
   await p.close();
 }
 {
@@ -162,7 +162,7 @@ console.log('\nLA REVISIÓN MIRA LA FOTO (IA LOCAL) Y LA RELACIONA CON LO DECLAR
   /* Se espera al DESENLACE de verdad: la fila pintada y ya sin «Mirando tu foto» (una fila oculta
    * tiene innerText vacío y haría pasar este wait antes de tiempo). */
   await p.waitForFunction(() => { const v = document.getElementById('visionNote');
-    return !v.hidden && !/Mirando tu foto/.test(v.innerText); }, null, {timeout: 8000}).catch(()=>{});
+    return !v.hidden && !/Mirando tus fotos/.test(v.innerText); }, null, {timeout: 8000}).catch(()=>{});
   const fila = await p.innerText('#visionNote').catch(() => '');
   check('una mirada que promete NO se muestra al cliente', fila.includes('garantía'), false);
   check('y la fila dice que miró pero que eso no se puede mostrar (no una línea vacía)',
@@ -207,7 +207,7 @@ console.log('\nLA REVISIÓN MIRA LA FOTO (IA LOCAL) Y LA RELACIONA CON LO DECLAR
   check('y sin mueble en la foto la fila va en ámbar, no en verde',
     await p.evaluate(() => document.querySelector('#visionNote > div').classList.contains('warn')), true);
   check('y sigue sin bloquear nada ni contar como observación de la revisión',
-    [/IA local/i.test(fila), await p.evaluate(() => state.review.warnings.length)], [true, 0]);
+    [/lía/i.test(fila), await p.evaluate(() => state.review.warnings.length)], [true, 0]);
   await p.close();
 }
 {
@@ -240,7 +240,7 @@ console.log('\nLA REVISIÓN MIRA LA FOTO (IA LOCAL) Y LA RELACIONA CON LO DECLAR
     await p.evaluate(() => document.getElementById('nextButton').disabled), true);
   check('y si el paso se intenta cerrar igual, lo dice en vez de dejarlo pasar',
     await p.evaluate(() => { const antes = state.step; const paso = validStep();
-      return [paso, state.step === antes, /la IA sigue mirando/.test(document.getElementById('analysisError').textContent)]; }),
+      return [paso, state.step === antes, /sigue analizando/.test(document.getElementById('analysisError').textContent)]; }),
     [false, true, true]);
   await p.waitForFunction(() => /sofá claro/.test(document.getElementById('visionNote').innerText), null, {timeout: 8000}).catch(()=>{});
   check('y la señal se va cuando llega la mirada',
@@ -263,9 +263,9 @@ console.log('\nLA REVISIÓN MIRA LA FOTO (IA LOCAL) Y LA RELACIONA CON LO DECLAR
   check('aun contestando al instante, la espera se ve un momento (piso de espera, como en el chat)',
     await p.waitForFunction(() => !!document.querySelector('#visionNote .mirada-espera'), null, {timeout: 400})
       .then(() => true).catch(() => false), true);
-  await p.waitForFunction(() => /no puedo mirar la fotografía con IA/.test(document.getElementById('visionNote').innerText), null, {timeout: 8000}).catch(()=>{});
+  await p.waitForFunction(() => /no puedo mirar la fotografía/.test(document.getElementById('visionNote').innerText), null, {timeout: 8000}).catch(()=>{});
   check('un modelo que no acepta imágenes no finge ojos, pero la fila lo dice',
-    /En este equipo no puedo mirar la fotografía con IA/.test(await p.innerText('#visionNote')), true);
+    /En este equipo no puedo mirar la fotografía/.test(await p.innerText('#visionNote')), true);
   /* Y el aviso no puede prometer una mirada que no va a llegar. */
   check('y el aviso de la tarjeta aclara que en este equipo la mirada no está activada',
     await p.evaluate(() => /no está activada/.test(document.getElementById('reviewNotice').textContent)), true);
@@ -281,9 +281,9 @@ console.log('\nLA REVISIÓN MIRA LA FOTO (IA LOCAL) Y LA RELACIONA CON LO DECLAR
       create: async () => ({ prompt: async () => { throw new DOMException('image input is not supported', 'NotSupportedError'); }, destroy(){} }) };
   });
   await hastaLaRevision(p);
-  await p.waitForFunction(() => /no puedo mirar la fotografía con IA/.test(document.getElementById('visionNote').innerText), null, {timeout: 8000}).catch(()=>{});
+  await p.waitForFunction(() => /no puedo mirar la fotografía/.test(document.getElementById('visionNote').innerText), null, {timeout: 8000}).catch(()=>{});
   check('si el navegador rechaza la imagen al mirar, la fila lo dice igual (sin fingir la mirada)',
-    /En este equipo no puedo mirar la fotografía con IA/.test(await p.innerText('#visionNote')), true);
+    /En este equipo no puedo mirar la fotografía/.test(await p.innerText('#visionNote')), true);
   await p.close();
 }
 {
@@ -315,11 +315,123 @@ console.log('\nLA REVISIÓN MIRA LA FOTO (IA LOCAL) Y LA RELACIONA CON LO DECLAR
       create: async () => ({ prompt: async () => 'no debería llegar aquí', destroy(){} }) };
   });
   await hastaLaRevision(p);
-  await p.waitForFunction(() => /no puedo mirar la fotografía con IA/.test(document.getElementById('visionNote').innerText), null, {timeout: 8000}).catch(()=>{});
+  await p.waitForFunction(() => /no puedo mirar la fotografía/.test(document.getElementById('visionNote').innerText), null, {timeout: 8000}).catch(()=>{});
   check('si la variante de imagen está sin descargar, no se baja sola y la fila lo dice',
-    /no puedo mirar la fotografía con IA/.test(await p.innerText('#visionNote')), true);
+    /no puedo mirar la fotografía/.test(await p.innerText('#visionNote')), true);
   check('y el aviso de la tarjeta lo dice igual',
     await p.evaluate(() => /no está activada/.test(document.getElementById('reviewNotice').textContent)), true);
+  await p.close();
+}
+
+/* ---- El documento en sus manos mientras el sistema trabaja (dueño, 19/09) ----
+ * «Lia at this moment can have a document on her hands.. and simulate read these documents… is
+ * white.. is simulating while the bar progressive and loading animation is working at the same
+ * time.... when exist response then come back to normal behaviour».
+ *
+ * La pose de lectura se aplica y se DESHACE dentro del cuadro (como la de sentarse), así que
+ * desde fuera de la capa solo se puede comprobar lo que ella publica: data-reading, cuánto mide
+ * la hoja dibujada (data-sheet-px), a qué distancia queda cada muñeca de su borde
+ * (data-sheet-gap), cuánto baja la cara (data-sheet-head) y de qué color es el papel
+ * (data-sheet-color). El modelo de mentira TARDA a propósito: la espera es lo que se mira. */
+console.log('\nMIENTRAS MIRA LA FOTO, ELLA LEE SU DOCUMENTO');
+{
+  const p = await b.newPage(); p.on('pageerror', e => errs.push('hoja: ' + e));
+  await p.addInitScript(() => {
+    Object.defineProperty(window, 'isSecureContext', { value: true });
+    window.LanguageModel = { availability: async () => 'available',
+      create: async () => ({ prompt: async () => {
+        await new Promise(r => setTimeout(r, 2500));   // la mirada tarda: se mira MIENTRAS
+        return '{"veMueble": true, "frase": "Veo un sofá de dos puestos tapizado en tela clara."}'; }, destroy(){} }) };
+  });
+  await p.goto(D + 'index.html');
+  await p.evaluate((db) => { localStorage.clear(); indexedDB.deleteDatabase(db); }, PHOTOS_DB);
+  /* Sin saludo de bienvenida: mientras el saludo está en pantalla ella mira al cliente
+   * (`state='talking'`), y eso taparía la mirada de la lectura en una prueba de 8 segundos. */
+  await p.evaluate(() => Store.markAssistantWelcomed());
+  await openWizard(p, D);
+  /* La capa 3D tarda en levantar (modelos + WebGL): sin esperarla, la prueba mediría el
+   * atributo que todavía no existe — pasó, y el fallo se veía como tres checks raros. */
+  await p.waitForFunction(() => document.querySelector('#assistantStage')?.dataset.pose === 'standing', null, { timeout: 15000 });
+  await p.click('.furniture-card[data-furniture="Sofá"]');
+  await p.setInputFiles('#furniturePhoto', BIG);
+  await p.waitForFunction(() => state.photos.length >= 3);
+  await p.click('#nextButton');
+  await p.evaluate(() => {
+    document.getElementById('width').value = '210';
+    document.getElementById('height').value = '85';
+    document.getElementById('depth').value = '90';
+    const s = document.querySelector('.wizard-step[data-brain="REVIEW"]');
+    showStep(+s.dataset.step);
+  });
+  const antes = await p.evaluate(() => { const st = document.getElementById('assistantStage').dataset;
+    return { reading: st.reading, px: st.sheetPx }; });
+  check('sin nada corriendo, no hay documento en las manos (ni se finge uno)',
+    [antes.reading, antes.px], ['off', '']);
+  await p.click('#analyzeButton');
+  /* La mirada (y con ella la hoja) arranca cuando el repaso local termina, ~1,2 s después del
+   * clic; el modelo de mentira tarda 2,5 s más. Se mira a los 2,6 s: la hoja ya está levantada
+   * y la cara ya bajó (la pose se levanta en ~0,6 s). */
+  await p.waitForTimeout(2600);
+  const mientras = await p.evaluate(() => { const st = document.getElementById('assistantStage').dataset;
+    const [w, h] = (st.sheetPx || '0x0').split('x').map(Number);
+    const [l, r] = (st.sheetGap || '1|1').split('|').map(Number);
+    return { reading: st.reading, w, h, l, r, head: Number(st.sheetHead), color: st.sheetColor,
+      manos: st.sheetHands, mid: st.sheetMid, mira: st.lookSrc, z: st.sheetWristz, tipsx: st.sheetTipsx, dedos: st.sheetFingers,
+      /* El botón de revisar no sirve para esto: el paso se vuelve a pintar cuando la mirada
+       * termina y desaparece del DOM (por eso se lee la bandera de la app). */
+      analizando: mirandoFoto }; });
+  check('mientras la mirada corre, ella sostiene el documento y lo lee',
+    [mientras.reading, mientras.analizando], ['on', true]);
+  /* El papel es un blanco cálido, no #ffffff: con las luces de la escena un albedo puro satura en
+   * blanco en todas las caras y el pliegue no se ve (por eso la textura y el tono). Lo que se exige
+   * es que sea un blanco (casi sin tinte) y que se dibuje con tamaño de verdad. */
+  const c = parseInt((mientras.color || '#000000').slice(1), 16);
+  const rgb = [(c >> 16) & 255, (c >> 8) & 255, c & 255];
+  check('el papel es blanco y se dibuja con tamaño de verdad (no un punto)',
+    [Math.min(...rgb) > 0xd0, Math.max(...rgb) - Math.min(...rgb) < 0x20, mientras.w >= 16, mientras.h >= 22],
+    [true, true, true, true]);
+  /* Menos de 7 cm de la muñeca al canto: la manopla de este rig mide ~4 cm, así que ese es el
+   * «agarre» real — con el papel en media carta (20x28 px) las manos pesan en la lectura. */
+  check('las dos manos están en los bordes de la hoja, a la misma altura y a menos de un palmo',
+    [mientras.l < 0.07, mientras.r < 0.07, Math.abs(mientras.l - mientras.r) < 0.03], [true, true, true]);
+  /* El agarre SE VE: las manos van por delante del plano del papel y los dedos quedan sobre su
+   * cara (el dueño lo pidió con la captura: «the hands dont catch the sheet»). A este tamaño
+   * (26 px de ancho) lo que se lee es la silueta, así que esto es lo que se exige. */
+  const agarre = mientras.z.split('|').map(Number);
+  const puntas = (mientras.tipsx || '0|0').split('|').map(Number);
+  const munecasX = (mientras.manos || '').split('|').map(t => Math.abs(Number(t.split(',')[0])));
+  check('y las manos van POR DELANTE del papel, con las muñecas en sus cantos (el agarre que se ve)',
+    [agarre[0] > 0.005, agarre[1] > 0.005,
+     munecasX[0] > 0.04, munecasX[0] < 0.10, munecasX[1] > 0.04, munecasX[1] < 0.10],
+    [true, true, true, true, true, true]);
+  /* Y las puntas quedan EN LOS BORDES, no juntas en el medio: con las manos cruzadas al centro el
+   * gesto deja de leerse como sostener (visto en una captura: «clasped in the middle»). Las diez
+   * puntas se cuentan sólo si caen por delante del papel; la banda es 3–10 cm la más adentro y
+   * 8–14 cm la más afuera, con el canto del papel a 10.5 cm (medido en vivo: 0.049–0.069 la más
+   * adentro según el cuadro, y 0.002–0.016 cuando las manos se cruzaban al medio). */
+  check('los dedos quedan en los bordes de la hoja, sin cruzarse al medio',
+    [puntas.length === 2, puntas[0] >= 0.005, puntas[0] <= 0.09, puntas[1] >= 0.03, puntas[1] <= 0.12],
+    [true, true, true, true, true]);
+  /* 8–30°: el dueño pidió dos veces bajar la cara («too down still») y con 0.30 rad quedan ~13°.
+   * El piso del rango se movió con el ángulo — el fallo de la corrida anterior fue exactamente
+   * dejar el umbral viejo (15°) mientras cambiaba la pose: al cambiar un número, grepear los
+   * specs que lo citan. */
+  check('y la cara baja hacia el papel (sin clavarla en el pecho: entre 8 y 30 grados)',
+    [mientras.head >= 8, mientras.head <= 30], [true, true]);
+  check('la hoja cuelga del punto medio de las manos, no de un supuesto',
+    await p.evaluate(() => { const st = document.getElementById('assistantStage').dataset;
+      const num = t => t.split(',').map(Number);
+      const [ml, mr] = (st.sheetHands || '').split('|').map(num), mid = num(st.sheetMid || '0,0,0');
+      const medio = [(ml[0] + mr[0]) / 2, (ml[1] + mr[1]) / 2, (ml[2] + mr[2]) / 2];
+      return Math.abs(mid[0] - medio[0]) < 0.02 && Math.abs(mid[1] - medio[1]) < 0.03; }), true);
+  /* Se espera al FIN de la mirada (`mirandoFoto`), no al del repaso local: ANALYSIS_COMPLETED
+   * sale 1,2 s después del clic y la mirada todavía no había empezado. */
+  await p.waitForFunction(() => state.analyzed && !mirandoFoto, null, { timeout: 12000 }).catch(() => {});
+  await p.waitForTimeout(1200);    // el peso de la pose se deja en ~0,6 s
+  const despues = await p.evaluate(() => { const st = document.getElementById('assistantStage').dataset;
+    return { reading: st.reading, px: st.sheetPx, gap: st.sheetGap, head: st.sheetHead }; });
+  check('cuando llega la respuesta, el documento se guarda y vuelve a su pose',
+    [despues.reading, despues.px, despues.gap, despues.head], ['off', '', '', '']);
   await p.close();
 }
 

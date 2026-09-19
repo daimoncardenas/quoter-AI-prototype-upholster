@@ -220,7 +220,9 @@ check('con la solicitud enviada, silencio', brain.observe(ctxFor(REVISION, { sub
 {
   const uno = brain.observe(ctxFor(REVISION), { type: 'ANALYSIS_COMPLETED', payload: { oddMeasures: ['width'] } });
   check('una medida fuera de lo habitual se avisa', uno.message.includes('el ancho quedó fuera de lo habitual para sofá'), true);
-  check('con un texto para la burbuja, por si el chat está cerrado', typeof uno.notice === 'string' && uno.notice.length > 0, true);
+  /* Ya no hay anzuelo aparte: el aviso de la burbuja ES el mensaje (el dueño: «the user dont have
+     to click for read error message»). */
+  check('sin anzuelo para la burbuja: el aviso es el propio mensaje', 'notice' in uno, false);
   check('y propone volver a Medidas', uno.proposedActions, [{ type: 'NAVIGATE_TO_STEP', step: MEDIDAS }]);
   const dos = brain.observe(ctxFor(REVISION), { type: 'ANALYSIS_COMPLETED', payload: { oddMeasures: ['width', 'depth'] } });
   check('dos se nombran como lista', dos.message.includes('el ancho y la profundidad'), true);

@@ -501,7 +501,7 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
             </div>
           </div>
           <p class="field-error" id="analysisError" hidden>Revisa tu información para continuar.</p>
-          <div class="notice"><span>i</span><p id="reviewNotice">Esta revisión comprueba que la fotografía sea legible y que las medidas sean plausibles. Cuando el equipo tiene el modelo local, además describe lo que ve en la foto —marcado «IA local»—: no mide ni identifica el mueble con certeza; eso lo confirma un asesor junto con la cotización definitiva.</p></div>
+          <div class="notice"><span>i</span><p id="reviewNotice">Esta revisión comprueba que la fotografía sea legible y que las medidas sean plausibles. Cuando el equipo tiene el modelo local, además describe lo que ve en la foto —en una fila <span data-assistant-copy>a nombre de <span data-assistant-name>{{ASSISTANT_DEFAULT_NAME}}</span></span><span data-assistant-off-copy>marcada «IA local»</span>—: no mide ni identifica el mueble con certeza; eso lo confirma un asesor junto con la cotización definitiva.</p></div>
         </section>
 
         <section class="wizard-step" data-step="14" data-brain="RECOMMENDATION">
@@ -616,6 +616,9 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
 {{ASSISTANT_FENCE_SCRIPT}}
   <script>
 const state={step:1,furniture:'Sofá',furnitureNote:'',photos:[],analyzed:false,fabric:null,fabricTouched:false,service:null,damages:[]};
+/* Con lo que nace el cotizador: cambiar de línea devuelve el mueble a este valor (y a la primera
+ * tarjeta, que es la que renderFurnitureOptions marca) — el paquete puede no llamarlo «Sofá». */
+const FURNITURE_INICIAL=state.furniture;
 const steps=[...document.querySelectorAll('.wizard-step')];
 const nextButton=document.getElementById('nextButton');
 const backButton=document.getElementById('backButton');
@@ -687,20 +690,26 @@ const ACI=(()=>{
       currentStep:{n:state.step,id:stepId(state.step),name:(AssistantBrain.STEPS.find(s=>s.n===state.step)||{}).name},
       submitted:!!state.submitted,
       service:state.service?{id:state.service.id,label:state.service.label,journey:state.service.journey}:null,
-      selectedFurniture:state.furniture,
+      /* Qué pasos existen para esta línea. El asistente no debe hablar de lo que nadie preguntó
+       * (dueño, 19/09: «in this wizard doesnt exist choose furniture.... however Lia has a context
+       * of furniture»): donde no hay paso, el campo viaja en null — y los que lo consumen lo
+       * cuentan como «no aplica», no como «sin elegir». */
+      asksFurniture:pideMueble(),asksMeasurements:pideMedidas(),asksPreferences:pidePreferencias(),
+      asksRecommendation:pideRecomendacion(),
+      selectedFurniture:pideMueble()?state.furniture:null,
       // «Otro» no dice qué mueble es: la descripción del cliente es la que lo dice (y solo con esa opción).
-      furnitureNote:esMuebleOtro()?byId('furnitureOther').value.trim()||null:null,
-      measurements:{width:num('width'),height:num('height'),depth:num('depth'),
+      furnitureNote:pideMueble()&&esMuebleOtro()?byId('furnitureOther').value.trim()||null:null,
+      measurements:pideMedidas()?{width:num('width'),height:num('height'),depth:num('depth'),
         quantity:{value:+seats.value||1,label:selText(seats)},cushions:cojines(),coverage:byId('coverage').value,
         // Lo que el propio cotizador considera habitual para este mueble (lo usa
         // su paso 4); el asistente lo cita, no lo inventa.
-        ranges:rangesPayload()},
-      preferences:{needs:[...document.querySelectorAll('#needsGrid input:checked')].map(x=>x.value),
+        ranges:rangesPayload()}:null,
+      preferences:pidePreferencias()?{needs:[...document.querySelectorAll('#needsGrid input:checked')].map(x=>x.value),
         pets:pets?pets.checked:null,style:byId('style').value,color:byId('color').value,
-        budget:selText(byId('budget')),servicePoint:selText(byId('city'))},
-      photos:{count:state.photos.length,min,max},
+        budget:selText(byId('budget')),servicePoint:selText(byId('city'))}:null,
+      photos:pideMueble()?{count:state.photos.length,min,max}:null,
       analysis:{done:!!state.analyzed,warnings:state.review?state.review.warnings:[],oddMeasures:state.review?state.review.oddMeasures:[]},
-      fabric:state.fabric?{id:state.fabric.id,name:state.fabric.name,colorName:state.fabric.colorName,auto:!state.fabricTouched}:null,
+      fabric:pideRecomendacion()&&state.fabric?{id:state.fabric.id,name:state.fabric.name,colorName:state.fabric.colorName,auto:!state.fabricTouched}:null,
       estimate:estimateSnapshot(),
       consent:byId('consent').checked
     };
@@ -1034,6 +1043,7 @@ photoInput.addEventListener('change',()=>{loadPhotos(photoInput.files);photoInpu
  * que se aleja más de un 20 % del rango; el aviso de la asistente sigue saliendo en el borde. */
 const MEDIDA_NOMBRE={width:'El ancho',height:'El alto',depth:'El fondo'};
 const MARGEN_MEDIDA=0.2;
+const textoMedidasFuera=fuera=>fuera.map(f=>`${MEDIDA_NOMBRE[f.id]} de ${f.valor} cm está muy fuera de lo habitual para ${state.furniture.toLowerCase()} (lo habitual: ${f.min} a ${f.max} cm).`).join(' ')+' Corrige la medida para continuar.';
 function medidasMuyFueraDeLoHabitual(){
   const rangos=measureRanges[state.furniture]||{};
   return ['width','height','depth'].map(id=>{
@@ -1043,41 +1053,47 @@ function medidasMuyFueraDeLoHabitual(){
     return (valor<r[0]-margen||valor>r[1]+margen)?{id,valor,min:r[0],max:r[1],margen}:null;
   }).filter(Boolean);
 }
+/* Un error se dice en DOS superficies con el MISMO texto: la línea del paso —que es la que no
+ * depende de que haya asistente— y el aviso de ella, que es un canal publicado: aparece sin que el
+ * cliente pulse nada. El dueño: «the idea is show the error in the dialogue inmediatly.... that is
+ * dont wait that user do click». Con el asistente apagado la capa 3D ignora el aviso y la línea
+ * sigue sola. */
+function decirError(el,texto,campo){
+  if(el){el.textContent=texto;el.hidden=false}
+  const destino=campo&&typeof campo==='string'?document.getElementById(campo):(campo||null);
+  try{window.dispatchEvent(new CustomEvent('aci:notice',{detail:{text:texto,campo:destino}}))}catch(err){}
+}
 function validStep(){
   if(state.step===0){
     if(!state.service){
-      serviceError.textContent='Elige qué quieres hacer para continuar.';
-      serviceError.hidden=false;document.getElementById('serviceGrid').scrollIntoView({behavior:'smooth',block:'center'});return false}}
+      decirError(serviceError,'Elige qué quieres hacer para continuar.',null);document.getElementById('serviceGrid').scrollIntoView({behavior:'smooth',block:'center'});return false}}
   if(state.step===1){
     if(esMuebleOtro()&&!document.getElementById('furnitureOther').value.trim()){
       const err=document.getElementById('furnitureOtherError');
-      err.textContent='Cuéntanos cuál es el mueble para continuar: «Otro» no dice qué hay que tapizar.';
-      err.hidden=false;
+      decirError(err,'Cuéntanos cuál es el mueble para continuar: «Otro» no dice qué hay que tapizar.','furnitureOther');
       document.getElementById('furnitureOther').focus({preventScroll:true});
       document.getElementById('furnitureOtherField').scrollIntoView({behavior:'smooth',block:'center'});
       return false}
     const {min}=photoLimits();
     if(state.photos.length<min){
       const faltan=min-state.photos.length;
-      photoError.textContent=`Agrega ${faltan} ${faltan===1?'foto más':'fotos más'}: necesitamos al menos ${min}.`;
-      photoError.hidden=false;uploadZone.scrollIntoView({behavior:'smooth',block:'center'});return false}}
+      decirError(photoError,`Agrega ${faltan} ${faltan===1?'foto más':'fotos más'}: necesitamos al menos ${min}.`,'uploadZone');uploadZone.scrollIntoView({behavior:'smooth',block:'center'});return false}}
   if(state.step===2){
     if(!damageIds().length){
-      damageError.hidden=false;document.getElementById('damageGrid').scrollIntoView({behavior:'smooth',block:'center'});return false}}
+      decirError(damageError,damageError.textContent,'damageGrid');document.getElementById('damageGrid').scrollIntoView({behavior:'smooth',block:'center'});return false}}
   const idPaso=ACI.stepId(state.step);
   if(idPaso==='MEASUREMENTS'){const fields=['width','height','depth'].map(id=>document.getElementById(id));const bad=fields.find(x=>!x.value||!x.checkValidity());if(bad){bad.reportValidity();return false}
     const fuera=medidasMuyFueraDeLoHabitual();
     if(fuera.length){
       const err=document.getElementById('measureError');
-      err.textContent=fuera.map(f=>`${MEDIDA_NOMBRE[f.id]} de ${f.valor} cm está muy fuera de lo habitual para ${state.furniture.toLowerCase()} (lo habitual: ${f.min} a ${f.max} cm).`).join(' ')+' Corrige la medida para continuar.';
-      err.hidden=false;
+      decirError(err,textoMedidasFuera(fuera),fuera[0].id);
       document.getElementById(fuera[0].id).focus({preventScroll:true});
       err.scrollIntoView({behavior:'smooth',block:'center'});
       return false}}
-  if(idPaso==='REVIEW'&&!state.analyzed){const err=document.getElementById('analysisError');err.hidden=false;err.scrollIntoView({behavior:'smooth',block:'center'});document.getElementById('analyzeButton').focus();return false}
+  if(idPaso==='REVIEW'&&!state.analyzed){const err=document.getElementById('analysisError');decirError(err,err.textContent,'analyzeButton');err.scrollIntoView({behavior:'smooth',block:'center'});document.getElementById('analyzeButton').focus();return false}
   /* Mientras la IA mira la fotografía, el paso no deja pasar: lo que se está revisando todavía no
    * está. (El botón se desactiva al empezar y vuelve solo al terminar; esto es el cinturón.) */
-  if(idPaso==='REVIEW'&&mirandoFoto){const err=document.getElementById('analysisError');err.textContent='Un momento: la IA sigue mirando tu fotografía. Puedes continuar cuando termine.';err.hidden=false;err.scrollIntoView({behavior:'smooth',block:'center'});return false}
+  if(idPaso==='REVIEW'&&mirandoFoto){const err=document.getElementById('analysisError');decirError(err,`Un momento: ${asistenteCfg().enabled?asistenteCfg().name:'la IA local'} sigue analizando tu fotografía. Puedes continuar cuando termine.`);err.scrollIntoView({behavior:'smooth',block:'center'});return false}
   if(idPaso==='CONTACT'){const ids=['fullName','email','phone','consent'];const bad=ids.map(id=>document.getElementById(id)).find(x=>!x.checkValidity());if(bad){bad.reportValidity();return false}}
   /* Un paso de pregunta valida lo que su spec declara: los campos numéricos dentro de su rango y
    * las filas del BOQ con al menos una pieza. Los chips son opcionales (no marcar también es una
@@ -1092,8 +1108,8 @@ function validStep(){
     const rows=sec.querySelector('[data-rows]');
     const sinPiezas=!!rows&&!askAnswers(sec.dataset.ask).rows.length;
     if(fuera||sinPiezas){
-      err.textContent=fuera?'Revisa las medidas: cada campo tiene su rango.':'Agrega al menos una pieza con su cantidad.';
-      err.hidden=false;sec.scrollIntoView({behavior:'smooth',block:'center'});return false;
+      const campo=fuera?sec.querySelector('[data-field]'):sec.querySelector('[data-rows]');
+      decirError(err,fuera?'Revisa las medidas: cada campo tiene su rango.':'Agrega al menos una pieza con su cantidad.',campo);sec.scrollIntoView({behavior:'smooth',block:'center'});return false;
     }
   }
   return true;
@@ -1111,22 +1127,35 @@ backButton.addEventListener('click',()=>{const v=pasosVisibles(),i=v.indexOf(sta
 // It is a cotización: there is nothing to confirm visually here.
 /* Las filas que el cliente ve en la tarjeta — y las MISMAS que recibe la mirada de la IA: el modelo
  * mira la foto relacionándola con lo declarado, y lo declarado es esto, no otra versión. */
+/* Lo que la línea elegida PREGUNTA, con la misma fuente que arma el recorrido (applyOptionalSteps:
+ * `skips` por paso). Un dato que el cliente no declaró no puede viajar en el contexto ni en la
+ * revisión: el dueño lo vio en «Tapicería arquitectónica» —que no pregunta mueble, ni medidas, ni
+ * preferencias— con el asistente hablando de un sofá y la revisión avisando de medidas fuera de
+ * rango. Sin línea elegida los tres pasos existen: la pantalla todavía no decidió. */
+const pideMueble=()=>!skipsLine().includes('furniture');
+const pideMedidas=()=>!skipsLine().includes('measurements');
+const pidePreferencias=()=>!skipsLine().includes('preferences');
+const pideRecomendacion=()=>!skipsLine().includes('recommendation');
 function declaredRows(){
   const rule=furnitureRules[state.furniture];
   const qty=seatsSelect.options[seatsSelect.selectedIndex].text;
   const w=document.getElementById('width').value,h=document.getElementById('height').value,d=document.getElementById('depth').value;
   const coverage={complete:'Todo el mueble',seats:'Solo asiento y respaldo',partial:'Una parte específica'}[document.getElementById('coverage').value]||'—';
   const needs=[...document.querySelectorAll('#needsGrid input:checked')].map(x=>x.value);
-  const rows=[
-    ['Motivo',state.service?state.service.label:'Sin elegir'],
-    ['Mueble',rule.scaleByQty&&seatsSelect.value==='1'?state.furniture:`${state.furniture} · ${qty}`],
-    ['Medidas',w&&h&&d?`${w} × ${h} × ${d} cm (ancho × alto × fondo)`:'Sin registrar'],
-    ['Qué se tapiza',coverage],
-    ['Uso previsto',needs.length?needs.join(' · '):'Sin preferencias marcadas'],
-    ['Estilo y color',`${document.getElementById('style').value} · ${document.getElementById('color').value}`],
-    ['Punto de atención',document.getElementById('city').selectedOptions[0]?document.getElementById('city').selectedOptions[0].text:''],
-    ['Fotografías',`${state.photos.length} adjunta${state.photos.length===1?'':'s'}`]
-  ];
+  /* Cada fila existe si el paso que la declara existe para esta línea: la arquitectónica no habla
+   * de muebles, medidas ni preferencias, y su resumen no puede inventarlos. */
+  const rows=[['Motivo',state.service?state.service.label:'Sin elegir']];
+  if(pideMueble())rows.push(['Mueble',rule.scaleByQty&&seatsSelect.value==='1'?state.furniture:`${state.furniture} · ${qty}`]);
+  if(pideMedidas()){
+    rows.push(['Medidas',w&&h&&d?`${w} × ${h} × ${d} cm (ancho × alto × fondo)`:'Sin registrar']);
+    rows.push(['Qué se tapiza',coverage]);
+  }
+  if(pidePreferencias()){
+    rows.push(['Uso previsto',needs.length?needs.join(' · '):'Sin preferencias marcadas']);
+    rows.push(['Estilo y color',`${document.getElementById('style').value} · ${document.getElementById('color').value}`]);
+    rows.push(['Punto de atención',document.getElementById('city').selectedOptions[0]?document.getElementById('city').selectedOptions[0].text:'']);
+  }
+  if(pideMueble())rows.push(['Fotografías',`${state.photos.length} adjunta${state.photos.length===1?'':'s'}`]);
   const ds=damageIds();
   if(ds.length)rows.splice(3,0,['Reparaciones',Store.damageItems().filter(d=>ds.indexOf(d.id)>=0).map(d=>d.label).join(' · ')]);
   return rows;
@@ -1149,10 +1178,13 @@ function oddMeasures(){
 function runReview(){
   const checks=[];
 
-  // 1. the photos — we genuinely know their sizes, so report those and nothing more
+  // 1. the photos — we genuinely know their sizes, so report those and nothing more.
+  //    Solo si la línea pide fotos (el paso del mueble las sube): la arquitectónica no las pide.
   const n=state.photos.length;
   const chicas=state.photos.filter(ph=>ph.width<600||ph.height<600);
-  if(!n){
+  if(!pideMueble()){
+    /* Sin paso de fotos no hay nada que decir de ellas ni nada que reclamar. */
+  }else if(!n){
     checks.push({ok:false,title:'Fotografías recibidas',detail:'No recibimos ninguna fotografía.'});
   }else if(chicas.length){
     const menor=chicas.reduce((a,b)=>(a.width*a.height<=b.width*b.height?a:b));
@@ -1164,16 +1196,21 @@ function runReview(){
       detail:`Todas tienen resolución suficiente (la menor mide ${menor.width}×${menor.height} px).`});
   }
 
-  // 2. the measurements — real arithmetic against plausible ranges
-  const odd=oddMeasures();
-  checks.push({ok:!odd.length,title:'Medidas registradas',
-    detail:odd.length
-      ? `El ${odd.map(k=>MEASURE_LABELS[k]).join(' y el ')} está fuera de lo habitual para ${state.furniture.toLowerCase()}. Corrige la medida para continuar.`
-      : `Ancho, alto y fondo están dentro de lo habitual para ${state.furniture.toLowerCase()}.`});
+  // 2. the measurements — real arithmetic against plausible ranges, solo si la línea las pide:
+  //    sin ese paso no hay rangos que aplicar ni medidas que corregir.
+  if(pideMedidas()){
+    const odd=oddMeasures();
+    checks.push({ok:!odd.length,title:'Medidas registradas',
+      detail:odd.length
+        ? `El ${odd.map(k=>MEASURE_LABELS[k]).join(' y el ')} está fuera de lo habitual para ${state.furniture.toLowerCase()}. Corrige la medida para continuar.`
+        : `Ancho, alto y fondo están dentro de lo habitual para ${state.furniture.toLowerCase()}.`});
+  }
 
   // 3. completeness — what the estimate actually needs
   checks.push({ok:true,title:'Datos suficientes para estimar',
-    detail:'Podemos calcular un rango preliminar de tela con esta información.'});
+    /* «de tela» no vale para la arquitectónica (va por m² de paneles o muros): fuera de ella la
+     * frase se queda como estaba — su largo mueve el alto del panel y con él la barra lateral. */
+    detail:`Podemos calcular un rango preliminar${state.service&&state.service.pricing==='m2'?'':' de tela'} con esta información.`});
 
   return checks;
 }
@@ -1182,21 +1219,27 @@ function runReview(){
  * Nace de la petición del dueño: «this step needs eyes for validation of photos... and related with
  * another information». Mira la foto más grande —el mismo criterio con el que la revisión señala
  * «la menor»— y recibe las filas declaradas tal cual (declaredRows). Nunca decide nada: la fila es
- * una observación marcada «IA local», no bloquea el paso, y si no hay modelo o su texto rompe el
+ * una observación a nombre de ella, no bloquea el paso, y si no hay modelo o su texto rompe el
  * cerco queda la línea neutra. Sin modelo no se pinta fila: no se fingen ojos. */
-/* La etiqueta «IA local» va SIEMPRE: dice quién mira, no si la noticia es buena; el color y el icono
- * son los que dicen eso (verde √ si ve el mueble, ámbar ! si no o si no se pudo leer el veredicto). */
+/* Quién mira, lee y recomienda: el nombre del asistente del paquete (`Store.assistant().name`, p. ej.
+ * Lía). El asistente se puede apagar por cliente: sin él la app vuelve a hablar de «la IA local del
+ * equipo» y ninguna frase puede sonar a persona. El dueño lo pidió así: «replace all text in the
+ * application where says "AI local" or "local AI" or "AI"». Diseño: docs/errores-con-lia.md. */
+const asistenteCfg=()=>Store.assistant();
+const asistenteNombre=()=>asistenteCfg().enabled?asistenteCfg().name:'La IA local del equipo';
+/* La etiqueta de una fila del modelo dice QUIÉN la firma (su nombre), no la tecnología. */
+const etiquetaIA=()=>`<i class="tag-ia">${esc(asistenteCfg().enabled?asistenteCfg().name:'IA local')}</i>`;
 const FILA_MIRADA=(titulo,detalle,ok)=>`<div class="${ok?'':'warn'}"><span>${ok?'✓':'!'}</span>`+
-  `<p><b>${esc(titulo)} <i class="tag-ia">IA local</i></b><small>${esc(detalle)}</small></p></div>`;
+  `<p><b>${esc(titulo)} ${etiquetaIA()}</b><small>${esc(detalle)}</small></p></div>`;
 /* Mientras mira: el título, el icono girando y una barra indeterminada — movimiento inequívoco. */
-const FILA_PENSANDO='<div><span class="mirada-gira"></span><p><b>Mirando tu foto <i class="tag-ia">IA local</i></b>'+
-  '<small>La IA local está mirando la fotografía.</small>'+
-  '<span class="mirada-espera" role="status" aria-label="La IA local está mirando la fotografía"></span></p></div>';
-const MIRADA_NO_MOSTRABLE='La IA local miró la fotografía, pero su respuesta no se puede mostrar aquí. Un asesor la revisa y te dice si sirve.';
+const filaPensando=()=>`<div><span class="mirada-gira"></span><p><b>Mirando tus fotos ${etiquetaIA()}</b>`+
+  `<small>${esc(asistenteNombre())} está analizando tus fotografías.</small>`+
+  `<span class="mirada-espera" role="status" aria-label="${esc(asistenteNombre())} está analizando tus fotografías."></span></p></div>`;
+const MIRADA_NO_MOSTRABLE=`${asistenteNombre()} miró la fotografía, pero su respuesta no se puede mostrar aquí. Un asesor la revisa y te dice si sirve.`;
 /* Cuando el equipo no puede mirar —o el modelo se cae— la fila lo dice: el cliente tiene que ver qué
  * pasó con su foto. Dos frases distintas porque son dos cosas distintas: una capacidad que este equipo
  * no tiene, y un intento que se cayó. */
-const MIRADA_SIN_OJOS='En este equipo no puedo mirar la fotografía con IA. Un asesor la revisa y te dice si sirve.';
+const MIRADA_SIN_OJOS='En este equipo no puedo mirar la fotografía: al modelo local le falta la variante de imagen. Un asesor la revisa y te dice si sirve.';
 const MIRADA_FALLO='No pude mirar la fotografía con el modelo local de este equipo. Un asesor la mira y te dice si sirve.';
 /* Lo mínimo que se ven los puntos, aunque el equipo conteste al instante: la misma razón del chat
  * (`ESPERA_MINIMA_MS`) — una señal que parpadea no se lee como que el cotizador hizo algo. */
@@ -1254,7 +1297,7 @@ function pintarLaMirada(titulo,detalle,ok){
 }
 function pintarEspera(){
   const caja=document.getElementById('visionNote');
-  caja.innerHTML=FILA_PENSANDO;
+  caja.innerHTML=filaPensando();
   caja.hidden=false;
 }
 /* ¿Este equipo acepta imágenes en el modelo local? Se pregunta UNA vez, con una sesión que solo
@@ -1300,7 +1343,8 @@ const sinCapacidadDeImagen=err=>/image|imagen|not.?support|unsupported|NotSuppor
  * llegar es justo lo que este prototipo no hace. (Sin modelo no se añade nada: ahí no prometía.) */
 function marcarSinOjos(){
   const p=document.getElementById('reviewNotice');
-  if(p&&iaDisponible()&&!/no está activada/.test(p.textContent))p.textContent+=' En este equipo la mirada con IA no está activada.';
+  if(p&&iaDisponible()&&!/no está activada/.test(p.textContent))p.textContent+=' En este equipo la mirada de '+
+    (asistenteCfg().enabled?asistenteCfg().name:'la IA local')+' no está activada.';
 }
 async function mirarLaFoto(){
   if(mirandoFoto||!state.analyzed||!state.photos.length)return;
@@ -1308,6 +1352,10 @@ async function mirarLaFoto(){
    * ya dice que no hay IA real (con modelo, en cambio, el cliente VE qué pasó con su foto). */
   if(!iaDisponible())return;
   mirandoFoto=true;
+  /* La mirada publica sus propios eventos: es ELLA la que tiene la barra que el cliente ve
+   * (el análisis local de arriba dura 1.2 s y no la enciende). Con esto Lía coge la hoja
+   * mientras mira la foto y la suelta cuando llega la respuesta. */
+  ACI.emit('LOOK_STARTED',{});
   bloquearContinuar(true);
   pintarEspera();
   const vista=Date.now();
@@ -1350,9 +1398,10 @@ async function mirarLaFoto(){
     else pintarLaMirada('Lo que veo en la foto',MIRADA_FALLO,false);
   }finally{
     mirandoFoto=false;
+    ACI.emit('LOOK_COMPLETED',{});   // la mirada tiene sus eventos: la barra que el cliente ve es la suya
     bloquearContinuar(false);
     const err=document.getElementById('analysisError');
-    if(/la IA sigue mirando/.test(err.textContent))err.hidden=true;
+    if(/sigue analizando/.test(err.textContent))err.hidden=true;
   }
 }
 
@@ -1379,7 +1428,9 @@ document.getElementById('analyzeButton').addEventListener('click',()=>{
     box.innerHTML=checks.map(c=>`<div class="${c.ok?'':'warn'}"><span>${c.ok?'✓':'!'}</span><p><b>${esc(c.title)}</b><small>${esc(c.detail)}</small></p></div>`).join('');
     box.hidden=false;
     mirarLaFoto();
-    state.review={warnings:checks.filter(c=>!c.ok).map(c=>c.title),oddMeasures:oddMeasures()};
+    /* Las medidas fuera de rango solo existen si la línea las pregunta: sin ese paso, el abanico
+     * vacío se leería como «todas fuera de rango» y viajaría al contexto del asistente. */
+    state.review={warnings:checks.filter(c=>!c.ok).map(c=>c.title),oddMeasures:pideMedidas()?oddMeasures():[]};
     ACI.emit('ANALYSIS_COMPLETED',state.review);
   },1200);
 });
@@ -1445,18 +1496,18 @@ function telasEnEspera(esperando){
   const paso=document.querySelector('.wizard-step[data-brain="RECOMMENDATION"]');
   if(paso)paso.classList.toggle('esperando-telas',esperando);
 }
-const TEXTO_RECOMENDACION_FALLO='La IA local no pudo darte una recomendación esta vez: el orden de abajo sigue tus preferencias.';
+const TEXTO_RECOMENDACION_FALLO=()=>`${asistenteNombre()} no pudo darte una recomendación esta vez: el orden de abajo sigue tus preferencias.`;
 const FILA_RECOMENDACION=(titulo,detalle,ok)=>`<div class="${ok?'':'warn'}"><span>${ok?'✓':'!'}</span>`+
-  `<p><b>${esc(titulo)} <i class="tag-ia">IA local</i></b><small>${esc(detalle)}</small></p></div>`;
+  `<p><b>${esc(titulo)} ${etiquetaIA()}</b><small>${esc(detalle)}</small></p></div>`;
 function pintarLaRecomendacion(titulo,detalle,ok){
   const caja=document.getElementById('aiPick'); if(!caja)return;
   caja.innerHTML=FILA_RECOMENDACION(titulo,detalle,ok); caja.hidden=false;
 }
 function pintarEsperaDeTelas(){
   const caja=document.getElementById('aiPick'); if(!caja)return;
-  caja.innerHTML='<div><span class="mirada-gira"></span><p><b>Pidiéndole una recomendación a la IA local '+
-    '<i class="tag-ia">IA local</i></b><small>Está leyendo lo que declaraste y las telas disponibles.</small>'+
-    '<span class="mirada-espera" role="status" aria-label="La IA local está preparando una recomendación"></span></p></div>';
+  caja.innerHTML='<div><span class="mirada-gira"></span><p><b>Pidiéndole una recomendación '+etiquetaIA()+'</b>'+
+    `<small>${esc(asistenteNombre())} está leyendo lo que declaraste y las telas disponibles.</small>`+
+    `<span class="mirada-espera" role="status" aria-label="${esc(asistenteNombre())} está preparando una recomendación"></span></p></div>`;
   caja.hidden=false;
 }
 const pedidoDeTelas=()=>({
@@ -1494,6 +1545,9 @@ async function recomendarConIA(){
   recomendandoIA=true;
   telasEnEspera(true);
   pintarEsperaDeTelas();
+  /* El sistema está trabajando: ella coge la hoja y lee (capa de presencia). Se cierra en el
+   * finally, con o sin recomendación: lo que se enseña es la espera, no el desenlace. */
+  ACI.emit('RECOMMENDATION_STARTED',{});
   try{
     const sesion=await conTope(IA_LOCAL.create({initialPrompts:[{role:'system',content:promptDeLaRecomendacion(ranked)}]}),TOPE_RECOMENDACION_MS);
     const crudo=String(await conTope(sesion.prompt([{role:'user',content:[{type:'text',value:'Ordénalas para mí y dime por qué la primera.'}]}]),TOPE_RECOMENDACION_MS)).trim();
@@ -1510,12 +1564,12 @@ async function recomendarConIA(){
       renderFabrics();
     }else{
       console.warn('[recomendación] la IA no dio una recomendación utilizable',juicio);
-      pintarLaRecomendacion('Recomendación de la IA local',TEXTO_RECOMENDACION_FALLO,false);
+      pintarLaRecomendacion(`Recomendación de ${asistenteCfg().enabled?asistenteCfg().name:'la IA local'}`,TEXTO_RECOMENDACION_FALLO(),false);
     }
   }catch(err){
     console.warn('[recomendación] la recomendación local no llegó',err);
-    pintarLaRecomendacion('Recomendación de la IA local',TEXTO_RECOMENDACION_FALLO,false);
-  }finally{recomendandoIA=false;telasEnEspera(false)}
+    pintarLaRecomendacion(`Recomendación de ${asistenteCfg().enabled?asistenteCfg().name:'la IA local'}`,TEXTO_RECOMENDACION_FALLO(),false);
+  }finally{recomendandoIA=false;telasEnEspera(false);ACI.emit('RECOMMENDATION_COMPLETED',{orden:ordenDeLaIA||null})}
 }
 function renderFabrics(){
   /* Mientras la IA ordena, la parrilla existe pero no se enseña: el `finally` de recomendarConIA() la
@@ -1940,7 +1994,8 @@ function iaDisponible(){ return !!IA_LOCAL && !!window.isSecureContext && dispon
 function notaDelChat(){
   const el = document.querySelector('.chat-sim-note'); if (!el) return;
   if (iaDisponible()) {
-    el.textContent = 'Asistente con IA local (modelo de Chrome, en este equipo): lo que escribas no sale de este navegador.';
+    const quien = asistenteCfg().enabled ? asistenteCfg().name : 'El asistente';
+    el.textContent = `${quien} responde con el modelo local del navegador (no es una persona): lo que escribas no sale de este equipo.`;
   } else if (disponibilidadIA === 'downloadable' || disponibilidadIA === 'downloading') {
     el.textContent = 'Respuestas simuladas: este equipo tiene el modelo local listo para activarse (se descarga una vez desde el navegador).';
   } else {
@@ -1974,8 +2029,12 @@ function estadoDelCotizador(c){
   const partes = [
     `Paso del cliente: «${(c.currentStep && c.currentStep.name) || ''}»${c.submitted ? ', y ya envió su solicitud' : ''}.`,
     `Línea que está cotizando: «${(c.service && c.service.label) || 'todavía sin elegir'}».`,
-    `Mueble: ${c.selectedFurniture || 'sin elegir'}${c.furnitureNote ? ` (el cliente lo describe: «${c.furnitureNote}»)` : ''}${c.measurements ? ` · medidas ${c.measurements.width || '—'} × ${c.measurements.height || '—'} × ${c.measurements.depth || '—'} cm (${(c.measurements.quantity || {}).label || ''}, ${c.measurements.coverage || ''})` : ''}.`,
   ];
+  /* El mueble y las medidas solo se cuentan si la línea las pregunta: en «Tapicería arquitectónica»
+   * (que no pregunta ninguna de las dos) el turno no puede hablar de un sofá. */
+  const delMueble=c.asksFurniture ? `Mueble: ${c.selectedFurniture || 'sin elegir'}${c.furnitureNote ? ` (el cliente lo describe: «${c.furnitureNote}»)` : ''}` : '';
+  const deMedidas=c.asksMeasurements && c.measurements ? `medidas ${c.measurements.width || '—'} × ${c.measurements.height || '—'} × ${c.measurements.depth || '—'} cm (${(c.measurements.quantity || {}).label || ''}, ${c.measurements.coverage || ''})` : '';
+  if (delMueble || deMedidas) partes.push([delMueble, deMedidas].filter(Boolean).join(' · ') + '.');
   if (c.measurements && c.measurements.ranges) partes.push(`Lo habitual para este mueble, según el propio cotizador: ${JSON.stringify(c.measurements.ranges)}.`);
   if (c.photos) partes.push(`Fotos cargadas: ${c.photos.count} (el cotizador pide entre ${c.photos.min} y ${c.photos.max}).`);
   if (c.analysis && c.analysis.done) partes.push(`Revisión del formulario: ${(c.analysis.warnings || []).concat(c.analysis.oddMeasures || []).join('; ') || 'sin observaciones'}. Si el cliente pregunta por su formulario, dile lo que dice esa revisión.`);
@@ -2055,7 +2114,13 @@ addEventListener('aci:event',e=>{
     addMessage(out.message,'bot');propose(out.proposedActions);
     if(!chatPanel.classList.contains('open')){
       document.querySelectorAll('.chat-fab').forEach(x=>{x.dataset.unread=''});
-      window.dispatchEvent(new CustomEvent('aci:notice',{detail:{text:out.notice||out.message}}));
+      /* El aviso dice el MENSAJE, no un anzuelo: el dueño («the user dont have to click for read
+       * error message») no quiere que haya que pulsar para leer el error. Y si la medida es
+       * imposible, el aviso y la línea dicen la MISMA frase (una sola fuente: textoMedidasFuera). */
+      const campoEl=campo?document.getElementById(String(campo).split('.').pop()):null;
+      const imposibles=tipo==='MEASUREMENTS_CHANGED'?medidasMuyFueraDeLoHabitual():[];
+      if(imposibles.length){decirError(document.getElementById('measureError'),textoMedidasFuera(imposibles),imposibles[0].id);return}
+      window.dispatchEvent(new CustomEvent('aci:notice',{detail:{text:out.message,campo:campoEl}}));
     }
   };
   deliver();
@@ -2187,6 +2252,60 @@ function applyOptionalSteps(){
   });
   buildDamageGrid();renderAskSteps();
 }
+/* ------------------------------------------------------------------ volver a cero --
+ * Cambiar de LÍNEA DE SERVICIO empieza de cero: lo que el cliente declaró para la línea anterior
+ * NO viaja a la nueva. El dueño (19/09): «when user change line of service... dont save.. because
+ * this contaminate the context for the AI» — y el contexto que ve el asistente sale justo de aquí:
+ * ACI.context() y declaredRows() leen `state` y los campos del formulario, así que lo que no se
+ * limpia, contamina (medidas de un sofá respondiendo en «Tapicería arquitectónica»).
+ *
+ * Se limpian las respuestas y los campos (a su valor de fábrica), se sueltan las fotos, se
+ * descarta la sesión del chat —su historial guarda lo declarado para la otra línea— y se rehace
+ * todo lo que se pinta: tira de fotos, revisión, recomendación y estimación.
+ * Los datos de CONTACTO (nombre, correo, teléfono y su autorización) no se tocan: son de la
+ * persona, no del proyecto, y volver a escribirlos en cada cambio de línea sería castigar al
+ * cliente por dudar. */
+const CONTACTO_DEL_CLIENTE=['fullName','email','phone','consent'];
+function resetProjectForLine(){
+  // 1 · lo declarado, al punto de partida (los valores con los que nace el cotizador)
+  state.furniture=FURNITURE_INICIAL;state.furnitureNote='';state.photos=[];state.analyzed=false;state.review=null;
+  state.fabric=null;state.fabricTouched=false;state.damages=[];
+  ordenDeLaIA=null;recomendandoIA=false;
+  // 2 · los campos del formulario: al valor con el que el cliente los encontró
+  document.querySelectorAll('.wizard-step input, .wizard-step select, .wizard-step textarea').forEach(el=>{
+    if(CONTACTO_DEL_CLIENTE.indexOf(el.id)>=0)return;
+    if(el.type==='checkbox'||el.type==='radio')el.checked=el.defaultChecked;
+    else if(el.tagName==='SELECT')el.selectedIndex=0;
+    else el.value=el.defaultValue;
+  });
+  const otro=document.getElementById('furnitureOther');if(otro)otro.value='';
+  // 3 · el chat: el historial del modelo local guarda la línea anterior; se suelta y la próxima
+  //     pregunta abre una sesión nueva con el estado ya limpio.
+  if(sesionIA){try{sesionIA.destroy&&sesionIA.destroy()}catch(err){}sesionIA=null}
+  // 4 · lo que se pinta
+  renderPhotos();renderFurnitureOptions();renderPreferenceOptions();buildDamageGrid();
+  const titulo=document.getElementById('analysisTitle');if(titulo)titulo.textContent=REVIEW_INICIAL.title;
+  const texto=document.getElementById('analysisText');if(texto)texto.textContent=REVIEW_INICIAL.text;
+  const checks=document.getElementById('analysisChecks');if(checks){checks.hidden=true;checks.innerHTML=''}
+  const ojo=document.getElementById('visionNote');if(ojo){ojo.hidden=true;ojo.innerHTML=''}
+  const aviso=document.getElementById('analysisError');if(aviso)aviso.hidden=true;
+  const caja=document.getElementById('aiPick');if(caja){caja.hidden=true;caja.innerHTML=''}
+  /* La parrilla de telas NO se vuelve a pintar aquí: pintarla elige tela sola (auto) y esa tela
+   * viajaría a la línea nueva — una línea sin tela (limpieza) acababa cotizando con una. Se vacía y
+   * la vuelve a pintar el propio paso al entrar, que es donde la elección automática tiene sentido. */
+  telasEnEspera(false);
+  const parrilla=document.getElementById('fabricGrid');if(parrilla)parrilla.innerHTML='';
+  renderReviewSummary();
+  updateEstimate();
+  /* El asistente no adivina: el contexto cambió de línea y su capa lo sabe (la silla vuelve a su
+   * tela neutra, la hoja no está en sus manos). */
+  ACI.emit('SERVICE_RESET',{serviceId:state.service?state.service.id:null});
+}
+/* El texto con el que nace el paso de revisión, guardado al cargar: tras analizar se reescribe y al
+ * cambiar de línea hay que devolverlo. */
+const REVIEW_INICIAL=(()=>{const t=document.getElementById('analysisTitle'),x=document.getElementById('analysisText');
+  return {title:t?t.textContent:'Listo para revisar',text:x?x.textContent:''}})();
+
 function renderServiceOptions(){
   if(!hasServiceStep)return;
   const grid=document.getElementById('serviceGrid');grid.innerHTML='';
@@ -2211,7 +2330,14 @@ function renderServiceOptions(){
     card.appendChild(body);
     const go=document.createElement('span');go.className='go';go.textContent=on?'Elegida':'Elegir';card.appendChild(go);
     card.addEventListener('click',()=>{
-      state.service=s;state.damages=[];applyLineCopy();renderServiceOptions();serviceError.hidden=true;nextButton.disabled=false;
+      /* Solo hay algo que borrar si YA había una línea elegida: en la primera elección (página
+       * recién abierta) no se toca nada — no hay declaración que pueda viajar. */
+      const cambiaDeLinea=!!state.service&&state.service.id!==s.id;
+      state.service=s;state.damages=[];
+      /* Cambiar de línea EMPIEZA DE CERO (ver resetProjectForLine). Volver a pulsar la línea ya
+       * elegida no borra nada: no hay cambio. */
+      if(cambiaDeLinea)resetProjectForLine();
+      applyLineCopy();renderServiceOptions();serviceError.hidden=true;nextButton.disabled=false;
       document.getElementById('furnitureEyebrow').textContent=s.label;
       document.getElementById('journeyContextLabel').textContent=s.label;
       /* La línea decide qué pasos existen (reparación pregunta por los daños): se recalcula aquí y
@@ -2219,6 +2345,10 @@ function renderServiceOptions(){
        * la línea cambia lo que se suma, y el bloque de precio ya no puede quedar con el número
        * anterior hasta que alguien entre y salga del paso. */
       applyOptionalSteps();updateEstimate();
+      /* Si el cliente cambiaba la línea desde un paso que la nueva no tiene (p. ej. desde «Tu
+       * mueble» a una línea que no pregunta mueble), ese paso se queda en pantalla pidiendo algo
+       * que ya no existe y «Continuar» no avanza. Se vuelve al principio del recorrido nuevo. */
+      if(!pasosVisibles().includes(state.step))showStep(pasosVisibles()[0]);
       ACI.emit('SERVICE_SELECTED',{serviceId:s.id,label:s.label,journey:s.journey});
     });
     grid.appendChild(card);
