@@ -34,3 +34,36 @@ export async function setTags(page, selector, values) {
   // La coma final confirma la última etiqueta.
   if (values.length) await page.keyboard.type(values.join(',') + ',');
 }
+
+/* La sede («¿Cuál sede eliges?», antes «Punto de atención») vive en el último paso desde
+ * docs/punto-de-atencion.md: se elige por el DOM —por su id o por su nombre— porque el paso de
+ * Preferencias ya no la tiene a la vista. Devuelve el id elegido, o null si no existe. */
+export async function elegirSede(page, cual) {
+  return page.evaluate(c => {
+    const s = document.getElementById('city');
+    if (!s) return null;
+    const o = [...s.options].find(x => x.value === c) || [...s.options].find(x => x.textContent.trim() === c);
+    if (!o) return null;
+    s.value = o.value;
+    s.dispatchEvent(new Event('change', { bubbles: true }));
+    return o.value;
+  }, cual);
+}
+/* La atención (ciudad del cliente, ciudad del servicio y sede) es requerida en el último paso desde
+ * docs/punto-de-atencion.md: cualquier spec que cierre una solicitud tiene que declararla. Por
+ * defecto toma la primera ciudad y la primera sede de los datos del cliente; `opts.city` elige la
+ * sede por su id o por su nombre (es lo que usaban los flujos que enviaban con un punto concreto). */
+export async function elegirAtencion(page, opts = {}) {
+  return page.evaluate(o => {
+    const elige = (sel, valor) => { if (!sel) return null;
+      const pedido = valor !== undefined && valor !== null;
+      if (!pedido && sel.value && sel.value !== '__otra__') return sel.value;   // lo ya declarado no se pisa
+      const o2 = (pedido ? ([...sel.options].find(x => x.value === valor) || [...sel.options].find(x => x.textContent.trim() === valor)) : null)
+        || [...sel.options].find(x => x.value && x.value !== '__otra__');
+      if (o2) { sel.value = o2.value; sel.dispatchEvent(new Event('change', { bubbles: true })); }
+      return sel.value || null; };
+    return { customerCity: elige(document.getElementById('customerCity'), o.customerCity),
+      serviceCity: elige(document.getElementById('serviceCity'), o.serviceCity),
+      sede: elige(document.getElementById('city'), o.city) };
+  }, opts);
+}

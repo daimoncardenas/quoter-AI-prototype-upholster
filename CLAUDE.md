@@ -312,6 +312,23 @@ descarta `sesionIA` (su historial guarda la línea vieja) y se rehace la estimac
 contacto no se tocan: son de la persona, no del proyecto. Volver a pulsar la MISMA línea no borra
 nada. El detalle y su porqué viven en `docs/cambio-de-linea.md`.
 
+**El presupuesto se pregunta en Validación, en la unidad del oficio** (dueño, 19/09: «budget...
+is data key for the bussiness.. and the assistant can recommend fabric and another things according
+the budget»). El mismo `#budget` —los tramos de `Store.settings().budgets`, que edita el
+backoffice— se lee «por metro de tela», «por metro cuadrado», «por pieza», «por mueble» o «por
+proyecto» según el `pricing` de la línea; viaja al resumen declarado, al contexto del asistente
+(`budget: {amount, unit, unitLabel, declared}`) y a la revisión; alimenta el techo de
+`recommend()` (`pedidoDeTelas().budget`) y el paso de la estimación lo contrasta con la cantidad del
+proyecto (metros, m², piezas, unidades). El tramo abierto («más de $X») se declara **sin tope**.
+Antes vivía en Preferencias y sólo se leía «por metro»: tres líneas no lo pedían nunca.
+`docs/presupuesto.md` y `tests/presupuesto.spec.mjs`.
+
+**Las fotos se piden en TODAS las líneas**, requeridas y analizadas (dueño, 19/09). El bloque de
+subida vive en «Tu mueble» y, si la línea no tiene ese paso, se muda al primer paso de la
+cotización (`pasoAnfitrionDeLaSubida()` / `reubicarLaSubida()`; nunca el paso 0, que es la rejilla
+de servicios); la exigencia de `validStep` se ancla a ese anfitrión y el contexto, el resumen
+(`declaredRows()`) y la revisión llevan las fotos siempre. `docs/fotos-en-todas-las-lineas.md`.
+
 **El contexto lleva lo que la línea pregunta, y nada más.** Los pasos de cada línea salen del
 catálogo (`skips` por paso, `asks` por pregunta) y de ahí salen también `pideMueble()`,
 `pideMedidas()`, `pidePreferencias()` y `pideRecomendacion()`: donde no hay paso, `ACI.context()`

@@ -205,8 +205,8 @@
       "analysisTitle": "Listo para revisar",
       "estimateTitle": "Estimación del tapizado",
       "preliminaryNotice": "Es una estimación: un asesor confirma la tela, las medidas y los daños antes de cotizar en firme.",
-      "confirmationMessage": "Recibimos tu solicitud. Un asesor revisará las fotos y te escribirá con la cotización.",
-      "artifactLabel": "Precotización de tapizado",
+      "confirmationMessage": "Recibimos tu solicitud. Un asesor revisará las fotos y te escribirá con la pre-cotización.",
+      "artifactLabel": "Pre-cotización de tapizado",
       "stepperLabel": "Estimación",
       "pendingConfirm": [
         "Las medidas del mueble",
@@ -240,7 +240,7 @@
       "estimateTitle": "Estimación por metro cuadrado",
       "preliminaryNotice": "Es una estimación por m²: un asesor confirma la superficie real y los acabados antes de cotizar en firme.",
       "confirmationMessage": "Recibimos tu solicitud. Un asesor revisará el espacio y te escribirá con la propuesta.",
-      "artifactLabel": "Precotización de tapicería arquitectónica",
+      "artifactLabel": "Pre-cotización de tapicería arquitectónica",
       "stepperLabel": "Estimación",
       "pendingConfirm": [
         "La superficie real del espacio",
@@ -273,8 +273,8 @@
       "analysisTitle": "Listo para revisar",
       "estimateTitle": "Estimación de fabricación",
       "preliminaryNotice": "Es una estimación de fabricación: maderas, acabados y entrega se confirman antes de cotizar en firme.",
-      "confirmationMessage": "Recibimos tu solicitud. Un asesor revisará el diseño y te escribirá con la cotización.",
-      "artifactLabel": "Precotización de mueble a la medida",
+      "confirmationMessage": "Recibimos tu solicitud. Un asesor revisará el diseño y te escribirá con la pre-cotización.",
+      "artifactLabel": "Pre-cotización de mueble a la medida",
       "stepperLabel": "Estimación",
       "pendingConfirm": [
         "Las maderas y los acabados",
@@ -289,7 +289,7 @@
       "pricing": "tela", "laborPct": 0, "skips": [],
       "hint": "Te decimos cuántos metros necesita tu mueble y a qué precio la referencia que elijas.",
       "copy": {
-        "artifactLabel": "Precotización de suministro de tela",
+        "artifactLabel": "Pre-cotización de suministro de tela",
         "estimateTitle": "Estimación del suministro",
         "pendingConfirm": [
           "Los metros de tela",
@@ -301,21 +301,21 @@
       "pricing": "tela", "laborPct": 60, "skips": [],
       "hint": "Cambiamos tela y rellenos de tu mueble, con la estructura como está.",
       "copy": {
-        "artifactLabel": "Precotización de retapizado",
+        "artifactLabel": "Pre-cotización de retapizado",
         "wizardTitle": "Cotiza el retapizado de tu mueble"
       } },
     { "id": "cambio-de-tela", "label": "Cambio de tela", "journey": "existente", "minPlan": "Professional",
       "pricing": "tela", "laborPct": 45, "skips": [],
       "hint": "Solo la cubierta: la estructura y los rellenos siguen bien.",
       "copy": {
-        "artifactLabel": "Precotización de cambio de tela",
+        "artifactLabel": "Pre-cotización de cambio de tela",
         "estimateTitle": "Estimación del cambio de tela"
       } },
     { "id": "reparacion", "label": "Reparación y restauración", "journey": "existente", "minPlan": "Professional",
       "pricing": "tela", "laborPct": 60, "asks": ["danos"], "skips": [],
       "hint": "Estructura, resortes, madera y acabados, además de la tela.",
       "copy": {
-        "artifactLabel": "Precotización de reparación y restauración",
+        "artifactLabel": "Pre-cotización de reparación y restauración",
         "wizardTitle": "Cotiza la reparación de tu mueble",
         "estimateTitle": "Estimación de la reparación",
         "pendingConfirm": [
@@ -330,6 +330,7 @@
     { "id": "proyecto-comercial", "label": "Proyecto comercial", "journey": "proyecto", "minPlan": "Business",
       "pricing": "unidad", "laborPct": 0, "asks": ["boq", "obra"],
       "skips": ["measurements", "preferences", "recommendation"],
+      "furniturePicker": false,
       "hint": "Cantidades, instalación y entrega para hoteles, oficinas y locales." },
     { "id": "tapiceria-arquitectonica", "label": "Tapicería arquitectónica", "journey": "proyecto", "minPlan": "Business",
       "pricing": "m2", "laborPct": 0, "asks": ["superficie", "acustica"],

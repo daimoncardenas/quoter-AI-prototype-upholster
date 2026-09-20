@@ -570,6 +570,10 @@
            * catálogo (shared/service-lines.json), no casos especiales del código. */
           pricing: s.pricing || 'tela',
           skips: (s.skips || []).slice(),
+          /* El paso del mueble sin escogedor —el oficio que declara su mueble en otra parte, como
+           * el proyecto comercial con su mesa de piezas—: dato del catálogo, no caso especial.
+           * false oculta el escogedor y deja el paso con su subida de fotos. */
+          furniturePicker: s.furniturePicker !== false,
           /* La copia con la que ese motivo se le cuenta al cliente: el default de su oficio más lo
            * que la línea sobrescriba (la etiqueta del artefacto, casi siempre). */
           copy: Object.assign({}, COPY_BY_ENGINE[s.pricing || 'tela'] || {}, s.copy || {}),

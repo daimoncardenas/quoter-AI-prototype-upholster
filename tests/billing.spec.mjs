@@ -3,7 +3,7 @@
  * with no minimum, and that people confuse constantly. */
 import { chromium } from 'playwright';
 import { PHOTOS_DB } from './client.mjs';
-import { openAdmin, openWizard } from './helpers.mjs';
+import { openAdmin, openWizard, elegirAtencion } from './helpers.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 const png = ['1','2','3'].map(n => new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
 
@@ -128,16 +128,22 @@ check('but the customer is quoted in the multiples this tela sells in',
 check('and step 5 explains the jump instead of hiding it',
   [await page.isVisible('#quoteNote'), (await page.textContent('#quoteNote')).includes('múltiplos de 2 m')],
   [true, true]);
+/* El precio del paso es un RANGO: la pre-cotización abre los extremos que colapsan con el margen
+ * declarado de la casa (docs/precotizacion-rango.md). Se compara con el mismo helper de la app. */
 check('the price follows the billed quantity, not the consumption',
   await page.textContent('#priceRange'),
-  await page.evaluate(() => Store.money(14*89000)));
+  await page.evaluate(() => { const m = n => Store.money(n);
+    const [lo, hi] = rangoPreliminar(14 * 89000, 14 * 89000);
+    return lo === hi ? m(lo) : `${m(lo)} – ${m(hi)}`; }));
 
 // Terciopelo Roma has a 25 m supplier minimum, which flattens both ends of the
 // range onto the same number. "25-25 metros" is a number said twice.
 await page.click('.fabric-card:has-text("Terciopelo Roma")');
-check('a range whose ends collapse is printed once, not twice',
+/* Los metros que colapsan se dicen una vez («25», no «25–25»); el precio, en cambio, abre su margen
+ * declarado: la tela es exacta, la pre-cotización no. */
+check('a range whose ends collapse is printed once, not twice (the fabric exact, the pre-quote open)',
   [await page.textContent('#metersRange'), (await page.textContent('#priceRange')).includes('–')],
-  ['25', false]);
+  ['25', true]);
 await page.click('.fabric-card:has-text("Lino Verona")');
 
 await page.click('#nextButton');
@@ -152,6 +158,7 @@ console.log('\nA SENT QUOTE IS FROZEN, NOT RECALCULATED');
 await page.fill('#fullName', 'Natalia Peña');
 await page.fill('#email', 'natalia@ejemplo.com');
 await page.fill('#phone', '3001234567');
+await elegirAtencion(page);
 await page.check('#consent');
 await page.click('#nextButton');
 await page.waitForSelector('#successState:not([hidden])');

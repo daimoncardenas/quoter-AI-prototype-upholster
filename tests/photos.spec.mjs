@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 import { PHOTOS_DB } from './client.mjs';
-import { openAdmin, openWizard } from './helpers.mjs';
+import { openAdmin, openWizard, elegirAtencion } from './helpers.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 const F = n => new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname;
 const TRES = ['1','2','3'].map(F);
@@ -97,6 +97,7 @@ await page.waitForFunction(()=>state.step===16);   // el paso de la estimación
 await page.click('#nextButton');
 await page.waitForFunction(()=>state.step===15);   // cierre: contacto y resumen
 await page.fill('#fullName','Natalia Peña');await page.fill('#email','n@example.com');
+await elegirAtencion(page);
 await page.fill('#phone','3001234567');await page.check('#consent');
 await page.click('#nextButton');
 await page.waitForSelector('#successState:not([hidden])');

@@ -16,7 +16,7 @@ import { chromium } from 'playwright';
 import { readFileSync } from 'node:fs';
 import { generate } from '../tools/generate.mjs';
 import { loadClientPack, listAvailableClients } from '../tools/client-pack.mjs';
-import { openAdmin, openWizard, setTags } from './helpers.mjs';
+import { openAdmin, openWizard, setTags, elegirAtencion } from './helpers.mjs';
 
 const PHOTOS = ['1', '2', '3'].map(n => new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
 
@@ -364,6 +364,7 @@ for (const slug of SLUGS) {
   await loop.fill('#fullName', 'Cliente Prueba Loop');
   await loop.fill('#email', 'loop@example.com');
   await loop.fill('#phone', '3001234567');
+  await elegirAtencion(loop);
   await loop.check('#consent');
   await loop.click('#nextButton');
   await loop.waitForSelector('#successState:not([hidden])');

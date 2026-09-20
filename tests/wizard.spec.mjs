@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 import { PHOTOS_DB } from './client.mjs';
-import { openWizard } from './helpers.mjs';
+import { openWizard, elegirAtencion } from './helpers.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 const png = ['1','2','3'].map(n=>new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
 let fails = 0;
@@ -168,7 +168,13 @@ const nueve = await barra('Muebles a la medida');
 check('ocho pasos: la barra entra sin scroll', [siete.filas, siete.scroll[0] === siete.scroll[1]], ['8', true]);
 check('diez pasos (el recorrido largo, con la estimación): también entra sin scroll', [nueve.filas, nueve.scroll[0] === nueve.scroll[1]], ['10', true]);
 check('la barra mide lo mismo con siete y con nueve', nueve.barra, siete.barra);
-check('y el hueco de Lía (su canvas) no se mueve', [nueve.stage, nueve.canvas], [siete.stage, siete.canvas]);
+/* Su hueco arranca en el mismo borde con 1 px de holgura: desde que la línea sin mueble aloja la
+ * subida de fotos en su primer paso, el reparto fraccionario de la rejilla redondea 1 px distinto
+ * (medido: alto x=-1/1, borde ±1). Lo que se sostiene exacto es que la barra entre sin scroll y
+ * mida lo mismo; el pixel de redondeo no corre su hueco a la vista. */
+const mismoBorde = (a, b) => Math.abs(a[0] - b[0]) <= 1 && Math.abs(a[1] - b[1]) <= 1;
+check('y el hueco de Lía (su canvas) no se mueve (mismo borde, 1 px de redondeo a lo sumo)',
+  [mismoBorde(nueve.stage, siete.stage), mismoBorde(nueve.canvas, siete.canvas)], [true, true]);
 
 /* Un «Continuar» se confirma esperando el cambio de paso: un clic que llegue antes de que el wizard
  * termine de moverse se pierde y la secuencia termina en el paso equivocado. Un solo helper para
@@ -216,7 +222,7 @@ for (let i = 1; i <= motivos.length; i++) {
 check('los ocho motivos pasan por el paso de la estimación', recorridos.map(r => r.estimacion), motivos.map(() => true));
 check('el nombre que el cliente lee es el de su motivo',
   [recorridos[1].artefacto, recorridos[5].artefacto, recorridos[7].artefacto],
-  ['Precotización de retapizado', 'Propuesta preliminar para proyecto comercial', 'Estimación de mantenimiento']);
+  ['Pre-cotización de retapizado', 'Propuesta preliminar para proyecto comercial', 'Estimación de mantenimiento']);
 check('y la línea pisa el default de su oficio (los cuatro de «tela» no dicen lo mismo)',
   new Set([recorridos[0].artefacto, recorridos[1].artefacto, recorridos[2].artefacto, recorridos[3].artefacto]).size, 4);
 check('limpieza no habla de telas ni de «tu mueble»',
@@ -256,14 +262,19 @@ const enResumenMant = (await page.textContent('#summaryPrice')).trim();
 await page.fill('#fullName','Cliente Limpieza');
 await page.fill('#email','limpieza@example.com');
 await page.fill('#phone','3000000000');
+await elegirAtencion(page);
 await page.check('#consent');
 await page.click('#nextButton');
 await page.waitForSelector('#successState:not([hidden])');
 const mantId = (await page.textContent('#requestNumber')).trim();
 const mant = await page.evaluate(i => Store.get('quotes', i), mantId);
+/* Lo que el cliente leyó es un RANGO: la línea por pieza cae en un solo número y el pre-cotizador
+ * lo abre con el margen declarado de la casa (docs/precotizacion-rango.md). El motor sigue dando su
+ * número exacto —la cuarta columna—: la separación es a propósito. */
 const totalMant = await page.evaluate(i => {
   const e = Store.get('quotes', i).estimate, m = n => Store.money(n);
-  return e.total[0] === e.total[1] ? m(e.total[0]) : `${m(e.total[0])} – ${m(e.total[1])}`;
+  const [lo, hi] = (typeof rangoPreliminar === 'function') ? rangoPreliminar(e.total[0], e.total[1]) : e.total;
+  return lo === hi ? m(lo) : `${m(lo)} – ${m(hi)}`;
 }, mantId);
 check('la solicitud de limpieza guarda su estimación por pieza, con el total que vio el cliente',
   [mant.estimate.kind, enPiezas, enResumenMant, totalMant], ['pieza', totalMant, totalMant, totalMant]);
@@ -304,6 +315,7 @@ check('el paso de la estimación y el resumen final dicen el mismo número', [en
 await page.fill('#fullName','Cliente Prueba');
 await page.fill('#email','prueba@example.com');
 await page.fill('#phone','3000000000');
+await elegirAtencion(page);
 await page.check('#consent');
 await page.click('#nextButton');
 await page.waitForSelector('#successState:not([hidden])');
@@ -332,9 +344,14 @@ check('y las entradas que produjeron el número quedan para poder auditarlo',
 
 console.log('\n«OTRO» PIDE LA DESCRIPCIÓN — Y NO DEJA SEGUIR SIN ELLA');
 await fresh();
-/* El cotizador puede preguntar la línea primero: se elige la primera para caer en «Tu mueble». */
-await page.evaluate(()=>{const c=document.querySelector('#serviceGrid .service-choice');if(c)c.click()});
-await page.click('#nextButton');
+/* A «Tu mueble» por una línea CON paso de mueble, elegida por su nombre (tras `fresh()` el cliente
+ * ya está en el paso del mueble de la primera tarjeta: re-elegir la línea reinicia el recorrido y
+ * hay que esperar a que aterrice en el paso del mueble de la nueva). El clic va por el DOM: la
+ * rejilla ya quedó atrás y no está a la vista. */
+await page.evaluate(() => { const c = [...document.querySelectorAll('#serviceGrid .service-choice')]
+  .find(x => /Retapizado de muebles/.test(x.textContent)); if (c) c.click(); });
+await page.waitForFunction(() => state.service && /retapizado/.test(state.service.id));
+await page.waitForFunction(() => !!document.querySelector('.wizard-step.active[data-brain="FURNITURE"]'));
 const enMueble=()=>page.evaluate(()=>({
   paso:state.step,
   campo:!document.getElementById('furnitureOtherField').hidden,
@@ -526,7 +543,7 @@ const limpio = await page.evaluate(() => {
   const c = ACI.context();
   const m = c.measurements || {}, p = c.preferences || {}, f = c.photos || {};
   return { linea: (c.service || {}).label, mueble: c.selectedFurniture, ancho: m.width,
-    alto: m.height, fondo: m.depth, fotos: f.count, needs: (p.needs || []).length,
+    alto: m.height, fondo: m.depth, fotos: f.count, minimo: f.min, needs: (p.needs || []).length,
     estilo: p.style, color: p.color, analisis: c.analysis.done,
     campoW: document.getElementById('width').value, campoH: document.getElementById('height').value,
     campoD: document.getElementById('depth').value, campos: document.querySelectorAll('#needsGrid input:checked').length,
@@ -539,16 +556,16 @@ check('la línea que no pregunta mueble no lleva mueble al contexto (antes lleva
   [limpio.mueble, limpio.mueble === declarado.mueble], [null, false]);
 check('las medidas declaradas no pasan a la línea nueva',
   [!limpio.ancho, !limpio.alto, !limpio.fondo, limpio.campoW, limpio.campoH, limpio.campoD], [true, true, true, '', '', '']);
-check('las fotos se sueltan (tira vacía y contexto sin fotos: esta línea no las pide)',
-  [limpio.fotos, limpio.tira], [null, 0]);
+check('las fotos se sueltan (tira vacía), y la línea nueva vuelve a pedirlas como todas',
+  [limpio.fotos, limpio.tira, limpio.minimo], [0, 0, 3]);
 check('las preferencias no viajan (esta línea no las pregunta)',
   [limpio.needs, limpio.campos, limpio.estilo, limpio.color], [0, 0, null, null]);
 check('la revisión no queda hecha para la línea nueva',
   [limpio.analisis, limpio.revisa, limpio.aiPick], [false, 'Listo para revisar', true]);
-check('y las filas que ve el asistente no llevan nada de la otra línea',
+check('y las filas que ve el asistente llevan lo suyo (el motivo y sus fotos), no lo de la otra línea',
   [/Motivo/.test(limpio.resumen), /Mueble/.test(limpio.resumen), /Fotografías/.test(limpio.resumen),
    limpio.resumen.includes(String(declarado.medida))],
-  [true, false, false, false]);
+  [true, false, true, false]);
 
 
 /* --------------------------------------------------------------------------------------------
@@ -563,6 +580,9 @@ await page.evaluate(() => {
   const card = [...document.querySelectorAll('#serviceGrid .service-choice')].find(c => /arquitect/i.test(c.textContent));
   card.click(); });
 await page.waitForTimeout(350);
+/* Las fotos se piden en TODAS las líneas: aquí la subida viaja al primer paso de la línea. */
+await page.setInputFiles('#furniturePhoto', png);
+await page.waitForFunction(() => state.photos.length >= 3);
 /* Caminar hasta la validación respondiendo lo que cada paso pida: los pasos son los suyos
  * (chips y campos de sus preguntas), no los del recorrido del mueble. */
 const responder = () => page.evaluate(() => {
@@ -593,21 +613,21 @@ const revision = await page.evaluate(() => {
     filas: [...document.querySelectorAll('#analysisChecks > div')].map(d => (d.querySelector('b') || {}).textContent || ''),
     resumen: [...document.querySelectorAll('#aiSummary dt')].map(d => d.textContent.trim()),
     todo: document.getElementById('analysisChecks').textContent,
-    contexto: [c.selectedFurniture, c.measurements, c.preferences, c.photos, c.fabric],
+    contexto: [c.selectedFurniture, c.measurements, c.preferences, c.photos ? c.photos.count : null, c.fabric],
   };
 });
-check('su revisión no habla de fotos ni de medidas (no hay esos pasos)',
-  [revision.filas.some(t => /Fotograf/.test(t)), revision.filas.some(t => /Medidas/.test(t)),
+check('su revisión pide las fotos como a todas las líneas, y no habla de medidas (no hay ese paso)',
+  [revision.filas.some(t => /fotograf/i.test(t)), revision.filas.some(t => /Medidas/.test(t)),
    /fuera de lo habitual/.test(revision.todo), revision.filas.length],
-  [false, false, false, 1]);
+  [true, false, false, 3]);   // fotos + «datos suficientes» + el presupuesto (en la unidad del oficio)
 check('y sigue diciendo lo que sí importa: que hay con qué estimar',
   [revision.filas.some(t => /Datos suficientes/.test(t)), /Revisión lista/.test(revision.titulo)], [true, true]);
-check('su resumen declara el motivo y sus propias preguntas, no un mueble ni unas medidas',
+check('su resumen declara el motivo, sus fotos y sus propias preguntas, no un mueble ni unas medidas',
   [revision.resumen.includes('Motivo'), revision.resumen.includes('Mueble'), revision.resumen.includes('Medidas'),
    revision.resumen.includes('Estilo y color'), revision.resumen.includes('Fotografías')],
-  [true, false, false, false, false]);
-check('y el contexto del asistente va tan limpio como el resumen',
-  revision.contexto, [null, null, null, null, null]);
+  [true, false, false, false, true]);
+check('y el contexto del asistente va tan limpio como el resumen (con las fotos de todas las líneas)',
+  revision.contexto, [null, null, null, 3, null]);
 
 /* --------------------------------------------------------------------------------------------
  * NINGÚN AVISO FUERA DE SU VOZ
@@ -626,6 +646,16 @@ const caminoAlCierre = async () => {
   await page.click('#nextButton'); await page.waitForFunction(() => ACI.stepId(state.step) === 'CONTACT');
 };
 await caminoAlCierre();
+/* La atención (ciudad del cliente, del servicio y sede) va PRIMERO en el último paso, porque es el
+ * orden de la pantalla (docs/punto-de-atencion.md). Se comprueba ahí y se declara para seguir. */
+await page.click('#nextButton'); await page.waitForTimeout(700);
+const sinAtencion = await page.evaluate(() => ({
+  burbuja: (document.querySelector('#assistantBubble .bubble-text') || {}).textContent || null,
+  foco: document.activeElement.id }));
+check('sin la atención declarada el cierre ni empieza, y lo dice ella',
+  [sinAtencion.burbuja, sinAtencion.foco],
+  ['Necesito saber en qué ciudad estás: elige una ciudad para continuar.', 'customerCity']);
+await elegirAtencion(page);
 const cierre = async () => page.evaluate(() => ({
   linea: document.getElementById('contactError').textContent,
   lineaVisible: !document.getElementById('contactError').hidden,
@@ -636,14 +666,23 @@ await page.click('#nextButton'); await page.waitForTimeout(700);
 const faltaNombre = await cierre();
 check('el nombre que falta lo dice su burbuja, no una línea roja ni el navegador',
   [faltaNombre.burbuja, faltaNombre.lineaVisible, faltaNombre.burbujaVisible, faltaNombre.linea === faltaNombre.burbuja],
-  ['Necesito tu nombre para enviarte la cotización.', false, true, true]);
+  ['Necesito tu nombre para enviarte la pre-cotización.', false, true, true]);
 check('y el campo queda con el foco y marcado',
   [faltaNombre.foco, faltaNombre.marca], ['fullName', 'true']);
+/* La traza: el mismo aviso queda como turno suyo en la conversación (dueño, 20/09: «add in the
+ * history conversation too.. how trazability with the user»). */
+const enLaConversacion = await page.evaluate(() => {
+  const avisos = [...document.querySelectorAll('#messages .message.bot.aviso')].map(m => m.textContent.trim());
+  return { ultimo: avisos[avisos.length - 1] || null, cuantos: avisos.length,
+    noLeidos: document.getElementById('chatPanel').classList.contains('has-unread') || !!document.querySelector('.chat-fab .unread, .chat-fab [data-unread]') };
+});
+check('y el aviso queda escrito en la conversación, como turno suyo',
+  [enLaConversacion.ultimo, enLaConversacion.cuantos >= 1], ['Necesito tu nombre para enviarte la pre-cotización.', true]);
 await page.fill('#fullName', 'Cliente Prueba');
 await page.click('#nextButton'); await page.waitForTimeout(700);
 const faltaCorreo = await cierre();
 check('después del nombre, el correo tiene su propia frase',
-  [faltaCorreo.burbuja, faltaCorreo.foco], ['Necesito tu correo: ahí te llega la copia de tu cotización.', 'email']);
+  [faltaCorreo.burbuja, faltaCorreo.foco], ['Necesito tu correo: ahí te llega la copia de tu pre-cotización.', 'email']);
 await page.fill('#email', 'cliente@example.com');
 await page.fill('#phone', '300123');            // seis dígitos: no parece un celular
 await page.click('#nextButton'); await page.waitForTimeout(700);
@@ -688,6 +727,7 @@ await caminoAlCierre();
 await page.fill('#fullName', 'Cliente Prueba');
 await page.fill('#email', 'cliente@example.com');
 await page.fill('#phone', '3001234567');
+await elegirAtencion(page);
 await page.check('#consent');
 await page.click('#nextButton');
 await page.waitForSelector('#successState:not([hidden])');

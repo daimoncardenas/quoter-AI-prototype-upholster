@@ -441,7 +441,12 @@ console.log('\nMIENTRAS MIRA LA FOTO, ELLA LEE SU DOCUMENTO');
   /* Se espera al FIN de la mirada (`mirandoFoto`), no al del repaso local: ANALYSIS_COMPLETED
    * sale 1,2 s después del clic y la mirada todavía no había empezado. */
   await p.waitForFunction(() => state.analyzed && !mirandoFoto, null, { timeout: 12000 }).catch(() => {});
-  await p.waitForTimeout(1200);    // el peso de la pose se deja en ~0,6 s
+  /* La pose se deja en ~0,6 s, pero en la cadena completa (máquina cargada) el reloj se estira y el
+   * número fijo fallaba por carrera: se espera a que la hoja se guarde DE VERDAD —sus medidas vacías
+   * en el dataset—, con tope, y sólo entonces se lee. Es el mismo criterio de las otras lecturas. */
+  await p.waitForFunction(() => { const st = document.getElementById('assistantStage').dataset;
+    return !st.sheetPx && !st.sheetGap && !st.sheetHead; }, null, { timeout: 6000 }).catch(() => {});
+  await p.waitForTimeout(250);
   const despues = await p.evaluate(() => { const st = document.getElementById('assistantStage').dataset;
     return { reading: st.reading, px: st.sheetPx, gap: st.sheetGap, head: st.sheetHead }; });
   check('cuando llega la respuesta, el documento se guarda y vuelve a su pose',

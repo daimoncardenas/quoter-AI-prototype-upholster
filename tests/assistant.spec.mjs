@@ -322,7 +322,7 @@ check('cambiar un selector publica el campo y su valor', (await ultimo('PREFEREN
 
 console.log('\nSIN LA AUTORIZACIÓN MARCADA EL ASISTENTE NO VE DATOS PERSONALES');
 check('lo que puede leer es el estado del cotizador, y nada más', await page.evaluate(() => Object.keys(ACI.context()).sort()),
-  ['analysis','asksFurniture','asksMeasurements','asksPreferences','asksRecommendation', 'consent', 'currentStep', 'estimate', 'fabric', 'furnitureNote', 'measurements', 'photos', 'preferences', 'selectedFurniture', 'service', 'submitted', 'tenant']);
+  ['analysis','asksFurniture','asksMeasurements','asksPreferences','asksRecommendation', 'budget', 'consent', 'currentStep', 'estimate', 'fabric', 'furnitureNote', 'location', 'measurements', 'photos', 'preferences', 'selectedFurniture', 'service', 'submitted', 'tenant']);
 await page.evaluate(() => {
   document.getElementById('fullName').value = 'Natalia Peña';
   document.getElementById('email').value = 'n@example.com';

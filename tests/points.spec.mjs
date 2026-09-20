@@ -7,7 +7,7 @@
  * pasaba con sellerId en quotes. */
 import { chromium } from 'playwright';
 import { client, PHOTOS_DB, userEmail, emailFor } from './client.mjs';
-import { openAdmin, openWizard } from './helpers.mjs';
+import { openAdmin, openWizard, elegirSede, elegirAtencion } from './helpers.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 const png = ['1','2','3'].map(n => new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
 
@@ -31,7 +31,7 @@ async function wizardTo(step, opts = {}) {
   await page.waitForFunction(() => state.photos.length >= 3);
   if (step >= 2) await page.click('#nextButton');
   if (step >= 3) { await page.fill('#width','210'); await page.fill('#height','85'); await page.fill('#depth','90'); await page.click('#nextButton'); }
-  if (step >= 4) { if (opts.city) await page.selectOption('#city', opts.city); await page.click('#nextButton'); }
+  if (step >= 4) { if (opts.city) await elegirSede(page, opts.city); await page.click('#nextButton'); }
   if (step >= 5) { await page.click('#analyzeButton'); await page.waitForFunction(() => state.analyzed); await page.click('#nextButton'); }
   if (step >= 6) await page.click('#nextButton');
 }
@@ -49,6 +49,9 @@ async function submitQuote(cityOption) {
   await page.fill('#fullName','Cliente Prueba');
   await page.fill('#email','prueba@example.com');
   await page.fill('#phone','3000000000');
+  /* La sede del flujo (o su «Otra ciudad», que es el caso sin punto y sin vendedor) manda: la
+   * atención la respeta y sólo rellena lo que falte. */
+  await elegirAtencion(page, { city: cityOption });
   await page.check('#consent');
   await page.click('#nextButton');
   await page.waitForSelector('#successState:not([hidden])');

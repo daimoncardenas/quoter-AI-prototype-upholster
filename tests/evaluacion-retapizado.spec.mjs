@@ -13,6 +13,7 @@
  * supone: la primera versión de este archivo comparaba «una pieza cotiza menos», con un ancho de
  * 210 cm metido a una poltrona; el criterio era del evaluador, no del producto, y se corrigió. */
 import { chromium } from 'playwright';
+import { elegirAtencion } from './helpers.mjs';
 import { createRequire } from 'node:module';
 import { PHOTOS_DB } from './client.mjs';
 const brain = createRequire(import.meta.url)('../assistant-brain.js');
@@ -117,6 +118,7 @@ async function recorrer({ mueble, fila, medidas, piezas }) {
   });
   await avanzar();                                                       // 16 → 15 (Contacto)
   await page.fill('#fullName','Cliente Evaluación'); await page.fill('#email','evalua@example.com');
+  await elegirAtencion(page);
   await page.fill('#phone','3001112233'); await page.check('#consent');
   await page.click('#nextButton');
   await page.waitForSelector('#successState:not([hidden])');
@@ -157,8 +159,8 @@ check('la mano de obra es el 60 % del material (redondeada hacia arriba a 0,1)',
 check('el sofá se cotiza por piezas contra el ancho del rollo de la tela (modelo de componentes)',
   [sofa.visto.modelo.ruta, sofa.visto.modelo.rollWidthCm > 0, sofa.visto.modelo.piezas > 0],
   ['componentes', true, true]);
-check('el artefacto se llama «Precotización de retapizado», aquí y en el cierre',
-  [sofa.visto.artefacto, sofa.guardado.cierre], ['Precotización de retapizado', 'Precotización de retapizado']);
+check('el artefacto se llama «Pre-cotización de retapizado», aquí y en el cierre',
+  [sofa.visto.artefacto, sofa.guardado.cierre], ['Pre-cotización de retapizado', 'Pre-cotización de retapizado']);
 check('la solicitud guarda el mismo total que vio el cliente, con su motor',
   [sofa.visto.total, sofa.guardado.total, sofa.guardado.kind], [sofa.guardado.total, sofa.guardado.total, 'tela']);
 check('lo pendiente de confirmar es lo que el catálogo declara para el motivo',

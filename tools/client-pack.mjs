@@ -134,6 +134,9 @@ export function validateServiceLines(lines) {
     if ('skips' in s && (!Array.isArray(s.skips) || s.skips.some(k => !SERVICE_SKIPS.includes(k)))) {
       bad.push(`${at}.skips = ${JSON.stringify(s.skips)} (expected an array drawn from: ${SERVICE_SKIPS.join(', ')})`);
     }
+    if ('furniturePicker' in s && typeof s.furniturePicker !== 'boolean') {
+      bad.push(`${at}.furniturePicker = ${JSON.stringify(s.furniturePicker)} (expected a boolean: false hides the furniture picker in the furniture step and keeps the step for its photos)`);
+    }
     if ('asks' in s && (!Array.isArray(s.asks) || s.asks.some(a => !SERVICE_ASKS.includes(a)))) {
       bad.push(`${at}.asks = ${JSON.stringify(s.asks)} (expected an array drawn from: ${SERVICE_ASKS.join(', ')})`);
     }

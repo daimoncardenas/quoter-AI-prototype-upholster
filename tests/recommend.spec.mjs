@@ -50,7 +50,9 @@ await page.click('#nextButton');
 await page.check('.chip-grid input[value="Mascotas"]');
 await page.check('.chip-grid input[value="Alto tráfico"]');
 await page.selectOption('#style','Clásico');
-await page.selectOption('#budget','160000');
+/* El presupuesto vive en Validación desde docs/presupuesto.md: se elige por el DOM —el clic real se
+ * comprueba en presupuesto.spec.mjs— para no caminar hasta allá en mitad de esta suite. */
+await page.evaluate(()=>{const s=document.getElementById('budget');s.value='160000';s.dispatchEvent(new Event('change',{bubbles:true}));});
 await page.click('#nextButton');await page.click('#analyzeButton');
 await page.waitForFunction(()=>state.analyzed);await page.click('#nextButton');
 check('la primera tarjeta lleva el sello "Mejor coincidencia"',
@@ -108,9 +110,14 @@ console.log('\nLA IA LOCAL RECOMIENDA: ORDENA LAS TELAS CON LO DECLARADO POR DEL
    * que estén los HECHOS que la comprobación mide (leyendo, con tamaño real y las dos manos), no a
    * que la pose se congele: la hoja se mece, así que «dos lecturas iguales» nunca llega. */
   await p.evaluate(async () => {
+    /* Se espera por TODOS los hechos que la comprobación mide —tamaño, alto y los dos huecos de la
+     * muñeca al canto—, no por una parte: con solo el ancho, bajo carga los huecos llegaban a la
+     * lectura todavía grandes y el check fallaba por carrera (cuarta vez que aparece el mismo patrón). */
     const listo = () => { const st = document.getElementById('assistantStage').dataset;
-      const [w] = (st.sheetPx || '0x0').split('x').map(Number);
-      return st.reading === 'on' && w >= 16 && (st.sheetHands || '').split('|').filter(Boolean).length === 2; };
+      const [w, h] = (st.sheetPx || '0x0').split('x').map(Number);
+      const [l, r] = (st.sheetGap || '1|1').split('|').map(Number);
+      return st.reading === 'on' && w >= 16 && h >= 22 && l < 0.07 && r < 0.07
+        && (st.sheetHands || '').split('|').filter(Boolean).length === 2; };
     for (let i = 0; i < 30 && !listo(); i++) await new Promise(r => setTimeout(r, 100));
   });
   const esperando = await p.evaluate(() => ({ telas: document.getElementById('fabricGrid').hidden,

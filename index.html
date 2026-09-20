@@ -289,7 +289,25 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
   .journey{padding-block:clamp(14px,3.2vh,46px) clamp(10px,2.2vh,28px)}
   .step-list li{margin-bottom:clamp(5px,2vh,22px)}
 @media print{html,body{height:auto!important;overflow:visible!important}.demo-banner{position:static!important}.chat-fab,.chat-panel,.assistant-stage,.assistant-hit,.assistant-bubble,#logoutBtn{display:none!important}body::after{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;background-image:var(--print-watermark);background-repeat:repeat}}
-  </style>
+  .budget-field{margin:0 0 18px;border:1px solid var(--line);background:#fff;border-radius:4px;padding:16px 18px}
+.budget-field label{display:block;font:600 .82rem var(--font-heading);color:var(--ink)}
+.budget-row{display:flex;align-items:center;gap:10px;margin-top:9px;flex-wrap:wrap}
+.budget-row select{flex:1 1 200px;max-width:330px}
+.budget-unit{font-size:.68rem;color:var(--muted)}
+.budget-hint{margin:9px 0 0;font-size:.62rem;line-height:1.5;color:var(--muted)}
+.estimate-budget{margin:14px 0 0;background:var(--tint-panel-wash,#f7f5f1);border-left:3px solid var(--accent);padding:11px 14px;font-size:.68rem;line-height:1.5;color:var(--ink-2)}
+.estimate-budget b{color:var(--ink)}
+/* La atención vive dentro de `.contact-fields` (una rejilla de dos columnas): ocupa el ancho
+ * completo y cada pregunta va encima de su control, como los campos del contacto. */
+.atencion-field{grid-column:1/-1;display:grid;gap:12px;margin:0;padding-bottom:16px;border-bottom:1px dashed var(--line)}
+.atencion-field label{display:block;font-size:.72rem;font-weight:700;color:var(--ink)}
+.atencion-field select,.atencion-otra input{width:100%;margin-top:8px;border:1px solid var(--line);background:#fff;border-radius:2px;padding:14px;color:var(--text);font-size:.8rem;min-height:47px}
+/* Sin flechitas de subir/bajar en los campos numéricos: en un formulario se escriben las medidas, no
+ * se pulsan flechas (dueño, 20/09: «when the user click the rows for up or down for increase or
+ * decrease the number... its uncomfortable»). */
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield;appearance:textfield}
+</style>
   {{MODE_STYLES}}
   <!-- store.js loads in <head> so Brand.apply() can paint any saved brand overrides (colors, fonts, header variant, title) before first paint; it is a no-op when nothing is overridden. -->
   <script src="store.js"></script>
@@ -309,7 +327,7 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
   </header>
 
   <main class="app-shell">
-    <aside class="journey" aria-label="Progreso de la cotización">
+    <aside class="journey" aria-label="Progreso de la pre-cotización">
       <div class="journey-intro">
         <span class="eyebrow gold">Tu proyecto</span>
         <h1 id="journeyTitle">Cotiza la tela ideal para tu mueble</h1>
@@ -334,7 +352,7 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
         <li data-step-dot="13" data-brain="REVIEW"><span>4</span><div><b>Validación</b><small>Revisión previa</small></div></li>
         <li data-step-dot="14" data-brain="RECOMMENDATION"><span>5</span><div><b>Recomendación</b><small>Telas sugeridas</small></div></li>
         <li data-step-dot="16" data-brain="ESTIMATE"><span>6</span><div><b id="estimateDotLabel">Estimación</b><small>Tu precio hoy</small></div></li>
-        <li data-step-dot="15" data-brain="CONTACT"><span>6</span><div><b>Tu cotización</b><small>Datos de contacto</small></div></li>
+        <li data-step-dot="15" data-brain="CONTACT"><span>6</span><div><b>Tu pre-cotización</b><small>Datos de contacto</small></div></li>
       </ol>
       <!-- The conversation lives HERE, not floating over the wizard: opening it
            replaces the progress list (see .journey.chatting), so the form is never
@@ -478,8 +496,6 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
             <div class="select-grid">
               <label>Estilo que prefieres<select id="style"></select></label>
               <label>Gama de color<select id="color"></select></label>
-              <label>Presupuesto por metro<select id="budget"></select></label>
-              <label>Punto de atención<select id="city"></select></label>
             </div>
           </div>
         </section>
@@ -489,6 +505,14 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
             <span class="eyebrow">Revisión previa</span>
             <h2>Revisemos que todo sea coherente</h2>
             <p>Revisamos la fotografía y las medidas que registraste antes de calcular tu estimación.</p>
+          </div>
+          <div class="budget-field" id="budgetField">
+            <label for="budget" id="budgetQuestion">¿Cuál es tu presupuesto por metro de tela?</label>
+            <div class="budget-row">
+              <select id="budget"></select>
+              <span class="budget-unit" id="budgetUnit">por metro de tela</span>
+            </div>
+            <p class="budget-hint">Con esto ordenamos las telas que te proponemos y contrastamos la estimación. Es una referencia para trabajar, no un compromiso.</p>
           </div>
           <div class="ai-card" id="aiCard">
             <div class="ai-summary" id="aiSummary"></div>
@@ -526,7 +550,7 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
              comercial solo revelaban su precio en el resumen final. -->
         <section class="wizard-step" data-step="16" data-brain="ESTIMATE">
           <div class="step-heading">
-            <span class="eyebrow gold" id="estimateArtifact">Precotización</span>
+            <span class="eyebrow gold" id="estimateArtifact">Pre-cotización</span>
             <h2 id="estimateTitle">Estimación del motivo</h2>
             <p id="estimateIntro">Esto es lo que costaría hoy, con lo que nos contaste. Un asesor lo confirma antes de cotizar en firme.</p>
           </div>
@@ -542,6 +566,7 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
               <ul class="estimate-assumptions" id="estimateAssumptions"></ul>
             </div>
           </div>
+          <p class="estimate-budget" id="budgetCompare" hidden></p>
           <div class="estimate-pending">
             <h3>Pendiente de confirmación</h3>
             <ul id="estimatePendingConfirm"></ul>
@@ -552,11 +577,18 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
         <section class="wizard-step" data-step="15" data-brain="CONTACT">
           <div class="step-heading">
             <span class="eyebrow">Último paso</span>
-            <h2>¿A dónde enviamos tu cotización?</h2>
+            <h2>¿A dónde enviamos tu pre-cotización?</h2>
             <p>Un asesor revisará la información y podrá comunicarse contigo para confirmar los detalles.</p>
           </div>
           <div class="final-layout">
             <div class="contact-fields">
+              <div class="atencion-field" id="atencionField">
+                <label>¿En qué ciudad te encuentras?<select id="customerCity"></select></label>
+                <label class="atencion-otra" id="customerCityOtherField" hidden>Escríbela<input type="text" id="customerCityOther" placeholder="Tu ciudad"></label>
+                <label>¿Para qué ciudad es el servicio?<select id="serviceCity"></select></label>
+                <label class="atencion-otra" id="serviceCityOtherField" hidden>Escríbela<input type="text" id="serviceCityOther" placeholder="Ciudad del servicio"></label>
+                <label>¿Cuál sede eliges?<select id="city"></select></label>
+              </div>
               <label>Nombre completo<input type="text" id="fullName" placeholder="Escribe tu nombre" required></label>
               <label>Correo electrónico<input type="email" id="email" placeholder="nombre@correo.com" required></label>
               <label>Celular o WhatsApp<input type="tel" id="phone" placeholder="Ej. 300 123 4567" required></label>
@@ -584,11 +616,11 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
           <span class="eyebrow">Solicitud recibida</span>
           <h2>Tu proyecto ya está en buenas manos</h2>
           <p class="success-artifact" id="successArtifact"></p>
-          <p>Enviamos la cotización a <b id="successEmail"></b>.</p>
+          <p>Enviamos la pre-cotización a <b id="successEmail"></b>.</p>
           <p id="successMessage"></p>
           <p id="successSeller"></p>
           <div class="request-number"><small>Número de solicitud</small><strong id="requestNumber">COT-0000</strong></div>
-          <button type="button" class="secondary-button" id="restartButton">Crear otra cotización</button>
+          <button type="button" class="secondary-button" id="restartButton">Crear otra pre-cotización</button>
         </section>
 
         <footer class="wizard-actions" id="wizardActions">
@@ -708,8 +740,14 @@ const ACI=(()=>{
         ranges:rangesPayload()}:null,
       preferences:pidePreferencias()?{needs:[...document.querySelectorAll('#needsGrid input:checked')].map(x=>x.value),
         pets:pets?pets.checked:null,style:byId('style').value,color:byId('color').value,
-        budget:selText(byId('budget')),servicePoint:selText(byId('city'))}:null,
-      photos:pideMueble()?{count:state.photos.length,min,max}:null,
+        budget:selText(byId('budget'))}:null,
+      /* Las fotos son de todas las líneas (dueño, 19/09): siempre en el contexto, con su mínimo. */
+      photos:{count:state.photos.length,min,max},
+      /* El presupuesto: se pregunta en Validación, en la unidad del oficio (docs/presupuesto.md). */
+      budget:(()=>{const b=presupuestoDeclarado();return {amount:b.amount,unit:b.unit,unitLabel:b.unitLabel,declared:b.declared}})(),
+      /* La atención: de dónde escribe el cliente, para dónde es el servicio y su sede. La declaran
+       * todas las líneas (vive en el último paso), así que va al contexto como las fotos. */
+      location:(()=>atencionDeclarada())(),
       analysis:{done:!!state.analyzed,warnings:state.review?state.review.warnings:[],oddMeasures:state.review?state.review.oddMeasures:[]},
       fabric:pideRecomendacion()&&state.fabric?{id:state.fabric.id,name:state.fabric.name,colorName:state.fabric.colorName,auto:!state.fabricTouched}:null,
       estimate:estimateSnapshot(),
@@ -816,7 +854,15 @@ function dejarLaConfirmacion(){
 function showStep(n){
   dejarLaConfirmacion();
   state.step=n; steps.forEach(s=>s.classList.toggle('active',+s.dataset.step===n));
-  document.querySelectorAll('[data-step-dot]').forEach(li=>{const x=+li.dataset.stepDot;li.classList.toggle('active',x===n);li.classList.toggle('done',x<n)});
+  /* El estado de la barra se decide por el ORDEN del recorrido, no por el número del paso: los
+   * números de la tabla son dispersos (la estimación es el 16 y el cierre el 15) y compararlos
+   * numéricamente dejaba la estimación sin pintar cuando el cliente ya estaba en el cierre (dueño,
+   * 20/09: «the six 6 step dont show with color yellow why?»). Los puntos visibles van en el orden
+   * del DOM, que es el del recorrido. */
+  (()=>{const visibles=steps.map(s=>+s.dataset.step).filter(i=>!skippedSteps.has(i));
+    const posActual=visibles.indexOf(n);
+    [...document.querySelectorAll('[data-step-dot]')].filter(li=>!li.hidden).forEach((li,i)=>{
+      li.classList.toggle('active',i===posActual);li.classList.toggle('done',i<posActual)});})();
   /* Los pasos, sus nombres y sus ids viven en `assistant-brain.js` (una sola tabla). */
   /* Los pasos opcionales son la pregunta por la línea (paso 0, con más de una habilitada) y la de
    * daños (paso 2, solo en las líneas que la piden). Cada paso existe para aliviar la carga, no
@@ -830,7 +876,7 @@ function showStep(n){
   const pos=visibles.indexOf(n),shown=pos+1,total=visibles.length,ultimo=visibles[visibles.length-1];
   document.getElementById('mobileStep').textContent=`Paso ${shown} de ${total}`; document.getElementById('mobileTitle').textContent=nameFor(n);
   document.getElementById('progressBar').style.width=`${shown/total*100}%`; backButton.disabled=pos===0;
-  nextButton.textContent=n===ultimo?'Enviar cotización  →':'Continuar  →';
+  nextButton.textContent=n===ultimo?'Enviar pre-cotización  →':'Continuar  →';
   /* En el paso de la línea el botón está deshabilitado hasta que haya una elegida: con la lista
    * sin tocar decía "Elige una línea para empezar" y el botón se veía accionable. */
   nextButton.disabled=(n===0&&!state.service);
@@ -1088,6 +1134,21 @@ function decirError(el,texto,campo){
   if(marcado&&marcado.matches&&marcado.matches('input,select,textarea'))marcado.setAttribute('aria-invalid','true');
   const destino=campo&&typeof campo==='string'?document.getElementById(campo):(campo||null);
   try{window.dispatchEvent(new CustomEvent('aci:notice',{detail:{text:texto,campo:destino}}))}catch(err){}
+  /* Y queda ESCRITO en la conversación: es la traza con el cliente (dueño, 20/09: «errors in the
+   * wizard that assistant communicate to the user... add in the history conversation too.. how
+   * trazability with the user»). Con el asistente apagado no hay conversación que anotar. */
+  anotarEnLaConversacion(texto);
+}
+/* El aviso, como turno suyo en el hilo del chat. No repite el mismo texto seguido (dos intentos
+ * del mismo error son un aviso, no dos) y deja el punto de no leídos encendido. */
+function anotarEnLaConversacion(texto){
+  if(!asistenteCfg().enabled)return;
+  const caja=document.getElementById('messages');if(!caja||!texto)return;
+  const avisos=[...caja.querySelectorAll('.message.bot.aviso')];
+  if(avisos.length&&avisos[avisos.length-1].textContent.trim()===String(texto).trim())return;
+  const m=addMessage(String(texto),'bot');if(!m)return;
+  m.classList.add('aviso');
+  try{unreadMark(false)}catch(err){}   // `unreadMark(false)` es el que marca: enciende el punto
 }
 function validStep(){
   if(state.step===0){
@@ -1099,7 +1160,12 @@ function validStep(){
       decirError(err,'Cuéntanos cuál es el mueble para continuar: «Otro» no dice qué hay que tapizar.','furnitureOther');
       document.getElementById('furnitureOther').focus({preventScroll:true});
       document.getElementById('furnitureOtherField').scrollIntoView({behavior:'smooth',block:'center'});
-      return false}
+      return false}}
+  /* Las fotos se piden SIEMPRE: en el paso que las aloje para esta línea (el del mueble, o el
+   * primero en las que no preguntan mueble). Va DESPUÉS del bloque del mueble y sin cortar: el paso
+   * del mueble también las exige (un `return true` ahí las saltaba). */
+  const anfitrion=pasoAnfitrionDeLaSubida();
+  if(anfitrion&&state.step===+anfitrion.dataset.step){
     const {min}=photoLimits();
     if(state.photos.length<min){
       const faltan=min-state.photos.length;
@@ -1136,6 +1202,18 @@ function validStep(){
     /* El último paso también habla: cada campo que falta tiene su frase, y ninguna burbuja del
      * navegador en inglés. */
     const err=document.getElementById('contactError');
+    /* La atención, primero: es el orden de la pantalla (ciudad del cliente, del servicio y sede). */
+    for(const id of ['customerCity','serviceCity']){
+      const sel=document.getElementById(id);if(!sel)continue;
+      const otro=id==='customerCity'?'en qué ciudad estás':'para qué ciudad es el servicio';
+      let falta=null;
+      if(sel.value==='__otra__'){const t=document.getElementById(id+'Other');
+        if(!t||!t.value.trim())falta={el:t||sel,frase:`Necesito saber ${otro}: escríbela en el campo.`}}
+      else if(!sel.value)falta={el:sel,frase:`Necesito saber ${otro}: elige una ciudad para continuar.`};
+      if(falta){decirError(err,falta.frase,falta.el.id);if(falta.el.focus)falta.el.focus({preventScroll:true});falta.el.scrollIntoView({behavior:'smooth',block:'center'});return false}}
+    /* La sede no bloquea: el campo viene con la principal elegida y «Otra ciudad» es una respuesta
+     * legítima (sin punto y sin vendedor asignado, que es lo que ya sabía hacer la solicitud). */
+    state.atencionDeclarada=true;   // el cliente vio la atención y siguió: queda declarada
     const nombre=document.getElementById('fullName'),correo=document.getElementById('email'),
           celular=document.getElementById('phone'),autoriza=document.getElementById('consent');
     const qué=!nombre.value.trim()?'nombre'
@@ -1146,8 +1224,8 @@ function validStep(){
       :!autoriza.checked?'autorizacion':null;
     if(qué){
       const dicho={
-        nombre:'Necesito tu nombre para enviarte la cotización.',
-        correoSin:'Necesito tu correo: ahí te llega la copia de tu cotización.',
+        nombre:'Necesito tu nombre para enviarte la pre-cotización.',
+        correoSin:'Necesito tu correo: ahí te llega la copia de tu pre-cotización.',
         correoMal:'Ese correo no tiene forma de correo: revísalo y te mando la copia.',
         celularSin:'Me falta tu celular: un asesor te escribe por ahí.',
         celularMal:'Ese celular no tiene pinta de celular: escríbelo como 300 123 4567.',
@@ -1196,7 +1274,11 @@ backButton.addEventListener('click',()=>{const v=pasosVisibles(),i=v.indexOf(sta
  * revisión: el dueño lo vio en «Tapicería arquitectónica» —que no pregunta mueble, ni medidas, ni
  * preferencias— con el asistente hablando de un sofá y la revisión avisando de medidas fuera de
  * rango. Sin línea elegida los tres pasos existen: la pantalla todavía no decidió. */
-const pideMueble=()=>!skipsLine().includes('furniture');
+/* `furniturePicker` es un oficio donde el mueble NO se elige en el paso (el proyecto comercial lo
+ * declara en su mesa de piezas): el paso existe —y con él su subida de fotos— pero sin escogedor,
+ * así que tampoco declara mueble (docs/paso-de-fotos.md). */
+const sinEscogedorDeMueble=()=>!!state.service&&state.service.furniturePicker===false;
+const pideMueble=()=>!skipsLine().includes('furniture')&&!sinEscogedorDeMueble();
 const pideMedidas=()=>!skipsLine().includes('measurements');
 const pidePreferencias=()=>!skipsLine().includes('preferences');
 const pideRecomendacion=()=>!skipsLine().includes('recommendation');
@@ -1217,9 +1299,14 @@ function declaredRows(){
   if(pidePreferencias()){
     rows.push(['Uso previsto',needs.length?needs.join(' · '):'Sin preferencias marcadas']);
     rows.push(['Estilo y color',`${document.getElementById('style').value} · ${document.getElementById('color').value}`]);
-    rows.push(['Punto de atención',document.getElementById('city').selectedOptions[0]?document.getElementById('city').selectedOptions[0].text:'']);
   }
-  if(pideMueble())rows.push(['Fotografías',`${state.photos.length} adjunta${state.photos.length===1?'':'s'}`]);
+  rows.push(['Fotografías',`${state.photos.length} adjunta${state.photos.length===1?'':'s'}`]);
+  (()=>{const b=presupuestoDeclarado();
+    rows.push(['Presupuesto',b.declared?`Hasta ${money(b.amount)} ${b.unitLabel}`:'Sin tope declarado']);})();
+  (()=>{const a=atencionDeclarada();
+    if(a.customerCity)rows.push(['Ciudad del cliente',a.customerCity]);
+    if(a.serviceCity)rows.push(['Ciudad del servicio',a.serviceCity]);
+    if(a.servicePoint)rows.push(['Sede',a.servicePoint.city?`${a.servicePoint.city} · ${a.servicePoint.name}`:a.servicePoint.name]);})();
   const ds=damageIds();
   if(ds.length)rows.splice(3,0,['Reparaciones',Store.damageItems().filter(d=>ds.indexOf(d.id)>=0).map(d=>d.label).join(' · ')]);
   return rows;
@@ -1246,9 +1333,7 @@ function runReview(){
   //    Solo si la línea pide fotos (el paso del mueble las sube): la arquitectónica no las pide.
   const n=state.photos.length;
   const chicas=state.photos.filter(ph=>ph.width<600||ph.height<600);
-  if(!pideMueble()){
-    /* Sin paso de fotos no hay nada que decir de ellas ni nada que reclamar. */
-  }else if(!n){
+  if(!n){
     checks.push({ok:false,title:'Fotografías recibidas',detail:'No recibimos ninguna fotografía.'});
   }else if(chicas.length){
     const menor=chicas.reduce((a,b)=>(a.width*a.height<=b.width*b.height?a:b));
@@ -1275,6 +1360,14 @@ function runReview(){
     /* «de tela» no vale para la arquitectónica (va por m² de paneles o muros): fuera de ella la
      * frase se queda como estaba — su largo mueve el alto del panel y con él la barra lateral. */
     detail:`Podemos calcular un rango preliminar${state.service&&state.service.pricing==='m2'?'':' de tela'} con esta información.`});
+
+  /* El presupuesto declarado, al final: dato del negocio, en la unidad del oficio. No bloquea
+   * —«más de $X» es una declaración legítima— y no corre las filas de siempre (hay pruebas que las
+   * cuentan por posición). */
+  (()=>{const b=presupuestoDeclarado();
+    checks.push(b.declared
+      ?{ok:true,title:'Presupuesto declarado',detail:`Hasta ${money(b.amount)} ${b.unitLabel}, para ordenar la recomendación y contrastar la estimación.`}
+      :{ok:true,title:'Sin tope de presupuesto',detail:'No pusiste tope: verás todas las telas y la estimación sin contraste.'});})();
 
   return checks;
 }
@@ -1701,6 +1794,16 @@ function billable(){
 /* La estimación sale de `Store.lineQuote`, que reparte según el oficio de la línea elegida
  * (material + mano de obra, piezas, m², fabricación o unidades). Un solo número que pintar: el
  * bloque de precio pinta sus partes sin saber de oficios. */
+/* El pre-cotizador NUNCA enseña una cifra sola: una pre-cotización es un rango (dueño, 20/09: «the
+ * image says "rango estimado"...but only has one value... remember how is pre-quoter then is
+ * necessary range... for all lines of services»). Cuando el cálculo cae en un solo número —las
+ * líneas que cobran por pieza, por unidad o por fabricación, sin el vaivén de los metros— el rango
+ * se abre con el margen declarado de la casa, que es el mismo que ya insinúa la copia: «este valor
+ * es orientativo». Las líneas de tela conservan su rango propio (metros mínimos y máximos). */
+const MARGEN_PRELIMINAR=0.10;
+const rangoPreliminar=(lo,hi)=>{lo=Math.round(lo);hi=Math.round(hi);
+  if(lo===hi&&lo>0){const d=Math.max(1000,Math.round(lo*MARGEN_PRELIMINAR/1000)*1000);return [lo-d,lo+d]}
+  return [lo<hi?lo:hi,hi>lo?hi:lo]};
 function linePrice(q){
   if(!state.service)return null;
   const base=state.fabric?[q.facMin*state.fabric.price,q.facMax*state.fabric.price]:[0,0];
@@ -1714,11 +1817,55 @@ function linePrice(q){
     answers:answers,
     boq:answers.rows||[]
   });
-  const rango=r=>r[0]===r[1]?money(r[0]):`${money(r[0])} – ${money(r[1])}`;
+  const rango=r=>{const [a,b]=rangoPreliminar(r[0],r[1]);return a===b?money(a):`${money(a)} – ${money(b)}`};
   return {...quote,partTexts:quote.parts.map(p=>({label:p.label,text:rango(p.value)})),totalText:rango(quote.total)};
 }
 /* La copia del motivo elegido, en los huecos del formulario: los textos vienen resueltos desde el
  * catálogo (oficio + override de la línea, ver Store.lineCopy) y aquí solo se pintan. */
+/* La unidad del presupuesto la pone el oficio (`pricing` de la línea): el mismo campo se lee «por
+ * metro de tela», «por metro cuadrado», «por pieza», «por mueble» o «por proyecto». Los tramos son
+ * los ajustes del cliente (los edita el backoffice; esto sólo los lee). Ver docs/presupuesto.md. */
+const UNIDADES_DEL_PRESUPUESTO={
+  tela:{pregunta:'¿Cuál es tu presupuesto por metro de tela?',unidad:'por metro de tela',corta:'/m'},
+  m2:{pregunta:'¿Cuál es tu presupuesto por metro cuadrado?',unidad:'por metro cuadrado',corta:'/m²'},
+  pieza:{pregunta:'¿Cuál es tu presupuesto por pieza?',unidad:'por pieza',corta:'/pieza'},
+  fabricacion:{pregunta:'¿Cuál es tu presupuesto por mueble?',unidad:'por mueble',corta:'/mueble'},
+  unidad:{pregunta:'¿Cuál es tu presupuesto por proyecto?',unidad:'por proyecto',corta:'/proyecto'}};
+const unidadDelPresupuesto=(servicio)=>UNIDADES_DEL_PRESUPUESTO[(servicio||state.service||{}).pricing]||UNIDADES_DEL_PRESUPUESTO.tela;
+/* El tramo elegido, traducido. El tramo abierto («Más de $X») no tiene tope: `declared` queda en
+ * false y nadie marca telas «sobre presupuesto» por él (es lo que «más de» significa). */
+function presupuestoDeclarado(){
+  const el=document.getElementById('budget'),u=unidadDelPresupuesto(state.service);
+  const opcion=el&&el.options[el.selectedIndex],amount=+((el&&el.value)||0)||null;
+  return {amount,declared:!!amount,label:opcion?opcion.textContent.trim():'',unit:u.corta,unitLabel:u.unidad,pregunta:u.pregunta};
+}
+/* La cantidad del proyecto en la unidad de su oficio, para traducir el tramo a total. */
+function cantidadDelProyecto(q){
+  const linea=state.service||{},a=(typeof allAnswers==='function'?allAnswers():null)||{};
+  if(linea.pricing==='tela')return (q&&q.facMax)?{valor:q.facMax,texto:rangoM(q.facMin,q.facMax)+' metros'}:null;
+  if(linea.pricing==='m2'){const m2=((+a.ancho||0)*(+a.alto||0))/10000;return m2?{valor:m2,texto:m2.toFixed(1)+' m²'}:null}
+  if(linea.pricing==='pieza'||linea.pricing==='fabricacion'){const n=+seatsSelect.value||1;return {valor:n,texto:n+(n===1?' pieza':' piezas')}}
+  if(linea.pricing==='unidad'){const tot=(a.servicios||[]).reduce((s,r)=>s+Math.max(0,+r.cantidad||0),0)||(+seatsSelect.value||1);return {valor:tot,texto:tot+(tot===1?' unidad':' unidades')}}
+  return null;
+}
+/* La atención declarada: ciudad del cliente, ciudad del servicio y sede (la sede por id, nunca por
+ * texto libre). Las ciudades salen de las sedes configuradas; «Otra ciudad…» declara su texto. */
+function atencionDeclarada(){
+  const ciudad=id=>{const sel=document.getElementById(id);if(!sel)return null;
+    if(sel.value==='__otra__'){const t=document.getElementById(id+'Other');return (t&&t.value.trim())||null}
+    return sel.value||null};
+  const sel=document.getElementById('city'),punto=sel&&sel.value?Store.get('servicePoints',sel.value):null;
+  /* La sede viene CON la principal elegida (no bloquea), así que su valor por sí solo no es una
+   * declaración: cuenta cuando el cliente la toca, cuando declara alguna ciudad o cuando confirma el
+   * último paso. Antes de eso no viaja a ninguna parte — el paso de la revisión va ANTES y el dueño
+   * vio ahí una sede que nadie había elegido todavía. */
+  const declarada=!!(state.atencionDeclarada)||!!(sel&&sel.dataset.declarada==='1')
+    ||!!ciudad('customerCity')||!!ciudad('serviceCity');
+  return {customerCity:declarada?ciudad('customerCity'):null,
+    serviceCity:declarada?ciudad('serviceCity'):null,
+    servicePoint:declarada&&punto?{id:punto.id,name:punto.name,city:punto.city}:null,
+    declared:declarada};
+}
 function applyLineCopy(){
   const c=Store.lineCopy(state.service);
   if(!c)return;
@@ -1727,6 +1874,8 @@ function applyLineCopy(){
   set('journeyIntro',c.wizardIntro);
   set('uploadTitle',c.photoTitle);
   set('uploadHint',c.photoInstructions);
+  const unidad=unidadDelPresupuesto(state.service);
+  set('budgetQuestion',unidad.pregunta);set('budgetUnit',unidad.unidad);
   set('analysisTitle',c.analysisTitle);
   set('estimateArtifact',c.artifactLabel);
   set('estimateTitle',c.estimateTitle);
@@ -1811,6 +1960,24 @@ function updateEstimate(){
   /* El paso de la estimación: con qué se calculó el número que está viendo. */
   const lista=document.getElementById('estimateAssumptions');
   if(lista)lista.innerHTML=p?estimateAssumptions(q).map(x=>`<li>${esc(x)}</li>`).join(''):'';
+  /* El presupuesto contra la estimación: el tramo se traduce a total con la cantidad del proyecto. */
+  const contraste=document.getElementById('budgetCompare');
+  if(contraste){
+    const b=presupuestoDeclarado(),cant=cantidadDelProyecto(q);
+    if(!p)contraste.hidden=true;
+    else if(b.declared&&cant&&cant.valor){
+      const techo=b.amount*cant.valor,lo=p.total[0],hi=p.total[1];
+      contraste.hidden=false;
+      contraste.innerHTML=(hi<=techo
+        ?`Tu presupuesto: <b>${money(b.amount)} ${b.unitLabel}</b>, <b>${money(techo)}</b> para ${cant.texto}. Esta estimación (<b>${esc(p.totalText)}</b>) queda dentro.`
+        :lo<=techo
+          ?`Tu presupuesto: <b>${money(b.amount)} ${b.unitLabel}</b>, <b>${money(techo)}</b> para ${cant.texto}. Esta estimación (<b>${esc(p.totalText)}</b>) arranca dentro y puede pasarse del techo: ajustemos telas o alcance.`
+          :`Tu presupuesto: <b>${money(b.amount)} ${b.unitLabel}</b>, <b>${money(techo)}</b> para ${cant.texto}. Esta estimación (<b>${esc(p.totalText)}</b>) queda por encima: hay margen para ajustar.`);
+    }else{
+      contraste.hidden=false;
+      contraste.innerHTML='Tu presupuesto: <b>sin tope declarado</b>. Cuando lo tengas, contrástalo con la estimación y un asesor ajusta telas y alcance.';
+    }
+  }
 }
 function furnitureSummaryLabel(){
   const rule=furnitureRules[state.furniture];const qtyText=seatsSelect.options[seatsSelect.selectedIndex].text;
@@ -1902,6 +2069,8 @@ async function submitQuote(){
     budget:+document.getElementById('budget').value||null,
     damages:damageIds(),
     city,servicePointId,
+    /* La atención declarada, tal cual la leyó el cliente (docs/punto-de-atencion.md). */
+    customerCity:atencionDeclarada().customerCity,serviceCity:atencionDeclarada().serviceCity,
     fabricId:state.fabric?state.fabric.id:null,
     fabricName:state.fabric?`${state.fabric.name} · ${state.fabric.colorName}`:'',
     meters:[min,max],
@@ -2207,6 +2376,25 @@ function renderCities(){
   sel.innerHTML=grupos.map(g=>
     `<optgroup label="${esc(g.city)}">${g.items.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</optgroup>`
   ).join('')+'<option value="">Otra ciudad</option>';
+  /* Las ciudades del cliente salen de sus propias sedes (`activeServicePoints`), sin inventar
+   * ninguna: la misma lista para «en qué ciudad estás» y «para qué ciudad es el servicio», cada una
+   * con «Otra ciudad…» para quien no esté en la lista (dueño, 20/09). */
+  const ciudades=[...new Set(puntos.map(p=>p.city))].filter(Boolean).sort();
+  ['customerCity','serviceCity'].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const previo=sel.value;
+    sel.innerHTML='<option value="">Elige una ciudad…</option>'+
+      ciudades.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')+
+      '<option value="__otra__">Otra ciudad…</option>';
+    if(previo)sel.value=previo;
+    if(!sel.dataset.atencionLigada){
+      sel.dataset.atencionLigada='1';
+      const campo=document.getElementById(id+'Other'),caja=document.getElementById(id+'OtherField');
+      const sync=()=>{const otra=sel.value==='__otra__';if(caja)caja.hidden=!otra;
+        if(campo&&!otra)campo.value='';};
+      sel.addEventListener('change',()=>{sel.dataset.declarada='1';sync()});sync();
+    }
+  });
 }
 /* La pregunta por la línea es SU PROPIO paso (el 0), y solo cuando hay más de una: con una
  * sola línea el paso no existe — ni en el flujo, ni en el stepper, ni en la numeración — y el
@@ -2296,6 +2484,56 @@ function askAnswers(ask){
 }
 const allAnswers=()=>Object.assign({},...asksLine().filter(a=>a!=='danos').map(askAnswers));
 
+/* Las fotos se piden en TODAS las líneas (dueño, 19/09: «for each line service is necessary upload
+ * photos for differents situations and context... but is necessary always... this data should be
+ * require and analize»). El bloque de subida vive en «Tu mueble»; en las líneas que no preguntan
+ * mueble —hoy, tapicería arquitectónica— se muda al primer paso visible, con su propia copia. */
+function pasoAnfitrionDeLaSubida(){
+  const pasoMueble=steps.find(s=>(s.dataset.brain||'')==='FURNITURE');
+  if(pasoMueble&&!skippedSteps.has(+pasoMueble.dataset.step))return pasoMueble;
+  /* El paso 0 es el de la línea (la rejilla de servicios): las fotos no van ahí —van al primer
+   * paso DE LA COTIZACIÓN—, así que la búsqueda empieza en 1. */
+  return steps.find(s=>+s.dataset.step>0&&!skippedSteps.has(+s.dataset.step))||null;
+}
+function reubicarLaSubida(){
+  const anfitrion=pasoAnfitrionDeLaSubida();if(!anfitrion)return;
+  if(uploadZone.parentElement!==anfitrion){anfitrion.appendChild(uploadZone);anfitrion.appendChild(photoError)}
+  const enMueble=(anfitrion.dataset.brain||'')==='FURNITURE';
+  /* La copia de la línea (catálogo, `photoTitle` / `photoInstructions`) manda; esto es el respaldo. */
+  const copia=Store.lineCopy(state.service)||{};
+  const titulo=document.getElementById('uploadTitle'),pista=document.getElementById('uploadHint');
+  if(titulo)titulo.textContent=copia.photoTitle||(enMueble?'Sube fotos de tu mueble':'Sube fotos del espacio');
+  if(pista)pista.textContent=copia.photoInstructions||(enMueble
+    ?'De frente, en diagonal y un detalle de la tela, con buena luz.'
+    :'Lo que vamos a tapizar y un detalle de la tela o del acabado, con buena luz.');
+}
+/* El paso del mueble, para los oficios que no eligen mueble ahí: se oculta el escogedor y el título
+ * pasa a ser el de las fotos, que ya vive en la copia de la línea. El dueño lo pidió con dos
+ * capturas del proyecto comercial: «the second step is correct.. the first for project... is
+ * incorrect... except for upload photos». */
+function aplicarElEscogedor(){
+  const paso=steps.find(s=>(s.dataset.brain||'')==='FURNITURE');if(!paso)return;
+  const cab=paso.querySelector('.step-heading'),grid=paso.querySelector('.furniture-grid');
+  if(!cab||!grid)return;
+  if(!paso.dataset.cabeceraOriginal)paso.dataset.cabeceraOriginal=cab.innerHTML;
+  const sin=sinEscogedorDeMueble(),c=Store.lineCopy(state.service)||{};
+  grid.hidden=sin;
+  cab.innerHTML=sin
+    ?`<span class="eyebrow">Tus fotos</span><h2>${esc(c.photoTitle||'Sube fotos de tu proyecto')}</h2>`+
+     `<p>${esc(c.photoInstructions||'Puedes agregar hasta 7 fotos.')}</p>`
+    :paso.dataset.cabeceraOriginal;
+  /* Con el título del paso diciendo lo mismo que la subida, el TEXTO de la subida se calla (la
+   * pantalla no repite la frase), pero el icono y el botón de seleccionar fotos se quedan: sin él
+   * no hay cómo subirlas (el dueño lo cazó en una captura: «are you sure?...»). */
+  const textoDeLaSubida=paso.querySelector('#uploadZone .upload-copy > div');
+  if(textoDeLaSubida)textoDeLaSubida.hidden=sin;
+  /* Y el punto de la barra dice lo mismo que el paso. */
+  const punto=document.querySelector('[data-step-dot="1"]');
+  if(punto){const b=punto.querySelector('b'),sm=punto.querySelector('small');
+    if(!punto.dataset.puntoOriginal)punto.dataset.puntoOriginal=(b?b.textContent:'')+'|'+(sm?sm.textContent:'');
+    const [tb,ts]=punto.dataset.puntoOriginal.split('|');
+    if(b)b.textContent=sin?'Tus fotos':tb;if(sm)sm.textContent=sin?'Foto y contexto':ts}
+}
 function applyOptionalSteps(){
   skippedSteps.clear();
   if(!hasServiceStep)skippedSteps.add(0);
@@ -2317,7 +2555,7 @@ function applyOptionalSteps(){
     const spec=li.dataset.askDot?Store.askSpec(li.dataset.askDot):null;
     if(spec){li.querySelector('b').textContent=spec.eyebrow;li.querySelector('small').textContent=spec.title;}
   });
-  buildDamageGrid();renderAskSteps();
+  buildDamageGrid();renderAskSteps();reubicarLaSubida();aplicarElEscogedor();
 }
 /* ------------------------------------------------------------------ volver a cero --
  * Cambiar de LÍNEA DE SERVICIO empieza de cero: lo que el cliente declaró para la línea anterior
@@ -2333,6 +2571,9 @@ function applyOptionalSteps(){
  * persona, no del proyecto, y volver a escribirlos en cada cambio de línea sería castigar al
  * cliente por dudar. */
 const CONTACTO_DEL_CLIENTE=['fullName','email','phone','consent'];
+/* La atención también es de la persona (de dónde escribe y en qué sede compra), no del proyecto:
+ * cambiar de línea no la borra (docs/punto-de-atencion.md). */
+const ATENCION_DEL_CLIENTE=['customerCity','customerCityOther','serviceCity','serviceCityOther','city'];
 function resetProjectForLine(){
   // 1 · lo declarado, al punto de partida (los valores con los que nace el cotizador)
   state.furniture=FURNITURE_INICIAL;state.furnitureNote='';state.photos=[];state.analyzed=false;state.review=null;
@@ -2340,9 +2581,9 @@ function resetProjectForLine(){
   ordenDeLaIA=null;recomendandoIA=false;
   // 2 · los campos del formulario: al valor con el que el cliente los encontró
   document.querySelectorAll('.wizard-step input, .wizard-step select, .wizard-step textarea').forEach(el=>{
-    if(CONTACTO_DEL_CLIENTE.indexOf(el.id)>=0)return;
+    if(CONTACTO_DEL_CLIENTE.indexOf(el.id)>=0||ATENCION_DEL_CLIENTE.indexOf(el.id)>=0)return;
     if(el.type==='checkbox'||el.type==='radio')el.checked=el.defaultChecked;
-    else if(el.tagName==='SELECT')el.selectedIndex=0;
+    else if(el.tagName==='SELECT'){const d=[...el.options].findIndex(o=>o.defaultSelected);el.selectedIndex=d>=0?d:0;}
     else el.value=el.defaultValue;
   });
   const otro=document.getElementById('furnitureOther');if(otro)otro.value='';

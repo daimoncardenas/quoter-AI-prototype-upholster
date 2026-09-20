@@ -41,8 +41,9 @@ const pideRecomendacion=()=>!skipsLine().includes('recommendation');
   elegir» por la bandera, no por el valor.
 - **El resumen declarado** (`declaredRows()`) solo arma las filas de los pasos que existen: la
   arquitectónica declara su motivo y sus propias respuestas, no un mueble.
-- **La revisión** (`runReview()`) solo juzga lo que hay: sin paso de fotos no hay fila de fotos, y
-  sin paso de medidas no hay rango que aplicar. Queda la comprobación de que hay con qué estimar.
+- **La revisión** (`runReview()`) solo juzga lo que hay: sin paso de medidas no hay rango que
+  aplicar. Las **fotos** son la excepción: el dueño las quiere en todas las líneas, siempre
+  requeridas y analizadas (docs/fotos-en-todas-las-lineas.md), así que su fila está siempre.
 - **El chat** (`estadoDelCotizador()`) arma las frases del mueble y de las medidas solo si la línea
   las pregunta: en la arquitectónica, el turno no puede hablar de un sofá.
 - Y la copia de la tercera comprobación dice «de tela» **solo donde se cotiza tela** (fabricación y
@@ -63,10 +64,11 @@ la línea nueva.
   que no van por tela (mantenimiento, arquitectónica, a la medida, proyecto comercial), las banderas
   del contexto coinciden con los pasos que el catálogo declara y los datos ausentes van en `null`.
 - `tests/wizard.spec.mjs` — «LA LÍNEA SIN MUEBLE NO DECLARA MUEBLE (REVISIÓN Y CONTEXTO)»: recorre
-  «Tapicería arquitectónica» respondiendo SUS preguntas, y comprueba que su revisión no tiene filas
-  de fotos ni de medidas (y ninguna mención a «fuera de lo habitual»), que sigue diciendo que hay con
-  qué estimar, que su resumen declara el motivo y sus preguntas pero no un mueble, y que el contexto
-  va tan limpio como el resumen. El bloque «UNA LÍNEA NUEVA NO HEREDA LO DECLARADO PARA LA ANTERIOR»
+  «Tapicería arquitectónica» respondiendo SUS preguntas —y subiendo sus fotos, que se piden en su
+  primer paso (docs/fotos-en-todas-las-lineas.md)—, y comprueba que su revisión no tiene filas de
+  medidas (ni mención a «fuera de lo habitual») pero sí la de fotos, que sigue diciendo que hay con
+  qué estimar, que su resumen declara el motivo, sus fotos y sus preguntas pero no un mueble, y que
+  el contexto lleva las fotos y nada más del recorrido del mueble. El bloque «UNA LÍNEA NUEVA NO HEREDA LO DECLARADO PARA LA ANTERIOR»
   cambia de una línea que sí pregunta mueble a una que no, y comprueba el `null`.
 
 ## Pendiente, con su precio

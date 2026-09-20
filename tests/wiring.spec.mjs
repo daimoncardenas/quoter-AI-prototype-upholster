@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 import { PHOTOS_DB, client } from './client.mjs';
-import { openAdmin, openWizard, setTags } from './helpers.mjs';
+import { openAdmin, openWizard, setTags, elegirSede, elegirAtencion } from './helpers.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 const png = ['1','2','3'].map(n=>new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
 
@@ -44,7 +44,7 @@ async function wizardTo(step, opts = {}) {
   for (let i = 0; i < 12; i++) {
     const at = await page.evaluate(() => { const s = document.querySelector('.wizard-step.active'); return { id: s.dataset.brain || '', ask: s.dataset.ask || '' }; });
     if (at.id === 'MEASUREMENTS') { await page.fill('#width','210'); await page.fill('#height','85'); await page.fill('#depth','90'); }
-    else if (at.id === 'PREFERENCES' && opts.city) await page.selectOption('#city', opts.city);
+    else if (opts.city && !opts.cityElegida) { await elegirSede(page, opts.city); opts.cityElegida = true; }
     else if (at.id === 'REVIEW') { await page.click('#analyzeButton'); await page.waitForFunction(() => state.analyzed); }
     if (at.id === destino) return;
     /* Se espera a que el paso CAMBIE, no a un rato fijo: un `waitForTimeout` corto lee el paso
@@ -127,6 +127,7 @@ await page.waitForFunction(() => state.step === 15);   // cierre: contacto y res
 await page.fill('#fullName','Natalia Peña');
 await page.fill('#email','natalia@example.com');
 await page.fill('#phone','3001234567');
+await elegirAtencion(page);
 await page.check('#consent');
 await page.click('#nextButton');
 await page.waitForSelector('#successState:not([hidden])');
@@ -278,16 +279,18 @@ await flujo.close();
   await page.evaluate(() => Store.saveSettings({ plan: 'Business', disabledLines: [] }));
   const motivos = [
     { etiqueta: 'Mantenimiento y limpieza', pricing: 'pieza',
-      pasos: ['Tu línea de servicio', 'Tu mueble', 'Lo que necesita', 'Cómo llega al taller', 'Validación', 'Estimación', 'Tu cotización'],
+      pasos: ['Tu línea de servicio', 'Tu mueble', 'Lo que necesita', 'Cómo llega al taller', 'Validación', 'Estimación', 'Tu pre-cotización'],
       ctx: { furnitureId: 'sofa', quantity: 1, answers: { tratamientos: ['quitamanchas'], traslado: 'taller' } }, total: 320000 },
     { etiqueta: 'Tapicería arquitectónica', pricing: 'm2',
-      pasos: ['Tu línea de servicio', 'La superficie', 'Cómo se monta', 'Validación', 'Recomendación', 'Estimación', 'Tu cotización'],
+      pasos: ['Tu línea de servicio', 'La superficie', 'Cómo se monta', 'Validación', 'Recomendación', 'Estimación', 'Tu pre-cotización'],
       ctx: { answers: { ancho: 300, alto: 200, papel: 'decorativo' }, fabricPerM2: 95000 }, total: 840000 },
     { etiqueta: 'Muebles a la medida', pricing: 'fabricacion',
-      pasos: ['Tu línea de servicio', 'Tu mueble', 'Medidas', 'Materiales y acabados', 'El tapizado', 'Preferencias', 'Validación', 'Recomendación', 'Estimación', 'Tu cotización'],
+      pasos: ['Tu línea de servicio', 'Tu mueble', 'Medidas', 'Materiales y acabados', 'El tapizado', 'Preferencias', 'Validación', 'Recomendación', 'Estimación', 'Tu pre-cotización'],
       ctx: { furnitureId: 'silla', materialRange: [0, 0], answers: { madera: 'pino', acabado: 'barniz', firmeza: 'media' } }, total: 628500 },
     { etiqueta: 'Proyecto comercial', pricing: 'unidad',
-      pasos: ['Tu línea de servicio', 'Tu mueble', 'Qué piezas', 'La obra', 'Validación', 'Propuesta', 'Tu cotización'],
+      /* El proyecto comercial no escoge mueble en ese paso: su mesa de piezas es el mueble, y el
+       * paso queda con las fotos (docs/paso-de-fotos.md). */
+      pasos: ['Tu línea de servicio', 'Tus fotos', 'Qué piezas', 'La obra', 'Validación', 'Propuesta', 'Tu pre-cotización'],
       ctx: { boq: [{ furniture: 'poltrona', cantidad: 12 }], answers: { servicios: ['instalacion'] } }, total: 9070000 },
   ];
   for (const m of motivos) {
@@ -306,17 +309,26 @@ await flujo.close();
     /* Y lo que NO pregunta no viaja: el contexto del asistente (y con él su turno y su resumen) solo
      * lleva los datos de los pasos que la línea tiene. El dueño lo vio en «Tapicería arquitectónica»:
      * sin paso de mueble, Lía hablaba igual de un sofá y la revisión avisaba de medidas fuera de
-     * rango para un mueble que nadie eligió (docs/contexto-por-linea.md). */
+     * rango para un mueble que nadie eligió (docs/contexto-por-linea.md). Las FOTOS son la
+     * excepción: el dueño las quiere en todas las líneas, siempre requeridas y analizadas
+     * (19/09), así que viajan aunque el mueble no. */
     const ctxLinea = await pg.evaluate(() => {
       const c = ACI.context();
       const filas = [...document.querySelectorAll('#aiSummary dt')].map(d => d.textContent.trim());
-      return { mueble: c.selectedFurniture, medidas: c.measurements, prefs: c.preferences, fotos: c.photos,
+      /* Las filas se leen de su fuente (declaredRows), no del resumen pintado: el resumen puede
+       * venir de un cuadro anterior y la fila de fotos es justo la que se está comprobando. */
+      const filasFuente = typeof declaredRows === 'function' ? declaredRows().map(r => r[0]) : [];
+      return { mueble: c.selectedFurniture, medidas: c.measurements, prefs: c.preferences,
+        filasFuente,
+        fotos: c.photos ? c.photos.count : null, minFotos: c.photos ? c.photos.min : null,
         tela: c.fabric, pide: [c.asksFurniture, c.asksMeasurements, c.asksPreferences, c.asksRecommendation], filas };
     });
     const pasos = m.pasos.join(' | ');
     check(`«${m.etiqueta}» solo lleva al contexto los datos de sus pasos`,
       [ctxLinea.pide,
-       ctxLinea.mueble === null, ctxLinea.medidas === null, ctxLinea.prefs === null, ctxLinea.fotos === null,
+       ctxLinea.mueble === null, ctxLinea.medidas === null, ctxLinea.prefs === null,
+       ctxLinea.fotos === 0 && ctxLinea.minFotos === 3,
+       ctxLinea.filasFuente.includes('Fotografías'),
        pasos.includes('Tu mueble') === (ctxLinea.mueble !== null),
        pasos.includes('Medidas') === (ctxLinea.medidas !== null),
        pasos.includes('Preferencias') === (ctxLinea.prefs !== null),
@@ -324,8 +336,8 @@ await flujo.close();
         * que haya o no tela depende de en qué paso esté el cliente (aquí, recién elegida la línea). */
        pasos.includes('Recomendación') || ctxLinea.tela === null],
       [[pasos.includes('Tu mueble'), pasos.includes('Medidas'), pasos.includes('Preferencias'), pasos.includes('Recomendación')],
-       !pasos.includes('Tu mueble'), !pasos.includes('Medidas'), !pasos.includes('Preferencias'), !pasos.includes('Tu mueble'),
-       true, true, true, true]);
+       !pasos.includes('Tu mueble'), !pasos.includes('Medidas'), !pasos.includes('Preferencias'),
+       true, true, true, true, true, true]);
     check(`«${m.etiqueta}» suma ${await pg.evaluate(v => Store.money(v), m.total)}`,
       await pg.evaluate(({ ctx, id }) => Store.lineQuote(Store.serviceById(id), ctx).total, { ctx: m.ctx, id: m.pricing === 'pieza' ? 'mantenimiento' : m.pricing === 'm2' ? 'tapiceria-arquitectonica' : m.pricing === 'fabricacion' ? 'a-la-medida' : 'proyecto-comercial' }),
       [m.total, m.total]);
@@ -748,6 +760,7 @@ await night.waitForSelector('[data-step="15"].active');
 await night.fill('#fullName', 'Prueba Nocturna');
 await night.fill('#email', 'noche@ejemplo.com');
 await night.fill('#phone', '3001112233');
+await elegirAtencion(night);
 await night.check('#consent');
 await night.click('#nextButton');
 await night.waitForSelector('#successState:not([hidden])', { timeout: 30000 });
@@ -1374,6 +1387,7 @@ await up.waitForFunction(() => state.step === 15);   // cierre: contacto y resum
 await up.fill('#fullName', 'Cliente Usage');
 await up.fill('#email', 'usage@example.com');
 await up.fill('#phone', '3001234567');
+await elegirAtencion(up);
 await up.check('#consent');
 await up.click('#nextButton');
 await up.waitForSelector('#successState:not([hidden])');

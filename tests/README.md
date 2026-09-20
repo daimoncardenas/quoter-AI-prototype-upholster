@@ -68,9 +68,11 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   assistant off the line stands alone and no bubble is painted (`docs/errores-con-lia.md`).
 
   Incluye también «LA LÍNEA SIN MUEBLE NO DECLARA MUEBLE»: recorriendo «Tapicería
-  arquitectónica» con sus propias preguntas, su revisión no tiene filas de fotos ni de
-  medidas ni habla de «fuera de lo habitual», su resumen declara el motivo y sus preguntas
-  pero no un mueble, y el contexto del asistente va igual de limpio.
+  arquitectónica» con sus propias preguntas —y subiendo sus fotos, que ahora se piden en su
+  primer paso—, su revisión no tiene filas de medidas ni habla de «fuera de lo habitual»
+  pero sí tiene la fila de fotos, su resumen declara el motivo, sus fotos y sus preguntas
+  pero no un mueble, y el contexto del asistente lleva las fotos y nada del mueble.
+  (docs/fotos-en-todas-las-lineas.md)
 
   Incluye «UNA LÍNEA NUEVA NO HEREDA LO DECLARADO PARA LA ANTERIOR»: al cambiar de
   línea de servicio (p. ej. a «Tapicería arquitectónica») el mueble vuelve al de fábrica, las
@@ -209,6 +211,12 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   both hidden from the nav and unreachable even by forcing a click on the hidden
   nav button), and that
   passwords are never stored in the clear.
+- `presupuesto.spec.mjs` — the budget on every service line (docs/presupuesto.md): the field
+  lives in the validation step and asks in the line's own unit (per metre of fabric, per square
+  metre, per piece, per piece of furniture, per project), it reaches the context, the summary and
+  the review, it feeds `recommend()`'s ceiling, the open tier is "sin tope" (no ceiling, nothing
+  marked over budget) and the estimate translates the tier into money for the project's quantity
+  and says whether the estimate lands within or above it.
 - `photos.spec.mjs` — the 3-to-7 attachment range: that the wizard refuses to
   advance below the minimum, caps at the maximum, lets photos be removed, and
   that every one of them reaches the backoffice. It also covers the quote
