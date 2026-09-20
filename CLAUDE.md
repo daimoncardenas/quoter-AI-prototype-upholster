@@ -29,7 +29,7 @@ Léelas antes de tocar nada. Son del dueño del producto y mandan sobre cualquie
    cierre equivocado borró 554 líneas de `tests/wizard.spec.mjs` de un solo golpe.
 5. **Verificar con el código de salida y la línea final (`ALL PASS` / `TODO PASA`), nunca con
    `grep -c FAIL`**: una corrida que se cae devuelve 0 FAILs y parece verde.
-6. **Si el dueño está emputado: responder en español**, corto, sin discursos: qué se rompió, qué se
+6. **Si el dueño está molesto: responder en español**, corto, sin discursos: qué se rompió, qué se
    hizo, qué números hay. Una pregunta a la vez y sólo si cambia la acción.
 
 El detalle del sidebar, medido a 1341×768: `[data-rows]` lo escribe `applyOptionalSteps()` y el CSS

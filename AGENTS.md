@@ -21,4 +21,4 @@ Claude Code y las demás herramientas. Resumen, para quien sólo lea este archiv
    `git diff <archivo> | grep <lo que tocaste>`).
 4. Ediciones de texto: imprimir cuántas líneas se borran **antes** de escribir.
 5. Verificar con código de salida y `ALL PASS` / `TODO PASA`, nunca con `grep -c FAIL`.
-6. Si el dueño está emputado: responder **en español**, corto, sin discursos.
+6. Si el dueño está molesto: responder **en español**, corto, sin discursos.
