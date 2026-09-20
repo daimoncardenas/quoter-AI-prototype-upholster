@@ -14,6 +14,32 @@ anything about branding, colors, emails, or demo data is fixed — almost none o
 
 Léelas antes de tocar nada. Son del dueño del producto y mandan sobre cualquier criterio propio.
 
+### Ritmo y verificación (cómo trabajar aquí)
+
+1. **Un cambio visual o CSS se verifica mirando**: se aplica, se toma UNA captura de esa zona, se
+   mira, y se responde con la captura. Nada de tests funcionales por un `clamp`, nada de recorrer
+   worktrees ni el historial. Minutos.
+2. **Un cambio funcional** lleva su test puntual del área tocada. **La batería completa**
+   (`npm test`, ~13 min) va UNA vez al cerrar el lote o antes de un commit, nunca por edición.
+3. **Al sumar a un selector o a una condición, se suma, no se sustituye.** Caso real: darle escalón
+   de CSS a `[data-rows="7"]` reemplazando el selector de `8` en la regla de `.step-list` le quitó el
+   ajuste a Suministro (su lista pasó de 539 a 594 px). Tras tocar selectores:
+   `git diff index.html | grep data-rows` y confirmar que están todos los que estaban.
+4. **Ediciones de texto: imprimir cuántas líneas se van a borrar ANTES de escribir.** Un marcador de
+   cierre equivocado borró 554 líneas de `tests/wizard.spec.mjs` de un solo golpe.
+5. **Verificar con el código de salida y la línea final (`ALL PASS` / `TODO PASA`), nunca con
+   `grep -c FAIL`**: una corrida que se cae devuelve 0 FAILs y parece verde.
+6. **Si el dueño está emputado: responder en español**, corto, sin discursos: qué se rompió, qué se
+   hizo, qué números hay. Una pregunta a la vez y sólo si cambia la acción.
+
+El detalle del sidebar, medido a 1341×768: `[data-rows]` lo escribe `applyOptionalSteps()` y el CSS
+tiene escalones para 8, 9 y 10. Las líneas de **7 pasos** (arquitectónica, mantenimiento, proyecto
+comercial) no tenían y su lista era la más larga (597 contra 539 del de 8), y por eso el personaje y
+la silla le quedaban encima. Con el escalón de 7 sumado al de 8: 8 → 539, 7 → 504/504/521, 10 → 533.
+
+*`AGENTS.md` es el archivo que Hermes carga al abrir el repo; estas mismas reglas viven aquí porque
+Claude Code y otras herramientas leen `CLAUDE.md`.*
+
 1. **Esto es un PROTOTIPO de demostración, no un producto real.** Un código, y los packs
    (`clients/<slug>/`) son **datos de demo**: el seed es **uno solo** (`shared/demo-seed.json`)
    y los logins ya son compartidos (`shared/demo-users.json`), así que ningún dato cambia con el
@@ -253,6 +279,18 @@ Couplings that are easy to break:
   close, the admin-only per-seller table) are all derived from these two fields —
   see `renderDashboard()`.
 
+## La confirmación del envío es de una sola vía
+
+Enviar (`submitQuote`) quita el `active` de todos los pasos, esconde la barra de acciones, atenúa el
+lista de pasos de la izquierda y abre `#successState` («Solicitud recibida · Tu proyecto ya está en
+buenas manos», con su número). Desde ahí, el cliente sale por «Crear otra cotización» (una recarga
+limpia) — pero **cualquier** vuelta al formulario pasa por `showStep()`, y ahí `dejarLaConfirmacion()`
+se lleva la confirmación: la esconde, devuelve la barra de acciones y la opacidad, y baja
+`state.submitted`. El dueño lo vio al revés, con la captura: «below has a little screen with
+information of before quoter... shouldnt be like this... because client restart for new process».
+Una página restaurada del bfcache vuelve con el DOM que quedó: `pageshow` con `persisted` aplica la
+misma limpieza antes de repintar el paso.
+
 ## Líneas de servicio (qué cotiza ACI)
 
 Lo que el cotizador ofrece se organiza en **líneas de servicio** (el «motivo»), y **el negocio es
@@ -401,13 +439,19 @@ context & actions" below).
   tus fotos» / «Lía está analizando tus fotografías»), los desenlaces y la nota del chat (que sigue
   diciendo que NO es una persona). El dueño: «replace all text in the application where says "AI local"
   or "local AI" or "AI"». El backoffice no se toca por ahora (su palabra).
-- **Los errores los dice ella, y al instante.** `decirError(el, texto, campo)` pinta la línea del paso
-  (que es la que no depende del asistente) y publica el MISMO texto como aviso (`aci:notice`), que es
-  el canal de su burbuja: aparece sin que el cliente pulse nada —al confirmar el campo (`change`) en las
-  medidas, y al pulsar «Continuar» en el resto de los bloqueos— y la capa 3D gira su cabeza hacia el
-  campo (`detail.campo`). El anzuelo «Tócame para verlo» del cerebro (`observe`) se eliminó: el aviso ES
-  el mensaje. El dueño: «the idea is show the error in the dialogue inmediatly.... that is dont wait
-  that user do click». Diseño y criterios: `docs/errores-con-lia.md`.
+- **Los errores los dice ella, y al instante — y nadie más.** `decirError(el, texto, campo)` escribe la
+  línea del paso y publica el MISMO texto como aviso (`aci:notice`), que es el canal de su burbuja:
+  aparece sin que el cliente pulse nada —al confirmar el campo (`change`) en las medidas, y al pulsar
+  «Continuar» en el resto de los bloqueos—, el campo que falla queda con el foco y `aria-invalid`, y la
+  capa 3D gira su cabeza hacia él (`detail.campo`). Con el asistente encendido la línea se queda escrita
+  pero **oculta** (habla ella); apagado, la línea se enseña y es la única voz. No hay `reportValidity()`
+  en ninguna parte: la burbuja del navegador («Please fill out this field.», en el idioma del sistema)
+  salía por el nombre, el correo, el celular, la autorización y las medidas, y cada uno tiene ya su
+  frase. El anzuelo «Tócame para verlo» del cerebro (`observe`) se eliminó: el aviso ES el mensaje.
+  El dueño: «the idea is show the error in the dialogue inmediatly.... that is dont wait that user do
+  click» y, con una captura de la burbuja del navegador, «this errors always is Lia who tell to
+  client... you can delete error messages of the wizard and let it be Lia who always says that».
+  Diseño y criterios: `docs/errores-con-lia.md`.
 - **Backoffice**: "Presencia del asistente" — on/off switch, character radiogroup
   (picking the other character swaps a name still equal to the previous
   suggestion), name, "traje con el color de tu marca" switch, save, and a reset

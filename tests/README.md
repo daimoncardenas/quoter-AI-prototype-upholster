@@ -76,6 +76,14 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   línea de servicio (p. ej. a «Tapicería arquitectónica») el mueble vuelve al de fábrica, las
   medidas y los campos quedan vacíos, las fotos se sueltan, las preferencias vuelven a su punto
   de partida y las filas que ve el asistente no llevan nada de la otra línea; re-pulsar la misma
+  Y que ningún aviso quede fuera de su voz: con el asistente encendido la línea del paso
+  va escrita pero oculta y habla su burbuja; apagado, la línea se enseña. El cierre (nombre,
+  correo, celular a medias, autorización) y una medida sin escribir tienen su frase, sin
+  `reportValidity()` de por medio.
+  Y que enviar y empezar de nuevo no arrastre la confirmación anterior: tras el envío,
+  volver al formulario esconde la pantalla de «Solicitud recibida», devuelve la barra de acciones
+  y deja `submitted` en falso (la captura del dueño: «below has a little screen with
+  information of before quoter»).
   línea conserva lo declarado. El porqué, en `docs/cambio-de-linea.md`.
 - `review.spec.mjs` — step 4: that the checks report the photo's real
   dimensions and the measurement ranges per furniture type, and that the checks

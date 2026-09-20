@@ -104,6 +104,15 @@ console.log('\nLA IA LOCAL RECOMIENDA: ORDENA LAS TELAS CON LO DECLARADO POR DEL
   /* MIENTRAS la IA ordena: la parrilla no se enseña (el modelo doble tarda 1,6 s). La hoja
    * y los brazos necesitan su tiempo: el peso de la pose sube desde 0 en ~0,6 s. */
   await p.waitForTimeout(1100);
+  /* La pose se levanta en ~0,6 s y en la cadena completa el reloj se atrasa: se espera —con tope— a
+   * que estén los HECHOS que la comprobación mide (leyendo, con tamaño real y las dos manos), no a
+   * que la pose se congele: la hoja se mece, así que «dos lecturas iguales» nunca llega. */
+  await p.evaluate(async () => {
+    const listo = () => { const st = document.getElementById('assistantStage').dataset;
+      const [w] = (st.sheetPx || '0x0').split('x').map(Number);
+      return st.reading === 'on' && w >= 16 && (st.sheetHands || '').split('|').filter(Boolean).length === 2; };
+    for (let i = 0; i < 30 && !listo(); i++) await new Promise(r => setTimeout(r, 100));
+  });
   const esperando = await p.evaluate(() => ({ telas: document.getElementById('fabricGrid').hidden,
     fila: /Pidiéndole una recomendación/.test(document.getElementById('aiPick').innerText),
     filaVisible: !document.getElementById('aiPick').hidden,

@@ -84,11 +84,19 @@ check('summary names the right unit', await page.textContent('#summaryFurniture'
 await page.evaluate(()=>{document.getElementById('seats').value='1';updateSummary()});
 check('a single piece needs no count', await page.textContent('#summaryFurniture'), 'Cabecero');
 
+/* Con el asistente encendido la explicación la dice su burbuja: la línea del paso queda escrita
+ * —el mismo texto— pero oculta (docs/errores-con-lia.md). */
+const avisoDeElla = () => page.evaluate(() => ({
+  burbuja: (document.querySelector('#assistantBubble .bubble-text') || {}).textContent || '',
+  visible: !!document.querySelector('#assistantBubble:not([hidden])') }));
+
 console.log('\nSTEP 4 — must not fail silently');
 await fresh(); await reach(4);
 const antesDelBloqueo = await page.evaluate(()=>state.step);
 await page.click('#nextButton');
-check('an error explains why it will not advance', await page.isVisible('#analysisError'), true);
+const avisoRevision = await avisoDeElla();
+check('an error explains why it will not advance',
+  [avisoRevision.visible, avisoRevision.burbuja.length > 0, await page.isVisible('#analysisError')], [true, true, false]);
 /* Relativo a propósito: el paso de Validación dejó de ser el «4» cuando entraron los pasos de la
  * línea y de los daños, y lo que importa es que NO avance, no el número que le tocó. */
 check('and it still blocks', await page.evaluate(()=>state.step), antesDelBloqueo);
@@ -143,6 +151,11 @@ const barra = async (motivo) => {
   await page.waitForTimeout(400);
   await page.click(`#serviceGrid .service-choice:has-text("${motivo}")`);
   await page.waitForFunction(() => document.getElementById('assistantStage').classList.contains('ready'), null, { timeout: 8000 }).catch(() => {});
+  /* La barra y el hueco de Lía se reacomodan en los cuadros que siguen al cambio de línea: se mide
+   * cuando la página quedó quieta, no en el mismo golpe del clic (medir en carrera daba 1 px de
+   * diferencia entre motivos). */
+  await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+  await page.waitForTimeout(400);
   return page.evaluate(() => {
     const j = document.querySelector('.journey'), st = document.getElementById('assistantStage');
     const c = st.querySelector('canvas');
@@ -337,8 +350,10 @@ await page.setInputFiles('#furniturePhoto', png);
 await page.waitForFunction(()=>state.photos.length>=3);
 await page.click('#nextButton');
 const sinDescripcion=await enMueble();
+const avisoMueble = await avisoDeElla();
 check('sin la descripción no se avanza, y el error lo dice',
-  [sinDescripcion.paso===conOtro.paso, await page.isVisible('#furnitureOtherError')], [true, true]);
+  [sinDescripcion.paso===conOtro.paso, avisoMueble.visible, avisoMueble.burbuja === (await page.textContent('#furnitureOtherError')).trim(),
+   await page.isVisible('#furnitureOtherError')], [true, true, true, false]);
 await page.fill('#furnitureOther','Banco de piano');
 const escrito=await enMueble();
 check('y lo escrito no se reescribe solo', escrito.valor, 'Banco de piano');
@@ -362,8 +377,9 @@ const bloqueado=await page.evaluate(()=>({
   paso:state.step,
   error:!document.getElementById('measureError').hidden,
   texto:document.getElementById('measureError').textContent}));
+const avisoMedida = await avisoDeElla();
 check('con una medida muy fuera de lo habitual no se avanza, y el paso dice por qué',
-  [bloqueado.paso===enMedidas, bloqueado.error], [true, true]);
+  [bloqueado.paso===enMedidas, avisoMedida.visible, avisoMedida.burbuja === bloqueado.texto.trim(), bloqueado.error], [true, true, true, false]);
 check('y el error trae el número y el rango habitual del mueble, del propio cotizador',
   /El fondo de 200 cm está muy fuera de lo habitual para sofá \(lo habitual: 70 a 120 cm\)/.test(bloqueado.texto), true);
 /* La medida es aproximada, no exacta: quedar apenas fuera de lo habitual no detiene a nadie. */
@@ -592,6 +608,104 @@ check('su resumen declara el motivo y sus propias preguntas, no un mueble ni una
   [true, false, false, false, false]);
 check('y el contexto del asistente va tan limpio como el resumen',
   revision.contexto, [null, null, null, null, null]);
+
+/* --------------------------------------------------------------------------------------------
+ * NINGÚN AVISO FUERA DE SU VOZ
+ * Hasta aquí quedaban dos: la burbuja del navegador («Please fill out this field.», en el idioma
+ * del sistema, sin firma) para un campo requerido, y las líneas rojas del paso. El dueño: «this
+ * errors always is Lia who tell to client... you can delete error messages of the wizard and let it
+ * be Lia who always says that». Con el asistente encendido habla ella y la línea calla —escrita,
+ * pero oculta: es el mismo texto—; apagado, la línea es la única voz y se enseña.
+ * -------------------------------------------------------------------------------------------- */
+console.log('\nTAMBIÉN EL ÚLTIMO PASO HABLA POR ELLA (Y NADA MÁS)');
+await fresh(); await reach(5);
+/* `reach(5)` deja el recorrido EN la recomendación, y los pasos se esperan por identidad, no por
+ * número: en la cadena completa las líneas habilitadas cambian y los números cambian con ellas. */
+const caminoAlCierre = async () => {
+  await page.click('#nextButton'); await page.waitForFunction(() => ACI.stepId(state.step) === 'ESTIMATE');
+  await page.click('#nextButton'); await page.waitForFunction(() => ACI.stepId(state.step) === 'CONTACT');
+};
+await caminoAlCierre();
+const cierre = async () => page.evaluate(() => ({
+  linea: document.getElementById('contactError').textContent,
+  lineaVisible: !document.getElementById('contactError').hidden,
+  burbuja: (document.querySelector('#assistantBubble .bubble-text') || {}).textContent || null,
+  burbujaVisible: !!document.querySelector('#assistantBubble:not([hidden])'),
+  foco: document.activeElement.id, marca: document.activeElement.getAttribute('aria-invalid') }));
+await page.click('#nextButton'); await page.waitForTimeout(700);
+const faltaNombre = await cierre();
+check('el nombre que falta lo dice su burbuja, no una línea roja ni el navegador',
+  [faltaNombre.burbuja, faltaNombre.lineaVisible, faltaNombre.burbujaVisible, faltaNombre.linea === faltaNombre.burbuja],
+  ['Necesito tu nombre para enviarte la cotización.', false, true, true]);
+check('y el campo queda con el foco y marcado',
+  [faltaNombre.foco, faltaNombre.marca], ['fullName', 'true']);
+await page.fill('#fullName', 'Cliente Prueba');
+await page.click('#nextButton'); await page.waitForTimeout(700);
+const faltaCorreo = await cierre();
+check('después del nombre, el correo tiene su propia frase',
+  [faltaCorreo.burbuja, faltaCorreo.foco], ['Necesito tu correo: ahí te llega la copia de tu cotización.', 'email']);
+await page.fill('#email', 'cliente@example.com');
+await page.fill('#phone', '300123');            // seis dígitos: no parece un celular
+await page.click('#nextButton'); await page.waitForTimeout(700);
+const celularCorto = await cierre();
+check('y un celular a medias también se dice en palabras',
+  [celularCorto.burbuja, celularCorto.foco], ['Ese celular no tiene pinta de celular: escríbelo como 300 123 4567.', 'phone']);
+/* Apagado: la línea del paso vuelve a ser la voz (no se finge a nadie). */
+await page.evaluate(() => { window.__asistente = Store.assistant; Store.assistant = () => ({ enabled: false, name: 'Lía' }); });
+await page.click('#nextButton'); await page.waitForTimeout(500);
+const sinAsistenteCierre = await cierre();
+check('con el asistente apagado la línea se enseña (es la única voz)',
+  [sinAsistenteCierre.lineaVisible, sinAsistenteCierre.linea], [true, celularCorto.linea]);
+await page.evaluate(() => { if (window.__asistente) Store.assistant = window.__asistente; });
+
+console.log('\nUNA MEDIDA SIN ESCRIBIR TAMBIÉN TIENE SU FRASE');
+/* `reach(2)` deja el recorrido EN las medidas (el 3 avanza a preferencias). Se vuelve a dejar el
+ * paquete completo antes: en la cadena, los bloques anteriores cambian las líneas habilitadas. */
+await page.evaluate(() => Store.saveSettings({ plan: 'Business', disabledLines: [] }));
+await fresh(); await reach(2);
+await page.fill('#width', '');
+await page.click('#nextButton'); await page.waitForTimeout(700);
+const medidaVacia = await page.evaluate(() => ({
+  linea: document.getElementById('measureError').textContent,
+  lineaVisible: !document.getElementById('measureError').hidden,
+  burbuja: (document.querySelector('#assistantBubble .bubble-text') || {}).textContent || null,
+  foco: document.activeElement.id }));
+check('la medida que falta no saca la burbuja del navegador: la dice ella',
+  [medidaVacia.burbuja, medidaVacia.lineaVisible, medidaVacia.foco],
+  ['Me falta el ancho del mueble: sin las tres medidas no puedo calcular la tela.', false, 'width']);
+
+/* --------------------------------------------------------------------------------------------
+ * UNA COTIZACIÓN NUEVA NO ARRASTRA LA ANTERIOR
+ * El dueño, con una captura: «below has a little screen with information of before quoter...
+ * shouldnt be like this... because client restart for new process». Enviar deja la confirmación
+ * abierta y el formulario sin paso activo; volver al formulario —por el control que sea— tiene que
+ * llevarse la confirmación: es un proceso nuevo.
+ * -------------------------------------------------------------------------------------------- */
+console.log('\nEMPEZAR DE NUEVO SE LLEVA LA CONFIRMACIÓN ANTERIOR');
+await page.evaluate(() => Store.saveSettings({ plan: 'Business', disabledLines: [] }));
+await fresh(); await reach(5);
+await caminoAlCierre();
+await page.fill('#fullName', 'Cliente Prueba');
+await page.fill('#email', 'cliente@example.com');
+await page.fill('#phone', '3001234567');
+await page.check('#consent');
+await page.click('#nextButton');
+await page.waitForSelector('#successState:not([hidden])');
+check('la solicitud enviada se confirma en su pantalla, con su número',
+  [await page.isVisible('#successState'), (await page.textContent('#requestNumber')).startsWith('COT-'), await page.evaluate(() => state.submitted)],
+  [true, true, true]);
+/* El mismo control que el cliente puede volver a alcanzar: la barra del motivo, que devuelve al
+ * paso de la línea. Con el envío hecho está oculta, pero su manejador es el del producto. */
+await page.evaluate(() => document.getElementById('journeyContextChange').click());
+await page.waitForTimeout(500);
+const arranqueLimpio = await page.evaluate(() => ({
+  exito: !document.getElementById('successState').hidden, enviado: state.submitted, paso: state.step,
+  acciones: !document.getElementById('wizardActions').hidden,
+  activos: [...document.querySelectorAll('.wizard-step')].filter(s => s.offsetParent).length,
+  atenuado: document.querySelector('.step-list').style.opacity || '' }));
+check('y empezar de nuevo se lleva la confirmación (nada de la cotización anterior detrás)',
+  [arranqueLimpio.exito, arranqueLimpio.enviado, arranqueLimpio.paso, arranqueLimpio.acciones, arranqueLimpio.activos, arranqueLimpio.atenuado],
+  [false, false, 0, true, 1, '']);
 
 console.log('\npage errors: ' + (errs.length?errs.join(' | '):'none'));
 console.log(fails?`\n${fails} FAILING`:'\nALL PASS');

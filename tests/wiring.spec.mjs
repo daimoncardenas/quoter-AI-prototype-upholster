@@ -229,8 +229,15 @@ await flujo.click('#nextButton'); await flujo.waitForSelector('[data-step="1"].a
 await flujo.click('#nextButton'); await flujo.waitForSelector('[data-step="2"].active');
 check('el paso de daños es el tercero de nueve', (await estadoFlujo()).visible, 'Paso 3 de 9');
 await flujo.click('#nextButton');
+/* Con el asistente encendido la explicación la dice su burbuja: la línea va escrita pero oculta
+ * (docs/errores-con-lia.md). */
+const avisoDanos = await flujo.evaluate(() => ({
+  burbuja: (document.querySelector('#assistantBubble .bubble-text') || {}).textContent || '',
+  visible: !!document.querySelector('#assistantBubble:not([hidden])') }));
 check('sin marcar ningún daño no avanza, y lo explica',
-  [await flujo.$eval('.wizard-step.active', s => s.dataset.step), await flujo.$eval('#damageError', e => !e.hidden)], ['2', true]);
+  [await flujo.$eval('.wizard-step.active', s => s.dataset.step), avisoDanos.visible,
+   avisoDanos.burbuja === (await flujo.textContent('#damageError')).trim(), await flujo.$eval('#damageError', e => !e.hidden)],
+  ['2', true, true, false]);
 await flujo.click('#damageGrid label:has-text("Estructura")');
 await flujo.click('#damageGrid label:has-text("Resortes")');
 check('los daños marcados suman al total y la mano de obra se declara',

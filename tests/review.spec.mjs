@@ -372,14 +372,28 @@ console.log('\nMIENTRAS MIRA LA FOTO, ELLA LEE SU DOCUMENTO');
    * clic; el modelo de mentira tarda 2,5 s más. Se mira a los 2,6 s: la hoja ya está levantada
    * y la cara ya bajó (la pose se levanta en ~0,6 s). */
   await p.waitForTimeout(2600);
-  const mientras = await p.evaluate(() => { const st = document.getElementById('assistantStage').dataset;
-    const [w, h] = (st.sheetPx || '0x0').split('x').map(Number);
-    const [l, r] = (st.sheetGap || '1|1').split('|').map(Number);
-    return { reading: st.reading, w, h, l, r, head: Number(st.sheetHead), color: st.sheetColor,
-      manos: st.sheetHands, mid: st.sheetMid, mira: st.lookSrc, z: st.sheetWristz, tipsx: st.sheetTipsx, dedos: st.sheetFingers,
-      /* El botón de revisar no sirve para esto: el paso se vuelve a pintar cuando la mirada
-       * termina y desaparece del DOM (por eso se lee la bandera de la app). */
-      analizando: mirandoFoto }; });
+  /* La pose del agarre se levanta con una mezcla de ~0,6 s: se espera a que sus medidas queden
+   * QUIETAS (dos lecturas seguidas iguales), no a un instante fijo — en la cadena completa el reloj
+   * de la página se atrasa y una lectura en plena mezcla daba una muñeca fuera de su canto. */
+  const mientras = await p.evaluate(async () => {
+    const lee = () => { const st = document.getElementById('assistantStage').dataset;
+      const [w, h] = (st.sheetPx || '0x0').split('x').map(Number);
+      const [l, r] = (st.sheetGap || '1|1').split('|').map(Number);
+      return { reading: st.reading, w, h, l, r, head: Number(st.sheetHead), color: st.sheetColor,
+        manos: st.sheetHands, mid: st.sheetMid, mira: st.lookSrc, z: st.sheetWristz, tipsx: st.sheetTipsx, dedos: st.sheetFingers,
+        /* El botón de revisar no sirve para esto: el paso se vuelve a pintar cuando la mirada
+         * termina y desaparece del DOM (por eso se lee la bandera de la app). */
+        analizando: mirandoFoto }; };
+    const clave = x => JSON.stringify([x.w, x.h, x.l, x.r, x.head, x.manos, x.z, x.tipsx]);
+    let previa = lee();
+    for (let i = 0; i < 25; i++) {
+      await new Promise(r => setTimeout(r, 120));
+      const ahora = lee();
+      if (previa.reading === 'on' && clave(previa) === clave(ahora)) return ahora;
+      previa = ahora;
+    }
+    return previa;
+  });
   check('mientras la mirada corre, ella sostiene el documento y lo lee',
     [mientras.reading, mientras.analizando], ['on', true]);
   /* El papel es un blanco cálido, no #ffffff: con las luces de la escena un albedo puro satura en

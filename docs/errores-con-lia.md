@@ -22,9 +22,19 @@ Lo que el dueño pidió el 19/09, con sus palabras:
 
 ## 1. Los errores, dichos por ella y al instante
 
-- **Una sola voz, dos superficies**: el error se sigue pintando donde estaba (la línea del paso, que
-  es la que no depende de que haya asistente) y además se publica como aviso (`aci:notice`, el mismo
-  canal del chat) con el MISMO texto. Así las dos superficies no pueden separarse.
+- **Una sola voz**: con el asistente encendido el aviso se publica en su burbuja (`aci:notice`, el
+  mismo canal del chat) y la línea del paso se queda **escrita pero oculta** —el mismo texto, en el
+  DOM— para que las dos superficies no puedan separarse; apagado, la línea se enseña y es la única
+  voz (no se finge a nadie). El dueño lo pidió en dos tiempos: primero «show both.. the input and lia
+  show this error», después «this errors always is Lia who tell to client... you can delete error
+  messages of the wizard and let it be Lia who always says that» (19/09, con una captura de la
+  burbuja del navegador —«Please fill out this field.», en el idioma del sistema— sobre el celular).
+- **Ningún aviso fuera de su voz**: los dos `reportValidity()` que sacaban la burbuja del navegador
+  —medidas y contacto— se reemplazaron por frases suyas: una medida sin escribir («Me falta el ancho
+  del mueble: sin las tres medidas no puedo calcular la tela.»), una medida imposible («El alto de
+  900 cm no es una medida posible: va de 20 a 500 cm.»), el nombre, el correo (vacío o sin forma de
+  correo), el celular (vacío o sin pinta de celular) y la autorización sin marcar. El campo que
+  falla queda con el foco y `aria-invalid`.
 - **El aviso no espera un clic**: el mensaje de la burbuja es un canal publicado, no el botón. En las
   medidas el aviso sale cuando el valor se confirma (`change` del campo: al salir del campo o con
   Enter), sin pulsar «Continuar»; el bloque de «Continuar» sigue existiendo para lo imposible.
@@ -32,12 +42,14 @@ Lo que el dueño pidió el 19/09, con sus palabras:
   (`.journey.noticing`), se va solo y deja la marca en «Pregúntale a» — todo eso ya existía.
 - **Y mira el campo que falla**: el aviso viaja con el campo (`detail.campo`) y la capa 3D gira su
   cabeza hacia él, como cuando el cliente toca un control.
-- Sin asistente (`Store.assistant().enabled === false`), la línea del paso sigue igual: el aviso no
-  existe, no se finge una voz.
+- Sin asistente (`Store.assistant().enabled === false`), el aviso no existe: no se finge una voz, y
+  la línea del paso se enseña porque es lo único que puede hablarle al cliente.
 
 Errores que hoy existen en `validStep()` y pasan por la misma voz: la línea (paso 0), «Otro» sin
-descripción, fotos insuficientes, daños sin marcar, medidas imposibles, la revisión sin hacer, la
-revisión mirando, y los pasos de pregunta (campos fuera de rango, filas sin piezas).
+descripción, fotos insuficientes, daños sin marcar, la medida sin escribir, la medida imposible, la
+medida muy fuera de lo habitual, la revisión sin hacer, la revisión mirando, el contacto (nombre,
+correo, celular, autorización) y los pasos de pregunta (campos fuera de rango, filas sin piezas).
+Ninguno llama ya a `reportValidity()`.
 
 ## 2. Su nombre donde decía «IA local»
 
@@ -68,8 +80,11 @@ producto (ACI · Asesor Comercial Inteligente, que es la marca del producto, no 
 
 - Al confirmar una medida imposible, el aviso de ella YA está en pantalla —sin pulsar «Continuar»— y
   su texto es el mismo que el de la línea del paso. (wizard.spec)
-- Un paso que no avanza deja el error en la línea y en el aviso, con el mismo texto, y sin asistente
-  la línea sigue y no hay aviso. (wizard.spec)
+- Un paso que no avanza deja el error en la línea (escrita, oculta) y en el aviso, con el mismo
+  texto; sin asistente la línea se enseña y no hay aviso. (wizard.spec)
+- El último paso habla por ella: nombre, correo, celular y autorización tienen su frase, el campo que
+  falta queda con el foco y `aria-invalid`, y una medida sin escribir también se dice en palabras.
+  (wizard.spec)
 - Las filas de la mirada y de la recomendación dicen «Lía» (el nombre del paquete) y no «IA local»;
   la nota del chat con modelo nombra a Lía y sigue diciendo que no es una persona. (review.spec,
   recommend.spec, assistant-ia-local.spec)

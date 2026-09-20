@@ -91,6 +91,7 @@
   .ask-step>.boq-rows{align-self:end}
   .ask-step>.boq-add{align-self:start}
   .ask-step>.field-error{grid-column:1/-1;align-self:start}
+  .contact-fields>.field-error{grid-column:1/-1}
   /* El paso del mueble es el mismo caso: la grilla de tarjetas se estira (más altas, hasta su tope)
    * y la zona de fotos queda pegada a las acciones, que es donde se pulsa Continuar. */
   .wizard-step.active[data-brain="FURNITURE"]{display:flex;flex-direction:column}
@@ -267,10 +268,10 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
      tipografía— para que el pie y el hueco de Lía queden donde están con siete: «suministro de
      tela» es el tamaño máximo de la barra. El número lo escribe `applyOptionalSteps()` desde los
      pasos visibles, así que un motivo con más pasos hereda la densidad sin tocar esto. */
-  .journey[data-rows="8"] .step-list li,.journey[data-rows="9"] .step-list li,.journey[data-rows="10"] .step-list li{margin-bottom:clamp(4px,1.05vh,11px)}
-  .journey[data-rows="8"] .step-list b,.journey[data-rows="9"] .step-list b{font-size:clamp(.67rem,.95vh,.72rem)}
-  .journey[data-rows="8"] .step-list small,.journey[data-rows="9"] .step-list small{font-size:clamp(.53rem,.8vh,.6rem)}
-  .journey[data-rows="8"] .step-list{--dot:clamp(24px,3.5vh,30px);margin-block:clamp(10px,2.2vh,26px) clamp(9px,1.8vh,22px)}
+  .journey[data-rows="7"] .step-list li,.journey[data-rows="8"] .step-list li,.journey[data-rows="9"] .step-list li,.journey[data-rows="10"] .step-list li{margin-bottom:clamp(4px,1.05vh,11px)}
+  .journey[data-rows="7"] .step-list b,.journey[data-rows="8"] .step-list b,.journey[data-rows="9"] .step-list b{font-size:clamp(.67rem,.95vh,.72rem)}
+  .journey[data-rows="7"] .step-list small,.journey[data-rows="8"] .step-list small,.journey[data-rows="9"] .step-list small{font-size:clamp(.53rem,.8vh,.6rem)}
+  .journey[data-rows="7"] .step-list,.journey[data-rows="8"] .step-list{--dot:clamp(24px,3.5vh,30px);margin-block:clamp(10px,2.2vh,26px) clamp(9px,1.8vh,22px)}
   .journey[data-rows="9"] .step-list{--dot:clamp(21px,3vh,26px);margin-block:clamp(7px,1.6vh,18px) clamp(7px,1.4vh,16px)}
   .journey[data-rows="9"] .step-list b{font-size:clamp(.64rem,.88vh,.69rem)}
   .journey[data-rows="9"] .step-list small{font-size:clamp(.5rem,.74vh,.56rem)}
@@ -284,7 +285,7 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
   .journey[data-rows="10"] .step-list small{font-size:clamp(.47rem,.7vh,.53rem)}
   .journey[data-rows="10"] h1{font-size:clamp(1.24rem,2.25vh,1.85rem);margin-block:clamp(3px,.7vh,7px) clamp(5px,1vh,10px)}
   .journey[data-rows="10"] .help-card{padding-top:clamp(7px,1.3vh,15px)}
-  .journey[data-rows="8"] .help-card,.journey[data-rows="9"] .help-card{padding-top:clamp(9px,1.6vh,18px)}
+  .journey[data-rows="7"] .help-card,.journey[data-rows="8"] .help-card,.journey[data-rows="9"] .help-card{padding-top:clamp(9px,1.6vh,18px)}
   .journey{padding-block:clamp(14px,3.2vh,46px) clamp(10px,2.2vh,28px)}
   .step-list li{margin-bottom:clamp(5px,2vh,22px)}
 @media print{html,body{height:auto!important;overflow:visible!important}.demo-banner{position:static!important}.chat-fab,.chat-panel,.assistant-stage,.assistant-hit,.assistant-bubble,#logoutBtn{display:none!important}body::after{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;background-image:var(--print-watermark);background-repeat:repeat}}
@@ -560,6 +561,7 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
               <label>Correo electrónico<input type="email" id="email" placeholder="nombre@correo.com" required></label>
               <label>Celular o WhatsApp<input type="tel" id="phone" placeholder="Ej. 300 123 4567" required></label>
               <label class="consent"><input type="checkbox" id="consent" required><span>{{CONSENT_HTML}}<span data-assistant-copy> {{CONSENT_ASSISTANT_HTML}}</span></span></label>
+              <p class="field-error" id="contactError" hidden></p>
             </div>
             <aside class="summary-card">
               <span class="eyebrow gold">Resumen</span>
@@ -796,7 +798,23 @@ const ACI=(()=>{
  * loud that this object is the page's assistant surface. */
 window.ACI=ACI;
 
+/* Salir de la confirmación EMPIEZA DE NUEVO: si el cliente vuelve al formulario —por el control que
+ * sea— la pantalla de «Solicitud recibida» no puede quedarse abierta detrás. El dueño la vio con el
+ * paso de la línea encima: «below has a little screen with information of before quoter... shouldnt
+ * be like this... because client restart for new process». */
+function dejarLaConfirmacion(){
+  const exito=document.getElementById('successState');
+  if(!exito||exito.hidden)return false;
+  exito.hidden=true;
+  document.getElementById('wizardActions').hidden=false;
+  const pasos=document.querySelector('.step-list');if(pasos)pasos.style.opacity='';
+  const progreso=document.querySelector('.mobile-progress');if(progreso)progreso.style.display='';
+  state.submitted=false;
+  try{syncActionsHeight()}catch(err){}
+  return true;
+}
 function showStep(n){
+  dejarLaConfirmacion();
   state.step=n; steps.forEach(s=>s.classList.toggle('active',+s.dataset.step===n));
   document.querySelectorAll('[data-step-dot]').forEach(li=>{const x=+li.dataset.stepDot;li.classList.toggle('active',x===n);li.classList.toggle('done',x<n)});
   /* Los pasos, sus nombres y sus ids viven en `assistant-brain.js` (una sola tabla). */
@@ -1059,7 +1077,15 @@ function medidasMuyFueraDeLoHabitual(){
  * dont wait that user do click». Con el asistente apagado la capa 3D ignora el aviso y la línea
  * sigue sola. */
 function decirError(el,texto,campo){
-  if(el){el.textContent=texto;el.hidden=false}
+  /* Una sola voz por aviso. Con el asistente encendido habla él —su burbuja, publicada en
+   * `aci:notice`— y la línea del paso se queda escrita pero oculta (el texto sigue ahí: es el mismo
+   * de la burbuja). Apagado, la línea es la única voz y se enseña. El dueño lo pidió así: «the idea
+   * is this errors always is Lia who tell to client... you can delete error messages of the wizard
+   * and let it be Lia who always says that». */
+  if(el){el.textContent=texto;el.hidden=asistenteCfg().enabled}
+  const marcado=campo&&typeof campo==='string'?document.getElementById(campo):(campo||null);
+  document.querySelectorAll('[aria-invalid="true"]').forEach(x=>x.removeAttribute('aria-invalid'));
+  if(marcado&&marcado.matches&&marcado.matches('input,select,textarea'))marcado.setAttribute('aria-invalid','true');
   const destino=campo&&typeof campo==='string'?document.getElementById(campo):(campo||null);
   try{window.dispatchEvent(new CustomEvent('aci:notice',{detail:{text:texto,campo:destino}}))}catch(err){}
 }
@@ -1082,7 +1108,19 @@ function validStep(){
     if(!damageIds().length){
       decirError(damageError,damageError.textContent,'damageGrid');document.getElementById('damageGrid').scrollIntoView({behavior:'smooth',block:'center'});return false}}
   const idPaso=ACI.stepId(state.step);
-  if(idPaso==='MEASUREMENTS'){const fields=['width','height','depth'].map(id=>document.getElementById(id));const bad=fields.find(x=>!x.value||!x.checkValidity());if(bad){bad.reportValidity();return false}
+  if(idPaso==='MEASUREMENTS'){
+    /* Nada de burbujas del navegador (salen en el idioma del sistema y sin su voz): cada tropiezo
+     * tiene su frase y la dice ella. */
+    const NOMBRE_MEDIDA={width:'ancho',height:'alto',depth:'fondo'};
+    const fields=['width','height','depth'].map(id=>document.getElementById(id));
+    const vacia=fields.find(x=>!x.value);
+    if(vacia){const err=document.getElementById('measureError');
+      decirError(err,`Me falta el ${NOMBRE_MEDIDA[vacia.id]} del mueble: sin las tres medidas no puedo calcular la tela.`,vacia.id);
+      vacia.focus({preventScroll:true});err.scrollIntoView({behavior:'smooth',block:'center'});return false}
+    const imposible=fields.find(x=>!x.checkValidity());
+    if(imposible){const err=document.getElementById('measureError');
+      decirError(err,`El ${NOMBRE_MEDIDA[imposible.id]} de ${imposible.value} cm no es una medida posible: va de ${imposible.min} a ${imposible.max} cm.`,imposible.id);
+      imposible.focus({preventScroll:true});err.scrollIntoView({behavior:'smooth',block:'center'});return false}
     const fuera=medidasMuyFueraDeLoHabitual();
     if(fuera.length){
       const err=document.getElementById('measureError');
@@ -1094,7 +1132,33 @@ function validStep(){
   /* Mientras la IA mira la fotografía, el paso no deja pasar: lo que se está revisando todavía no
    * está. (El botón se desactiva al empezar y vuelve solo al terminar; esto es el cinturón.) */
   if(idPaso==='REVIEW'&&mirandoFoto){const err=document.getElementById('analysisError');decirError(err,`Un momento: ${asistenteCfg().enabled?asistenteCfg().name:'la IA local'} sigue analizando tu fotografía. Puedes continuar cuando termine.`);err.scrollIntoView({behavior:'smooth',block:'center'});return false}
-  if(idPaso==='CONTACT'){const ids=['fullName','email','phone','consent'];const bad=ids.map(id=>document.getElementById(id)).find(x=>!x.checkValidity());if(bad){bad.reportValidity();return false}}
+  if(idPaso==='CONTACT'){
+    /* El último paso también habla: cada campo que falta tiene su frase, y ninguna burbuja del
+     * navegador en inglés. */
+    const err=document.getElementById('contactError');
+    const nombre=document.getElementById('fullName'),correo=document.getElementById('email'),
+          celular=document.getElementById('phone'),autoriza=document.getElementById('consent');
+    const qué=!nombre.value.trim()?'nombre'
+      :!correo.value.trim()?'correoSin'
+      :!correo.checkValidity()?'correoMal'
+      :!celular.value.trim()?'celularSin'
+      :(celular.value.match(/\d/g)||[]).length<7?'celularMal'
+      :!autoriza.checked?'autorizacion':null;
+    if(qué){
+      const dicho={
+        nombre:'Necesito tu nombre para enviarte la cotización.',
+        correoSin:'Necesito tu correo: ahí te llega la copia de tu cotización.',
+        correoMal:'Ese correo no tiene forma de correo: revísalo y te mando la copia.',
+        celularSin:'Me falta tu celular: un asesor te escribe por ahí.',
+        celularMal:'Ese celular no tiene pinta de celular: escríbelo como 300 123 4567.',
+        autorizacion:'Marca la autorización: sin ella no puedo usar tus datos ni que un asesor te contacte.',
+      }[qué];
+      const campoEl={nombre:nombre,correoSin:correo,correoMal:correo,celularSin:celular,celularMal:celular,autorizacion:autoriza}[qué];
+      decirError(err,dicho,campoEl);
+      campoEl.focus({preventScroll:true});
+      err.scrollIntoView({behavior:'smooth',block:'center'});
+      return false}
+  }
   /* Un paso de pregunta valida lo que su spec declara: los campos numéricos dentro de su rango y
    * las filas del BOQ con al menos una pieza. Los chips son opcionales (no marcar también es una
    * respuesta: «solo limpieza», «decorativo»). */
@@ -1877,6 +1941,9 @@ async function submitQuote(){
   document.querySelector('.step-list').style.opacity='.35';
 }
 document.getElementById('restartButton').addEventListener('click',()=>location.reload());
+/* Una página restaurada (bfcache del navegador) vuelve con el DOM que quedó: si trae la confirmación
+ * de una cotización anterior, se deja el formulario limpio — es un proceso nuevo. */
+addEventListener('pageshow',e=>{if(e.persisted&&dejarLaConfirmacion()){const v=pasosVisibles();showStep(v.length?v[0]:0)}});
 
 /* El contexto, dicho en voz alta la primera vez que se abre el chat: es la forma de
  * que el cliente VEA que el asistente está leyendo su cotización y no adivinando.
