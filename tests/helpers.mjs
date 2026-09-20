@@ -11,6 +11,10 @@ export async function openWizard(page, D) {
     await page.click('#serviceGrid .service-choice');
     await page.click('#nextButton');
   }
+  /* La línea puede traer una RUTA (docs/flujo-de-suministro.md): su pregunta viene entre la línea y
+   * «Tu mueble», y viene elegida — la clásica —, así que un «Continuar» más deja el wizard donde
+   * siempre: en el paso del mueble. El que quiera otra ruta la elige él (tests/ruta-directa.spec). */
+  if (await page.isVisible('.wizard-step[data-step="18"].active')) await page.click('#nextButton');
 }
 
 export async function openAdmin(page, D, email = ADMIN_EMAIL) {

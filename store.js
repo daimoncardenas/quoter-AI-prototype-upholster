@@ -106,7 +106,14 @@
   function read(entity) {
     try {
       var raw = localStorage.getItem(NS + entity);
-      if (raw !== null) return JSON.parse(raw);
+      if (raw !== null) {
+        var parsed = JSON.parse(raw);
+        /* El catálogo de telas guardado por un navegador viejo no trae el dato de
+         * orientación, y sin él la regla nueva cotiza de más: hereda del seed lo
+         * que el seed declara para esa MISMA referencia (ver migrateFabrics). */
+        if (entity === 'fabrics') return migrateFabrics(parsed);
+        return parsed;
+      }
     } catch (err) {
       // Corrupt JSON or storage disabled: fall back to the seed rather than
       // leaving the page with no catalog at all.
@@ -116,6 +123,27 @@
     var seed = clone(SEEDS[entity] || []);
     try { write(entity, seed); } catch (err) { /* read-only storage is survivable */ }
     return seed;
+  }
+
+  /* El dato de orientación del corte llegó después que las telas guardadas, y sin
+   * él la regla nueva cotiza de más (conservador) — porque sin dato no se gira una
+   * pieza. Lo que sí puede heredar una tela es lo que el PACK declara para esa
+   * mismas referencia: los ids del seed son los del demo y ahí el valor es
+   * explícito (docs/consumo-direccional.md). Cualquier tela que no venga del seed
+   * se queda sin el dato — y sin dato, no se rota. Nunca sobrescribe un valor ya
+   * declarado: solo rellena lo que falta. */
+  function migrateFabrics(list) {
+    var seed = SEEDS.fabrics || [];
+    var changed = false;
+    (list || []).forEach(function (f) {
+      var s = null;
+      for (var i = 0; i < seed.length; i++) { if (String(seed[i].id) === String(f.id)) s = seed[i]; }
+      if (!s) return;
+      if (f.cutDirection === undefined && s.cutDirection !== undefined) { f.cutDirection = s.cutDirection; changed = true; }
+      if (f.patternMatch === undefined && s.patternMatch !== undefined) { f.patternMatch = s.patternMatch; changed = true; }
+    });
+    if (changed) { try { write('fabrics', list); } catch (err) { /* read-only storage is survivable */ } }
+    return list;
   }
 
   /* Placeholder zone names from the demo seeds that predate the real service
@@ -570,6 +598,10 @@
            * catálogo (shared/service-lines.json), no casos especiales del código. */
           pricing: s.pricing || 'tela',
           skips: (s.skips || []).slice(),
+          /* Las rutas de esta línea (docs/flujo-de-suministro.md): la primera viene elegida y cada
+           * una declara qué pasos NO existen para quien la toma. Una línea sin `rutas` no pregunta
+           * nada al entrar — su recorrido es el de siempre. */
+          rutas: (s.rutas || []).slice(),
           /* El paso del mueble sin escogedor —el oficio que declara su mueble en otra parte, como
            * el proyecto comercial con su mesa de piezas—: dato del catálogo, no caso especial.
            * false oculta el escogedor y deja el paso con su subida de fotos. */
@@ -1057,10 +1089,14 @@
     },
 
     /* Defaults so a tela created before commercial rules existed still quotes:
-     * fine increments, no minimum, remainder goes back to inventory. */
+     * fine increments, no minimum, remainder goes back to inventory. La
+     * orientación del corte es la excepción: sin el dato NO se gira (ver
+     * docs/consumo-direccional.md) — cotizar de menos es el único error que el
+     * cliente no puede corregir al cortar. */
     fabricRules: function (fabric) {
       var f = fabric || {};
       var num = function (v, fallback) { var n = +v; return isFinite(n) && n > 0 ? n : fallback; };
+      var dir = (f.cutDirection === 'free' || f.cutDirection === 'directional') ? f.cutDirection : 'unknown';
       return {
         rollWidthCm: num(f.rollWidthCm, 140),
         rollLengthM: num(f.rollLengthM, 30),
@@ -1068,7 +1104,14 @@
         incrementM: num(f.incrementM, 0.1),
         minOrderM: num(f.minOrderM, 0),
         supplierMinM: num(f.supplierMinM, 0),
-        reusableRemainder: f.reusableRemainder !== false
+        reusableRemainder: f.reusableRemainder !== false,
+        /* 'free' deja girar las piezas; 'directional' y 'unknown' no. `unknown`
+         * es el estado de un registro sin el dato, y es conservador a propósito. */
+        cutDirection: dir,
+        /* La repetición del diseño puede subir la cantidad y no hay fórmula
+         * todavía: el estado honesto es 'confirm' (se avisa y lo confirma un
+         * asesor). Solo un 'none' declarado lo calla. */
+        patternMatch: f.patternMatch === 'none' ? 'none' : 'confirm'
       };
     },
 
@@ -1084,12 +1127,17 @@
       var pieces = tpl.pieces(inputs);
       if (!pieces.length) return null;
 
-      var rollM = Store.fabricRules(fabric).rollWidthCm / 100;
+      var rules = Store.fabricRules(fabric);
+      var rollM = rules.rollWidthCm / 100;
+      /* Rotar una pieza es una decisión de la TELA, no del mueble: una tela con
+       * pelo, rayas o dibujo con dirección pierde el sentido (y mide menos) si el
+       * corte la gira. Sin el dato, no se rota. */
+      var rota = rules.cutDirection === 'free';
       var tecnico = 0;
       var despiece = pieces.map(function (p) {
         // The allowance is per piece, on both dimensions, not on the total.
         var w = p.w + SEAM, h = p.h + SEAM;
-        var metres = packRun(p.qty, w, h, rollM);
+        var metres = packRun(p.qty, w, h, rollM, rota);
         tecnico += metres;
         return { name: p.name, qty: p.qty, w: round2(w), h: round2(h), metres: round2(metres) };
       });
@@ -1099,7 +1147,11 @@
       var tol = Math.max(0, +s.rangeTolerancePct || 0) / 100;
       return {
         modelo: 'componentes',
-        rollWidthCm: Store.fabricRules(fabric).rollWidthCm,
+        rollWidthCm: rules.rollWidthCm,
+        cutDirection: rules.cutDirection,
+        patternMatch: rules.patternMatch,
+        /* Si la tela dejó girar las piezas: el número y su porqué viajan juntos. */
+        rotated: rota,
         tecnico: round2(tecnico),
         despiece: despiece,
         // Never quote short: both ends round up to the tenth.
@@ -1490,9 +1542,11 @@
   /* How many linear metres of a roll `rollM` wide a run of identical pieces
    * eats. This is the whole point: two 65 cm pieces sit side by side on a
    * 140 cm roll and cost 0.70 m; two 80 cm pieces cannot, and cost 1.40 m. */
-  function packRun(qty, w, h, rollM) {
+  function packRun(qty, w, h, rollM, allowRotate) {
     var best = Infinity;
-    [[w, h], [h, w]].forEach(function (o) {
+    /* Dos orientaciones solo cuando la tela lo permite: `allowRotate` no es un
+     * adorno, es el dato de la tela (cutDirection === 'free'). */
+    (allowRotate === true ? [[w, h], [h, w]] : [[w, h]]).forEach(function (o) {
       var across = o[0], along = o[1], panels = 1;
       // Wider than the roll: the upholsterer seams it out of panels.
       if (across > rollM) { panels = Math.ceil(across / rollM - 1e-9); across = across / panels; }

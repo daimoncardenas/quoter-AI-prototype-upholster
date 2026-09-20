@@ -67,7 +67,7 @@ const ctxFor = (step = MEDIDAS, over = {}) => Object.assign({
 
 console.log('\nEL CATÁLOGO CERRADO: PASOS, CAMPOS Y ACCIONES');
 check('los pasos, en orden y con los ids que el adaptador busca', brain.STEPS.map(s => [s.n, s.id]), [
-  [0, 'SERVICE'], [1, 'FURNITURE'], [2, 'DAMAGE'], [3, 'LIMPIEZA'], [4, 'TRASLADO'], [5, 'SUPERFICIE'], [6, 'ACUSTICA'], [7, 'BOQ'], [8, 'OBRA'], [9, 'MEASUREMENTS'], [10, 'MATERIALES'], [11, 'TAPIZADO'], [12, 'PREFERENCES'], [13, 'REVIEW'], [14, 'RECOMMENDATION'], [15, 'CONTACT'], [16, 'ESTIMATE']
+  [0, 'SERVICE'], [1, 'FURNITURE'], [2, 'DAMAGE'], [3, 'LIMPIEZA'], [4, 'TRASLADO'], [5, 'SUPERFICIE'], [6, 'ACUSTICA'], [7, 'BOQ'], [8, 'OBRA'], [9, 'MEASUREMENTS'], [10, 'MATERIALES'], [11, 'TAPIZADO'], [12, 'PREFERENCES'], [13, 'REVIEW'], [14, 'RECOMMENDATION'], [15, 'CONTACT'], [16, 'ESTIMATE'], [18, 'ROUTE'], [19, 'DIRECT']
 ]);
 check('solo los tres tipos de acción declarados', brain.ACTION_TYPES, ['FOCUS_FIELD', 'SET_FIELD', 'NAVIGATE_TO_STEP']);
 check('cada campo declara su paso y su etiqueta', Object.entries(brain.FIELDS)

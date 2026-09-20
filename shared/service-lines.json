@@ -288,6 +288,12 @@
     { "id": "suministro-tela", "label": "Suministro de tela", "journey": "suministro", "minPlan": "base",
       "pricing": "tela", "laborPct": 0, "skips": [],
       "hint": "Te decimos cuántos metros necesita tu mueble y a qué precio la referencia que elijas.",
+      "_rutas": "Lo que se pregunta PRIMERO en esta línea (docs/flujo-de-suministro.md): cada ruta declara los pasos que NO existen para ella, con el mismo vocabulario que `skips`. La primera es la que viene elegida — la clásica, la que ya funcionaba — y «compra directa» es el atajo del que llega con la referencia y los metros: sin mueble, sin medidas, sin fotos, sin recomendación.",
+      "rutas": [
+        { "id": "mueble", "label": "Mueble o proyecto", "hint": "La pieza, sus medidas y la tela que le queda" },
+        { "id": "directa", "label": "Compra directa", "hint": "Ya sé la referencia y cuántos metros",
+          "skips": ["furniture", "measurements", "preferences", "review", "recommendation", "photos"] }
+      ],
       "copy": {
         "artifactLabel": "Pre-cotización de suministro de tela",
         "estimateTitle": "Estimación del suministro",

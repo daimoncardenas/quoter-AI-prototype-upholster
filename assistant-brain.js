@@ -40,7 +40,12 @@
     { n: 15, id: 'CONTACT', name: 'Tu cotización' },
     /* El paso de la estimación es de TODOS los motivos (ver docs/journeys.md §10): va después de las
      * preguntas y antes del contacto, y esta tabla es la que lo nombra en el móvil y en los eventos. */
-    { n: 16, id: 'ESTIMATE', name: 'Estimación' }
+    { n: 16, id: 'ESTIMATE', name: 'Estimación' },
+    /* Los dos pasos de la ruta corta (docs/flujo-de-suministro.md): la pregunta de entrada de una
+     * línea con rutas y su paso de referencia + cantidad. No son pasos de todos los motivos, así que
+     * el móvil los nombra por esta tabla igual que a los demás. */
+    { n: 18, id: 'ROUTE', name: '¿Qué necesitas?' },
+    { n: 19, id: 'DIRECT', name: 'Tu referencia y cantidad' }
   ];
   /* Los pasos se NOMBRAN por su id, nunca por un número escrito a mano: con los tres pasos
    * opcionales (la línea, los daños y los que pide cada motivo) la numeración corre, y un

@@ -20,7 +20,9 @@ await openWizard(page, D);
 
 const SOFA = { width: 210, height: 85, depth: 90, seats: 3, cushions: 3, coverage: 'complete' };
 const est = (mueble, inp, rollWidthCm) => page.evaluate(([m, i, w]) => {
-  const r = Store.estimateByComponents(Store.furnitureByName(m), i, { rollWidthCm: w });
+  // La tela lisa declara que puede girar: los números calibrados de esta suite
+  // son los de una tela `free` (docs/consumo-direccional.md).
+  const r = Store.estimateByComponents(Store.furnitureByName(m), i, { rollWidthCm: w, cutDirection: 'free' });
   return r && { tecnico: r.tecnico, range: r.range, piezas: r.despiece.length };
 }, [mueble, inp, rollWidthCm]);
 
@@ -31,12 +33,12 @@ check('pieces that share a row cost one row, not two',
   await page.evaluate(() => {
     const uno = Store.estimateByComponents(Store.furnitureByName('Sofá'),
       { width: 130, height: 85, depth: 90, seats: 2, cushions: 2, coverage: 'partial' },
-      { rollWidthCm: 140 });
+      { rollWidthCm: 140, cutDirection: 'free' });
     // 65 cm cushions: two fit across 140. Widen them past half the roll and
     // the same two pieces need a row each.
     const dos = Store.estimateByComponents(Store.furnitureByName('Sofá'),
       { width: 160, height: 85, depth: 90, seats: 2, cushions: 2, coverage: 'partial' },
-      { rollWidthCm: 140 });
+      { rollWidthCm: 140, cutDirection: 'free' });
     return dos.tecnico > uno.tecnico;
   }), true);
 
@@ -50,6 +52,30 @@ check('a wider roll genuinely costs less fabric, and it is not linear',
    Math.round(r140.tecnico / r280.tecnico * 10) / 10],
   [true, true, 2]);
 check('every cut type is accounted for', r140.piezas, 9);
+
+console.log('\nLA ORIENTACIÓN ES DE LA TELA: SIN DATO NO SE GIRA');
+/* Rotar una pieza es lo que hace barato el despiece… y lo que descuadra una tela
+ * con dirección (pelo, rayas, dibujo). El permiso lo da la TELA (`cutDirection`),
+ * no el mueble, y un registro sin el dato no gira: cotizar de menos es el único
+ * error del cotizador que el cliente no puede corregir al cortar. */
+const conDireccion = await page.evaluate(() => {
+  const mueble = Store.furnitureByName('Sofá');
+  const i = { width: 210, height: 85, depth: 90, seats: 3, cushions: 3, coverage: 'complete' };
+  const libre = Store.estimateByComponents(mueble, i, { rollWidthCm: 140, cutDirection: 'free' });
+  const direccional = Store.estimateByComponents(mueble, i, { rollWidthCm: 140, cutDirection: 'directional' });
+  const sinDato = Store.estimateByComponents(mueble, i, { rollWidthCm: 140 });
+  return {
+    libre: libre.tecnico, direccional: direccional.tecnico, sinDato: sinDato.tecnico,
+    giroLibre: libre.rotated, giroDireccional: direccional.rotated,
+    estadoSinDato: sinDato.cutDirection,
+  };
+});
+check('una tela con dirección cuesta MÁS: ninguna pieza se gira',
+  conDireccion.direccional > conDireccion.libre, true);
+check('y la respuesta dice cuál se giró y cuál no',
+  [conDireccion.giroLibre, conDireccion.giroDireccional], [true, false]);
+check('un registro sin el dato se comporta como direccional (unknown, no free)',
+  [conDireccion.estadoSinDato, conDireccion.sinDato === conDireccion.direccional], ['unknown', true]);
 
 console.log('\nCOVERAGE SELECTS PIECES INSTEAD OF SCALING A NUMBER');
 const solo = await est('Sofá', { ...SOFA, coverage: 'partial' }, 140);
@@ -148,7 +174,7 @@ await page.click('#saveSettings');
 check('a wider tolerance widens the published range, not the technical number',
   await page.evaluate(() => {
     const i = { width: 210, height: 85, depth: 90, seats: 3, cushions: 3, coverage: 'complete' };
-    const r = Store.estimateByComponents(Store.furnitureByName('Sofá'), i, { rollWidthCm: 140 });
+    const r = Store.estimateByComponents(Store.furnitureByName('Sofá'), i, { rollWidthCm: 140, cutDirection: 'free' });
     return [r.tecnico, r.range[1] - r.range[0] > 3];
   }), [10.91, true]);
 
@@ -162,6 +188,25 @@ check('and the roll width edited on the tela reaches the calculation',
     Store.furnitureByName('Sofá'),
     { width: 210, height: 85, depth: 90, seats: 3, cushions: 3, coverage: 'complete' },
     Store.get('fabrics', 1)).tecnico), 5.37);
+
+console.log('\nUN CATÁLOGO GUARDADO ANTES DEL DATO SE MIGRA SOLO');
+/* Un navegador que ya tiene sus telas guardadas no va a perder el número que veía:
+ * la referencia del PACK hereda lo que el pack declara (por id), y una tela propia
+ * del negocio se queda sin el dato — y sin dato, no se gira. */
+check('la tela del pack hereda su orientación; una referencia propia se queda en unknown',
+  await page.evaluate(() => {
+    const clave = Object.keys(localStorage).find(k => k.endsWith('fabrics'));
+    const antes = localStorage.getItem(clave);
+    localStorage.setItem(clave, JSON.stringify([
+      { id: 1, name: 'Lino Verona', price: 89000, rollWidthCm: 140, active: true },
+      { id: 99, name: 'La mía', price: 50000, rollWidthCm: 140, active: true },
+    ]));
+    const vistas = Store.all('fabrics');
+    const regla = id => Store.fabricRules(vistas.find(f => f.id === id)).cutDirection;
+    const salida = [regla(1), regla(99)];
+    if (antes === null) localStorage.removeItem(clave); else localStorage.setItem(clave, antes);
+    return salida;
+  }), ['free', 'unknown']);
 
 console.log('\npage errors: ' + (errs.length ? errs.join(' | ') : 'none'));
 console.log(fails ? `\n${fails} FAILING` : '\nALL PASS');

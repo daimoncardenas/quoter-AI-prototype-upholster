@@ -78,6 +78,11 @@ await page.fill('#fabricForm [name=collection]', 'Naturales 2026');
 await page.fill('#fabricForm [name=price]', '97000');
 await page.fill('#fabricForm [name=colorName]', 'Humo');
 await page.fill('#fabricForm [name=tags]', 'Lavable, Antimanchas');
+/* La tela que se crea aquí es un tejido liso: se declara que sus piezas pueden
+ * girar, como antes de que existiera el dato (docs/consumo-direccional.md). Sin
+ * declararlo, el cotizador NO gira y las cuentas de arriba compararían dos telas
+ * distintas (la del pack sí gira). */
+await page.selectOption('#fabricForm [name=cutDirection]', 'free');
 await page.click('#fabricForm button.primary');
 check('backoffice confirms the save', (await page.textContent('#toast')).includes('cotizador'), true);
 
@@ -147,12 +152,13 @@ const linea = await page.evaluate(id => {
   };
 }, quoteId);
 /* La línea de servicio la decide EL NEGOCIO (Upgrade → Configurar mi plan), no el plan: con más de
- * una habilitada el cotizador tiene el paso de la línea como primero, el stepper pasa a 8 y las
- * tarjetas son las que el negocio tiene habilitadas (el catálogo es del producto, así que la
- * esperada se deriva de él, no de un nombre escrito a mano). */
+ * una habilitada el cotizador tiene el paso de la línea como primero, el stepper pasa a 9 —la línea
+ * y su ruta delante de los siete pasos del recorrido— y las tarjetas son las que el negocio tiene
+ * habilitadas (el catálogo es del producto, así que la esperada se deriva de él, no de un nombre
+ * escrito a mano). */
 check('el paso de la línea existe y ofrece las líneas que el negocio tiene habilitadas',
   { paso: linea.paso, dots: linea.dots, habilitadas: linea.habilitadas.map(h => h.id) },
-  { paso: false, dots: 8, habilitadas: client.serviceLines.map(s => s.id) });
+  { paso: false, dots: 9, habilitadas: client.serviceLines.map(s => s.id) });
 /* La línea de servicio con la que se cotizó: el cotizador elige la primera que el negocio tiene
  * habilitada (el negocio manda, no el plan ni el nombre de ninguna línea escrito a mano), y con
  * más de una el paso de la línea es el primero. */
@@ -213,11 +219,14 @@ const estadoFlujo = () => flujo.evaluate(() => ({
 }));
 await flujo.click('#nextButton');
 check('con suministro no hay paso de daños y «Continuar» cae en Medidas',
-  await estadoFlujo(), { paso: 9, visible: 'Paso 3 de 8', dotDanos: false, motivo: 'Suministro de tela' });
+  await estadoFlujo(), { paso: 9, visible: 'Paso 4 de 9', dotDanos: false, motivo: 'Suministro de tela' });
 check('y su estimación es solo material',
   await flujo.evaluate(() => { const e = Store.lineEstimate(Store.serviceById('suministro-tela'), [1000000, 1200000], []); return [e.laborPct, e.total]; }),
   [0, [1000000, 1200000]]);
 await flujo.click('#backButton'); await flujo.waitForSelector('[data-step="1"].active');
+/* Un paso más de vuelta: entre «Medidas» y la línea está la RUTA de la línea (docs/flujo-de-suministro.md),
+ * que para el suministro viene elegida. */
+await flujo.click('#backButton'); await flujo.waitForSelector('[data-step="18"].active');
 await flujo.click('#backButton'); await flujo.waitForSelector('[data-step="0"].active');
 await flujo.click('#serviceGrid .service-choice:has-text("Reparación y restauración")');
 /* Cambiar de línea empieza de cero (docs/cambio-de-linea.md): las fotos que se subieron para

@@ -101,6 +101,15 @@ await fresh('admin.html');
 check('the roll width is gone from the global settings, it belongs to the tela',
   await page.evaluate(() => !!document.getElementById('setRoll')), false);
 await page.click('button[data-page="fabrics"]');
+/* La tela NUEVA nace sin declarar orientación: el default conservador no gira
+ * piezas, y el patrón queda por confirmar (docs/consumo-direccional.md). */
+await page.click('#newFabric');
+check('una tela nueva nace conservadora: sin orientación declarada y con el patrón por confirmar',
+  await page.evaluate(() => {
+    const f = document.getElementById('fabricForm').elements;
+    return [f.cutDirection.value, f.patternMatch.value];
+  }), ['unknown', 'confirm']);
+await page.click('#fabricForm button.close');
 await page.click('[data-edit-fabric="1"]');   // Lino Verona
 check('the tela modal carries its own sale rules',
   await page.evaluate(() => {
@@ -108,6 +117,11 @@ check('the tela modal carries its own sale rules',
     return [f.rollWidthCm.value, f.saleUnit.value, f.incrementM.value,
             f.minOrderM.value, f.supplierMinM.value, f.reusableRemainder.checked];
   }), ['140','metro','0.1','1','0',true]);
+check('y la orientación del corte, que es de la tela y no del mueble',
+  await page.evaluate(() => {
+    const f = document.getElementById('fabricForm').elements;
+    return [f.cutDirection.value, f.patternMatch.value];
+  }), ['free', 'none']);
 await page.fill('#fabricForm [name=incrementM]', '2');
 await page.fill('#fabricForm [name=minOrderM]', '12');
 await page.click('#fabricForm button.primary');
@@ -168,6 +182,11 @@ check('the solicitud carries the whole breakdown',
     const b = Store.get('quotes', id).billing;
     return [b.consumo, b.facturable, b.compra, b.sobrante, b.modelo];
   }, quoteId), [[12.5,14],[14,14],[14,14],[1.5,0],'componentes']);
+check('la solicitud congela con qué motor y con qué orientación se cotizó',
+  await page.evaluate(id => {
+    const q = Store.get('quotes', id);
+    return [q.billing.cutDirection, q.billing.patternMatch, q.estimate.engineVersion];
+  }, quoteId), ['free', 'none', 2]);
 
 // A price list or a sale rule can change tomorrow. What was promised cannot.
 await openAdmin(page, D);

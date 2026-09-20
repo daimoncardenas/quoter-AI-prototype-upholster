@@ -165,7 +165,7 @@ const barra = async (motivo) => {
 };
 const siete = await barra('Suministro de tela');
 const nueve = await barra('Muebles a la medida');
-check('ocho pasos: la barra entra sin scroll', [siete.filas, siete.scroll[0] === siete.scroll[1]], ['8', true]);
+check('nueve pasos (suministro, con su ruta): la barra entra sin scroll', [siete.filas, siete.scroll[0] === siete.scroll[1]], ['9', true]);
 check('diez pasos (el recorrido largo, con la estimación): también entra sin scroll', [nueve.filas, nueve.scroll[0] === nueve.scroll[1]], ['10', true]);
 check('la barra mide lo mismo con siete y con nueve', nueve.barra, siete.barra);
 /* Su hueco arranca en el mismo borde con 1 px de holgura: desde que la línea sin mueble aloja la
@@ -330,7 +330,9 @@ check('el total guardado es, palabra por palabra, el que vio el cliente',
 check('y viaja con su motor, su desglose y su versión de snapshot',
   [guardada.estimate.kind, /Mano de obra/.test(guardada.estimate.parts.map(p=>p.label).join(' | ')),
    guardada.estimate.parts.length >= 2, guardada.estimate.engineVersion],
-  ['tela', true, true, 1]);
+  /* v2 desde la orientación del corte por tela (docs/consumo-direccional.md): se
+   * sube a propósito al cambiar una fórmula, y esta comprobación es la que avisa. */
+  ['tela', true, true, 2]);
 check('la estimación guardada no es el rango de tela que se guardaba antes (era el hallazgo)',
   guardada.estimate.total[0] > guardada.price[0], true);
 check('la solicitud sigue trayendo su rango de tela de siempre (compatibilidad)',
