@@ -52,14 +52,24 @@
 .journey-context>span{text-transform:uppercase;letter-spacing:.13em;font-weight:700;font-size:.62rem;color:var(--muted)}
 .journey-context b{font:600 .95rem var(--font-heading);color:var(--ink)}
 .journey-context .text-button{font-size:.66rem}
+/* El sendero: lo que el cliente ya eligió —el camino, para qué necesita la tela y qué sabe— leído
+ * de un vistazo arriba, al lado del motivo. Cada tramo llega desde el catálogo de la línea. */
+.journey-context .trail{display:inline-flex;align-items:center;gap:2px;flex-wrap:wrap;text-transform:none;letter-spacing:normal}
+.journey-context .trail .crumb{font:600 .72rem var(--font-body);color:var(--ink-2);letter-spacing:.01em}
+/* La flecha va PEGADA a su tramo (con un `+` no se puede quedar sola al final de una línea). */
+.journey-context .trail .crumb+.crumb::before{content:'›';font-weight:400;color:var(--muted);opacity:.75;margin:0 7px}
 .ask-step{max-width:940px}
 .ask-select{display:block;font-size:.72rem;font-weight:700;color:var(--ink);max-width:420px;margin:0 0 18px}
 .ask-select select{width:100%;margin-top:8px;border:1px solid var(--line);background:white;border-radius:2px;padding:14px;font-size:.8rem;min-height:47px;color:var(--text)}
 .boq-rows{display:grid;gap:10px;margin:0 0 16px}
 .boq-row{display:grid;grid-template-columns:1fr 130px 38px;gap:12px;align-items:end}
+/* Los insumos del trabajo: dos columnas (qué se repone · cuánto), sin el botón de quitar de la lista. */
+.insumo-row{grid-template-columns:1fr 150px}
+.insumo-unit{display:block;margin-top:3px;font-weight:400;font-size:.6rem;color:var(--muted)}
 .boq-row label{font-size:.68rem;font-weight:700;color:var(--ink)}
 .boq-row select,.boq-row input{width:100%;margin-top:6px;border:1px solid var(--line);background:white;border-radius:2px;padding:10px;font-size:.78rem;min-height:44px;color:var(--text)}
 .row-x{border:0;background:transparent;color:var(--muted);font-size:1.05rem;cursor:pointer;padding:0 0 12px}
+.boq-row .sin-cantidad small{display:block;margin-top:6px;font-weight:500;font-size:.62rem;color:var(--muted);line-height:1.4}
 .boq-add{margin-top:2px}
 .price-block #priceParts{display:grid;gap:3px;margin:5px 0 6px;text-align:right}
 .price-block #priceParts span{font-size:.58rem;color:var(--tint-quote-preview-caption)}
@@ -285,6 +295,16 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
   .journey[data-rows="10"] .step-list small{font-size:clamp(.47rem,.7vh,.53rem)}
   .journey[data-rows="10"] h1{font-size:clamp(1.24rem,2.25vh,1.85rem);margin-block:clamp(3px,.7vh,7px) clamp(5px,1vh,10px)}
   .journey[data-rows="10"] .help-card{padding-top:clamp(7px,1.3vh,15px)}
+  /* Once filas: el recorrido COMPLETO de «suministro de tela» —sus dos caminos, los tres propósitos,
+   * lo que se sabe y la estimación—. La barra tampoco puede hacer scroll aquí: se aprieta un punto
+   * más que la de diez. */
+  .journey[data-rows="11"] .step-list{--dot:clamp(17px,2.45vh,22px);margin-block:clamp(5px,1.2vh,14px) clamp(5px,1vh,12px)}
+  .journey[data-rows="11"] .step-list li{margin-bottom:clamp(2px,.8vh,8px)}
+  .journey[data-rows="11"] .step-list b{font-size:clamp(.57rem,.78vh,.63rem)}
+  .journey[data-rows="11"] .step-list small{font-size:clamp(.44rem,.66vh,.51rem)}
+  .journey[data-rows="11"] h1{font-size:clamp(1.16rem,2.1vh,1.75rem);margin-block:clamp(3px,.6vh,6px) clamp(4px,.9vh,9px)}
+  .journey[data-rows="11"] .journey-intro p{font-size:clamp(.66rem,.98vh,.76rem);line-height:1.45}
+  .journey[data-rows="11"] .help-card{padding-top:clamp(6px,1.1vh,13px)}
   .journey[data-rows="7"] .help-card,.journey[data-rows="8"] .help-card,.journey[data-rows="9"] .help-card{padding-top:clamp(9px,1.6vh,18px)}
   .journey{padding-block:clamp(14px,3.2vh,46px) clamp(10px,2.2vh,28px)}
   .step-list li{margin-bottom:clamp(5px,2vh,22px)}
@@ -346,15 +366,20 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
         <li data-step-dot="7" data-ask-dot="boq" hidden><span>7</span><div><b></b><small></small></div></li>
         <li data-step-dot="8" data-ask-dot="obra" hidden><span>8</span><div><b></b><small></small></div></li>
         <li data-step-dot="9" data-brain="MEASUREMENTS"><span>2</span><div><b>Medidas</b><small>Datos principales</small></div></li>
+        <li data-step-dot="23" hidden><span>4</span><div><b>Insumos del trabajo</b><small>Lo que se repone</small></div></li>
         <li data-step-dot="10" data-ask-dot="materiales" hidden><span>10</span><div><b></b><small></small></div></li>
         <li data-step-dot="11" data-ask-dot="tapizado" hidden><span>11</span><div><b></b><small></small></div></li>
         <li data-step-dot="12" data-brain="PREFERENCES"><span>3</span><div><b>Preferencias</b><small>Uso y estilo</small></div></li>
         <li data-step-dot="13" data-brain="REVIEW"><span>4</span><div><b>Validación</b><small>Revisión previa</small></div></li>
         <li data-step-dot="14" data-brain="RECOMMENDATION"><span>5</span><div><b>Recomendación</b><small>Telas sugeridas</small></div></li>
-        <!-- La ruta de la línea (catálogo: `rutas`) y su paso corto: la compra directa del que ya
-             sabe la referencia y los metros: sin mueble, sin medidas, sin fotos, sin recomendación. -->
-        <li data-step-dot="18" hidden><span>1</span><div><b>¿Qué necesitas?</b><small>El camino</small></div></li>
-        <li data-step-dot="19" hidden><span>2</span><div><b>Tu referencia y cantidad</b><small>Metros o rollos</small></div></li>
+        <!-- La ruta de la línea (catálogo: `rutas`) y sus pasos cortos: la compra del que ya sabe la
+             referencia y cuánto necesita —una tela o varias— y el faltante de un pedido anterior, sin
+             mueble, sin medidas, sin fotos, sin recomendación. -->
+        <li data-step-dot="18" hidden><span>1</span><div><b>¿Qué quieres hacer?</b><small>El camino</small></div></li>
+        <li data-step-dot="22" hidden><span>2</span><div><b>¿Para qué?</b><small>Tu propósito</small></div></li>
+        <li data-step-dot="23" hidden><span>3</span><div><b>¿Qué sabes?</b><small>Tela y cantidad</small></div></li>
+        <li data-step-dot="21" hidden><span>2</span><div><b>Tu pedido anterior</b><small>Buscar y continuar</small></div></li>
+        <li data-step-dot="20" hidden><span>2</span><div><b>Tu compra</b><small>Referencias y cantidades</small></div></li>
         <li data-step-dot="16" data-brain="ESTIMATE"><span>6</span><div><b id="estimateDotLabel">Estimación</b><small>Tu precio hoy</small></div></li>
         <li data-step-dot="15" data-brain="CONTACT"><span>6</span><div><b>Tu pre-cotización</b><small>Datos de contacto</small></div></li>
       </ol>
@@ -387,6 +412,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       <div class="journey-context" id="journeyContext" hidden>
         <span>Motivo</span>
         <b id="journeyContextLabel"></b>
+        <span class="trail" id="journeyTrail" hidden></span>
         <button type="button" class="text-button" id="journeyContextChange">cambiar</button>
       </div>
       <div class="mobile-progress" aria-live="polite">
@@ -419,22 +445,69 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
           <p class="field-error" id="routeError" hidden></p>
         </section>
 
-        <!-- La ruta corta: la referencia del catálogo y la cantidad. La unidad la pone la tela
-             (metros, o rollos si se vende por rollo completo) y las reglas comerciales se aplican
-             solas. Sin mueble, sin medidas, sin fotos, sin recomendación. -->
-        <section class="wizard-step" data-step="19" id="directStep" data-ruta="directa">
+        <!-- Lo que se pregunta al entrar (diagrama del dueño, 20/09): PARA QUÉ se necesita la tela.
+             «Reventa o inventario» va directo a la lista de referencias y cantidades; los otros dos
+             propósitos preguntan después qué se sabe (paso 23). -->
+        <section class="wizard-step" data-step="22" id="purposeStep" data-brain="PROPOSITO">
           <div class="step-heading">
             <span class="eyebrow">Tu compra</span>
-            <h2>¿Qué referencia y cuánta cantidad?</h2>
-            <p>Elige la tela y dime cuántos metros necesitas. Los mínimos, los incrementos y el rollo completo se aplican solos, y un asesor confirma antes de cortar.</p>
+            <h2>¿Para qué necesitas la tela?</h2>
+            <p>Según para qué sea, el recorrido cambia: no te preguntamos lo que no hace falta.</p>
           </div>
-          <div class="fabric-grid" id="directGrid"></div>
+          <div class="service-grid" role="radiogroup" aria-label="Para qué necesitas la tela" id="purposeGrid"></div>
+          <p class="field-error" id="purposeError" hidden></p>
+        </section>
+
+        <!-- Y si el propósito lo pide: qué se sabe de la tela y de la cantidad — compra directa,
+             recomendación o el cálculo del trabajo. Las opciones salen del propósito elegido. -->
+        <section class="wizard-step" data-step="23" id="saberStep" data-brain="SABER">
+          <div class="step-heading">
+            <span class="eyebrow">Tu compra</span>
+            <h2>¿Conoces tela y cantidad?</h2>
+            <p>Con lo que ya sepas, te llevamos por el camino más corto.</p>
+          </div>
+          <div class="service-grid" role="radiogroup" aria-label="Conoces tela y cantidad" id="saberGrid"></div>
+          <p class="field-error" id="saberError" hidden></p>
+        </section>
+
+        <!-- La rutas con la cantidad declarada (catálogo: `rutas`): «compra con referencia y cantidad»
+             —una tela o varias, cada fila con su unidad— y «completar pedido». La unidad la pone la
+             tela de la fila (metros, o rollos si se vende por rollo completo) y las reglas
+             comerciales se aplican solas. Sin mueble, sin medidas, sin fotos, sin recomendación. -->
+        <!-- Un solo paso para la cantidad declarada, con una tela o con veinte: la lista (más abajo).
+             Nada de mueble, medidas, fotos ni recomendación en las ramas cortas. -->
+
+        <!-- Completar pedido: se busca la solicitud anterior en este navegador (o la busca un asesor
+             en el sistema) y su referencia se trae a la lista para escribir el faltante. Va ANTES de
+             la lista porque es lo que se pregunta primero en esa ruta (el orden del flujo es el
+             orden del documento). -->
+        <section class="wizard-step" data-step="21" id="pedidoStep" data-brain="ORDER">
+          <div class="step-heading">
+            <span class="eyebrow">Tu pedido anterior</span>
+            <h2>¿Qué pedido vas a completar?</h2>
+            <p>Escribe el número de la solicitud (por ejemplo COT-1042) o la referencia, y traemos lo que llevaba para que le agregues el faltante.</p>
+          </div>
           <div class="select-grid">
-            <label id="directQtyLabel">Cantidad <span class="unit" id="directUnit">m</span>
-              <input type="number" id="directQty" min="0.1" step="0.1" placeholder="Ej. 22" inputmode="decimal">
-            </label>
+            <label>Número o referencia<input type="text" id="pedidoBusca" maxlength="40" placeholder="Ej. COT-1042"></label>
           </div>
-          <p class="field-error" id="directError" hidden>Escribe cuánta tela necesitas para calcular tu estimación.</p>
+          <button type="button" class="secondary-button" id="pedidoBuscar">Buscar el pedido</button>
+          <p class="field-error" id="pedidoError" hidden>No encontramos esa solicitud en este navegador. Un asesor la busca en el sistema y te dice qué lote hay.</p>
+          <div class="notice" id="pedidoHallado" hidden><span>i</span><p id="pedidoHalladoTexto"></p></div>
+          <p class="modal-hint">El lote y la continuidad del color los confirma un asesor: si no está el mismo lote, te propone la alternativa.</p>
+        </section>
+
+        <!-- La lista de compra: la MISMA para una tela o para veinte («compra con referencia y
+             cantidad») y para el faltante de un pedido anterior. Cada fila pasa por SU regla
+             comercial (mínimo, incremento, rollo) y por su propia disponibilidad. -->
+        <section class="wizard-step" data-step="20" id="listStep" data-brain="LIST">
+          <div class="step-heading">
+            <span class="eyebrow">Tu compra</span>
+            <h2>¿Qué referencias y cuántas?</h2>
+            <p>Una fila por referencia; si es una sola tela, llena una fila. Los mínimos, los incrementos y el rollo completo se aplican solos, y un asesor confirma disponibilidad y lote antes de cortar.</p>
+          </div>
+          <div class="boq-rows" id="listRows" data-rows></div>
+          <button type="button" class="secondary-button boq-add" id="listAdd">+ Agregar referencia</button>
+          <p class="field-error" id="listError" hidden>Agrega al menos una referencia con su cantidad para calcular tu estimación.</p>
         </section>
         <section class="wizard-step active" data-step="1" data-brain="FURNITURE">
           <div class="step-heading">
@@ -516,6 +589,19 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
         <section class="wizard-step" data-step="10" data-ask="materiales"><div class="ask-step" data-ask-body="materiales"></div></section>
         <section class="wizard-step" data-step="11" data-ask="tapizado"><div class="ask-step" data-ask-body="tapizado"></div></section>
+
+        <!-- Los INSUMOS del trabajo (docs/retapizado-trabajo.md): paso propio y sólo para las líneas
+             que los piden (`asks:["insumos"]`). La cantidad vacía significa que ese insumo no se
+             cambia; lo marcado se congela con su precio en la solicitud. -->
+        <section class="wizard-step" data-step="17" id="insumoStep" data-brain="INSUMOS">
+          <div class="step-heading">
+            <span class="eyebrow">Lo que se repone</span>
+            <h2>¿Qué se le cambia por dentro?</h2>
+            <p>Además de la tela, el taller repone rellenos y menudos. Escribe la cantidad de lo que se cambia y deja en blanco lo que esté bien.</p>
+          </div>
+          <div class="boq-rows insumo-rows" id="insumoRows" data-rows></div>
+          <p class="modal-hint">Los precios los pone el taller en su lista; un asesor confirma lo que se cambia al revisar el mueble.</p>
+        </section>
 
         <section class="wizard-step" data-step="12" data-brain="PREFERENCES">
           <div class="step-heading">
@@ -691,7 +777,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 {{ASSISTANT_BRAIN_SCRIPT}}
 {{ASSISTANT_FENCE_SCRIPT}}
   <script>
-const state={step:1,furniture:'Sofá',furnitureNote:'',photos:[],analyzed:false,fabric:null,fabricTouched:false,service:null,damages:[],ruta:null};
+const state={step:1,furniture:'Sofá',furnitureNote:'',photos:[],analyzed:false,fabric:null,fabricTouched:false,service:null,damages:[],ruta:null,proposito:null,saber:null};
 /* Con lo que nace el cotizador: cambiar de línea devuelve el mueble a este valor (y a la primera
  * tarjeta, que es la que renderFurnitureOptions marca) — el paquete puede no llamarlo «Sofá». */
 const FURNITURE_INICIAL=state.furniture;
@@ -708,7 +794,9 @@ const money=n=>Store.money(n);
  * le mostró al cliente y esta marca dice con qué motor se calculó. Súbela al cambiar una fórmula. */
 /* v2: la orientación de las piezas depende de la tela (`cutDirection`), así que
  * la misma entrada puede dar otro número que en v1 — ver docs/consumo-direccional.md. */
-const ESTIMATE_ENGINE_VERSION=2;
+/* v3: la mano de obra de las líneas de trabajo puede venir POR MUEBLE + POR METRO en vez del % del
+ * material, y los insumos del trabajo se suman — ver docs/retapizado-trabajo.md. */
+const ESTIMATE_ENGINE_VERSION=3;
 // Furniture types, their consumption rules and their plausible measurement
 // ranges are all defined in the backoffice; nothing about them lives here.
 let furnitureRules={},measureRanges={};
@@ -931,6 +1019,7 @@ function showStep(n){
   barra.hidden=!(state.service&&n!==0&&!state.submitted);
   document.getElementById('journeyContextChange').hidden=!hasServiceStep;
   document.querySelector('.workspace').classList.toggle('has-context',!barra.hidden);
+  pintarElSendero();
   document.getElementById('stepHint').textContent=n===0?'Elige una línea para empezar':n===ultimo?'Recibirás una copia en tu correo':'Puedes modificar tus respuestas en cualquier momento';
   const idPaso=ACI.stepId(n); if(idPaso==='REVIEW')renderReviewSummary(); if(idPaso==='RECOMMENDATION'){renderFabrics();recomendarConIA()} if(idPaso==='CONTACT')updateSummary(); ACI.emit('STEP_CHANGED',{step:n,id:idPaso,name:nameFor(n)}); const pane=steps.find(x=>x.classList.contains('active'));
   if(pane&&pane.scrollHeight>pane.clientHeight)pane.scrollTo({top:0,behavior:'smooth'});else window.scrollTo({top:0,behavior:'smooth'});
@@ -1217,12 +1306,26 @@ function validStep(){
   if(state.step===2){
     if(!damageIds().length){
       decirError(damageError,damageError.textContent,'damageGrid');document.getElementById('damageGrid').scrollIntoView({behavior:'smooth',block:'center'});return false}}
-  /* La ruta corta no avanza sin cantidad: sin ella no hay nada que cotizar (y el paso lo dice). */
-  if(state.step===19&&!cantidadDeclarada()){
-    const err=document.getElementById('directError');
-    decirError(err,err.textContent,'directQty');
-    document.getElementById('directQty').focus({preventScroll:true});
+  /* La lista no avanza sin lo que esa intención necesita: la cantidad —o, si la tela se conoce y la
+   * cantidad la calcula el motor, la referencia—. */
+  if(state.step===20&&!((esIntencionTela()?filasDeLaLista().length:leerLaLista().length))){
+    const err=document.getElementById('listError');
+    err.textContent=esIntencionTela()
+      ?'Elige la tela para calcular cuántos metros necesita tu mueble.'
+      :'Agrega al menos una referencia con su cantidad para calcular tu estimación.';
+    decirError(err,err.textContent,'listRows');
     err.scrollIntoView({behavior:'smooth',block:'center'});return false}
+  /* El pedido anterior no avanza sin decir CUÁL: sin número ni referencia el asesor no tiene qué
+   * buscar y el faltante queda sin base. No se exige que aparezca aquí —el que no está en este
+   * navegador lo busca un asesor— pero sí que se diga cuál es. */
+  if(state.step===21){
+    const busca=document.getElementById('pedidoBusca');
+    const dicho=String((busca&&busca.value)||'').trim();
+    if(!dicho){
+      const err=document.getElementById('pedidoError');
+      decirError(err,'Escribe el número de la solicitud o la referencia del pedido que vas a completar.','pedidoBusca');
+      if(busca)busca.scrollIntoView({behavior:'smooth',block:'center'});return false}
+  }
   const idPaso=ACI.stepId(state.step);
   if(idPaso==='MEASUREMENTS'){
     /* Nada de burbujas del navegador (salen en el idioma del sistema y sin su voz): cada tropiezo
@@ -1351,7 +1454,7 @@ function declaredRows(){
     rows.push(['Estilo y color',`${document.getElementById('style').value} · ${document.getElementById('color').value}`]);
   }
   /* Las fotos son la excepción declarada —se piden en todas las líneas— salvo que la RUTA las deje
-   * fuera: la compra directa llega con la referencia y los metros. */
+   * fuera: las rutas de la cantidad declarada llegan con la tela y los metros. */
   if(pideFotos())rows.push(['Fotografías',`${state.photos.length} adjunta${state.photos.length===1?'':'s'}`]);
   (()=>{const b=presupuestoDeclarado();
     rows.push(['Presupuesto',b.declared?`Hasta ${money(b.amount)} ${b.unitLabel}`:'Sin tope declarado']);})();
@@ -1843,13 +1946,23 @@ const rangoM=(a,b)=>{const [x,y]=[+a,+b].sort((m,n)=>m-n);return x===y?fmtM(x):`
  * sobrante vuelve al inventario. Cuando los dos números no coinciden hay que
  * decir por qué, no cobrar de más en silencio. */
 function billable(){
-  /* La cantidad puede venir DECLARADA (la ruta corta: el cliente dice cuántos metros necesita) o
-   * CALCULADA (el motor estima el consumo del mueble). Declarada no lleva el alza del taller:
-   * desperdicio y margen son de lo que se calcula, no de lo que el cliente ya sabe. */
-  const decl=cantidadDeclarada();
-  const c=decl?{range:[decl.valor,decl.valor],modelo:'declarada',tecnico:null,rollWidthCm:null,
-                piezas:0,declarada:decl,cutDirection:null,patternMatch:null}
-              :consumo();
+  /* La cantidad puede venir DECLARADA en la lista (la ruta corta: el cliente dice cuántos metros o
+   * rollos necesita) o CALCULADA (el motor estima el consumo del mueble). Declarada no lleva el alza
+   * del taller: desperdicio y margen son de lo que se calcula, no de lo que el cliente ya sabe. */
+  if(esRutaLista()){
+    /* La LISTA: N referencias × su cantidad —o los metros que calculó el motor con el mueble— cada
+     * una con SU regla comercial (Store.quantities). El total es la suma, y solo cuando está
+     * completo: si falta elegir la tela el valor se queda por confirmar, no se inventa. */
+    const filas=valorDeLaLista();
+    const declarado=filas.reduce((s,f)=>s+f.declarado,0);
+    const facturable=filas.reduce((s,f)=>s+f.facturable,0);
+    const completo=filas.length>0&&filas.every(f=>!f.sinTela&&!f.sinCalcular);
+    return {min:declarado,max:declarado,facMin:facturable,facMax:facturable,razones:[],
+            consumo:{range:[declarado,declarado],modelo:'lista',tecnico:null,rollWidthCm:null,
+                     piezas:filas.length,declarada:null,cutDirection:null,patternMatch:null},
+            lista:filas,total:completo?filas.reduce((s,f)=>s+f.valorTotal[1],0):null};
+  }
+  const c=consumo();
   const [min,max]=c.range;
   if(!state.fabric)return {min,max,facMin:min,facMax:max,razones:[],consumo:c};
   const a=Store.quantities(state.fabric,min),b=Store.quantities(state.fabric,max);
@@ -1871,18 +1984,35 @@ const rangoPreliminar=(lo,hi)=>{lo=Math.round(lo);hi=Math.round(hi);
   return [lo<hi?lo:hi,hi>lo?hi:lo]};
 function linePrice(q){
   if(!state.service)return null;
+  const rango=r=>{const [a,b]=rangoPreliminar(r[0],r[1]);return a===b?money(a):`${money(a)} – ${money(b)}`};
+  /* Una LISTA no pasa por Store.lineQuote: no hay un oficio que reparta un solo material. Cada fila
+   * ya trae su valor con su propia regla comercial, y el total es la suma. */
+  if(q.lista){
+    /* Sin tela elegida (o sin cantidad) todavía no hay cifra: el paso lo dice en vez de inventarla. */
+    if(q.total==null)return {kind:'lista',totalText:'Por confirmar',total:[0,0],
+      parts:q.lista.map(f=>({label:`${f.name}${f.colorName?' · '+f.colorName:''}`,value:[0,0]})),
+      partTexts:q.lista.map(f=>({label:`${f.name}${f.colorName?' · '+f.colorName:''}`,text:'Por confirmar'}))};
+    const total=q.lista.reduce((s,f)=>s+f.valorTotal[1],0);
+    const quote={kind:'lista',parts:q.lista.map(f=>({label:`${f.name}${f.colorName?' · '+f.colorName:''}`,value:f.valorTotal})),
+                 total:[total,total]};
+    return {...quote,partTexts:quote.parts.map(p=>({label:p.label,text:rango(p.value)})),totalText:rango(quote.total)};
+  }
   const base=state.fabric?[q.facMin*state.fabric.price,q.facMax*state.fabric.price]:[0,0];
   const answers=allAnswers();
   const quote=Store.lineQuote(state.service,{
     furnitureId:(Store.furnitureByName(state.furniture)||{}).id,
+    furnitureName:state.furniture,
     quantity:+seatsSelect.value||1,
     materialRange:base,
+    /* Los metros del consumo: la obra por tabla se cobra por mueble + por metro de tela
+     * (docs/retapizado-trabajo.md); el modo de siempre no los mira. */
+    meters:[+q.facMin||0,+q.facMax||0],
+    insumos:insumosMarcados(),
     fabricPerM2:state.fabric&&state.fabric.rollWidthCm?state.fabric.price/(state.fabric.rollWidthCm/100):0,
     damages:damageIds(),
     answers:answers,
     boq:answers.rows||[]
   });
-  const rango=r=>{const [a,b]=rangoPreliminar(r[0],r[1]);return a===b?money(a):`${money(a)} – ${money(b)}`};
   return {...quote,partTexts:quote.parts.map(p=>({label:p.label,text:rango(p.value)})),totalText:rango(quote.total)};
 }
 /* La copia del motivo elegido, en los huecos del formulario: los textos vienen resueltos desde el
@@ -2024,6 +2154,9 @@ function estimateAssumptions(q){
   return out;
 }
 function updateEstimate(){
+  /* Una lista se pinta sola: una línea por referencia con sus metros facturables y su valor, y el
+   * total. No pasa por el reparto del oficio (ver linePrice). */
+  if(esRutaLista()){sincronizarFilasConLaTela();pintarLaLista();return}
   const q=billable();
   document.getElementById('metersRange').textContent=rangoM(q.facMin,q.facMax);
   const p=linePrice(q);
@@ -2068,7 +2201,9 @@ function furnitureSummaryLabel(){
 function updateSummary(){
   document.getElementById('summaryFurniture').textContent=furnitureSummaryLabel();
   document.getElementById('summaryMeasures').textContent=`${document.getElementById('width').value} × ${document.getElementById('height').value} × ${document.getElementById('depth').value} cm`;
-  document.getElementById('summaryFabric').textContent=state.fabric?`${state.fabric.name} · ${state.fabric.colorName}`:'Por confirmar';
+  document.getElementById('summaryFabric').textContent=esRutaLista()
+    ?(()=>{const n=leerLaLista().length;return n?`${n} ${n===1?'referencia':'referencias'}`:'Por confirmar'})()
+    :(state.fabric?`${state.fabric.name} · ${state.fabric.colorName}`:'Por confirmar');
   document.getElementById('summaryService').textContent=state.service?state.service.label:'—';
   const q=billable();
   document.getElementById('summaryConsumo').textContent=`${rangoM(q.min,q.max)} m`;
@@ -2121,6 +2256,9 @@ async function submitQuote(){
    * segundo cálculo paralelo. */
   const mostrado=linePrice(q);
   const entradas=estimateInputs(q);
+  /* La lista viaja a la solicitud tal como se declaró: cada referencia con sus metros. */
+  if(q.lista)entradas.lista=q.lista.map(f=>({fabricId:f.fabricId,declarado:f.declarado,
+                                            facturable:f.facturable,price:f.price}));
   const estimate=mostrado?{
     kind:mostrado.kind||null,
     engineVersion:ESTIMATE_ENGINE_VERSION,
@@ -2135,8 +2273,10 @@ async function submitQuote(){
     /* La ruta por la que entró la solicitud (docs/flujo-de-suministro.md) y, cuando la cantidad la
      * declaró el cliente, con qué la declaró: los rollos se guardan como metros y con su cuenta. */
     ruta:state.ruta||null,
-    cantidadDeclarada:(()=>{const d=cantidadDeclarada();
-      return d?{valor:d.valor,unidad:d.unidad,rollos:d.rollos,rollLengthM:d.rollLengthM}:null})(),
+    /* PARA QUÉ necesita la tela y QUÉ sabía: lo que la empresa necesita saber de cada caso cuando
+     * habilita la línea (ruta → propósito → saber, los tres congelados con su etiqueta). */
+    proposito:propositoActual()?{id:propositoActual().id,label:propositoActual().label}:null,
+    saber:saberActual()?{id:saberActual().id,label:saberActual().label}:null,
     entrega:(()=>{const f=document.getElementById('entregaField');
       return f&&!f.hidden?document.getElementById('entrega').value:null})(),
     customer:{name:document.getElementById('fullName').value.trim(),
@@ -2155,12 +2295,24 @@ async function submitQuote(){
     colorRange:document.getElementById('color').value,
     budget:+document.getElementById('budget').value||null,
     damages:damageIds(),
+    /* Los insumos del trabajo, congelados con su precio del día: una solicitud vieja sigue diciendo
+     * lo que se le mostró (docs/retapizado-trabajo.md). */
+    insumos:insumosMarcados(),
     city,servicePointId,
     /* La atención declarada, tal cual la leyó el cliente (docs/punto-de-atencion.md). */
     customerCity:atencionDeclarada().customerCity,serviceCity:atencionDeclarada().serviceCity,
     fabricId:state.fabric?state.fabric.id:null,
     fabricName:state.fabric?`${state.fabric.name} · ${state.fabric.colorName}`:'',
     meters:[min,max],
+    /* La lista de la compra con cantidad declarada (una tela o varias, y el faltante de un pedido):
+     * cada referencia con SU regla comercial y su valor, congelados con la solicitud. La
+     * disponibilidad y el lote no se congelan porque nadie los declaró: los confirma un asesor. */
+    lista:q.lista?q.lista.map(f=>({fabricId:f.fabricId,fabricName:f.sinTela?'':`${f.name} · ${f.colorName}`,
+      valor:f.valor,unidad:f.unidad,rollos:f.rollos,rollLengthM:f.rollLengthM,
+      declarado:f.declarado,facturable:f.facturable,compra:f.compra,sobrante:f.sobrante,
+      price:f.price,valorTotal:[f.valorTotal[0],f.valorTotal[1]],
+      sinTela:f.sinTela,porCalculo:f.porCalculo})):null,
+    pedidoDe:pedidoBase?{id:pedidoBase.id,fabricName:pedidoBase.fabricName}:null,
     /* Congelado a propósito: si mañana cambian el precio o la forma de venta de
      * la tela, esta solicitud tiene que seguir diciendo lo que se le prometió
      * al cliente. Lo vigente se recalcula, lo cotizado no. */
@@ -2490,7 +2642,7 @@ function renderCities(){
  * el backoffice y `Store.servicesEnabled()` es lo que este paso pregunta. */
 const serviceOptions=Store.servicesEnabled();
 const hasServiceStep=serviceOptions.length>1;
-if(serviceOptions.length===1){state.service=serviceOptions[0];applyLineCopy();aplicarRutaPorDefecto();}
+if(serviceOptions.length===1){state.service=serviceOptions[0];applyLineCopy();aplicarRutaPorDefecto();aplicarPropositoPorDefecto();}
 /* Los pasos que pide un motivo (`asks`) y los que se salta (`skips`), los dos declarados por línea
  * en el catálogo: el mismo cotizador sirve para los ocho oficios sin un caso especial por motivo.
  * `skippedSteps` es lo que showStep cuenta para numerar y la navegación recorre esa lista. */
@@ -2498,6 +2650,39 @@ const skippedSteps=new Set();
 const asksLine=()=>((state.service&&state.service.asks)||[]);
 const skipsLine=()=>((state.service&&state.service.skips)||[]);
 const asksDamage=()=>asksLine().indexOf('danos')>=0;
+/* Los INSUMOS del trabajo (docs/retapizado-trabajo.md): la línea los declara en el catálogo, su paso
+ * los pregunta y la estimación los suma con el precio declarado. Cantidad vacía = no se cambia nada;
+ * lo que se marca viaja CONGELADO con su precio en la solicitud. Van declaradas como funciones —y no
+ * como flechas— porque `linePrice` las llama antes de que el script llegue hasta aquí. */
+function asksInsumos(){return asksLine().indexOf('insumos')>=0}
+function insumosDeLaLinea(){return (state.service&&state.service.insumos)||[]}
+function insumosMarcados(){
+  return insumosDeLaLinea().map(x=>{
+    const el=document.querySelector(`#insumoRows [data-insumo="${x.id}"]`);
+    return {id:x.id,label:x.label,unit:x.unit,cop:x.cop,qty:el?Math.max(0,+el.value||0):0};
+  }).filter(x=>x.qty>0);
+}
+function pintarInsumos(){
+  const caja=document.getElementById('insumoRows');if(!caja)return;
+  const lista=insumosDeLaLinea();
+  const previos={};
+  caja.querySelectorAll('[data-insumo]').forEach(el=>{previos[el.dataset.insumo]=el.value});
+  caja.innerHTML='';
+  lista.forEach(x=>{
+    const fila=document.createElement('div');fila.className='boq-row insumo-row';
+    const rotulo=document.createElement('label');rotulo.textContent=x.label;
+    const nota=document.createElement('small');nota.className='insumo-unit';
+    nota.textContent=(x.unit?'por '+x.unit+' · ':'')+Store.money(x.cop);
+    rotulo.appendChild(nota);
+    const campo=document.createElement('label');campo.textContent='Cantidad';
+    const inp=document.createElement('input');inp.type='number';inp.min='0';inp.step='1';
+    inp.placeholder='—';inp.value=previos[x.id]||'';inp.dataset.insumo=x.id;
+    inp.addEventListener('input',()=>updateEstimate());
+    campo.appendChild(inp);
+    fila.appendChild(rotulo);fila.appendChild(campo);
+    caja.appendChild(fila);
+  });
+}
 /* Los daños marcados se leen vivos del DOM: el paso los pinta una vez y nadie más tiene que
  * mantener una copia en `state` que se pueda desincronizar. */
 const damageIds=()=>[...document.querySelectorAll('#damageGrid input:checked')].map(x=>x.value);
@@ -2577,8 +2762,9 @@ const allAnswers=()=>Object.assign({},...asksLine().filter(a=>a!=='danos').map(a
  * require and analize»). El bloque de subida vive en «Tu mueble»; en las líneas que no preguntan
  * mueble —hoy, tapicería arquitectónica— se muda al primer paso visible, con su propia copia. */
 function pasoAnfitrionDeLaSubida(){
-  /* La compra directa no pide fotos: llega con la referencia y los metros. Sin anfitrión, el
-   * bloque de subida se esconde y `validStep` no exige ninguna (docs/flujo-de-suministro.md). */
+  /* Las rutas con la cantidad declarada no piden fotos: llegan con la tela y los metros. Sin
+   * anfitrión, el bloque de subida se esconde y `validStep` no exige ninguna
+   * (docs/flujo-de-suministro.md). */
   if(!pideFotos())return null;
   const pasoMueble=steps.find(s=>(s.dataset.brain||'')==='FURNITURE');
   if(pasoMueble&&!skippedSteps.has(+pasoMueble.dataset.step))return pasoMueble;
@@ -2633,10 +2819,18 @@ function applyOptionalSteps(){
   /* La ruta solo pregunta cuando la línea declara más de una; sin rutas NO existen ni la pregunta ni
    * su paso corto (la referencia y la cantidad). Con una sola ruta tampoco: el recorrido de la línea
    * es el suyo. */
-  const saltos=skipsLine().concat(skipsRuta());
-  if(!hayRutaStep()){skippedSteps.add(18);skippedSteps.add(19);}
-  else if(state.ruta!=='directa')skippedSteps.add(19);
+  const saltos=skipsLine().concat(skipsRuta()).concat(skipsProposito()).concat(skipsSaber());
+  /* La ruta y sus dos preguntas —y la lista y el pedido, que son de los caminos cortos— solo existen
+   * cuando la línea declara sus rutas. Sin rutas, la línea es su recorrido de siempre. */
+  if(!hayRutaStep()){skippedSteps.add(18);skippedSteps.add(22);skippedSteps.add(23);
+    skippedSteps.add(20);skippedSteps.add(21);}
+  else{
+    if(!hayPropositoStep())skippedSteps.add(22);
+    if(!haySaberStep())skippedSteps.add(23);
+  }
   if(!asksDamage())skippedSteps.add(2);
+  /* Los insumos son del TRABAJO: sin ellos el paso no existe y el stepper no lo cuenta. */
+  if(!asksInsumos())skippedSteps.add(17);
   /* Los saltos del motivo y los de la ruta elegida hablan el mismo idioma (furniture, measurements,
    * preferences, review, recommendation…): una ruta nueva es una lista más, no un caso especial. */
   steps.forEach(s=>{
@@ -2656,9 +2850,14 @@ function applyOptionalSteps(){
     const spec=li.dataset.askDot?Store.askSpec(li.dataset.askDot):null;
     if(spec){li.querySelector('b').textContent=spec.eyebrow;li.querySelector('small').textContent=spec.title;}
   });
-  buildDamageGrid();renderAskSteps();reubicarLaSubida();aplicarElEscogedor();
-  /* La ruta y su paso corto, y la entrega (que solo pregunta una línea con rutas). */
-  if(hayRutaStep()){renderRouteOptions();if(state.ruta==='directa'){renderDirectPick();aplicarUnidadDeLaCantidad()}}
+  buildDamageGrid();renderAskSteps();pintarInsumos();reubicarLaSubida();aplicarElEscogedor();
+  /* La ruta, sus dos preguntas (para qué y qué se sabe) y su paso de la lista —que trae la
+   * referencia del pedido anterior cuando se está completando uno—, y la entrega (que solo pregunta
+   * una línea con rutas). */
+  if(hayRutaStep()){renderRouteOptions();
+    if(hayPropositoStep())renderPurposeOptions();
+    if(haySaberStep())renderSaberOptions();
+    if(esRutaLista())pintarFilasDeLaLista();}
   const ef=document.getElementById('entregaField');if(ef)ef.hidden=!hayRutaStep();
 }
 /* ------------------------------------------------------------------ volver a cero --
@@ -2682,9 +2881,13 @@ function resetProjectForLine(){
   // 1 · lo declarado, al punto de partida (los valores con los que nace el cotizador)
   state.furniture=FURNITURE_INICIAL;state.furnitureNote='';state.photos=[];state.analyzed=false;state.review=null;
   state.fabric=null;state.fabricTouched=false;state.damages=[];
-  /* La ruta vuelve a la que la línea trae por defecto: la cantidad declarada y la entrega las
-   * devuelve el barrido de campos de abajo (son del proyecto, no de la persona). */
-  state.ruta=null;aplicarRutaPorDefecto();
+  /* La ruta y sus dos preguntas vuelven a las que la línea trae por defecto: la cantidad declarada y
+   * la entrega las devuelve el barrido de campos de abajo (son del proyecto, no de la persona). */
+  state.ruta=null;state.proposito=null;state.saber=null;aplicarRutaPorDefecto();aplicarPropositoPorDefecto();
+  /* La lista y el pedido anterior tampoco viajan de una línea a otra (son del proyecto). */
+  pedidoBase=null;
+  const filasDeLaLista=document.getElementById('listRows');if(filasDeLaLista)filasDeLaLista.innerHTML='';
+  const hallado=document.getElementById('pedidoHallado');if(hallado)hallado.hidden=true;
   ordenDeLaIA=null;recomendandoIA=false;
   // 2 · los campos del formulario: al valor con el que el cliente los encontró
   document.querySelectorAll('.wizard-step input, .wizard-step select, .wizard-step textarea').forEach(el=>{
@@ -2729,14 +2932,51 @@ const rutasLine=()=>((state.service&&state.service.rutas)||[]);
 const rutaActual=()=>rutasLine().filter(r=>r.id===state.ruta)[0]||rutasLine()[0]||null;
 const skipsRuta=()=>((rutaActual()||{}).skips||[]);
 const hayRutaStep=()=>rutasLine().length>1;
-/* Las fotos son la excepción declarada (se piden en todas las líneas), y una ruta puede pedir lo
- * contrario: la compra directa llega con la referencia y los metros — fotografiar un mueble que
- * nadie va a describir no le pregunta nada a nadie. */
-const pideFotos=()=>skipsRuta().indexOf('photos')<0;
+/* Las fotos son la excepción declarada (se piden en todas las líneas), y un camino puede pedir lo
+ * contrario: la compra directa llega con la tela y los metros — fotografiar un mueble que nadie va a
+ * describir no le pregunta nada a nadie. El propósito y lo que se sabe mandan igual: el que sabe la
+ * tela pero no la cantidad SÍ describe su mueble, y el que sabe las dos no. */
+const pideFotos=()=>skipsRuta().indexOf('photos')<0&&skipsProposito().indexOf('photos')<0
+                 &&skipsSaber().indexOf('photos')<0;
 function aplicarRutaPorDefecto(){
   const rutas=rutasLine();
   if(!rutas.length){state.ruta=null;return}
   if(!rutas.some(r=>r.id===state.ruta))state.ruta=rutas[0].id;
+}
+/* EL SENDERO — lo que el cliente ya eligió, en orden, para que se lea de un vistazo por dónde va
+ * sin volver atrás: el camino, para qué necesita la tela, qué sabe, el mueble, sus preferencias, la
+ * tela que eligió y cómo quiere recibirla. Cada tramo sale del CATÁLOGO de la línea (agnóstico,
+ * como las rutas) y sólo aparece lo que de verdad se preguntó y ya pasó: en «reventa» no hay
+ * pregunta de saber y el sendero no la inventa. */
+const pasoDeBrain=brain=>{const s=steps.filter(x=>(x.dataset.brain||'')===brain)[0];return s?+s.dataset.step:null};
+const yaVisitado=brain=>{
+  const pasos=pasosVisibles(),i=pasos.indexOf(pasoDeBrain(brain)),j=pasos.indexOf(state.step);
+  return i>=0&&j>=0&&j>=i;
+};
+const textoDeSelect=id=>{const el=document.getElementById(id);if(!el||!el.selectedOptions.length)return '';
+  return (el.selectedOptions[0].textContent||'').trim()};
+function pintarElSendero(){
+  const caja=document.getElementById('journeyTrail');if(!caja)return;
+  const rotulo=(lista,id)=>{const o=(lista||[]).filter(x=>x.id===id)[0];return o?String(o.label||''):''};
+  const tramos=[];
+  if(hayRutaStep())tramos.push(rotulo(rutasLine(),state.ruta));
+  if(hayPropositoStep())tramos.push(rotulo(propositosRuta(),state.proposito));
+  if(haySaberStep())tramos.push(rotulo(saberesDelProposito(),state.saber));
+  /* Lo que sigue ya no es el camino sino el proyecto: el mueble, para qué uso y de qué estilo —lo
+   * que el paso llama preferencias— y la tela, cuando la eligió. */
+  if(yaVisitado('FURNITURE')&&state.furniture)tramos.push(String(state.furniture));
+  if(yaVisitado('PREFERENCES')){
+    const usos=[...document.querySelectorAll('#needsGrid input:checked')]
+      .map(x=>((x.closest('label')||{}).textContent||x.value||'').trim());
+    tramos.push([...usos,textoDeSelect('style'),textoDeSelect('color')].filter(Boolean).join(' · '));
+  }
+  if(yaVisitado('RECOMMENDATION')&&state.fabric&&state.fabric.name)tramos.push(String(state.fabric.name));
+  const campoEntrega=document.getElementById('entregaField');
+  if(campoEntrega&&!campoEntrega.hidden&&yaVisitado('CONTACT'))tramos.push(textoDeSelect('entrega'));
+  const vivos=tramos.filter(Boolean);
+  caja.hidden=!vivos.length;
+  caja.innerHTML='';
+  vivos.forEach(t=>{const c=document.createElement('span');c.className='crumb';c.textContent=t;caja.appendChild(c)});
 }
 function renderRouteOptions(){
   const grid=document.getElementById('routeGrid');if(!grid)return;
@@ -2755,74 +2995,318 @@ function renderRouteOptions(){
     card.appendChild(body);
     const go=document.createElement('span');go.className='go';go.textContent=on?'Elegida':'Elegir';card.appendChild(go);
     card.addEventListener('click',()=>{
-      state.ruta=r.id;renderRouteOptions();applyOptionalSteps();updateEstimate();
+      /* Un camino puede MANDAR A OTRA LÍNEA (catálogo: `line`): la reparación no se re-cotiza dentro
+       * de mantenimiento — corre su propia línea, con su tela, sus daños y su mano de obra. */
+      if(r.line){
+        const destino=[...serviceOptions,...(Store.services()||[])].find(x=>x.id===r.line);
+        if(destino&&(!state.service||state.service.id!==destino.id)){
+          state.service=destino;state.damages=[];
+          state.ruta=null;state.proposito=null;state.saber=null;
+          resetProjectForLine();applyLineCopy();renderServiceOptions();aplicarRutaPorDefecto();
+        }
+      } else {
+        state.ruta=r.id;state.proposito=null;state.saber=null;aplicarPropositoPorDefecto();
+      }
+      renderRouteOptions();applyOptionalSteps();updateEstimate();pintarElSendero();
       if(!pasosVisibles().includes(state.step))showStep(pasosVisibles()[0]);
       ACI.emit('ROUTE_SELECTED',{routeId:r.id,label:r.label});
     });
     grid.appendChild(card);
   });
 }
-/* ---- compra directa: la referencia y la cantidad, y nada más ---- */
-function renderDirectPick(){
-  const grid=document.getElementById('directGrid');if(!grid)return;
-  const telas=Store.all('fabrics').filter(f=>f.active);
-  if(!state.fabric||!telas.some(f=>String(f.id)===String(state.fabric.id)))state.fabric=telas[0]||null;
-  grid.innerHTML='';
-  telas.forEach(f=>{
-    const on=!!state.fabric&&String(f.id)===String(state.fabric.id),rules=Store.fabricRules(f);
-    const card=document.createElement('button');card.type='button';
-    card.className='fabric-card'+(on?' selected':'');card.setAttribute('aria-pressed',String(on));
-    card.innerHTML=`<div class="swatch" style="background:${Store.swatch(f)}"></div>`+
-      `<div class="fabric-card-body"><b>${esc(f.name)} · ${esc(f.colorName)}</b>`+
-      `<small>${money(f.price)} por metro · Precio de referencia</small>`+
-      (rules.saleUnit==='rollo'?`<p class="why">Se vende por rollo completo de ${fmtM(rules.rollLengthM)} m</p>`:'')+
-      `</div>`;
-    card.addEventListener('click',()=>{
-      state.fabric=f;state.fabricTouched=true;renderDirectPick();aplicarUnidadDeLaCantidad();updateEstimate();
-      ACI.emit('FABRIC_SELECTED',ACI.fabricPayload(f,false));
-    });
-    grid.appendChild(card);
-    Store.paintSwatch(card.querySelector('.swatch'),f);
-  });
+/* ---- la lista de compra: la MISMA para una tela o para veinte ----
+ * La usan «compra con referencia y cantidad» y «completar pedido» (el faltante de una compra
+ * anterior). Cada fila es una referencia del catálogo con su cantidad EN SU UNIDAD (metros, o rollos
+ * si la tela se vende por rollo completo) y pasa por SU regla comercial: el mínimo, el incremento y
+ * el rollo son de la tela, no de la solicitud (docs/flujo-de-suministro.md). */
+let pedidoBase=null;   // la solicitud anterior que se está completando (paso 21)
+/* Las ramas con la lista de compra (catálogo: `rutas`): «nueva compra» —reventa, taller o mueble
+ * propio, cuando su camino escribe una lista— y «completar pedido anterior», que trae su referencia
+ * del pedido. No basta la ruta: el recorrido completo («no tengo claro ninguna de las dos») NO tiene
+ * lista, y sin ella la estimación es la del motor clásico (material + mano de obra del oficio). */
+const RUTAS_CON_LISTA=['compra','pedido'];
+const esRutaLista=()=>hayRutaStep()&&RUTAS_CON_LISTA.indexOf(state.ruta||'')>=0&&!skippedSteps.has(20);
+const telasActivas=()=>Store.all('fabrics').filter(f=>f.active);
+/* La referencia de cada fila: el catálogo activo. Cuando el comprador sabe los metros pero NO la
+ * tela (intención «metros»), la fila puede quedar sin referencia: la elige después, en la
+ * recomendación, y hasta entonces el valor queda por confirmar. */
+const opcionesDeTelas=(sel,sinTela)=>(sinTela&&!sel
+    ?'<option value="" selected>Aún no sé la tela (la elijo en la recomendación)</option>':'')
+  +telasActivas().map(f=>
+    `<option value="${esc(f.id)}"${String(f.id)===String(sel)?' selected':''}>${esc(f.name)} · ${esc(f.colorName)}</option>`).join('');
+/* Cuando sabe la tela y NO la cantidad (intención «tela»), la referencia de la fila ES la tela del
+ * proyecto: el motor calcula sus metros y el resumen, la solicitud y el chat la ven igual que en el
+ * recorrido clásico. */
+function sincronizarTelaDeLaFila(fila){
+  if(!esIntencionTela())return;
+  const sel=fila.querySelector('.list-fabric');if(!sel)return;
+  const fab=telasActivas().filter(x=>String(x.id)===String(sel.value))[0]||null;
+  state.fabric=fab;state.fabricTouched=!!fab;
+}
+function agregarFilaDeLaLista(fabricId,metros){
+  const caja=document.getElementById('listRows');if(!caja)return;
+  const sinTela=esIntencionDeMetros();   // sabe los metros, no la tela: la elige en la recomendación
+  /* Quien sabe la tela pero no cuánto necesita no escribe metros: los calcula el motor con su mueble
+   * y sus medidas (paso 1 y 9, que esta intención sí conserva). */
+  const campoCantidad=esIntencionTela()
+    ?`<label class="sin-cantidad">Los metros<small>Los calculamos con tu mueble y sus medidas.</small></label>`
+    :`<label>Cantidad <span class="unit" data-row-unit>m</span><input type="number" class="list-metros" data-row="metros" min="0.1" step="0.1" value="${metros!=null?esc(metros):''}" placeholder="Ej. 22"></label>`;
+  const fila=document.createElement('div');fila.className='boq-row';
+  fila.innerHTML=`<label>Referencia<select class="list-fabric" data-row="fabric">${opcionesDeTelas(fabricId,sinTela)}</select></label>`+
+    campoCantidad+
+    `<button type="button" class="row-x" data-row-remove aria-label="Quitar esta referencia">×</button>`;
+  fila.querySelector('[data-row-remove]').addEventListener('click',()=>{fila.remove();updateEstimate()});
+  const refrescar=()=>{const err=document.getElementById('listError');if(err)err.hidden=true;
+    unidadDeLaFila(fila);sincronizarTelaDeLaFila(fila);updateEstimate()};
+  fila.querySelectorAll('select,input').forEach(el=>{
+    el.addEventListener('input',refrescar);el.addEventListener('change',refrescar)});
+  caja.appendChild(fila);
+  unidadDeLaFila(fila);sincronizarTelaDeLaFila(fila);
 }
 /* La cantidad se pide en la unidad en que se vende ESA tela: metros, o rollos cuando la tela es de
  * rollo completo. Nadie piensa en «22 metros» cuando compra rollos. */
-function aplicarUnidadDeLaCantidad(){
-  const rules=state.fabric?Store.fabricRules(state.fabric):null;
+const unidadDeLaFila=fila=>{
+  const sel=fila.querySelector('.list-fabric');if(!sel)return;
+  const fab=telasActivas().filter(x=>String(x.id)===String(sel.value))[0];
+  const rules=fab?Store.fabricRules(fab):null;
   const porRollo=!!rules&&rules.saleUnit==='rollo';
-  const unit=document.getElementById('directUnit'),label=document.getElementById('directQtyLabel');
-  if(unit)unit.textContent=porRollo?'':'m';
-  if(label&&label.childNodes[0])label.childNodes[0].textContent=porRollo?'Número de rollos':'Cantidad ';
-  const el=document.getElementById('directQty');
+  const unidad=fila.querySelector('[data-row-unit]'),el=fila.querySelector('.list-metros');
+  if(unidad)unidad.textContent=porRollo?'rollos':'m';
   if(el)el.placeholder=porRollo?'Ej. 1':'Ej. 22';
+};
+function pintarFilasDeLaLista(){
+  const caja=document.getElementById('listRows');if(!caja)return;
+  if(!caja.querySelector('.boq-row')){
+    /* El pedido anterior trae su referencia a la lista: es lo que se está completando. */
+    let id=null;
+    if(pedidoBase&&pedidoBase.fabricName){
+      const base=pedidoBase.fabricName.split(' · ')[0].trim();
+      const f=telasActivas().filter(x=>x.name===base)[0];if(f)id=f.id;
+    }
+    agregarFilaDeLaLista(id);return;
+  }
+  const sinTela=esIntencionDeMetros();
+  caja.querySelectorAll('.list-fabric').forEach(s=>{const v=s.value;s.innerHTML=opcionesDeTelas(v,sinTela)});
 }
-/* Lo que el cliente declaró, en metros — la unidad que come el motor. Los rollos se convierten con
- * el largo del rollo de ESA tela; las reglas comerciales ya saben cobrar rollo completo. */
-function cantidadDeclarada(){
-  if(!hayRutaStep()||state.ruta!=='directa')return null;
-  const el=document.getElementById('directQty');if(!el)return null;
-  const v=+(el.value||0);if(!(v>0))return null;
-  const rules=state.fabric?Store.fabricRules(state.fabric):null;
-  const porRollo=!!rules&&rules.saleUnit==='rollo';
-  return porRollo?{valor:v*rules.rollLengthM,unidad:'rollos',rollos:v,rollLengthM:rules.rollLengthM}
-                 :{valor:v,unidad:'m',rollos:null,rollLengthM:null};
+/* Lo declarado en cada fila, en metros — la unidad que come el motor. Los rollos se convierten con
+ * el largo del rollo de ESA tela; las reglas comerciales ya saben cobrar el rollo completo. Una fila
+ * cuenta cuando tiene metros o cuando tiene tela (el caso «sé la tela, no cuánto»). */
+function filasDeLaLista(){
+  const caja=document.getElementById('listRows');if(!caja)return [];
+  return [...caja.querySelectorAll('.boq-row')].map(r=>{
+    const sel=r.querySelector('.list-fabric'),el=r.querySelector('.list-metros');
+    const fab=telasActivas().filter(x=>String(x.id)===String(sel.value))[0]||null;
+    const rules=fab?Store.fabricRules(fab):null,porRollo=!!rules&&rules.saleUnit==='rollo';
+    const valor=el?+(el.value||0):0;   // la intención «tela» no escribe metros: los calcula el motor
+    const rollLengthM=porRollo?(rules.rollLengthM||0):null;
+    return {fabricId:fab?fab.id:'',valor,unidad:porRollo?'rollos':'m',
+            rollos:porRollo?valor:null,rollLengthM,
+            metros:porRollo?valor*rollLengthM:valor};
+  }).filter(r=>r.metros>0||r.fabricId);
+}
+const leerLaLista=()=>filasDeLaLista().filter(r=>r.metros>0);
+/* En «sé los metros, no la tela» la referencia sale de la RECOMENDACIÓN: la fila se queda con la
+ * tela que se está cotizando (la de la recomendación manda), para que el cliente vea la misma y el
+ * valor deje de esperar. */
+function sincronizarFilasConLaTela(){
+  if(!esIntencionDeMetros()||!state.fabric)return;
+  const caja=document.getElementById('listRows');if(!caja)return;
+  caja.querySelectorAll('.boq-row').forEach(r=>{
+    const sel=r.querySelector('.list-fabric');
+    if(sel&&sel.value!==String(state.fabric.id)){sel.value=String(state.fabric.id);unidadDeLaFila(r)}
+  });
+}
+/* El valor de cada fila con SU regla comercial: el facturable de esa tela, y el sobrante que no
+ * vuelve al inventario se cobra completo (Store.quantities ya lo sabe y lo explica). Sin cantidad
+ * declarada los metros los pone el motor con el mueble y sus medidas — y entonces el valor es un
+ * RANGO, como el de cualquier pre-cotización. Sin tela elegida no hay valor que enseñar. */
+function valorDeLaLista(){
+  const calculo=esIntencionTela()?consumo():null;
+  const rangoCalculado=calculo&&calculo.range?calculo.range:null;
+  return filasDeLaLista().map(f=>{
+    /* La tela de la fila; si esa fila no la tiene (sabe los metros, no la tela), la que eligió en la
+     * recomendación — la misma que el paso está cotizando. */
+    const fab=telasActivas().filter(x=>String(x.id)===String(f.fabricId))[0]
+              ||((esIntencionDeMetros()&&state.fabric)?state.fabric:null);
+    /* Sin cantidad declarada y sin mueble/medidas todavía no hay nada que calcular: cero, y el paso
+     * lo enseña como «por confirmar» en vez de inventar metros. */
+    const declarado=f.metros>0?f.metros:(rangoCalculado?rangoCalculado[1]:0);
+    if(!fab)return {fabricId:'',name:'Sin tela elegida',colorName:'',price:null,declarado,
+                    valor:f.valor,unidad:f.unidad,rollos:f.rollos,rollLengthM:f.rollLengthM,
+                    facturable:declarado,compra:null,sobrante:null,razones:[],valorTotal:null,
+                    sinTela:true,porCalculo:false,sinCalcular:false};
+    /* La fila calculada sin mueble declarado no tiene valor: se dice, no se inventa. */
+    if(!(f.metros>0)&&!rangoCalculado)return {fabricId:fab.id,name:fab.name,colorName:fab.colorName,
+                    price:fab.price,declarado:0,valor:0,unidad:f.unidad,rollos:f.rollos,rollLengthM:f.rollLengthM,
+                    facturable:0,compra:null,sobrante:null,razones:[],valorTotal:null,
+                    sinTela:false,porCalculo:true,sinCalcular:true};
+    const q1=Store.quantities(fab,f.metros>0?f.metros:rangoCalculado[0]);
+    const q2=Store.quantities(fab,f.metros>0?f.metros:rangoCalculado[1]);
+    const rango=[q1.facturable,q2.facturable];
+    const r=Store.quantities(fab,rango[1]);
+    return {fabricId:fab.id,name:fab.name,colorName:fab.colorName,price:fab.price,declarado,
+            valor:f.valor,unidad:f.unidad,rollos:f.rollos,rollLengthM:f.rollLengthM,
+            facturable:rango[1],facturableRango:rango,compra:r.compra,sobrante:r.sobrante,
+            razones:r.razones,valorTotal:[rango[0]*fab.price,rango[1]*fab.price],
+            sinTela:false,porCalculo:f.metros<=0,sinCalcular:false};
+  });
+}
+/* Lo que se ve en el paso de la estimación cuando el recorrido es una lista: una línea por
+ * referencia con SUS metros facturables y su valor, y el total. La disponibilidad y el lote no se
+ * fingen — sin el dato, la salida honesta es la del asesor. */
+function pintarLaLista(){
+  const filas=valorDeLaLista();
+  const conTela=filas.filter(f=>!f.sinTela);
+  /* Sin tela elegida no hay precio que enseñar (la elige en la recomendación), y sin mueble/medidas
+   * tampoco hay metros que calcular: en los dos casos el paso lo dice en vez de inventar una cifra. */
+  const completo=filas.length>0&&filas.every(f=>!f.sinTela&&!f.sinCalcular);
+  const [lo,hi]=completo?rangoPreliminar(conTela.reduce((s,f)=>s+f.valorTotal[0],0),
+                                        conTela.reduce((s,f)=>s+f.valorTotal[1],0)):[null,null];
+  document.getElementById('priceRange').textContent=completo?(lo===hi?money(lo):`${money(lo)} – ${money(hi)}`):'Por confirmar';
+  document.getElementById('priceCaption').textContent='Tu compra';
+  document.getElementById('priceCaptionNote').hidden=true;
+  const partes=document.getElementById('priceParts');
+  const sinNumero=f=>f.sinTela||f.sinCalcular;
+  partes.innerHTML=filas.map(f=>`<span>${esc(f.name)} · ${f.facturable?fmtM(f.facturable)+' m':'sin metros'} · <b>${sinNumero(f)?'Por confirmar':esc(money(f.valorTotal[0]))}</b></span>`).join('');
+  partes.hidden=filas.length<1;
+  const metros=document.getElementById('metersRange');
+  if(metros)metros.textContent=completo
+    ?rangoM(filas.reduce((s,f)=>s+f.facturable,0),filas.reduce((s,f)=>s+f.facturable,0))
+    :'Por confirmar';
+  const sup=document.getElementById('estimateAssumptions');
+  if(sup)sup.innerHTML=filas.length
+    ? filas.map(f=>`<li>${esc(f.name)}${f.colorName?' · '+esc(f.colorName):''}: ${declaradoEnPalabras(f)}`+
+        (f.sinTela?' — el precio espera a la tela que elijas'
+          :f.sinCalcular?' — los metros salen de tu mueble y sus medidas'
+          :` → ${fmtM(f.facturable)} m a ${esc(money(f.price))} / m`)+`</li>`).join('')+
+      '<li>Un asesor confirma disponibilidad y lote antes de cortar.</li>'+
+      filas.filter(f=>f.razones.length).map(f=>f.razones.map(r=>`<li>${esc(f.name)}: ${esc(r)}</li>`).join('')).join('')
+    : '<li>Sin referencias todavía: agrega una para ver tu estimación.</li>';
+  const aviso=document.getElementById('quoteNote');if(aviso)aviso.hidden=true;
+  const contraste=document.getElementById('budgetCompare');if(contraste)contraste.hidden=true;
+}
+/* Lo que el cliente escribió, en sus palabras: «2 rollos (60 m)», «21,3 m» o los metros que calculó
+ * el motor con su mueble. El número facturable —el que se cobra— va aparte. */
+function declaradoEnPalabras(f){
+  if(f.sinTela)return `${fmtM(f.declarado)} m`;
+  if(f.sinCalcular)return 'los metros de tu mueble (por calcular)';
+  if(f.porCalculo){const r=f.facturableRango||[f.facturable,f.facturable];
+    return `los metros de tu mueble (${rangoM(r[0],r[1])} m)`}
+  return f.unidad==='rollos'
+    ? `${fmtM(f.valor)} ${f.valor===1?'rollo':'rollos'} (${fmtM(f.declarado)} m)`
+    : (f.declarado!==f.facturable?`declaraste ${fmtM(f.declarado)} m`:`${fmtM(f.declarado)} m`);
+}
+/* La búsqueda del pedido anterior (paso 21): por número de solicitud o por referencia, en lo que
+ * este navegador tiene guardado. Lo que no aparezca lo busca un asesor en el sistema. */
+function buscarPedido(){
+  const caja=document.getElementById('pedidoHallado'),texto=document.getElementById('pedidoHalladoTexto');
+  const err=document.getElementById('pedidoError');
+  const q=String((document.getElementById('pedidoBusca')||{}).value||'').trim().toLowerCase();
+  const citas=(Store.all('quotes')||[]);
+  const hallada=q?citas.filter(x=>String(x.id||'').toLowerCase().includes(q)||
+      String(x.fabricName||'').toLowerCase().includes(q))[0]:null;
+  if(hallada){
+    pedidoBase={id:hallada.id,fabricName:hallada.fabricName||''};
+    if(texto)texto.textContent=`Pedido ${hallada.id} · ${hallada.fabricName||'sin tela registrada'}`+
+      `${hallada.date?` · ${hallada.date}`:''}. Traemos su referencia: escribe el faltante.`;
+    if(caja)caja.hidden=false;if(err)err.hidden=true;
+  }else{
+    pedidoBase=null;
+    if(caja)caja.hidden=true;
+    if(err){err.textContent='No encontramos esa solicitud en este navegador. Un asesor la busca en el sistema y te dice qué lote hay.';err.hidden=false}
+  }
+  return !!hallada;
+}
+
+/* ---- lo que se pregunta al entrar: para qué y qué se sabe ----
+ * El diagrama del dueño (20/09): «nueva compra» o «completar pedido anterior» y, dentro de la compra,
+ * PARA QUÉ se necesita la tela. Los propósitos que lo piden preguntan después QUÉ SE SABE (tela y
+ * cantidad) y de ahí sale el camino: compra directa, recomendación o el cálculo del trabajo. Los tres
+ * niveles declaran sus pasos con el mismo vocabulario que `skips` — son la misma clase de dato. */
+const propositosRuta=()=>((rutaActual()||{}).propositos||[]);
+const hayPropositoStep=()=>propositosRuta().length>0;
+const propositoActual=()=>propositosRuta().filter(p=>p.id===state.proposito)[0]||null;
+const skipsProposito=()=>((propositoActual()||{}).skips||[]);
+const saberesDelProposito=()=>((propositoActual()||{}).saberes||[]);
+const haySaberStep=()=>saberesDelProposito().length>0;
+const saberActual=()=>saberesDelProposito().filter(s=>s.id===state.saber)[0]||saberesDelProposito()[0]||null;
+const skipsSaber=()=>((saberActual()||{}).skips||[]);
+const saberEs=id=>haySaberStep()&&!!saberActual()&&saberActual().id===id;
+/* Los dos saberes que cambian quién pone los números: la tela (los metros los calcula el motor con el
+ * mueble) y los metros (la tela la recomienda el catálogo). */
+const esIntencionTela=()=>esRutaLista()&&saberEs('tela');
+const esIntencionDeMetros=()=>esRutaLista()&&saberEs('metros');
+function aplicarPropositoPorDefecto(){
+  const lista=propositosRuta();
+  if(!lista.length){state.proposito=null;state.saber=null;return}
+  if(!lista.some(p=>p.id===state.proposito))state.proposito=lista[0].id;
+  aplicarSaberPorDefecto();
+}
+function aplicarSaberPorDefecto(){
+  const lista=saberesDelProposito();
+  if(!lista.length){state.saber=null;return}
+  if(!lista.some(s=>s.id===state.saber))state.saber=(lista.filter(s=>s.defecto)[0]||lista[0]).id;
+}
+/* Las dos preguntas pintan igual: tarjetas de una sola elección que cambian el recorrido en el acto.
+ * El propósito además rehace la lista: lo que esa rama pide (tela y cantidad, solo una de las dos, o
+ * una referencia para el cálculo del trabajo) cambia de un propósito a otro. */
+function pintarPreguntaDeLaCompra(selector,lista,elegido,alElegir){
+  const grid=document.getElementById(selector);if(!grid)return;
+  grid.style.setProperty('--cols','1');
+  grid.style.setProperty('--rows',String(lista.length));
+  grid.innerHTML='';
+  lista.forEach(o=>{
+    const on=elegido===o.id;
+    const card=document.createElement('button');card.type='button';card.setAttribute('role','radio');
+    card.className='service-choice'+(on?' selected':'');card.setAttribute('aria-checked',on?'true':'false');
+    const body=document.createElement('span');
+    const title=document.createElement('b');title.textContent=o.label;body.appendChild(title);
+    if(o.hint){const hint=document.createElement('small');hint.textContent=o.hint;body.appendChild(hint)}
+    card.appendChild(body);
+    const go=document.createElement('span');go.className='go';go.textContent=on?'Elegida':'Elegir';card.appendChild(go);
+    card.addEventListener('click',()=>alElegir(o));
+    grid.appendChild(card);
+  });
+}
+/* Elegir en cualquiera de las dos preguntas cambia los pasos: la lista se rehace y el flujo se
+ * repinta en el acto (`applyOptionalSteps`), y si el paso actual desapareció se cae al primero. */
+function elegidoEnLaCompra(){
+  const caja=document.getElementById('listRows');if(caja)caja.innerHTML='';
+  applyOptionalSteps();updateEstimate();pintarElSendero();
+  if(!pasosVisibles().includes(state.step))showStep(pasosVisibles()[0]);
+}
+function renderPurposeOptions(){
+  pintarPreguntaDeLaCompra('purposeGrid',propositosRuta(),state.proposito,p=>{
+    state.proposito=p.id;aplicarSaberPorDefecto();elegidoEnLaCompra();
+    ACI.emit('ROUTE_SELECTED',{routeId:state.ruta||'',purposeId:p.id,label:p.label});
+  });
+}
+function renderSaberOptions(){
+  pintarPreguntaDeLaCompra('saberGrid',saberesDelProposito(),(saberActual()||{}).id,s=>{
+    state.saber=s.id;elegidoEnLaCompra();
+    ACI.emit('ROUTE_SELECTED',{routeId:state.ruta||'',purposeId:state.proposito||'',saberId:s.id,label:s.label});
+  });
 }
 
 function renderServiceOptions(){
   if(!hasServiceStep)return;
   const grid=document.getElementById('serviceGrid');grid.innerHTML='';
+  /* Una línea que OTRA usa como camino no pinta tarjeta propia: «reparación y restauración» se
+   * elige dentro de mantenimiento (catálogo: `rutas` con `line`), así el paso muestra UNA tarjeta
+   * donde antes había dos y el mismo oficio no se cobra por dos puertas. */
+  const ofrecidas=serviceOptions.filter(s=>!serviceOptions.some(o=>(o.rutas||[]).some(r=>r.line===s.id)));
   /* Una lista de opciones, no una grilla: con 4 o con 7 líneas el paso se lee de un vistazo y
    * ocupa el panel. La nota de arriba dice cuántas incluye el plan vigente — así el salto entre
    * planes se ve en la pantalla. */
   const note=document.getElementById('servicePlanNote');
-  if(note)note.textContent=`Tu plan ${Store.planLabel(Store.settings().plan)} incluye ${serviceOptions.length} líneas de servicio.`;
+  if(note)note.textContent=`Tu plan ${Store.planLabel(Store.settings().plan)} incluye ${ofrecidas.length} líneas de servicio.`;
   /* Una columna hasta tres líneas; de cuatro en adelante, dos: así la grilla llena el panel sin
    * dejar huecos ni obligar a desplazarse. `--rows` topa el alto de las tarjetas por filas: con
    * dos líneas no quedan tarjetas de 250 px con una sola frase dentro (medido). */
-  const cols = serviceOptions.length <= 3 ? 1 : 2;
+  const cols = ofrecidas.length <= 3 ? 1 : 2;
   grid.style.setProperty('--cols', String(cols));
-  grid.style.setProperty('--rows', String(Math.ceil(serviceOptions.length / cols)));
-  serviceOptions.forEach((s,i)=>{
+  grid.style.setProperty('--rows', String(Math.ceil(ofrecidas.length / cols)));
+  ofrecidas.forEach((s,i)=>{
     const on=state.service&&state.service.id===s.id;
     const card=document.createElement('button');card.type='button';card.setAttribute('role','radio');
     card.className='service-choice'+(on?' selected':'');card.setAttribute('aria-checked',on?'true':'false');
@@ -2836,9 +3320,9 @@ function renderServiceOptions(){
        * recién abierta) no se toca nada — no hay declaración que pueda viajar. */
       const cambiaDeLinea=!!state.service&&state.service.id!==s.id;
       state.service=s;state.damages=[];
-      /* La ruta de la línea nueva: la que trae por defecto. Volver a pulsar la misma línea no
+      /* La ruta de la línea nueva y sus dos preguntas por defecto: volver a pulsar la misma línea no
        * cambia nada (no hay ruta vieja que borrar). */
-      state.ruta=null;aplicarRutaPorDefecto();
+      state.ruta=null;state.proposito=null;state.saber=null;aplicarRutaPorDefecto();aplicarPropositoPorDefecto();
       /* Cambiar de línea EMPIEZA DE CERO (ver resetProjectForLine). Volver a pulsar la línea ya
        * elegida no borra nada: no hay cambio. */
       if(cambiaDeLinea)resetProjectForLine();
@@ -2889,14 +3373,33 @@ addEventListener('resize',syncActionsHeight);
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(syncActionsHeight);
 syncActionsHeight();
 renderAllOptions();
-/* La cantidad de la compra directa se lee viva del campo (como los daños): escribir recalcula. */
-document.getElementById('directQty').addEventListener('input',()=>{
-  const err=document.getElementById('directError');if(err)err.hidden=true;updateEstimate();
+/* La lista de compra: la fila nueva se pide a mano, y el pedido anterior se busca cuando el cliente
+ * lo pide (o con Enter). Ninguna de las dos cosas avanza sola. */
+document.getElementById('listAdd').addEventListener('click',()=>{agregarFilaDeLaLista()});
+document.getElementById('pedidoBuscar').addEventListener('click',buscarPedido);
+document.getElementById('pedidoBusca').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();buscarPedido()}
+});
+/* Al escribir, el aviso se va: el mismo trato que la lista (el error sale al intentar seguir). */
+document.getElementById('pedidoBusca').addEventListener('input',()=>{
+  const e=document.getElementById('pedidoError');if(e)e.hidden=true;
 });
 renderPhotos();
 // The backoffice writes to the same store; refresh if it changes while open.
 Store.onChange(()=>{renderAllOptions();const id=ACI.stepId(state.step);if(id==='REVIEW')renderReviewSummary();if(id==='RECOMMENDATION')renderFabrics()});
 showStep(hasServiceStep?0:1);
+/* El hueco de Lía se mide UNA vez por carga, cuando la escena ya está lista (la clase `ready`): antes
+ * de eso el recorrido todavía se está acomodando —filas que aparecen, la tipografía llegando— y su
+ * colocación queda con el alto viejo, ~20% más chica (medido en la batería: la hoja que lee, 14x20 px
+ * contra 18x25). Se le avisa con el mismo `resize` que da una ventana al moverse; la capa del
+ * asistente no se toca. Y es UNA vez, no en cada cambio de paso: el hueco tiene que quedar igual
+ * entre líneas (lo comprueba wizard.spec) y un aviso en medio del recorrido la movía. */
+const escenaDeLaAsistente=document.getElementById('assistantStage');
+if(escenaDeLaAsistente)new MutationObserver((_,vigia)=>{
+  if(!escenaDeLaAsistente.classList.contains('ready'))return;
+  vigia.disconnect();
+  requestAnimationFrame(()=>requestAnimationFrame(()=>dispatchEvent(new Event('resize'))));
+}).observe(escenaDeLaAsistente,{attributes:true,attributeFilter:['class']});
   </script>
 {{ASSISTANT_SCRIPT}}
 </body>

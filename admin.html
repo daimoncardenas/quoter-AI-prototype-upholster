@@ -356,7 +356,7 @@
     .quote-inputs{margin:12px 0 0}
     .quote-inputs dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:.62rem}
     .quote-inputs dt{color:var(--muted);font-weight:700}
-    .quote-inputs dd{margin:0;color:var(--ink);overflow-wrap:anywhere}.service-lines{list-style:none;margin:0;padding:0;font-size:.68rem;line-height:1.5;color:var(--text)}.service-lines li{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}.service-lines li:last-child{border-bottom:0}.line-row{display:flex;gap:10px;align-items:center;cursor:pointer}.line-row input{width:16px;height:16px;margin:0;flex:0 0 auto}.service-lines .lock{color:var(--amber)}.quote-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:16px}.quote-gallery img{width:100%;height:118px;object-fit:cover;border:1px solid var(--line);display:block}
+    .quote-inputs dd{margin:0;color:var(--ink);overflow-wrap:anywhere}.service-lines{list-style:none;margin:0;padding:0;font-size:.68rem;line-height:1.5;color:var(--text)}.service-lines li{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}.service-lines li:last-child{border-bottom:0}.line-row{display:flex;gap:10px;align-items:center;cursor:pointer}.line-row input{width:16px;height:16px;margin:0;flex:0 0 auto}.service-lines .lock{color:var(--amber)}/* Mano de obra e insumos: la tabla de trabajo del taller (docs/retapizado-trabajo.md). */.line-work{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}.line-work h3{font:600 .82rem var(--font-heading);margin:0 0 10px;color:var(--ink)}.line-work h4{font-size:.66rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:12px 0 6px}.line-work-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.line-work-grid label,.line-work-rows label{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:.68rem;color:var(--ink)}.line-work-grid input,.line-work-grid select{max-width:200px}.line-work-rows{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:7px}.line-work-rows input{max-width:150px;text-align:right}.line-work-rows em{font-style:normal;color:var(--muted)}.line-work-note{margin-left:10px;font-size:.6rem;color:var(--muted)}.line-work-lead{margin:0 0 12px;font-size:.66rem;line-height:1.55;color:var(--muted);max-width:780px}.line-work-example{margin:2px 0 12px;font-size:.66rem;color:var(--ink-2);background:var(--tint-panel-wash,#f7f5f1);border-left:3px solid var(--accent);padding:9px 12px}.quote-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:16px}.quote-gallery img{width:100%;height:118px;object-fit:cover;border:1px solid var(--line);display:block}
     /* Cada foto es un botón (se abre en grande) y el hueco de una que ya no está en este navegador
      * se NOMBRA, en vez de dejar un rectángulo vacío o desaparecer de la galería. */
     .quote-gallery button{padding:0;border:0;background:none;cursor:zoom-in;line-height:0;display:block;width:100%}
@@ -473,7 +473,7 @@
         <div class="page-head"><div><span class="eyebrow">Reglas del cotizador</span><h1>Configuraciones de cotizador</h1><p>Ajusta estimaciones, mensajes y comportamiento general.</p></div><div class="save-block"><span class="unsaved" id="settingsDirty" hidden>Cambios sin guardar</span><button class="button primary" id="saveSettings">Guardar cambios</button></div></div>
         <div class="settings-grid"><article class="settings-card"><h2>Estimación de tela</h2><p>Márgenes generales del cálculo. El ancho del rollo y la forma de venta se definen en cada tela, porque cambian de una a otra.</p><div class="form-grid"><label class="field">Desperdicio adicional (%)<input type="number" id="setWaste" min="0" max="100"></label><label class="field">Margen de seguridad (%)<input type="number" id="setMargin" min="0" max="100"></label><label class="field">Tolerancia del rango (%)<input type="number" id="setTolerance" min="0" max="50"></label><label class="field">Moneda<select id="setCurrency"><option value="COP">COP — Peso colombiano</option><option value="USD">USD — Dólar</option></select></label></div></article>
           <article class="settings-card"><h2>Automatización</h2><p>Controla las acciones automáticas después de cada solicitud.</p><div class="setting-row"><div><b>Asignar por ubicación</b><small>Selecciona automáticamente al vendedor de la zona.</small></div><button class="toggle" id="setAutoAssign" aria-label="Asignar por ubicación"></button></div><div class="setting-row"><div><b>Enviar correo al cliente</b><small>Remite una copia inicial de la estimación.</small></div><button class="toggle" id="setEmailCopy" aria-label="Enviar correo"></button></div><div class="setting-row"><div><b>Validación visual con IA</b><small>Contrasta foto, tipo de mueble y medidas.</small></div><button class="toggle" id="setAiCheck" aria-label="Validación visual"></button></div></article>
-          <article class="settings-card wide"><h2>Líneas de servicio</h2><p>Lo que este negocio presta <b>hoy</b>: el cotizador solo pregunta por las líneas marcadas, y con una sola marcada entra directo a ella. Prender o apagar aquí no contrata nada — eso se elige en <b>Upgrade → Configurar mi plan</b>.</p><ul class="service-lines" id="serviceLinesCfg"></ul></article>
+          <article class="settings-card wide"><h2>Líneas de servicio</h2><p>Lo que este negocio presta <b>hoy</b>: el cotizador solo pregunta por las líneas marcadas, y con una sola marcada entra directo a ella. Prender o apagar aquí no contrata nada — eso se elige en <b>Upgrade → Configurar mi plan</b>.</p><ul class="service-lines" id="serviceLinesCfg"></ul><div id="lineWorkCfg"></div></article>
           <article class="settings-card wide"><h2>Opciones del cuestionario</h2><p>Listas que ve el cliente. Escribe una opción y pulsa Enter para agregarla; toca la × para quitarla.</p><div class="form-grid"><label class="field full">Necesidades de uso<div class="tag-input" id="setNeeds" data-placeholder="Agregar necesidad y Enter"></div></label><label class="field">Estilos<div class="tag-input" id="setStyles" data-placeholder="Agregar estilo y Enter"></div></label><label class="field">Gamas de color<div class="tag-input" id="setColors" data-placeholder="Agregar gama y Enter"></div></label><label class="field">Cortes de presupuesto por metro<div class="tag-input" id="setBudgets" data-type="number" data-placeholder="120000 y Enter"></div></label><label class="field">Cantidad máxima ofrecida<input id="setMaxQty" type="number" min="2" max="20"></label><p class="modal-hint full" id="coverageScope"></p><label class="field">Solo asiento y respaldo (% mín / máx)<span class="pair"><input id="setCovSeatsMin" type="number" min="1" max="100"><input id="setCovSeatsMax" type="number" min="1" max="100"></span></label><label class="field">Una parte específica (% mín / máx)<span class="pair"><input id="setCovPartMin" type="number" min="1" max="100"><input id="setCovPartMax" type="number" min="1" max="100"></span></label><p class="modal-hint full" id="coveragePieces"></p></div></article>
           <article class="settings-card wide"><h2>Mensajes y contacto</h2><p>Textos que verá el cliente al finalizar su solicitud.</p><div class="form-grid"><label class="field full">Mensaje de confirmación<textarea id="setMessage"></textarea></label><label class="field">Correo remitente<input type="email" id="setSender"></label><label class="field">Tiempo prometido de respuesta<select id="setResponse"><option>Durante el mismo día hábil</option><option>En menos de 24 horas</option><option>En menos de 48 horas</option></select></label></div></article></div>
       </section>
@@ -1220,7 +1220,10 @@
      * contrata nada (eso es Upgrade → Mi ACI), solo se dice qué se ofrece. */
     function renderServiceLines(){
       const list=$('#serviceLinesCfg');if(!list)return;
-      list.innerHTML=Store.services().map(s=>
+      /* La línea que otra usa como camino (catálogo: `rutas` con `line`) no se lista aparte: la
+       * reparación se elige DENTRO de Mantenimiento (dueño, 21/09). Se acá y en Mi ACI. */
+      const esCaminoDeOtra=s=>Store.services().some(o=>(o.rutas||[]).some(r=>r.line===s.id));
+      list.innerHTML=Store.services().filter(s=>!esCaminoDeOtra(s)).map(s=>
         `<li><label class="line-row"><input type="checkbox" data-line="${esc(s.id)}"${s.enabled?' checked':''}>`+
         `<span><strong>${esc(s.label)}</strong></span></label>`+
         `<span class="aci-value">${s.enabled?'Habilitada':'Deshabilitada'}</span></li>`).join('');
@@ -1230,6 +1233,59 @@
           catch(err){ cb.checked=!cb.checked; toast(err.message); }
           renderServiceLines(); renderMyAci();
         });
+      });
+      renderLineWork();
+    }
+
+    /* Mano de obra e insumos (docs/retapizado-trabajo.md): lo único que el taller edita aquí es CÓMO
+     * se cobra su obra y CUÁNTO por metro de tela. La base por mueble vive en el catálogo del
+     * producto (valores DEMO) y los precios de los insumos también: esta tarjeta es una decisión, no
+     * un formulario. La edición vive como override de ESTE cliente (`settings.lineOverrides`), así
+     * regenerar el paquete no borra lo que el taller eligió. */
+    function renderLineWork(){
+      const box=$('#lineWorkCfg');if(!box)return;
+      const lineas=Store.services().filter(s=>(s.labor&&s.labor.mode==='tabla')||(s.insumos||[]).length);
+      if(!lineas.length){box.innerHTML='';return}
+      box.innerHTML=lineas.map(s=>{
+        const lab=s.labor||{mode:'pct',pct:0,perMeter:0,porMueble:{}};
+        const filasInsumo=(s.insumos||[]).map(x=>
+          `<li><label><b>${esc(x.label)}</b> <em>por ${esc(x.unit||'unidad')}</em><input type="number" min="0" step="1000" data-insumo-cop="${esc(x.id)}" value="${x.cop}" placeholder="—"></label></li>`).join('');
+        return `<div class="line-work" data-line-work="${esc(s.id)}">`+
+          `<h3>Mano de obra e insumos — ${esc(s.label)}</h3>`+
+          `<div class="line-work-grid">`+
+            `<label>Se cobra por<select data-obra-modo>`+
+              `<option value="tabla"${lab.mode==='tabla'?' selected':''}>Por mueble + por metro</option>`+
+              `<option value="pct"${lab.mode!=='tabla'?' selected':''}>Porcentaje de la tela</option>`+
+            `</select></label>`+
+            `<label data-obra-metro${lab.mode==='tabla'?'':' hidden'}>Por metro de tela (COP)<input type="number" min="0" step="500" data-obra-metro-campo value="${lab.perMeter||''}" placeholder="—"></label>`+
+            `<label data-obra-pct${lab.mode==='tabla'?' hidden':''}>Porcentaje de la tela (%)<input type="number" min="0" max="200" step="1" data-obra-pct-campo value="${lab.pct||''}" placeholder="60"></label>`+
+          `</div>`+
+          `<h4>Insumos que repone — precio del catálogo</h4><ul class="line-work-rows">${filasInsumo||'<li>Esta línea no pregunta insumos.</li>'}</ul>`+
+        `</div>`;
+      }).join('');
+      const cambiarModo=(caja)=>{
+        const modo=caja.querySelector('[data-obra-modo]').value;
+        caja.querySelector('[data-obra-metro]').hidden=modo!=='tabla';
+        caja.querySelector('[data-obra-pct]').hidden=modo==='tabla';
+      };
+      box.querySelectorAll('[data-line-work]').forEach(caja=>{
+        const guardar=()=>{
+          const id=caja.dataset.lineWork;
+          const s=Store.services().filter(x=>x.id===id)[0];
+          /* La base por mueble NO se toca desde aquí: viaja tal como está (catálogo u override). */
+          const labor={mode:caja.querySelector('[data-obra-modo]').value,
+                       pct:+caja.querySelector('[data-obra-pct-campo]').value||0,
+                       perMeter:+caja.querySelector('[data-obra-metro-campo]').value||0,
+                       porMueble:Object.assign({},(s.labor||{}).porMueble||{})};
+          const insumos=(s.insumos||[]).map(x=>{
+            const campo=caja.querySelector(`[data-insumo-cop="${x.id}"]`);
+            return Object.assign({},x,{cop:campo?Math.max(0,+campo.value||0):x.cop});
+          });
+          const todos=Object.assign({},Store.settings().lineOverrides||{});todos[id]={labor,insumos};
+          Store.saveSettings({lineOverrides:todos});
+          toast(`${s.label}: obra ${labor.mode==='tabla'?'por mueble + por metro':'por porcentaje'}`);
+        };
+        caja.addEventListener('change',()=>{cambiarModo(caja);guardar()});
       });
     }
 
@@ -1288,7 +1344,11 @@
           renderMyAci(); renderServiceLines();
         }));
       }
-      list.innerHTML=aci.services.map(s=>
+      /* La copia de `aci.services` no lleva `rutas`: la verdad está en el catálogo (`Store.services()`).
+       * Sin esto, «Reparación y restauración» seguía apareciendo suelta con «incluido» (dueño, 21/09). */
+      const conRutas=Store.services()||[];
+      const esCaminoDeOtra=id=>conRutas.some(o=>(o.rutas||[]).some(r=>r.line===id));
+      list.innerHTML=aci.services.filter(s=>!esCaminoDeOtra(s.id)).map(s=>
         `<li><label class="line-row"><input type="checkbox" data-line="${esc(s.id)}"${s.enabled?' checked':''}>`+
         `<span><strong>${esc(s.label)}</strong>${s.hint?`<small class="aci-hint">${esc(s.hint)}</small>`:''}</span></label>`+
         `<span class="aci-value">${s.price?'+'+money(s.price)+' <span class="aci-iva">+ IVA</span> / '+esc(aci.period):'incluido'}</span></li>`).join('');

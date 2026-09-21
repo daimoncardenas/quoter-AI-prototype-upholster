@@ -186,7 +186,7 @@ check('la solicitud congela con qué motor y con qué orientación se cotizó',
   await page.evaluate(id => {
     const q = Store.get('quotes', id);
     return [q.billing.cutDirection, q.billing.patternMatch, q.estimate.engineVersion];
-  }, quoteId), ['free', 'none', 2]);
+  }, quoteId), ['free', 'none', 3]);
 
 // A price list or a sale rule can change tomorrow. What was promised cannot.
 await openAdmin(page, D);

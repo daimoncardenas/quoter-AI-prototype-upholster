@@ -158,7 +158,7 @@ const linea = await page.evaluate(id => {
  * escrito a mano). */
 check('el paso de la línea existe y ofrece las líneas que el negocio tiene habilitadas',
   { paso: linea.paso, dots: linea.dots, habilitadas: linea.habilitadas.map(h => h.id) },
-  { paso: false, dots: 9, habilitadas: client.serviceLines.map(s => s.id) });
+  { paso: false, dots: 12, habilitadas: client.serviceLines.map(s => s.id) });
 /* La línea de servicio con la que se cotizó: el cotizador elige la primera que el negocio tiene
  * habilitada (el negocio manda, no el plan ni el nombre de ninguna línea escrito a mano), y con
  * más de una el paso de la línea es el primero. */
@@ -219,13 +219,15 @@ const estadoFlujo = () => flujo.evaluate(() => ({
 }));
 await flujo.click('#nextButton');
 check('con suministro no hay paso de daños y «Continuar» cae en Medidas',
-  await estadoFlujo(), { paso: 9, visible: 'Paso 4 de 9', dotDanos: false, motivo: 'Suministro de tela' });
+  await estadoFlujo(), { paso: 9, visible: 'Paso 6 de 11', dotDanos: false, motivo: 'Suministro de tela' });
 check('y su estimación es solo material',
   await flujo.evaluate(() => { const e = Store.lineEstimate(Store.serviceById('suministro-tela'), [1000000, 1200000], []); return [e.laborPct, e.total]; }),
   [0, [1000000, 1200000]]);
 await flujo.click('#backButton'); await flujo.waitForSelector('[data-step="1"].active');
-/* Un paso más de vuelta: entre «Medidas» y la línea está la RUTA de la línea (docs/flujo-de-suministro.md),
- * que para el suministro viene elegida. */
+/* Tres pasos más de vuelta: entre «Medidas» y la línea están las preguntas del camino
+ * (docs/flujo-de-suministro.md) — qué se sabe, para qué y qué quieres hacer. */
+await flujo.click('#backButton'); await flujo.waitForSelector('[data-step="23"].active');
+await flujo.click('#backButton'); await flujo.waitForSelector('[data-step="22"].active');
 await flujo.click('#backButton'); await flujo.waitForSelector('[data-step="18"].active');
 await flujo.click('#backButton'); await flujo.waitForSelector('[data-step="0"].active');
 await flujo.click('#serviceGrid .service-choice:has-text("Reparación y restauración")');
@@ -287,7 +289,7 @@ await flujo.close();
 {
   await page.evaluate(() => Store.saveSettings({ plan: 'Business', disabledLines: [] }));
   const motivos = [
-    { etiqueta: 'Mantenimiento y limpieza', pricing: 'pieza',
+    { etiqueta: 'Mantenimiento', pricing: 'pieza',
       pasos: ['Tu línea de servicio', 'Tu mueble', 'Lo que necesita', 'Cómo llega al taller', 'Validación', 'Estimación', 'Tu pre-cotización'],
       ctx: { furnitureId: 'sofa', quantity: 1, answers: { tratamientos: ['quitamanchas'], traslado: 'taller' } }, total: 320000 },
     { etiqueta: 'Tapicería arquitectónica', pricing: 'm2',

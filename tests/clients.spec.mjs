@@ -1,20 +1,16 @@
-/* White-label smoke test for every non-Mediterránea pack (see
- * clients/<slug>/README.md — every value in these packs is invented except
- * the brand itself, sourced from the client's real site). This does not join
- * the main `npm test` chain: that suite is written against
- * clients/mediterranea/'s specific fixtures (seller names, quote counts...)
- * and only makes sense under CLIENT=MEDITERRANEA. This spec instead proves
- * the white-label pipeline itself, for EVERY other pack under clients/:
- * generation succeeds, that client's own branding shows up, its demo admin
- * can log in, nothing from any OTHER client's pack leaks into its output, and
- * the backoffice -> cotizador loop works on that pack's own demo data.
+/* Browser pass for the ACTIVE pack (`CLIENT` in `.env` / the env var): generation succeeds, that
+ * client's own branding shows up, its demo admin can log in, nothing from any OTHER client's pack
+ * leaks into its output, and the backoffice -> cotizador loop works on its own data.
  *
- * Generates each pack into generated-<slug>/ (not generated/) so it never
- * collides with whatever the main suite has generated for CLIENT=MEDITERRANEA.
+ * Runs ONCE, on the pack that is loaded — not once per client: the logic is one, and the browser
+ * pass is part of it. The per-pack data glance (its brand in its output, no leaks) lives in
+ * tests/packs.spec.mjs and takes seconds. Generates into generated-<slug>/ so it never collides
+ * with whatever the main suite has generated for `.env`'s client.
  */
 import { chromium } from 'playwright';
 import { readFileSync } from 'node:fs';
 import { generate } from '../tools/generate.mjs';
+import { resolveClient } from '../tools/env.mjs';
 import { loadClientPack, listAvailableClients } from '../tools/client-pack.mjs';
 import { openAdmin, openWizard, setTags, elegirAtencion } from './helpers.mjs';
 
@@ -28,8 +24,12 @@ const check = (n, got, want) => {
 };
 
 const ALL_SLUGS = listAvailableClients();
-const SLUGS = ALL_SLUGS.filter(s => s !== 'mediterranea');
-if (!SLUGS.length) throw new Error('No non-mediterranea packs found under clients/ to test');
+/* El navegador corre UNA vez, sobre el pack ACTIVO (el de `.env`): la misma suite de siempre, sin
+ * repetirla por cliente. Lo que es de cada pack —su marca en su salida y que nada de otro pack se
+ * cuele— se mira en datos y en segundos: tests/packs.spec.mjs. Se recuerda `mediterranea` solo como
+ * una aguja más para el chequeo de filtraciones de abajo. */
+const ACTIVO = resolveClient();
+const SLUGS = [ACTIVO];
 
 // Every pack's own distinctive markers (never allowed to leak into ANOTHER
 // pack's output), collected up front so each pack's checks can assert every
@@ -98,7 +98,7 @@ for (const slug of SLUGS) {
 
   console.log(`\nLA SALIDA DE ${CLIENT} NO FILTRA NINGÚN OTRO CLIENTE`);
   for (const otherSlug of ALL_SLUGS) {
-    if (otherSlug === slug) continue;
+    if (otherSlug === slug || otherSlug.toLowerCase() === String(ACTIVO).toLowerCase()) continue;
     for (const marker of markersBySlug[otherSlug]) {
       const leaked = [indexHtml, adminHtml, storeJs].some(html => html.includes(marker));
       check(`no menciona a ${otherSlug} (${JSON.stringify(marker)})`, leaked, false);

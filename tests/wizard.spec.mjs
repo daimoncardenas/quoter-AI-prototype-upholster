@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 import { PHOTOS_DB } from './client.mjs';
-import { openWizard, elegirAtencion } from './helpers.mjs';
+import { openWizard, elegirAtencion, elegirElRecorridoCompleto } from './helpers.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 const png = ['1','2','3'].map(n=>new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
 let fails = 0;
@@ -141,15 +141,21 @@ check('un mueble sin dibujo propio cae al genérico, no al del anterior',
   }), [true, true]);
 
 console.log('\nLA BARRA NO CRECE CON LOS PASOS — el hueco de Lía queda igual');
-/* Su regla: «suministro de tela» es el tamaño MÁXIMO de la barra. Con nueve pasos (a la medida)
- * la lista se aprieta y la barra, el pie y el hueco de Lía tienen que quedar en el mismo sitio.
- * Se compara el caso de nueve contra el de siete en la MISMA ventana. */
-const barra = async (motivo) => {
+/* Su regla: «suministro de tela» es el tamaño MÁXIMO de la barra, y su recorrido completo (con las
+ * preguntas del camino y la estimación) son once pasos. La lista se aprieta y la barra, el pie y el
+ * hueco de Lía tienen que quedar en el mismo sitio. Se compara el caso de once contra el de diez (a
+ * la medida) en la MISMA ventana. */
+const barra = async (motivo, camino) => {
   await page.goto(D + 'index.html');
   await page.evaluate(() => Store.saveSettings({ plan: 'Business', disabledLines: [] }));
   await page.goto(D + 'index.html');
   await page.waitForTimeout(400);
   await page.click(`#serviceGrid .service-choice:has-text("${motivo}")`);
+  /* El recorrido COMPLETO —sus tres preguntas y el camino guiado— cuando se mide el caso máximo. */
+  if (camino) {
+    await page.click('#nextButton');
+    await elegirElRecorridoCompleto(page);
+  }
   await page.waitForFunction(() => document.getElementById('assistantStage').classList.contains('ready'), null, { timeout: 8000 }).catch(() => {});
   /* La barra y el hueco de Lía se reacomodan en los cuadros que siguen al cambio de línea: se mide
    * cuando la página quedó quieta, no en el mismo golpe del clic (medir en carrera daba 1 px de
@@ -163,11 +169,11 @@ const barra = async (motivo) => {
     return { filas: j.dataset.rows, barra: r(j), stage: r(st), canvas: r(c), scroll: [j.scrollHeight, j.clientHeight] };
   });
 };
-const siete = await barra('Suministro de tela');
+const siete = await barra('Suministro de tela', true);
 const nueve = await barra('Muebles a la medida');
-check('nueve pasos (suministro, con su ruta): la barra entra sin scroll', [siete.filas, siete.scroll[0] === siete.scroll[1]], ['9', true]);
-check('diez pasos (el recorrido largo, con la estimación): también entra sin scroll', [nueve.filas, nueve.scroll[0] === nueve.scroll[1]], ['10', true]);
-check('la barra mide lo mismo con siete y con nueve', nueve.barra, siete.barra);
+check('once pasos (suministro, recorrido completo): la barra entra sin scroll', [siete.filas, siete.scroll[0] === siete.scroll[1]], ['11', true]);
+check('diez pasos (a la medida, con la estimación): también entra sin scroll', [nueve.filas, nueve.scroll[0] === nueve.scroll[1]], ['10', true]);
+check('la barra mide lo mismo con once y con diez', nueve.barra, siete.barra);
 /* Su hueco arranca en el mismo borde con 1 px de holgura: desde que la línea sin mueble aloja la
  * subida de fotos en su primer paso, el reparto fraccionario de la rejilla redondea 1 px distinto
  * (medido: alto x=-1/1, borde ±1). Lo que se sostiene exacto es que la barra entre sin scroll y
@@ -219,17 +225,20 @@ for (let i = 1; i <= motivos.length; i++) {
     };
   }));
 }
-check('los ocho motivos pasan por el paso de la estimación', recorridos.map(r => r.estimacion), motivos.map(() => true));
+check('los seis motivos pasan por el paso de la estimación', recorridos.map(r => r.estimacion), motivos.map(() => true));
 check('el nombre que el cliente lee es el de su motivo',
-  [recorridos[1].artefacto, recorridos[5].artefacto, recorridos[7].artefacto],
+  [porNombre('Retapizado de muebles').artefacto, porNombre('Proyecto comercial').artefacto, porNombre('Mantenimiento').artefacto],
   ['Pre-cotización de retapizado', 'Propuesta preliminar para proyecto comercial', 'Estimación de mantenimiento']);
 check('y la línea pisa el default de su oficio (los cuatro de «tela» no dicen lo mismo)',
   new Set([recorridos[0].artefacto, recorridos[1].artefacto, recorridos[2].artefacto, recorridos[3].artefacto]).size, 4);
 check('limpieza no habla de telas ni de «tu mueble»',
-  [/limpieza/i.test(recorridos[7].titulo), /tela/i.test(recorridos[7].titulo), /piezas/i.test(recorridos[7].foto)],
+  [porNombre('Mantenimiento').titulo, porNombre('Mantenimiento').titulo, porNombre('Mantenimiento').foto].map((t,i)=>[/limpieza/i,/tela/i,/piezas/i][i].test(t)),
   [true, false, true]);
+/* Por NOMBRE, no por posición: la grilla cambió dos veces hoy y un índice miente en silencio.
+ * Declarada como FUNCIÓN (no const) para que exista también en los checks de más arriba. */
+function porNombre(n){ return recorridos[motivos.indexOf(n)]; }
 check('y el recorrido largo (a la medida) crece un paso con la estimación',
-  [recorridos[4].pasos, recorridos[7].pasos], [10, 7]);
+  [porNombre('Muebles a la medida').pasos, porNombre('Mantenimiento').pasos], [10, 7]);
 
 console.log('\nMANTENIMIENTO VE SU ESTIMACIÓN EN SU PASO — y queda congelada en la solicitud');
 /* El caso que la auditoría marcó como el peor: un oficio sin tela, cuyo `price` guardado era null.
@@ -238,7 +247,9 @@ await page.goto(D + 'index.html');
 await page.evaluate((db)=>{localStorage.clear();indexedDB.deleteDatabase(db)}, PHOTOS_DB);
 await page.goto(D + 'index.html');
 await page.waitForTimeout(300);
-await page.click('#serviceGrid .service-choice:nth-child(8)');
+/* Por NOMBRE en la página, no por posición: después de limpiar el storage la grilla se re-arma y
+ * el `nth-child` que se calculó arriba apunta a otra tarjeta (timeout visto). */
+await page.evaluate(() => { const c=[...document.querySelectorAll('#serviceGrid .service-choice')].find(x=>x.textContent.includes('Mantenimiento')); if(c)c.click(); });
 await avanzar();                                                        // 0 → 1 (Tu mueble)
 await page.setInputFiles('#furniturePhoto', png);
 await page.waitForFunction(()=>state.photos.length>=3);
@@ -289,7 +300,8 @@ console.log('\nLA SOLICITUD GUARDA LA ESTIMACIÓN QUE VIO EL CLIENTE — no solo
  * + daños, o piezas, m², unidades, fabricación) y la solicitud guardaba metros × precio de tela — o
  * nada. Ahora la estimación viaja congelada con sus entradas, así que una solicitud vieja sigue
  * diciendo el número que se le mostró al cliente aunque el catálogo haya cambiado. Retapizado es el
- * caso con mano de obra (60 %): su estimación NO es el rango de la tela. */
+ * caso con mano de obra (por mueble + por metro, docs/retapizado-trabajo.md): su estimación NO es el
+ * rango de la tela. */
 await page.goto(D + 'index.html');
 await page.evaluate((db)=>{localStorage.clear();indexedDB.deleteDatabase(db)}, PHOTOS_DB);
 await page.goto(D + 'index.html');
@@ -300,7 +312,8 @@ await page.setInputFiles('#furniturePhoto', png);
 await page.waitForFunction(()=>state.photos.length>=3);
 await avanzar();                                                        // 1 → 9 (Medidas)
 await page.fill('#width','210'); await page.fill('#height','85'); await page.fill('#depth','90');
-await avanzar();                                                        // 9 → 12 (Preferencias)
+await avanzar();                                                        // 9 → 17 (Insumos del trabajo)
+await avanzar();                                                        // 17 → 12 (Preferencias)
 await avanzar();                                                        // 12 → 13 (Validación)
 /* La validación no abre la puerta sin revisar: el botón de análisis vive en este paso. */
 if (await page.isVisible('#analyzeButton')) { await page.click('#analyzeButton'); await page.waitForFunction(()=>state.analyzed); }
@@ -330,9 +343,10 @@ check('el total guardado es, palabra por palabra, el que vio el cliente',
 check('y viaja con su motor, su desglose y su versión de snapshot',
   [guardada.estimate.kind, /Mano de obra/.test(guardada.estimate.parts.map(p=>p.label).join(' | ')),
    guardada.estimate.parts.length >= 2, guardada.estimate.engineVersion],
-  /* v2 desde la orientación del corte por tela (docs/consumo-direccional.md): se
-   * sube a propósito al cambiar una fórmula, y esta comprobación es la que avisa. */
-  ['tela', true, true, 2]);
+  /* v3 desde la mano de obra por mueble + metro y los insumos del trabajo
+   * (docs/retapizado-trabajo.md): se sube a propósito al cambiar una fórmula, y esta
+   * comprobación es la que avisa. */
+  ['tela', true, true, 3]);
 check('la estimación guardada no es el rango de tela que se guardaba antes (era el hallazgo)',
   guardada.estimate.total[0] > guardada.price[0], true);
 check('la solicitud sigue trayendo su rango de tela de siempre (compatibilidad)',
@@ -382,8 +396,9 @@ check('con la descripción escrita el cotizador sigue', (await enMueble()).paso>
 
 console.log('\nMEDIDAS MUY FUERA DE LO HABITUAL NO DEJAN SEGUIR — LA IA AVISA Y EL PASO BLOQUEA');
 await fresh();
-await page.evaluate(()=>{const c=document.querySelector('#serviceGrid .service-choice');if(c)c.click()});
-await page.click('#nextButton');
+/* `openWizard` (dentro de `fresh`) ya dejó la línea y el camino elegidos y el wizard en «Tu mueble»:
+ * volver a pulsar la línea empieza de cero —es lo que hace cuando alguien cambia de línea— y dejaría
+ * el flujo en el paso de la línea. */
 await page.evaluate(()=>{document.querySelector('.furniture-card').click()});   // Sofá
 await page.setInputFiles('#furniturePhoto', png);
 await page.waitForFunction(()=>state.photos.length>=3);
@@ -435,7 +450,7 @@ check('las tarjetas de opción son altas de verdad (no la tira de 52 px de antes
   tapizado.tarjeta >= 150, true);
 check('y el bloque se centra: el aire de arriba y el de abajo se diferencian en menos de 12 px',
   Math.abs(tapizado.arriba - tapizado.abajo) <= 12, true);
-const limpieza = await abrirEnElPaso('Mantenimiento y limpieza', 3);
+const limpieza = await abrirEnElPaso('Mantenimiento', 3);
 check('el mismo reparto en otro motivo (mantenimiento y limpieza)',
   [limpieza.tarjeta >= 150, Math.abs(limpieza.arriba - limpieza.abajo) <= 12], [true, true]);
 

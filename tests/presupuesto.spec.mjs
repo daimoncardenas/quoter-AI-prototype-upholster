@@ -38,7 +38,7 @@ const UNIDADES = { 'tela': ['¿Cuál es tu presupuesto por metro de tela?', 'por
   'fabricacion': ['¿Cuál es tu presupuesto por mueble?', 'por mueble', '/mueble'],
   'unidad': ['¿Cuál es tu presupuesto por proyecto?', 'por proyecto', '/proyecto'] };
 const lineas = await page.$$eval('#serviceGrid .service-choice', els => els.map(e => e.querySelector('b').textContent.trim()));
-check('el catálogo trae las ocho líneas', lineas.length, 8);
+check('el paso ofrece las seis líneas (reparación se elige dentro de Mantenimiento)', lineas.length, 6);
 for (const nombre of lineas) {
   await page.evaluate(n => { const c = [...document.querySelectorAll('#serviceGrid .service-choice')].find(x => x.textContent.includes(n)); if (c) c.click(); }, nombre);
   await page.waitForTimeout(280);

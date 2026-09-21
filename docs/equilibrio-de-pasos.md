@@ -13,7 +13,7 @@ acciones («← Volver / Continuar →»). Medido en el navegador del dueño a 1
 | paso (motivo) | tarjetas antes | hueco antes | tarjetas ahora | hueco ahora |
 |---|---|---|---|---|
 | relleno (Muebles a la medida, paso 11) | 291×52 | **278 px** | 290×200 | 66 px |
-| limpieza (Mantenimiento y limpieza, paso 3) | 291×52 | **278 px** | 290×200 | 66 px |
+| limpieza (Mantenimiento, paso 3) | 291×52 | **278 px** | 290×200 | 66 px |
 | traslado (paso 4) | 291×52 | **278 px** | 290×200 | 66 px |
 | superficie (Tapicería arquitectónica, paso 5) | 291×52 | **258 px** | 290×120 | 63 px |
 | daños (Reparación y restauración, paso 2) | 291×52 | **216 px** | 290×78 | 82 px |

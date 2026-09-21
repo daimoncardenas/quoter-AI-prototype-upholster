@@ -45,7 +45,8 @@ check('el botón dice «Pagar» en negrita', await card.locator('[data-pay-custo
 check('el snapshot guardado coincide con lo marcado', await page.evaluate(()=>{
   const cp=Store.customPlan();
   return [cp.lines.length, cp.capabilities.filter(c=>c.id==='plantillas').length, cp.total===Store.myAci().total];
-}), [5,1,true]);
+}), [4,1,true]);   /* 4 = las líneas que ofrece el plan a la medida: eran 5 y la retirada
+                     «Cambio de tela» (20/09) bajó el catálogo a siete líneas */
 
 // 4. Pagar: mismo flujo que los planes del catálogo (confirmación → factura → Bold simulado).
 await card.locator('[data-pay-customplan]').click();

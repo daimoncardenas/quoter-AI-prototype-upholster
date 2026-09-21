@@ -87,9 +87,12 @@ console.log('\nLA IA LOCAL RECOMIENDA: ORDENA LAS TELAS CON LO DECLARADO POR DEL
           if (!Array.isArray(mensajes) || !mensajes.every(m => m && m.role && Array.isArray(m.content)))
             throw new Error("Failed to read the 'content' property from 'LanguageModelMessage': Required member is undefined.");
           window.__pedido = mensajes;
-          /* Tarda un poco a propósito: así se puede mirar la pantalla MIENTRAS la IA ordena
-           * (y la hoja de Lía alcanza su pose: la levanta en ~0,6 s). */
-          await new Promise(r => setTimeout(r, 1600));
+          /* Tarda a propósito: así se puede mirar la pantalla MIENTRAS la IA ordena
+           * (y la hoja de Lía alcanza su pose: la levanta en ~0,6 s). Nueve segundos: la pose se
+           * levanta con WebGL por software y en una máquina cargada el tramo se estira —con 1,6 s y
+           * con 4 s la espera se acababa antes de que la hoja llegara a su tamaño y la lectura medía
+           * la mezcla (y en la batería completa, la parrilla ya estaba enseñada)—. */
+          await new Promise(r => setTimeout(r, 9000));
           /* Un orden al revés del determinista: si la parrilla lo respeta, el orden es SUYO. */
           return '{"orden": ["3","5","2","1","4"], "razon": "La Bouclé Capri te va por el uso y el estilo que declaraste."}';
         }, destroy(){} }; } };
@@ -103,6 +106,11 @@ console.log('\nLA IA LOCAL RECOMIENDA: ORDENA LAS TELAS CON LO DECLARADO POR DEL
   await p.evaluate(() => { document.getElementById('style').value = 'Moderno';
     document.getElementById('color').value = 'Grises'; document.getElementById('budget').value = '160000';
     const s = document.querySelector('.wizard-step[data-brain="RECOMMENDATION"]'); showStep(+s.dataset.step); });
+  /* La recomendación se vuelve a empezar desde cero: `recomendarConIA()` sólo corre una vez por
+   * recorrido (su guardia es `ordenDeLaIA`) y en la cadena completa el modelo ya había contestado
+   * cuando se lee la espera, así que las dos comprobaciones de abajo medían el FINAL. Soltarla y
+   * volver a llamarla es lo que hace el paso al entrar por primera vez. */
+  await p.evaluate(() => { ordenDeLaIA = null; recomendandoIA = false; state.fabric = null; recomendarConIA(); });
   /* MIENTRAS la IA ordena: la parrilla no se enseña (el modelo doble tarda 1,6 s). La hoja
    * y los brazos necesitan su tiempo: el peso de la pose sube desde 0 en ~0,6 s. */
   await p.waitForTimeout(1100);
@@ -115,10 +123,14 @@ console.log('\nLA IA LOCAL RECOMIENDA: ORDENA LAS TELAS CON LO DECLARADO POR DEL
      * lectura todavía grandes y el check fallaba por carrera (cuarta vez que aparece el mismo patrón). */
     const listo = () => { const st = document.getElementById('assistantStage').dataset;
       const [w, h] = (st.sheetPx || '0x0').split('x').map(Number);
-      const [l, r] = (st.sheetGap || '1|1').split('|').map(Number);
-      return st.reading === 'on' && w >= 16 && h >= 22 && l < 0.07 && r < 0.07
+      return st.reading === 'on' && w >= 16 && h >= 22
         && (st.sheetHands || '').split('|').filter(Boolean).length === 2; };
-    for (let i = 0; i < 30 && !listo(); i++) await new Promise(r => setTimeout(r, 100));
+    /* La espera es por el TAMAÑO, no por los huecos de la muñeca: pedir de una vez todo lo que mide
+     * la comprobación hacía que, cuando la pose tardaba en asentar, el tope se agotara y la lectura
+     * cayera DESPUÉS de que el modelo contestara (las dos comprobaciones medían el final). Los huecos
+     * se dejan asentar aparte, como en la revisión. */
+    for (let i = 0; i < 40 && !listo(); i++) await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 1200));
   });
   const esperando = await p.evaluate(() => ({ telas: document.getElementById('fabricGrid').hidden,
     fila: /Pidiéndole una recomendación/.test(document.getElementById('aiPick').innerText),
@@ -138,7 +150,7 @@ console.log('\nLA IA LOCAL RECOMIENDA: ORDENA LAS TELAS CON LO DECLARADO POR DEL
     [esperando.hoja.reading, esperando.hoja.w >= 16, esperando.hoja.h >= 22,
      esperando.hoja.l < 0.07, esperando.hoja.r < 0.07],
     ['on', true, true, true, true]);
-  await p.waitForFunction(() => /Bouclé Capri/.test(document.getElementById('aiPick').innerText), null, {timeout: 8000}).catch(()=>{});
+  await p.waitForFunction(() => /Bouclé Capri/.test(document.getElementById('aiPick').innerText), null, {timeout: 14000}).catch(()=>{});
   const est = await p.evaluate(() => ({
     telas: document.getElementById('fabricGrid').hidden,
     fila: document.getElementById('aiPick').innerText,

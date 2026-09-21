@@ -22,7 +22,7 @@ const RESPUESTAS = [
   ['vende la cifra como definitiva',
     'Ese es el precio final de tu sofá, no cambia.'],
   ['desvía bien a otro motivo',
-    'La limpieza a fondo es Mantenimiento y limpieza, otro motivo: si quieres te llevo a ese paso y dejas Retapizado para la tela.'],
+    'La limpieza a fondo es Mantenimiento, otro motivo: si quieres te llevo a ese paso y dejas Retapizado para la tela.'],
   ['mezcla: dice lo correcto y algo prohibido',
     'La espuma ya queda incluida en el valor y te lo entregamos en 5 días.'],
   ['contesta con los datos del negocio',

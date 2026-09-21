@@ -85,9 +85,10 @@ Claude Code y otras herramientas leen `CLAUDE.md`.*
 npm install && npx playwright install chromium   # tests only; the prototype has no deps
 npm run dev                                       # dev server on 127.0.0.1:3000, re-renders + live reload
 npm run generate                                  # renders generated/ for CLIENT (.env / env var)
-npm test                                          # generates, then all suites (CLIENT=MEDITERRANEA only, see below)
+npm test                                          # generates, then all suites — con el pack que tengas en .env: es la suite de la LÓGICA
 npm run test:wiring                               # one suite (also: node tests/wiring.spec.mjs)
-npm run test:clients                              # white-label pipeline smoke test, every non-Mediterránea pack
+npm run test:clients                              # browser pass for the ACTIVE pack (once, not per client)
+npm run test:packs                                # cada pack en datos: su marca en su salida y nada de otro pack (segundos)
 npm run build                                     # generates, then writes dist/index.html + dist/admin.html
 npm run build:assistant                           # rebuilds assets/assistant/*.gltf (downloads the CC0 sources first)
 ```
@@ -96,11 +97,14 @@ npm run build:assistant                           # rebuilds assets/assistant/*.
 - There is no test runner. Each `tests/*.spec.mjs` is a plain Node script that drives
   Chromium via Playwright, prints `PASS`/`FAIL` per check, and exits non-zero on any
   failure. There is no way to run a single check — run its file.
-- The main suite (`npm test`) is written against `clients/mediterranea/`'s specific
-  fixtures (seller names, quote counts, service points...), so it only passes end to
-  end with `CLIENT=MEDITERRANEA` (the `.env.example` default). It reads brand-specific
-  values (emails, demo password, storage keys) from the active pack via
-  `tests/client.mjs` instead of hardcoding them — see `tests/README.md`.
+- The main suite (`npm test`) runs against the pack that `CLIENT` points to (`.env` / env var):
+  it reads brand values (emails, demo password, storage keys) from that pack via
+  `tests/client.mjs`, and the fixtures it asserts — seller names, points of sale, seeded
+  quotes, fabric prices — live in the SHARED seed (`shared/`), not in a client pack.
+  Medido: los siete specs que parecían anclados a un cliente (assistant-brain, assistant,
+  billing, photos, points, ruta-pedido, wiring; 586 comprobaciones) pasan igual con
+  `CLIENT=MACIZO`. La suite es de la LÓGICA: no se le clava ningún cliente.
+  Ver `tests/README.md` y `npm run test:clients` (cada pack se comprueba generándolo).
 - No linter, no bundler. To look at the app, `npm run dev` (`tools/dev.mjs`: serves
   `generated/` on `127.0.0.1:$PORT`, default 3000, watches templates, `clients/` and
   `.env`, re-renders and live-reloads; the reload script is injected into HTTP

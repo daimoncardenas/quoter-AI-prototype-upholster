@@ -444,7 +444,7 @@ marked, `Store.lineEstimate` puts labour at 60 % and sums exactly `+$320.000` in
 the recommendation's price block spells out material, labour and repairs. The chosen **motivo**
 follows the customer through every step (`#journeyContext`) and its «cambiar» returns to the line
 step. It then walks the **four motivos that don't go through fabric** (plan raised to Business in
-that page): each asserts the exact steps it asks for, in order — `Mantenimiento y limpieza` shows
+that page): each asserts the exact steps it asks for, in order — `Mantenimiento` shows
 La línea · Tu mueble · Lo que necesita · Cómo llega al taller · Validación · Tu cotización, while
 `Muebles a la medida` inserts Medidas BEFORE Materiales y acabados — plus its `pricing` kind and
 its total from `Store.lineQuote` (mantenimiento `$320.000`, arquitectónica `$8.400.000`, a la

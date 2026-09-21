@@ -126,7 +126,7 @@ export function crearSustituto({ empresa, formulario = FORMULARIO_DEMO }) {
   return (dice) => {
     const t = String(dice).toLowerCase();
     if (/no s[eé] qu[eé]|recomiend|me queda bien|no entiendo de telas/.test(t)) return 'Con gusto: en la recomendación de telas te propongo opciones según el uso y el color. ¿El mueble es para una sala con mascotas o con niños?';
-    if (/limpiar|limpieza/.test(t)) return 'La limpieza va por el motivo «Mantenimiento y limpieza», que también trabajamos: si quieres te llevo a ese paso y dejamos el retapizado para la tela.';
+    if (/limpiar|limpieza/.test(t)) return 'La limpieza va por el motivo «Mantenimiento», que también trabajamos: si quieres te llevo a ese paso y dejamos el retapizado para la tela.';
     if (/mano de obra|cobran|por qu[eé] cobra/.test(t)) return 'El valor se compone de la tela y la mano de obra (60 % del material); un asesor te confirma el detalle antes de la compra.';
     if (/error|diligenci|formulario|validaci|corrig|an[aá]lisis/.test(t)) return (formulario.analisis || []).length
       ? `Tu formulario ya se revisó: ${formulario.analisis[0]}. Puedes corregir eso antes de enviarlo.`

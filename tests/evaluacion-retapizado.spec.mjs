@@ -87,7 +87,8 @@ async function recorrer({ mueble, fila, medidas, piezas }) {
   await avanzar();                                                       // 1 → 9 (Medidas)
   await page.fill('#width',String(medidas[0])); await page.fill('#height',String(medidas[1]));
   await page.fill('#depth',String(medidas[2]));
-  await avanzar();                                                       // 9 → 12 (Preferencias)
+  await avanzar();                                                       // 9 → 17 (Insumos del trabajo)
+  await avanzar();                                                       // 17 → 12 (Preferencias)
   await avanzar();                                                       // 12 → 13 (Validación)
   if (await page.isVisible('#analyzeButton')) { await page.click('#analyzeButton'); await page.waitForFunction(()=>state.analyzed); }
   await avanzar();                                                       // 13 → 14 (Recomendación)

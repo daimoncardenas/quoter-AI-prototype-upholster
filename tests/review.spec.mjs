@@ -340,7 +340,7 @@ console.log('\nMIENTRAS MIRA LA FOTO, ELLA LEE SU DOCUMENTO');
     Object.defineProperty(window, 'isSecureContext', { value: true });
     window.LanguageModel = { availability: async () => 'available',
       create: async () => ({ prompt: async () => {
-        await new Promise(r => setTimeout(r, 2500));   // la mirada tarda: se mira MIENTRAS
+        await new Promise(r => setTimeout(r, 6000));   // la mirada tarda: se mira MIENTRAS
         return '{"veMueble": true, "frase": "Veo un sofá de dos puestos tapizado en tela clara."}'; }, destroy(){} }) };
   });
   await p.goto(D + 'index.html');
@@ -368,13 +368,13 @@ console.log('\nMIENTRAS MIRA LA FOTO, ELLA LEE SU DOCUMENTO');
   check('sin nada corriendo, no hay documento en las manos (ni se finge uno)',
     [antes.reading, antes.px], ['off', '']);
   await p.click('#analyzeButton');
-  /* La mirada (y con ella la hoja) arranca cuando el repaso local termina, ~1,2 s después del
-   * clic; el modelo de mentira tarda 2,5 s más. Se mira a los 2,6 s: la hoja ya está levantada
-   * y la cara ya bajó (la pose se levanta en ~0,6 s). */
-  await p.waitForTimeout(2600);
-  /* La pose del agarre se levanta con una mezcla de ~0,6 s: se espera a que sus medidas queden
-   * QUIETAS (dos lecturas seguidas iguales), no a un instante fijo — en la cadena completa el reloj
-   * de la página se atrasa y una lectura en plena mezcla daba una muñeca fuera de su canto. */
+  /* La mirada (y con ella la hoja) arranca cuando el repaso local termina, ~1,2 s después del clic;
+   * el modelo de mentira tarda 6 s más. */
+  /* La pose del agarre se levanta con una mezcla de ~0,6 s, y con la máquina cargada (WebGL por
+   * software, y con la foto grande del fixture) el tramo se estira: se espera —con tope amplio, porque
+   * el modelo de mentira dura 6 s— a que estén los HECHOS que las comprobaciones miden (leyendo, la
+   * hoja con tamaño real y las dos manos en su canto), no a un instante fijo. Esperar a que la pose
+   * quede QUIETA (dos lecturas iguales) no sirve: la hoja se mece y «igual» nunca llega. */
   const mientras = await p.evaluate(async () => {
     const lee = () => { const st = document.getElementById('assistantStage').dataset;
       const [w, h] = (st.sheetPx || '0x0').split('x').map(Number);
@@ -384,15 +384,18 @@ console.log('\nMIENTRAS MIRA LA FOTO, ELLA LEE SU DOCUMENTO');
         /* El botón de revisar no sirve para esto: el paso se vuelve a pintar cuando la mirada
          * termina y desaparece del DOM (por eso se lee la bandera de la app). */
         analizando: mirandoFoto }; };
-    const clave = x => JSON.stringify([x.w, x.h, x.l, x.r, x.head, x.manos, x.z, x.tipsx]);
-    let previa = lee();
-    for (let i = 0; i < 25; i++) {
-      await new Promise(r => setTimeout(r, 120));
-      const ahora = lee();
-      if (previa.reading === 'on' && clave(previa) === clave(ahora)) return ahora;
-      previa = ahora;
+    const listo = x => x.reading === 'on' && x.analizando && x.w >= 16 && x.h >= 22
+      && x.l < 0.07 && x.r < 0.07 && (x.manos || '').split('|').filter(Boolean).length === 2;
+    let ahora = lee();
+    for (let i = 0; i < 100 && !listo(ahora); i++) {
+      await new Promise(r => setTimeout(r, 100));
+      ahora = lee();
     }
-    return previa;
+    /* La pose se MEZCLA en ~0,6 s y los hechos de arriba se cumplen a mitad de la mezcla: se deja
+     * asentar antes de leer, o la muñeca se mide aún en movimiento (visto: 0.106 y 0.114 contra la
+     * banda de 0,04–0,10 del agarre). Antes esto no hacía falta porque se leía a los 2,6 s fijos. */
+    await new Promise(r => setTimeout(r, 1200));
+    return lee();
   });
   check('mientras la mirada corre, ella sostiene el documento y lo lee',
     [mientras.reading, mientras.analizando], ['on', true]);

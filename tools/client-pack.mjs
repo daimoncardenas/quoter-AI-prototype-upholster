@@ -91,7 +91,7 @@ export const SERVICE_JOURNEYS = ['suministro', 'existente', 'nueva', 'proyecto']
 export const SERVICE_PLANS = ['Essential', 'Professional', 'Business'];
 /* Lo que una línea puede preguntar MÁS ALLÁ de la tela. Hoy solo «reparación» pregunta por los
  * daños: son suyos, no del cotizador, así que se declaran en la línea y no en el flujo. */
-export const SERVICE_ASKS = ['danos', 'limpieza', 'traslado', 'superficie', 'acustica', 'materiales', 'tapizado', 'boq', 'obra'];
+export const SERVICE_ASKS = ['danos', 'insumos', 'limpieza', 'traslado', 'superficie', 'acustica', 'materiales', 'tapizado', 'boq', 'obra'];
 /* Cómo se cotiza cada línea. `tela` es el motor de siempre (metros × precio + mano de obra);
  * los otros cuatro son oficios que no se cotizan por metro de rollo. */
 export const SERVICE_PRICINGS = ['tela', 'pieza', 'm2', 'fabricacion', 'unidad'];
@@ -214,9 +214,10 @@ export function validateAskSpecs(specs, lines) {
     });
   }
   for (const a of asked) if (!specs || !specs[a]) bad.push(`a line asks for "${a}" but asks.${a} does not exist`);
-  /* `danos` se sirve con su propio paso (`#damageStep` + `damageItems`, el primero que existió):
-   * se valida aparte. Unificarlo con el render de `asks` queda pendiente. */
+  /* `danos` y `insumos` se sirven con su propio paso (`#damageStep`, `#insumoStep`), no con el
+   * render de `asks`: se validan aparte. Unificarlos queda pendiente. */
   if (asked.has('danos') && !(specs || {}).danos) bad.pop();
+  if (asked.has('insumos') && !(specs || {}).insumos) bad.pop();
   if (bad.length) throw new Error(`${SHARED_LINES_FILE} has invalid asks:\n  ${bad.join('\n  ')}`);
 }
 

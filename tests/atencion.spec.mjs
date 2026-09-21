@@ -29,7 +29,10 @@ const TRES = ['1', '2', '3'].map(n => new URL(`./fixture-sofa-${n}.png`, import.
 const alUltimoPaso = async () => {
   await page.setInputFiles('#furniturePhoto', TRES);
   await page.waitForFunction(() => state.photos.length >= 3);
-  for (let i = 0; i < 9; i++) {
+  /* Hasta catorce saltos: la caminata empieza en el paso de la LÍNEA (cambiar de línea empieza de
+   * cero) y el recorrido completo de suministro pasa por sus dos caminos, el propósito y lo que se
+   * sabe antes del mueble. */
+  for (let i = 0; i < 14; i++) {
     const paso = await page.evaluate(() => { const p = document.querySelector('.wizard-step.active'); return p ? (p.dataset.brain || p.dataset.ask) : null; });
     if (paso === 'CONTACT') return true;
     if (paso === 'REVIEW') { await page.click('#analyzeButton').catch(() => {}); await page.waitForTimeout(1800); }

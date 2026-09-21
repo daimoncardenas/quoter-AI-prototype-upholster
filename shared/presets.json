@@ -18,7 +18,7 @@
       "Analítica mensual básica, notificaciones por correo y actualizaciones del producto",
       "Soporte por correo electrónico"
     ] },
-  "pricingNota": "De dónde sale cada cifra, y qué se movió para que la suma cuadre con el precio del MES (dueño: «la base es 299.000 y ajusta el resto», 18 de septiembre). LA BASE ES EL ACI CORE: 299.000 (antes 199.000, por instrucción del dueño) — es lo que todo paquete incluye, y de ahí para arriba suma cada paquete. DEL TEXTO DEL DUEÑO: Tapicería arquitectónica +$100.000; Asignación de vendedores +$60.000; Analítica comercial +$80.000. INVESTIGADAS con fuente: Soporte prioritario +$190.000 (piso de mantenimiento de una pyme: mentoracolombia); Dominio propio +$20.000. AJUSTADAS para que Core + servicios + capacidades sume EXACTO el precio del mes: Suministro de tela $50.000 (tu cifra del texto, sin tocar); Retapizado 80.000→50.000 (los dos del paquete de entrada suman 100.000, que es lo que le falta a la base para llegar a 399.000); Cambio de tela 70.000→75.000; Reparación 95.000→100.000; A la medida 130.000→140.000; Proyecto comercial 120.000→100.000; Mantenimiento 85.000→70.000; Marca blanca 45.000→25.000; Plantillas 25.000→20.000; Exportación CSV 20.000→15.000; Asistentes adicionales 100.000→96.000. Las tres sumas: Taller 299.000+100.000 = 399.000 · Empresa 299.000+415.000+185.000 = 899.000 · Distribuidor 299.000+685.000+506.000 = 1.490.000.",
+  "pricingNota": "De dónde sale cada cifra, y qué se movió para que la suma cuadre con el precio del MES (dueño: «la base es 299.000 y ajusta el resto», 18 de septiembre). LA BASE ES EL ACI CORE: 299.000 (antes 199.000, por instrucción del dueño) — es lo que todo paquete incluye, y de ahí para arriba suma cada paquete. DEL TEXTO DEL DUEÑO: Tapicería arquitectónica +$100.000; Asignación de vendedores +$60.000; Analítica comercial +$80.000. INVESTIGADAS con fuente: Soporte prioritario +$190.000 (piso de mantenimiento de una pyme: mentoracolombia); Dominio propio +$20.000. AJUSTADAS para que Core + servicios + capacidades sume EXACTO el precio del mes: Suministro de tela $50.000 (tu cifra del texto, sin tocar); Retapizado 80.000→50.000 (los dos del paquete de entrada suman 100.000, que es lo que le falta a la base para llegar a 399.000); Reparación 95.000→100.000→175.000 (20/09: absorbe los 75.000 de la línea «Cambio de tela», retirada — su caso lo cubre retapizado sin insumos; así las tres sumas siguen cuadrando sin mover ningún precio de plan); A la medida 130.000→140.000; Proyecto comercial 120.000→100.000; Mantenimiento 85.000→70.000 (21/09: la línea pasó a valer 160.000 al recibir la reparación adentro, y el reparto se aplana alrededor del promedio de las seis — 114.167, que no puede moverse porque las seis suman los 685.000 de Distribuidor: 50/50/155/160/135/135); Proyecto comercial 100.000→135.000 y Tapicería 100.000→135.000 (el mismo reparto); Marca blanca 45.000→25.000; Plantillas 25.000→20.000; Exportación CSV 20.000→15.000; Asistentes adicionales 100.000→96.000. Las tres sumas: Taller 299.000+100.000 = 399.000 · Empresa 299.000+415.000+185.000 = 899.000 · Distribuidor 299.000+685.000+506.000 = 1.490.000.",
   "capabilitiesNota": "Nada se borra de la oferta: las capacidades que prometían los planes están aquí, cada una con lo que HACE (hint) y con su precio — y el precio entra en la suma del paquete (ver pricingNota). La IA NO es checkbox: se cobra por INTERACCIONES, así que vive en la capacidad del paquete (75, 300 o 1.000 interacciones de IA al mes) y se amplía como cualquier otra capacidad. El ASISTENTE también es del Core (uno viene incluido); lo que se vende es cada configuración adicional. Soporte +$190.000 (el piso de mantenimiento de una pyme: mentoracolombia).",
   "capabilities": [
     { "id": "dominio", "label": "Dominio propio o subdominio del cliente", "hint": "El cotizador vive en tu dominio, no en uno de CARDYRAM.", "price": 20000 },
@@ -33,22 +33,20 @@
   "servicePrices": {
     "suministro-tela": 50000,
     "retapizado": 50000,
-    "cambio-de-tela": 75000,
-    "reparacion": 100000,
-    "a-la-medida": 140000,
-    "proyecto-comercial": 100000,
-    "tapiceria-arquitectonica": 100000,
-    "mantenimiento": 70000
+    "a-la-medida": 155000,
+    "mantenimiento": 160000,
+    "proyecto-comercial": 135000,
+    "tapiceria-arquitectonica": 135000
   },
   "precioNota": "Manda el precio POR MES: la composición (Core + servicios + capacidades) suma EXACTO el precio mes a mes del paquete — 399.000 / 899.000 / 1.490.000 — que es el que se paga cada mes y el que se ve en la tarjeta con «Mes». El de contrato de arrendamiento a 12 meses es MÁS BAJO y se muestra aparte: 299.000 / 799.000 / 1.390.000 (`priceYearly`, cifras del dueño del 19 de septiembre) — el mismo plan, con el compromiso de un año. La tarjeta de Planes y «Configurar mi plan» leen lo mismo (`Store.planPrice`). `activation` es la activación inicial: una mensualidad (399.000 / 899.000 / 1.490.000), que se paga al contratar mes a mes y va INCLUIDA en la contratación anual (condiciones generales del dueño, 19 de septiembre).",
   "presets": [
     { "id": "taller", "label": "Taller", "hint": "Recomendado para comenzar", "price": 399000, "priceYearly": 299000, "activation": 399000, "lines": ["suministro-tela", "retapizado"],
       "capabilities": [],
       "quota": { "quotes": 30, "aiCredits": 75, "storageGB": 1, "users": 1, "locations": 1, "historyMonths": 3 } },
-    { "id": "empresa", "label": "Empresa de muebles", "hint": "Varios oficios en el mismo taller", "price": 899000, "priceYearly": 799000, "activation": 899000, "lines": ["suministro-tela", "retapizado", "cambio-de-tela", "reparacion", "a-la-medida"],
+    { "id": "empresa", "label": "Empresa de muebles", "hint": "Varios oficios en el mismo taller", "price": 899000, "priceYearly": 799000, "activation": 899000, "lines": ["suministro-tela", "retapizado", "mantenimiento", "a-la-medida"],
       "capabilities": ["dominio", "asignacion", "analitica", "marca-blanca"],
       "quota": { "quotes": 90, "aiCredits": 300, "storageGB": 5, "users": 3, "locations": 3, "historyMonths": 12 } },
-    { "id": "distribuidor", "label": "Distribuidor", "hint": "Todo el catálogo, proyectos y obra", "price": 1490000, "priceYearly": 1390000, "activation": 1490000, "lines": ["suministro-tela", "retapizado", "cambio-de-tela", "reparacion", "a-la-medida", "proyecto-comercial", "tapiceria-arquitectonica", "mantenimiento"],
+    { "id": "distribuidor", "label": "Distribuidor", "hint": "Todo el catálogo, proyectos y obra", "price": 1490000, "priceYearly": 1390000, "activation": 1490000, "lines": ["suministro-tela", "retapizado", "a-la-medida", "proyecto-comercial", "tapiceria-arquitectonica", "mantenimiento"],
       "capabilities": ["dominio", "plantillas", "export-csv", "soporte", "asignacion", "analitica", "marca-blanca", "asistentes-extra"],
       "quota": { "quotes": 300, "aiCredits": 1000, "storageGB": 15, "users": 10, "locations": 10, "historyMonths": 12 } }
   ]

@@ -5,16 +5,29 @@ import { ADMIN_EMAIL, DEMO_PASSWORD } from './client.mjs';
  * es el primero y su "Continuar" está deshabilitado hasta elegir. Deja el wizard en el paso 1
  * (Tu mueble), que es donde arrancan todas las suites que recorren el formulario. Un solo lugar
  * para esa mecánica: las suites no repiten el gesto. */
+/* La línea puede traer CAMINOS (docs/flujo-de-suministro.md, diagrama del dueño): qué quieres hacer
+ * → para qué → qué sabes. El recorrido COMPLETO —«mi mueble o proyecto personal» + «no tengo claro
+ * ninguna de las dos»— es el de siempre (mueble, medidas, preferencias, validación, recomendación) y
+ * es donde arrancan las suites que recorren el formulario. El que quiera otro camino lo elige él
+ * (tests/ruta-*.spec). */
+export async function elegirElRecorridoCompleto(page) {
+  if (!await page.isVisible('.wizard-step[data-step="18"].active')) return false;
+  await page.click('#routeGrid .service-choice:has-text("Nueva compra")');
+  await page.click('#nextButton');
+  await page.click('#purposeGrid .service-choice:has-text("Mi mueble o proyecto personal")');
+  await page.click('#nextButton');
+  await page.click('#saberGrid .service-choice:has-text("No tengo claro ninguna de las dos")');
+  await page.click('#nextButton');
+  return true;
+}
+
 export async function openWizard(page, D) {
   await page.goto(D + 'index.html');
   if (await page.isVisible('#serviceGrid .service-choice')) {
     await page.click('#serviceGrid .service-choice');
     await page.click('#nextButton');
   }
-  /* La línea puede traer una RUTA (docs/flujo-de-suministro.md): su pregunta viene entre la línea y
-   * «Tu mueble», y viene elegida — la clásica —, así que un «Continuar» más deja el wizard donde
-   * siempre: en el paso del mueble. El que quiera otra ruta la elige él (tests/ruta-directa.spec). */
-  if (await page.isVisible('.wizard-step[data-step="18"].active')) await page.click('#nextButton');
+  await elegirElRecorridoCompleto(page);
 }
 
 export async function openAdmin(page, D, email = ADMIN_EMAIL) {

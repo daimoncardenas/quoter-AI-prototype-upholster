@@ -34,6 +34,7 @@
     { n: 9, id: 'MEASUREMENTS', name: 'Medidas' },
     { n: 10, id: 'MATERIALES', name: 'Materiales y acabados' },
     { n: 11, id: 'TAPIZADO', name: 'El tapizado' },
+    { n: 17, id: 'INSUMOS', name: '¿Qué se le cambia por dentro?' },
     { n: 12, id: 'PREFERENCES', name: 'Preferencias' },
     { n: 13, id: 'REVIEW', name: 'Validación' },
     { n: 14, id: 'RECOMMENDATION', name: 'Recomendación' },
@@ -41,11 +42,15 @@
     /* El paso de la estimación es de TODOS los motivos (ver docs/journeys.md §10): va después de las
      * preguntas y antes del contacto, y esta tabla es la que lo nombra en el móvil y en los eventos. */
     { n: 16, id: 'ESTIMATE', name: 'Estimación' },
-    /* Los dos pasos de la ruta corta (docs/flujo-de-suministro.md): la pregunta de entrada de una
-     * línea con rutas y su paso de referencia + cantidad. No son pasos de todos los motivos, así que
-     * el móvil los nombra por esta tabla igual que a los demás. */
-    { n: 18, id: 'ROUTE', name: '¿Qué necesitas?' },
-    { n: 19, id: 'DIRECT', name: 'Tu referencia y cantidad' }
+    /* Los pasos de los caminos cortos (docs/flujo-de-suministro.md, diagrama del dueño): la primera
+     * pregunta —qué quieres hacer—, para qué se necesita la tela cuando es una compra nueva, qué se
+     * sabe (tela y cantidad), la lista y el pedido anterior. No son pasos de todos los motivos, así
+     * que el móvil los nombra por esta tabla igual que a los demás. */
+    { n: 18, id: 'ROUTE', name: '¿Qué quieres hacer?' },
+    { n: 22, id: 'PROPOSITO', name: '¿Para qué necesitas la tela?' },
+    { n: 23, id: 'SABER', name: '¿Conoces tela y cantidad?' },
+    { n: 20, id: 'LIST', name: 'Tu compra' },
+    { n: 21, id: 'ORDER', name: 'Tu pedido anterior' }
   ];
   /* Los pasos se NOMBRAN por su id, nunca por un número escrito a mano: con los tres pasos
    * opcionales (la línea, los daños y los que pide cada motivo) la numeración corre, y un

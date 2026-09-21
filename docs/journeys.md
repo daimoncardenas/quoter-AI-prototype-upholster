@@ -93,10 +93,9 @@ camino (ver 3.2).
 |---|---|---|---|---|
 | 1 | Retapizado de muebles | existente | tela + espuma/relleno (+estructura si el taller la hace) | La línea base de todo taller. Precio = mano de obra + tela + espuma + reparaciones. |
 | 2 | Suministro de tela (por metro) | suministro | tela | La línea del distribuidor (caso Mediterránea). Es el cotizador actual, sin selector. |
-| 3 | Cambio de tela | existente | solo cubierta | Barata y rápida; obliga a declarar que la estructura está sana. |
-| 4 | Reparación y restauración | existente | + estructura y acabados | La línea donde la revisión humana pesa más; el motor cotiza igual. |
-| 5 | Muebles a la medida (y personalización) | nueva | mueble completo o delta sobre un modelo | La base es la referencia del cliente, no un catálogo. |
-| 6 | Proyecto comercial | proyecto | cantidades + instalación | Salida: propuesta. Solo plan superior. |
+| 3 | Reparación y restauración | existente | + estructura y acabados | La línea donde la revisión humana pesa más; el motor cotiza igual. |
+| 4 | Muebles a la medida (y personalización) | nueva | mueble completo o delta sobre un modelo | La base es la referencia del cliente, no un catálogo. |
+| 5 | Proyecto comercial | proyecto | cantidades + instalación | Salida: propuesta. Solo plan superior. |
 
 Los servicios del mercado caben aquí sin una línea por cada uno: limpieza y tratamientos son
 **alcance**; transporte e instalación son líneas de la cotización.
@@ -232,7 +231,7 @@ tarifas demo del catálogo sujetas a las anclas de §8.2). Pendiente: la estimac
 para los motivos que se saltan la recomendación —hoy su total se ve en el resumen final—, el mapa
 de copia por motivo y unificar el paso de daños con el render de `asks`.
 
-### 9.1 Mantenimiento y limpieza — se cotiza por PIEZA, no por tela
+### 9.1 Mantenimiento — se cotiza por PIEZA, no por tela
 
     Pasos      0 Motivo · 1 Tu mueble (tipo + fotos) · 2 ¿Qué necesita? · 3 Domicilio o recogida
                · 4 Validación · 5 Tu estimación · 6 Tus datos

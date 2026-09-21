@@ -587,12 +587,35 @@
          * queda es el del negocio, que apaga líneas desde el backoffice. */
         var required = s.minPlan === 'base' ? 'Essential' : s.minPlan;
         var withinPlan = true;
+        /* Lo que el taller escribió en el backoffice pisa lo que trae el catálogo
+         * (settings.lineOverrides): la tabla de mano de obra y la lista de insumos. El catálogo
+         * queda como el default del producto y nada del cliente se pierde al regenerar. */
+        var ov = (settings.lineOverrides || {})[s.id] || null;
         out.push({
           id: s.id, label: s.label, hint: s.hint || '', journey: s.journey,
           requiredPlan: required,
           /* Lo que la línea suma a la estimación y lo que pregunta de más (ver lineEstimate y
            * docs/journeys.md): la línea no es solo una etiqueta en la cotización. */
           laborPct: Math.max(0, +s.laborPct || 0),
+          /* La mano de obra según cómo la cobre la línea (docs/retapizado-trabajo.md): `pct` es lo de
+           * siempre —un % del material— y `tabla` la cobra por mueble + por metro de tela. El
+           * backoffice la edita y su edición (`lineOverrides`) gana sobre el catálogo; sin tabla
+           * declarada la línea se queda con su porcentaje de siempre. */
+          labor: (function () {
+            var lab = (ov && ov.labor) || s.labor || {};
+            var pct = (ov && ov.labor && ov.labor.pct !== undefined) ? ov.labor.pct : s.laborPct;
+            return { mode: lab.mode === 'tabla' ? 'tabla' : 'pct',
+                     pct: Math.max(0, +pct || 0),
+                     perMeter: Math.max(0, +lab.perMeter || 0),
+                     porMueble: Object.assign({}, lab.porMueble || {}) };
+          })(),
+          /* Los insumos del trabajo (espuma, cinchas, grapas…): el catálogo los declara, el
+           * backoffice los edita y la estimación los suma con el precio vigente. */
+          insumos: (((ov && ov.insumos) || s.insumos) || []).map(function (x) {
+            return { id: x.id, label: x.label || x.id, unit: x.unit || '',
+                     cop: Math.max(0, +x.cop || 0), hint: x.hint || '',
+                     demo: !!x.demo, nota: x.nota || '' };
+          }),
           asks: (s.asks || []).slice(),
           /* Cómo se cotiza esta línea y qué pasos del cotizador se salta: los dos son datos del
            * catálogo (shared/service-lines.json), no casos especiales del código. */
@@ -645,11 +668,14 @@
 
     /* El tramo que la línea elegida aporta a la estimación, sobre el rango de material:
      *   suministro            → solo material (laborPct 0): la tela es el producto
-     *   retapizado / cambio   → material + mano de obra (% del material, como se cotiza a mano)
+     *   retapizado / cambio   → material + mano de obra (% del material, o POR MUEBLE + POR METRO
+     *                           cuando la línea trae labor.mode 'tabla' — docs/retapizado-trabajo.md)
      *   reparación            → material + mano de obra + los daños marcados
+     *   + insumos             → lo que el paso de insumos marcó, con su precio del catálogo
      * Así el número cambia de verdad al cambiar de línea, que es lo que el cotizador promete. */
-    lineEstimate: function (service, range, damageIds) {
+    lineEstimate: function (service, range, damageIds, extra) {
       var svc = service || {};
+      extra = extra || {};
       var laborPct = Math.max(0, +svc.laborPct || 0) / 100;
       var lo = Math.max(0, +((range || [])[0]) || 0);
       var hi = Math.max(lo, +((range || [])[1]) || 0);
@@ -658,13 +684,48 @@
         if ((damageIds || []).indexOf(d.id) >= 0) picked.push(d);
       });
       var damages = picked.reduce(function (a, d) { return a + d.cop; }, 0);
+      /* La obra por tabla no depende del precio de la tela: por mueble + por metro. Con el rango de
+       * metros sale un rango igual que el material (los dos extremos del consumo). */
+      var tabla = !!(svc.labor && svc.labor.mode === 'tabla');
+      var labor, laborNote = '';
+      if (tabla) {
+        var porMueble = (svc.labor && svc.labor.porMueble) || {};
+        var mueble = extra.furnitureId;
+        var baseObra = Math.max(0, +((mueble != null && porMueble[mueble] !== undefined)
+          ? porMueble[mueble] : porMueble.otro) || 0);
+        var porMetro = Math.max(0, +((svc.labor && svc.labor.perMeter) || 0));
+        var mts = extra.meters || [];
+        var mMin = Math.max(0, +mts[0] || 0), mMax = Math.max(mMin, +mts[1] || 0);
+        labor = [ceilTo(baseObra + porMetro * mMin, 0.1), ceilTo(baseObra + porMetro * mMax, 0.1)];
+        var metros = String(Math.round(mMax * 10) / 10).replace('.', ',');
+        laborNote = (extra.furnitureName ? extra.furnitureName + ' · ' : '') + metros + ' m';
+      } else {
+        /* El modo de siempre: el porcentaje de la línea —o el que el taller dejó en el backoffice—. */
+        laborPct = Math.max(0, +((svc.labor && svc.labor.pct !== undefined)
+          ? svc.labor.pct : svc.laborPct * 100) || 0) / 100;
+        labor = [ceilTo(lo * laborPct, 0.1), ceilTo(hi * laborPct, 0.1)];
+      }
+      /* Los insumos marcados: cantidad × precio del catálogo. Vacío = no se cambia nada. */
+      var insumos = [];
+      var insumosSum = 0;
+      (extra.insumos || []).forEach(function (x) {
+        var qty = Math.max(0, +((x || {}).qty) || 0);
+        if (!qty) return;
+        insumos.push({ id: x.id, label: x.label || x.id, unit: x.unit || '', qty: qty, cop: Math.max(0, +x.cop || 0) });
+        insumosSum += qty * Math.max(0, +x.cop || 0);
+      });
       return {
         material: [lo, hi],
-        laborPct: Math.round(laborPct * 100),
-        labor: [ceilTo(lo * laborPct, 0.1), ceilTo(hi * laborPct, 0.1)],
+        laborPct: tabla ? 0 : Math.round(laborPct * 100),
+        laborMode: tabla ? 'tabla' : 'pct',
+        laborNote: laborNote,
+        labor: labor,
+        insumos: insumos,
+        insumosSum: ceilTo(insumosSum, 0.1),
         damages: damages,
         picked: picked,
-        total: [ceilTo(lo * (1 + laborPct), 0.1) + damages, ceilTo(hi * (1 + laborPct), 0.1) + damages]
+        total: [labor[0] + lo + damages + ceilTo(insumosSum, 0.1),
+                labor[1] + hi + damages + ceilTo(insumosSum, 0.1)]
       };
     },
 
@@ -768,9 +829,22 @@
         if (serv.indexOf('desmontaje') >= 0) parts.push({ label: 'Desmontaje de lo existente', value: igual(units * money(U.desmontajePorUnidad)) });
         if (serv.length) parts.push({ label: 'Logística y entrega', value: igual(money(U.logisticaCop)) });
       } else {
-        var e = Store.lineEstimate(service, ctx.materialRange || [0, 0], ctx.damages || []);
+        var e = Store.lineEstimate(service, ctx.materialRange || [0, 0], ctx.damages || [],
+          { meters: ctx.meters || [], furnitureId: ctx.furnitureId,
+            furnitureName: ctx.furnitureName, insumos: ctx.insumos || [] });
         parts.push({ label: 'Material', value: juntos(e.material) });
-        if (e.laborPct > 0) parts.push({ label: 'Mano de obra (≈ ' + e.laborPct + ' %)', value: juntos(e.labor) });
+        /* La obra por tabla trae su nota («Sofá · 21,5 m»): se lee de dónde sale el número
+         * (docs/retapizado-trabajo.md). El modo de siempre sigue diciendo su porcentaje. */
+        if (e.laborMode === 'tabla')
+          parts.push({ label: 'Mano de obra' + (e.laborNote ? ' (' + e.laborNote + ')' : ''), value: juntos(e.labor) });
+        else if (e.laborPct > 0)
+          parts.push({ label: 'Mano de obra (≈ ' + e.laborPct + ' %)', value: juntos(e.labor) });
+        if (e.insumosSum > 0) {
+          var detalle = e.insumos.map(function (x) {
+            return x.label + ' ' + x.qty + (x.unit ? ' ' + x.unit : '');
+          }).join(' · ');
+          parts.push({ label: 'Insumos (' + detalle + ')', value: igual(e.insumosSum) });
+        }
         if (e.damages > 0) parts.push({ label: 'Reparaciones', value: igual(e.damages) });
       }
 
