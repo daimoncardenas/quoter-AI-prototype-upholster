@@ -610,12 +610,20 @@
                      porMueble: Object.assign({}, lab.porMueble || {}) };
           })(),
           /* Los insumos del trabajo (espuma, cinchas, grapas…): el catálogo los declara, el
-           * backoffice los edita y la estimación los suma con el precio vigente. */
-          insumos: (((ov && ov.insumos) || s.insumos) || []).map(function (x) {
-            return { id: x.id, label: x.label || x.id, unit: x.unit || '',
-                     cop: Math.max(0, +x.cop || 0), hint: x.hint || '',
-                     demo: !!x.demo, nota: x.nota || '' };
-          }),
+           * backoffice los edita y la estimación los suma con el precio vigente. El estándar de la
+           * mano (docs/insumos-asistidos.md) se toma del CATÁLOGO por id, siempre: el override del
+           * backoffice cambia precios —y uno guardado antes de que el estándar existiera no lo
+           * trae—, no la regla de cuánto gasta un mueble. */
+          insumos: (function () {
+            var standardPorId = {};
+            (s.insumos || []).forEach(function (x) { if (x.standard) standardPorId[x.id] = x.standard; });
+            return (((ov && ov.insumos) || s.insumos) || []).map(function (x) {
+              return { id: x.id, label: x.label || x.id, unit: x.unit || '',
+                       cop: Math.max(0, +x.cop || 0), hint: x.hint || '',
+                       demo: !!x.demo, nota: x.nota || '',
+                       standard: standardPorId[x.id] || x.standard || null };
+            });
+          })(),
           asks: (s.asks || []).slice(),
           /* Cómo se cotiza esta línea y qué pasos del cotizador se salta: los dos son datos del
            * catálogo (shared/service-lines.json), no casos especiales del código. */
@@ -1246,6 +1254,30 @@
       return !!tpl && (tpl.optional || []).indexOf(input) >= 0;
     },
 
+    /* Las cantidades que el taller suele gastar en ese mueble — la mano del paso de insumos
+     * (docs/insumos-asistidos.md). Los estándares (cuánto rinde un kilo, cada cuánto va una banda)
+     * son DATOS del catálogo y DEMO declarado; aquí solo se aplican sobre las caras del mueble.
+     * Devuelve [] si falta la medida que los sostiene, o si el insumo no declara estándar. */
+    insumoSuggestion: function (service, inputs, furniture) {
+      var caras = insumoSurfaces(furniture, inputs);
+      var lista = (service && service.insumos) || [];
+      if (!caras || !lista.length) return [];
+      return lista.map(function (x) {
+        var st = x.standard;
+        if (!st) return null;
+        var qty;
+        if (st.mode === 'bandas') {
+          var ancho = +st.bandCm > 0 ? +st.bandCm / 100 : 0.07;
+          qty = Math.ceil(Math.ceil(caras.anchoAsiento / ancho) * caras.fondoAsiento);
+        } else {
+          var per = +st.per > 0 ? +st.per : 1;
+          qty = Math.ceil(insumoFaceArea(st.faces, caras) / per);
+        }
+        if (!(qty > 0)) return null;
+        return { id: x.id, label: x.label, unit: x.unit, qty: qty, why: st.why || '' };
+      }).filter(Boolean);
+    },
+
     /* Three numbers that get confused constantly, and are only equal when the
      * fabric sells in fine increments with no minimum:
      *   consumo    — what the furniture is expected to eat
@@ -1641,6 +1673,57 @@
 
   /* 0.5 reads better than 0.50, and 10 better than 10.00. */
   function fmtM(n) { return String(round2(n)).replace('.', ','); }
+
+  /* ------------------------------------------------- insumos del trabajo -- */
+
+  /* La superficie de tela de un mueble, en m², para estimar los insumos del taller
+   * (docs/insumos-asistidos.md). Con plantilla sale del DESPIECE —las mismas piezas que el motor
+   * corta, así que respeta la cobertura que declaró el cliente—; sin plantilla sale de sus medidas
+   * y de los metros base del mueble (los del backoffice), con el rendimiento de un rollo de 1,4 m:
+   * 0,8 m² de superficie por metro. Es una aproximación declarada, no una medida de taller.
+   * null cuando falta la medida que la sostiene: quien la use lo dice, no la inventa. */
+  var SURFACE_PER_METER = 0.8;
+  function insumoSurfaces(furniture, inputs) {
+    var i = inputs || {};
+    var W = (+i.width || 0) / 100, H = (+i.height || 0) / 100, D = (+i.depth || 0) / 100;
+    if (!(W > 0 && H > 0 && D > 0)) return null;
+    var fondoAsiento = Math.max(0.35, D - 0.18);
+    var hRespaldo = Math.max(0.30, H - 0.42);
+    var tpl = FURNITURE_TEMPLATES[furniture && furniture.id];
+    if (tpl) {
+      var asiento = 0, espaldar = 0, tela = 0;
+      tpl.pieces(i).forEach(function (p) {
+        var area = p.w * p.h * p.qty;
+        tela += area;
+        if (p.name === 'Asiento superior') asiento += area;
+        if (p.name === 'Respaldo frontal') espaldar += area;
+      });
+      return { tela: tela, asiento: asiento, espaldar: espaldar,
+               anchoAsiento: W, fondoAsiento: fondoAsiento };
+    }
+    var metros = (furniture && furniture.meters) || null;
+    /* Sin plantilla, los metros base del mueble son los del backoffice y escalan como escalan en la
+     * estimación de tela: por cantidad cuando el mueble se cuenta por piezas y por ancho cuando su
+     * consumo va con el ancho (los dos factores y sus topes son los de `estimateBaseline`). Sin
+     * esto, tres poltronas recibirían los insumos de una. */
+    var qty = Math.max(1, +i.seats || 1);
+    var factor = 1;
+    if (furniture && furniture.scaleByQty) factor *= qty;
+    if (furniture && furniture.widthScaled) factor *= Math.max(0.75, Math.min(1.4, W / 2.10));
+    var medio = metros ? (((+metros[0] || 0) + (+metros[1] || 0)) / 2) * factor : 0;
+    if (!(medio > 0)) return null;
+    return { tela: medio * SURFACE_PER_METER, asiento: W * fondoAsiento * qty,
+             espaldar: W * hRespaldo * qty, anchoAsiento: W * qty, fondoAsiento: fondoAsiento };
+  }
+
+  /* Qué caras suma un estándar: 'tela' es todo lo tapizado; 'asiento' y 'espaldar', esa cara. */
+  function insumoFaceArea(faces, caras) {
+    var keys = (faces && faces.length) ? faces : ['tela'];
+    return keys.reduce(function (sum, k) {
+      return sum + (k === 'tela' ? caras.tela : k === 'asiento' ? caras.asiento
+                 : k === 'espaldar' ? caras.espaldar : 0);
+    }, 0);
+  }
 
   /* Mix a hex colour toward white, for the lighter half of a swatch gradient. */
   function tint(hex, amount) {

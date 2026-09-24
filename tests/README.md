@@ -399,6 +399,17 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   Y que escribir una medida NO recrea la sesión del modelo (el hilo sigue), mientras que
   CAMBIAR DE LÍNEA sí la destruye: la pregunta siguiente abre una sesión nueva y su turno ya no
   lleva la medida de la línea anterior (`docs/cambio-de-linea.md`).
+- `retapizado-trabajo.spec.mjs` — la promesa del trabajo de taller (`docs/retapizado-trabajo.md`):
+  que la tela no manda sobre la obra (el mismo sofá con una tela de 89.000 y con una de 119.000
+  paga la misma mano de obra por tabla), que los insumos del catálogo se suman con su precio
+  congelado, que el paso de insumos es del trabajo —entre las medidas y las preferencias, y que
+  Suministro no lo ve— y, desde el 23/09, **la mano que estima las cantidades**
+  (`docs/insumos-asistidos.md`): al pulsarla llena las filas **vacías** con lo que el taller suele
+  gastar (las medidas del mueble y el despiece, aplicados sobre los estándares DEMO que cada
+  insumo declara en el catálogo), marca esas filas `aprox.` hasta que el cliente las toca —la
+  marca vive en la fila, no en el estado—, no pisa lo que el cliente ya había escrito y dice
+  cuántas respetó, y deja la advertencia en **una sola superficie** —su burbuja o la línea del
+  paso— con el mismo texto. Sin el paso no hay mano que estime (Suministro).
 - `sealed.spec.mjs` — the encrypted delivery build: since that gate is
   currently disabled at the owner's request, this checks that `dist/` ships in
   the clear rather than encrypted. It tests the packaging, not the prototype.

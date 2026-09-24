@@ -76,10 +76,135 @@ check('con todo en blanco no se suma nada',
     return [insumosMarcados().length, q.parts.filter(x => /Insumos/.test(x.label)).length];
   }), [0, 0]);
 
+/* ---------------------------------------------------------------------------------------------
+ * LA MANO DEL PASO DE INSUMOS (docs/insumos-asistidos.md, dueño 23/09: «client dont know this
+ * inputs... put a hand aside of a page and when the user push this ... Assistant can fill this
+ * inputs how recommendation... according of measures... and standard... Assitant have warning to
+ * client these measures are approximattly values»). Lo que se prueba: la mano existe y está al
+ * lado de las filas; al pulsarla las filas VACÍAS quedan escritas con lo que el taller suele
+ * gastar (medidas del mueble + estándares del catálogo); lo que el cliente ya escribió no se pisa
+ * y se dice; las filas que él escribió quedan marcadas `aprox.` y la marca se va cuando el cliente
+ * toca la fila; y la advertencia llega al cliente por UNA superficie —su burbuja o la línea del
+ * paso— con el mismo texto.
+ * Los números esperados salen del despiece del sofá de 210 × 85 × 90, 3 puestos (sin cojines
+ * declarados): asiento 3 × 0,70 × 0,72 = 1,51 m² y espaldar frontal 3 × 0,70 × 0,43 = 0,90 m² de
+ * espuma → 3 m²; 30 bandas cada 7 cm por 0,72 m de fondo → 22 m de cinchas; 9,49 m² de tela → una
+ * caja (por 12 m²), 2 rollos (por 6 m²) y 3 kg (por 4 m²).
+ * ------------------------------------------------------------------------------------------- */
+console.log('\nLA MANO ESTIMA LAS CANTIDADES — Y LO DICE APROXIMADO');
+const png = ['1', '2', '3'].map(n => new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
+const avanzar = async () => {
+  const antes = await page.evaluate(() => state.step);
+  await page.click('#nextButton');
+  await page.waitForFunction(x => state.step !== x, antes);
+};
+/* Llegar al paso de insumos como llega el cliente: la línea, el mueble con sus fotos y las medidas.
+ * El recorrido completo lo prueban wizard.spec.mjs y la evaluación por línea; aquí, la mano. */
+async function hastaInsumos(opts = {}) {
+  const { mueble = 'Sofá', medidas = [210, 85, 90], puestos, cobertura } = opts;
+  await abrirLaLinea('Retapizado de muebles');
+  await avanzar();
+  await page.click(`.furniture-card[data-furniture="${mueble}"]`);
+  await page.waitForTimeout(150);
+  if (puestos) await page.evaluate(n => {
+    const s = document.getElementById('seats');
+    s.value = String(n); s.dispatchEvent(new Event('change', { bubbles: true }));
+  }, puestos);
+  await page.setInputFiles('#furniturePhoto', png);
+  await page.waitForFunction(() => state.photos.length >= 3);
+  await avanzar();
+  await page.fill('#width', String(medidas[0]));
+  await page.fill('#height', String(medidas[1]));
+  await page.fill('#depth', String(medidas[2]));
+  if (cobertura) await page.selectOption('#coverage', cobertura);
+  await avanzar();
+  return page.evaluate(() => [state.step, state.furniture]);
+}
+const valores = () => page.evaluate(() =>
+  [...document.querySelectorAll('#insumoRows [data-insumo]')].map(i => [i.dataset.insumo, i.value]));
+check('el sofá del seed, en el paso de insumos', await hastaInsumos(), [17, 'Sofá']);
+check('la mano está al lado de las filas, y su etiqueta lleva el nombre del asistente del paquete',
+  await page.evaluate(() => ({
+    visible: !!document.getElementById('insumoMano').offsetParent,
+    diceElNombre: document.getElementById('insumoMano').innerText.indexOf(Store.assistant().name) >= 0
+  })), { visible: true, diceElNombre: true });
+
+await page.click('#insumoMano');
+await page.waitForTimeout(300);
+check('pulsarla escribe las cantidades que el taller suele gastar',
+  await page.evaluate(() => [...document.querySelectorAll('#insumoRows [data-insumo]')]
+    .map(i => [i.dataset.insumo, i.value])),
+  [['espuma', '3'], ['cinchas', '22'], ['grapas', '1'], ['hilo', '2'], ['pegante', '3']]);
+check('y las marca aproximadas, en la fila (no en el estado)',
+  await page.evaluate(() => [...document.querySelectorAll('#insumoRows .insumo-aprox')].map(x => x.hidden)),
+  [false, false, false, false, false]);
+check('la estimación las suma con el precio del catálogo (3×38.000 + 22×9.000 + 22.000 + 2×18.000 + 3×25.000)',
+  await page.evaluate(() => insumosMarcados().reduce((s, x) => s + x.qty * x.cop, 0)), 445000);
+check('el cliente lo lee UNA vez y en una sola superficie: la burbuja o la línea del paso, con el mismo texto',
+  await page.evaluate(() => {
+    const burbuja = document.querySelector('#assistantBubble .bubble-text').textContent;
+    const aviso = document.getElementById('insumoAviso');
+    const dicho = burbuja || aviso.textContent;
+    return { aproximadas: /Son valores aproximados/.test(dicho),
+             nombraLoEscrito: /3 m² de espuma/.test(dicho),
+             unaSolaVoz: burbuja ? aviso.hidden : !aviso.hidden,
+             mismoTexto: aviso.textContent === burbuja };
+  }), { aproximadas: true, nombraLoEscrito: true, unaSolaVoz: true, mismoTexto: true });
+check('queda anotado en la conversación (la traza con el cliente)',
+  await page.evaluate(() => [...document.querySelectorAll('#messages .message.bot')]
+    .some(m => /aproximados/.test(m.textContent))), true);
+
+await page.click('#insumoMano');
+await page.waitForTimeout(250);
+check('pulsarla otra vez no pisa nada, y lo dice',
+  await page.evaluate(() => ({
+    dice: /Ya están todas escritas/.test(document.querySelector('#assistantBubble .bubble-text').textContent),
+    valores: [...document.querySelectorAll('#insumoRows [data-insumo]')].map(i => i.value)
+  })), { dice: true, valores: ['3', '22', '1', '2', '3'] });
+
+/* Lo que el cliente ya había escrito no se pisa: se respeta y se dice cuántas. */
+await page.fill('#insumoRows [data-insumo="espuma"]', '5');
+await page.fill('#insumoRows [data-insumo="hilo"]', '');
+await page.fill('#insumoRows [data-insumo="pegante"]', '');
+await page.click('#insumoMano');
+await page.waitForTimeout(250);
+check('llena lo vacío, respeta lo escrito y lo dice',
+  await page.evaluate(() => ({
+    valores: [...document.querySelectorAll('#insumoRows [data-insumo]')].map(i => [i.dataset.insumo, i.value]),
+    dice: /Dejé como estaba/.test(document.querySelector('#assistantBubble .bubble-text').textContent)
+  })),
+  { valores: [['espuma', '5'], ['cinchas', '22'], ['grapas', '1'], ['hilo', '2'], ['pegante', '3']], dice: true });
+check('y la fila que el cliente toca deja de estar marcada como aproximada',
+  await page.evaluate(() => {
+    document.querySelector('#insumoRows [data-insumo="espuma"]').value = '6';
+    document.querySelector('#insumoRows [data-insumo="espuma"]').dispatchEvent(new Event('input', { bubbles: true }));
+    return [document.querySelector('#insumoRows [data-insumo="espuma"]').closest('.insumo-row')
+      .querySelector('.insumo-aprox').hidden, insumosMarcados()[0].qty];
+  }), [true, 6]);
+
+/* Sin plantilla de despiece el tamaño sale de las medidas del mueble y de sus metros base (los del
+ * backoffice), y escala con la CANTIDAD: tres poltronas no pueden recibir los insumos de una. La
+ * cobertura también manda: lo que no se tapiza no se repone. */
+await hastaInsumos({ mueble: 'Poltrona', medidas: [85, 90, 75], puestos: 1 });
+await page.click('#insumoMano'); await page.waitForTimeout(300);
+check('una poltrona: sus medidas y sus metros base (85 × 90 × 75, una pieza)',
+  await valores(), [['espuma', '1'], ['cinchas', '8'], ['grapas', '1'], ['hilo', '1'], ['pegante', '2']]);
+await hastaInsumos({ mueble: 'Poltrona', medidas: [85, 90, 75], puestos: 3 });
+await page.click('#insumoMano'); await page.waitForTimeout(300);
+check('tres poltronas: lo mismo por tres — la cantidad escala los insumos',
+  await valores(), [['espuma', '3'], ['cinchas', '22'], ['grapas', '2'], ['hilo', '3'], ['pegante', '4']]);
+await hastaInsumos({ mueble: 'Sofá', medidas: [210, 85, 90], puestos: 3, cobertura: 'seats' });
+await page.click('#insumoMano'); await page.waitForTimeout(300);
+check('«solo asiento y respaldo»: menos tela, menos insumos (la espuma no: es la misma cara)',
+  await valores(), [['espuma', '3'], ['cinchas', '22'], ['grapas', '1'], ['hilo', '1'], ['pegante', '2']]);
+
 await abrirLaLinea('Suministro de tela');
 check('suministro no lo ve: la tela es el producto y no hay taller que reponga nada',
   await page.evaluate(() => [pasosVisibles().indexOf(17), asksInsumos(), insumosDeLaLinea().length]),
   [-1, false, 0]);
+check('y sin ese paso no hay mano que estime: sin taller que reponga, no hay cantidades que sugerir',
+  await page.evaluate(() => [!!document.getElementById('insumoMano').offsetParent, pasosVisibles().indexOf(17)]),
+  [false, -1]);
 
 console.log('\n"CAMBIO DE TELA" YA NO SE OFRECE: ESE CASO LO CUBRE RETAPIZADO SIN INSUMOS');
 const textoDeLineas = await page.evaluate(() => document.body.innerText);

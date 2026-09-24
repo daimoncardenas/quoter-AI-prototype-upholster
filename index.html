@@ -66,6 +66,17 @@
 /* Los insumos del trabajo: dos columnas (qué se repone · cuánto), sin el botón de quitar de la lista. */
 .insumo-row{grid-template-columns:1fr 150px}
 .insumo-unit{display:block;margin-top:3px;font-weight:400;font-size:.6rem;color:var(--muted)}
+/* La mano de los insumos (docs/insumos-asistidos.md): las filas a la izquierda, la mano pegada al
+   borde derecho del paso; en pantallas angostas baja debajo para no apretar las filas. */
+.insumo-layout{display:grid;grid-template-columns:minmax(0,1fr) 132px;gap:22px;align-items:start}
+.insumo-mano{position:sticky;top:18px;align-self:stretch;display:grid;grid-template-rows:1fr auto;gap:7px;text-align:center}
+.mano-btn{width:100%;height:100%;display:grid;place-items:center;align-content:center;gap:7px;border:1px dashed var(--line);background:var(--cream);color:var(--ink);border-radius:10px;padding:13px 10px;transition:.2s}
+.mano-btn:hover{border-color:var(--gold)}
+.mano-icon{width:30px;height:30px;color:var(--gold)}
+.mano-label{font-size:.66rem;font-weight:700;line-height:1.35}
+.mano-note{margin:0;font-size:.58rem;line-height:1.45;color:var(--muted)}
+.insumo-aprox{display:block;margin-top:4px;font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--amber)}
+@media(max-width:900px){.insumo-layout{grid-template-columns:1fr}.insumo-mano{position:static;text-align:left}.mano-btn{grid-template-columns:30px 1fr;justify-items:start;align-items:center;padding:11px 14px}.mano-note{max-width:46ch}}
 .boq-row label{font-size:.68rem;font-weight:700;color:var(--ink)}
 .boq-row select,.boq-row input{width:100%;margin-top:6px;border:1px solid var(--line);background:white;border-radius:2px;padding:10px;font-size:.78rem;min-height:44px;color:var(--text)}
 .row-x{border:0;background:transparent;color:var(--muted);font-size:1.05rem;cursor:pointer;padding:0 0 12px}
@@ -599,8 +610,22 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
             <h2>¿Qué se le cambia por dentro?</h2>
             <p>Además de la tela, el taller repone rellenos y menudos. Escribe la cantidad de lo que se cambia y deja en blanco lo que esté bien.</p>
           </div>
-          <div class="boq-rows insumo-rows" id="insumoRows" data-rows></div>
+          <!-- La mano (docs/insumos-asistidos.md, dueño 23/09): al lado de las filas y sólo en este
+               paso. Con el asistente apagado queda la etiqueta neutra —la estimación sirve igual— y
+               el aviso que él diría en su burbuja se escribe en la línea del paso. -->
+          <div class="insumo-layout">
+            <div class="boq-rows insumo-rows" id="insumoRows" data-rows></div>
+            <aside class="insumo-mano">
+              <button type="button" class="mano-btn" id="insumoMano" aria-label="Estimar las cantidades de lo que se repone">
+                <svg class="mano-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+                <span class="mano-label" data-assistant-copy>Que <span data-assistant-name>{{ASSISTANT_DEFAULT_NAME}}</span> las estime</span>
+                <span class="mano-label" data-assistant-off-copy>Sugerir cantidades</span>
+              </button>
+              <p class="mano-note">Aproximadas: el taller las ajusta al revisar el mueble.</p>
+            </aside>
+          </div>
           <p class="modal-hint">Los precios los pone el taller en su lista; un asesor confirma lo que se cambia al revisar el mueble.</p>
+          <p class="modal-hint insumo-aviso" id="insumoAviso" hidden></p>
         </section>
 
         <section class="wizard-step" data-step="12" data-brain="PREFERENCES">
@@ -1416,6 +1441,8 @@ nextButton.addEventListener('click',()=>{if(!validStep())return;const v=pasosVis
   if(i>=0&&i<v.length-1){showStep(v[i+1]);return}
   nextButton.disabled=true;submitQuote().catch(err=>{console.error(err);alert('Ocurrió un problema al enviar tu solicitud.')}).finally(()=>{nextButton.disabled=false})});
 backButton.addEventListener('click',()=>{const v=pasosVisibles(),i=v.indexOf(state.step);if(i>0)showStep(v[i-1])});
+/* La mano del paso de insumos (docs/insumos-asistidos.md): el cliente la pulsa y él estima. */
+document.getElementById('insumoMano').addEventListener('click',sugerirInsumos);
 
 
 // Step 4 reviews the data the customer entered, so it shows that data as text.
@@ -2674,15 +2701,69 @@ function pintarInsumos(){
     const nota=document.createElement('small');nota.className='insumo-unit';
     nota.textContent=(x.unit?'por '+x.unit+' · ':'')+Store.money(x.cop);
     rotulo.appendChild(nota);
+    /* La marca de lo estimado (docs/insumos-asistidos.md): vive en la fila, no en `state`, y se va
+     * en cuanto el cliente escribe — ese número pasa a ser suyo. */
+    const aprox=document.createElement('small');aprox.className='insumo-aprox';aprox.textContent='aprox.';aprox.hidden=true;
+    rotulo.appendChild(aprox);
     const campo=document.createElement('label');campo.textContent='Cantidad';
     const inp=document.createElement('input');inp.type='number';inp.min='0';inp.step='1';
     inp.placeholder='—';inp.value=previos[x.id]||'';inp.dataset.insumo=x.id;
-    inp.addEventListener('input',()=>updateEstimate());
+    inp.addEventListener('input',()=>{aprox.hidden=true;updateEstimate()});
     campo.appendChild(inp);
     fila.appendChild(rotulo);fila.appendChild(campo);
     caja.appendChild(fila);
   });
 }
+/* La mano del paso de insumos (docs/insumos-asistidos.md, dueño 23/09): el cliente no sabe cuánta
+ * espuma lleva un sofá, así que él escribe lo que el taller suele gastar —con las medidas del mueble
+ * y los estándares del catálogo— y LO DICE APROXIMADO. No pisa lo que el cliente ya escribió: llena
+ * las filas vacías y cuenta las que respetó. Por el chat todavía no sabe hacerlo: la mano es el
+ * camino, y decirlo es parte de la entrega. */
+function decirPropuesta(texto,aviso,foco){
+  if(aviso){aviso.textContent=texto;aviso.hidden=asistenteCfg().enabled}
+  try{window.dispatchEvent(new CustomEvent('aci:notice',{detail:{text:texto,campo:foco||null}}))}catch(err){}
+  anotarEnLaConversacion(texto);
+}
+function listaEnEspanol(xs){
+  if(xs.length<2)return xs[0]||'';
+  return xs.slice(0,-1).join(', ')+' y '+xs[xs.length-1];
+}
+/* El catálogo declara la unidad en singular ('rollo', 'caja'); al hablar, dos rollos son rollos y
+ * uno es uno. Las abreviaturas y el kilo (m, m², kg) no se pluralizan. */
+function conUnidad(n,u){
+  const palabra=String(u).length>1&&/^[a-záéíóúñ]+$/.test(String(u))&&u!=='kg';
+  return n+' '+(n>1&&palabra?u+'s':u);
+}
+function sugerirInsumos(){
+  const aviso=document.getElementById('insumoAviso');
+  const boton=document.getElementById('insumoMano');
+  if(!state.service||!asksInsumos())return;
+  const sug=Store.insumoSuggestion(state.service,wizardInputs(),Store.furnitureByName(state.furniture));
+  const filas=[...document.querySelectorAll('#insumoRows .insumo-row')];
+  if(!sug.length||!filas.length){
+    decirPropuesta('Todavía no puedo estimarlas: registra primero las medidas del mueble.',aviso,boton);return;
+  }
+  const mueble=esMuebleOtro()?'mueble':String(state.furniture||'mueble').toLowerCase();
+  const escritas=[],respetadas=[];
+  sug.forEach(s=>{
+    const inp=filas.map(f=>f.querySelector('[data-insumo]')).find(i=>i&&i.dataset.insumo===s.id);
+    if(!inp)return;
+    if(String(inp.value).trim()){respetadas.push(s);return}
+    inp.value=String(s.qty);
+    inp.dispatchEvent(new Event('input',{bubbles:true}));
+    const tag=inp.closest('.insumo-row').querySelector('.insumo-aprox');
+    if(tag)tag.hidden=false;
+    escritas.push(s);
+  });
+  const laLista=listaEnEspanol(escritas.map(x=>`${conUnidad(x.qty,x.unit)} de ${x.label.toLowerCase()}`));
+  const texto=escritas.length
+    ? `Te las estimé con las medidas de tu ${mueble}: ${laLista}. Son valores aproximados — el taller ajusta lo que se cambia al revisar el mueble.`+
+      (respetadas.length?` Dejé como estaba${respetadas.length>1?'n':''} la${respetadas.length>1?'s':''} que ya habías escrito.`:'')+
+      ` Cambia lo que quieras.`
+    : `Ya están todas escritas: no toqué ninguna. Si quieres mi estimación, borra la que quieras ajustar.`;
+  decirPropuesta(texto,aviso,boton);
+}
+
 /* Los daños marcados se leen vivos del DOM: el paso los pinta una vez y nadie más tiene que
  * mantener una copia en `state` que se pueda desincronizar. */
 const damageIds=()=>[...document.querySelectorAll('#damageGrid input:checked')].map(x=>x.value);
