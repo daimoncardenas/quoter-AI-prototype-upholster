@@ -71,9 +71,8 @@
     .plan-card h2{font:600 1.3rem var(--font-heading);color:var(--ink);margin:0 0 8px}
     .plan-price{font:600 1.55rem var(--font-heading);color:var(--ink);margin:0 0 10px}
     .plan-price-period{font-size:.68rem;font-weight:600;color:var(--text);margin-left:2px}
-    /* Los precios del catálogo son ANTES de IVA y tiene que decirlo: va pegado a la cifra, con su
-     * propio rol para que se lea sin confundirse con el precio ni con el periodo. */
-    .plan-iva{font-size:.72rem;font-weight:700;color:var(--text);margin-left:2px;white-space:nowrap}
+    /* Los precios de Planes ya no rotulan el IVA junto a la cifra (dueño, 23/09): el catálogo sigue
+     * siendo ANTES de IVA y es la factura la que lo suma y lo desglosa. */
     /* Same var(--text) on the card's white background as .plan-audience right
      * below — already proven to clear 4.5:1 in this client's theme — with the
      * matching modes/inverted.css override for the accent-leaning card bg. */
@@ -136,11 +135,6 @@
      * `.modal-hint` el tema lo pintaba claro sobre claro y el cliente no veía ningún número —
      * reportado TRES veces. La regla del repo: una caption solo es legible como su SUPERFICIE. */
     .aci-value{color:var(--text);font-weight:600;font-size:.68rem;white-space:nowrap}
-    /* Los precios de «Configurar mi plan» también son ANTES de IVA: el «+ IVA» va pegado a la
-     * cifra, y necesita ganarle al tamaño de su contenedor (el em/span del precio lo fija con el
-     * shorthand `font:`), por eso las reglas con más peso. */
-    .aci-iva{font-size:.62rem;font-weight:700;color:var(--text);white-space:nowrap;margin-left:1px}
-    .aci-head em .aci-iva,.aci-preset em .aci-iva,.aci-total span .aci-iva{font-size:.62rem}
     .aci-hint{display:block;font-size:.6rem;font-weight:400;color:var(--text);opacity:.75;margin-top:2px;max-width:56ch}
     /* En Configuración la fila es el ROJO de marca y el tema no deja ahí un token legible
      * (heredaba oscuro = 2.83:1, medido): el valor va claro sobre ese rojo, como en las tarjetas
@@ -1298,7 +1292,7 @@
       const aci=Store.myAci();
       const core=$('#aciCore');
       if(core)core.innerHTML=
-        `<div class="aci-head"><b>${esc(aci.core.label)}</b><em>${money(aci.core.price)} <span class="aci-iva">+ IVA</span> / ${esc(aci.period)}</em></div>`+
+        `<div class="aci-head"><b>${esc(aci.core.label)}</b><em>${money(aci.core.price)} / ${esc(aci.period)}</em></div>`+
         `<ul class="aci-includes">${(aci.core.includes||[]).map(x=>`<li>✓ ${esc(x)}</li>`).join('')}</ul>`;
       /* Consumo: la cuota del paquete. Los paquetes de consumo comprados (25 cotizaciones,
        * 100 interacciones, GB, usuario, sede) viven en la pestaña Paquetes, no aquí: el dueño
@@ -1315,7 +1309,7 @@
         capa.innerHTML=`<h4 class="aci-section">Capacidades</h4><ul class="service-lines">`+
           aci.capabilities.map(c=>`<li><label class="line-row"><input type="checkbox" data-cap="${esc(c.id)}"${c.enabled?' checked':''}>`+
             `<span><strong>${esc(c.label)}</strong>${c.hint?`<small class="aci-hint">${esc(c.hint)}</small>`:''}</span></label>`+
-            `<span class="aci-value">+${money(c.price)} <span class="aci-iva">+ IVA</span> / ${esc(aci.period)}</span></li>`).join('')+
+            `<span class="aci-value">+${money(c.price)} / ${esc(aci.period)}</span></li>`).join('')+
           `</ul>`;
         capa.querySelectorAll('input[data-cap]').forEach(cb=>cb.addEventListener('change',()=>{
           try{ Store.setCapability(cb.dataset.cap,cb.checked); }
@@ -1333,7 +1327,7 @@
           return `<button type="button" class="aci-preset${aci.presetActual&&aci.presetActual.id===p.id?' current':''}" data-preset="${esc(p.id)}">`+
             `<b>${esc(p.label)}</b><small>${esc(p.hint)}</small>`+
             (q?`<small class="aci-quota">${esc(q)}</small>`:'')+
-            `<em>${money(p.price)} <span class="aci-iva">+ IVA</span> / ${esc(aci.period)}</em></button>`;
+            `<em>${money(p.price)} / ${esc(aci.period)}</em></button>`;
         }).join('');
         box.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{
           const p=Store.presets().presets.find(x=>x.id===b.dataset.preset);
@@ -1351,7 +1345,7 @@
       list.innerHTML=aci.services.filter(s=>!esCaminoDeOtra(s.id)).map(s=>
         `<li><label class="line-row"><input type="checkbox" data-line="${esc(s.id)}"${s.enabled?' checked':''}>`+
         `<span><strong>${esc(s.label)}</strong>${s.hint?`<small class="aci-hint">${esc(s.hint)}</small>`:''}</span></label>`+
-        `<span class="aci-value">${s.price?'+'+money(s.price)+' <span class="aci-iva">+ IVA</span> / '+esc(aci.period):'incluido'}</span></li>`).join('');
+        `<span class="aci-value">${s.price?'+'+money(s.price)+' / '+esc(aci.period):'incluido'}</span></li>`).join('');
       list.querySelectorAll('input[data-line]').forEach(cb=>{
         cb.addEventListener('change',()=>{
           try{ const l=Store.setLineEnabled(cb.dataset.line,cb.checked); toast(`${l.label}: ${cb.checked?'habilitada':'deshabilitada'}`); }
@@ -1367,7 +1361,7 @@
         const nota=aci.presetActual
           ?`Precio del paquete «${aci.presetActual.label}» · ${BILLING_CAPTIONS.mensual} · ${BILLING_CAPTIONS.anual} ${money(aci.presetActual.priceYearly)}`
           :`A la medida: Core + servicios + capacidades, cada uno con su precio · ${BILLING_CAPTIONS.mensual}`;
-        total.innerHTML=`<b>Tu plan</b><span>${money(aci.total)} <span class="aci-iva">+ IVA</span> / ${esc(aci.period)}</span>`+
+        total.innerHTML=`<b>Tu plan</b><span>${money(aci.total)} / ${esc(aci.period)}</span>`+
           `<small class="aci-total-note">${esc(nota)}</small>`+
           (aci.demo?'<small>Precios demo del prototipo</small>':'');
       }
@@ -1695,7 +1689,7 @@
         const act=Store.planActivation(p.name);
         const activation=act?(billing==='anual'
           ? `<p class="plan-activation">Activación inicial <b>incluida</b> con el contrato a 12 meses.</p>`
-          : `<p class="plan-activation">Activación inicial: <b>${esc(Store.money(act))} + IVA</b>, una sola vez al contratar.</p>`):'';
+          : `<p class="plan-activation">Activación inicial: <b>${esc(Store.money(act))}</b>, una sola vez al contratar.</p>`):'';
         const activationDetails=p.activationIncludes?`<details class="plan-details"><summary>La activación incluye</summary><ul class="plan-list">${p.activationIncludes.map(x=>`<li>${esc(planCopy(x))}</li>`).join('')}</ul></details>`:'';
         const label=isCurrent?'<p class="plan-current-label">Plan actual</p>':'';
         const cta=isCurrent?{cls:'button primary',text:'Tu plan actual',disabled:true}
@@ -1703,7 +1697,7 @@
           :{cls:'button secondary',text:`Cambiar a ${planLabel(p.name)}`,disabled:false};
         return `<article class="plan-card${isCurrent?' current':''}">${label}<h2>${esc(planLabel(p.name))}</h2>`+
           `<p class="plan-promise">${esc(p.promise)}</p>`+
-          `<p class="plan-price">${esc(Store.money(planPrice(p,billing)))} <span class="plan-iva">+ IVA</span> <span class="plan-price-period">COP / mes</span></p>`+
+          `<p class="plan-price">${esc(Store.money(planPrice(p,billing)))} <span class="plan-price-period">COP / mes</span></p>`+
           `<p class="plan-billing-caption">${esc(BILLING_CAPTIONS[billing])}</p>`+
           `${activation}`+
           `<p class="plan-audience">${esc(p.audience)}</p><hr class="plan-divider">`+
@@ -1718,7 +1712,7 @@
         return `<article class="plan-card current">`+
           `<p class="plan-current-label">${cp.paid?'Plan actual':'Tu configuración'}</p>`+
           `<h2>Plan a la medida</h2>`+
-          `<p class="plan-price">${esc(Store.money(cp.total))} <span class="plan-iva">+ IVA</span> <span class="plan-price-period">COP / ${esc(cp.period)}</span></p>`+
+          `<p class="plan-price">${esc(Store.money(cp.total))} <span class="plan-price-period">COP / ${esc(cp.period)}</span></p>`+
           `<p class="plan-audience">Armado por ti en «Configurar mi plan».</p><hr class="plan-divider">`+
           `<p class="plan-section-title first">Incluye</p><ul class="plan-list incluye">${items||'<li>ACI Core</li>'}</ul>${q}`+
           `<div class="plan-cta"><button type="button" class="button primary" data-pay-customplan><b>Pagar</b></button></div></article>`;
@@ -1763,7 +1757,7 @@
         if(!cp)return;
         const billing=currentBilling();
         const ok=await askConfirm({title:'Confirmar pago',
-          message:`¿Confirmas el pago de tu plan a la medida por ${Store.money(cp.total)} + IVA COP / mes, ${CONFIRM_MODALITY[billing]}?`});
+          message:`¿Confirmas el pago de tu plan a la medida por ${Store.money(cp.total)} COP / mes, ${CONFIRM_MODALITY[billing]}?`});
         if(!ok)return;
         let inv;
         try{inv=Store.createInvoice({kind:'customplan',target:'a-medida',concept:'Plan a la medida',amount:cp.total,billing})}
@@ -1779,7 +1773,7 @@
       const billing=currentBilling();
       const price=planPrice(plan,billing);
       const ok=await askConfirm({title:'Confirmar cambio de plan',
-        message:`¿Confirmas el cambio al plan ${planLabel(name)} por ${Store.money(price)} + IVA COP / mes, ${CONFIRM_MODALITY[billing]}?`});
+        message:`¿Confirmas el cambio al plan ${planLabel(name)} por ${Store.money(price)} COP / mes, ${CONFIRM_MODALITY[billing]}?`});
       if(!ok)return;
       let inv;
       try{inv=Store.createInvoice({kind:'plan',target:name,concept:`Plan ${planLabel(name)}`,amount:price,billing})}
@@ -1885,7 +1879,7 @@
       const pkg=PACKAGES.find(p=>p.id===btn.dataset.package);
       if(!pkg)return;
       const {full}=packagePriceParts(pkg);
-      const ok=await askConfirm({title:'Confirmar compra',message:`¿Confirmas la compra de ${pkg.name} por ${full} + IVA?`});
+      const ok=await askConfirm({title:'Confirmar compra',message:`¿Confirmas la compra de ${pkg.name} por ${full}?`});
       if(!ok)return;
       // El monto de la factura es pkg.min (el mismo número fuente que arma
       // packagePriceParts): nunca el texto del rango ni nada leído del DOM.
@@ -1954,7 +1948,8 @@
       const modality=inv.billing
         ?`<p class="pay-detail">Modalidad: ${inv.billing==='mensual'?'Mes a mes':'Año'} · ${esc(BILLING_CAPTIONS[inv.billing])}</p>`:'';
       /* El número grande es el TOTAL a pagar (valor + IVA 19%), y el desglose va debajo: el precio
-       * del catálogo es antes de IVA — así lo dicen las tarjetas — y la factura lo suma. */
+       * del catálogo es antes de IVA y la factura lo suma (las tarjetas ya no rotulan el IVA junto a la
+ * cifra: dueño, 23/09). */
       const t=Store.invoiceTotals(inv);
       $('#payModalBody').innerHTML=
         `<h3 class="modal-section">${esc(inv.concept)}</h3>`+

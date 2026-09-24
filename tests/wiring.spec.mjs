@@ -883,13 +883,13 @@ const preciosDePaquetesYPlanes = () => page.evaluate(() => {
 });
 check('Año: las tarjetas muestran el precio del contrato y los paquetes el del mes',
   await preciosDePaquetesYPlanes(),
-  { planes: ['299000', '799000', '1390000'], paquetes: ['399000', '899000', '1490000'] });
+  { planes: ['328900', '878900', '1529000'], paquetes: ['438900', '988900', '1639000'] });
 /* La suma de las PARTES tiene que dar EXACTO el precio POR MES del paquete (Core + sus servicios
  * + sus capacidades): si alguien mueve una cifra del catálogo, esta comprobación lo dice en voz
  * alta en vez de dejar dos cuentas que no cuadran. */
-check('las partes de cada paquete suman exacto el precio del mes (399.000 / 899.000 / 1.490.000)',
+check('las partes de cada paquete suman exacto el precio del mes (438.900 / 988.900 / 1.639.000)',
   await page.evaluate(() => Store.myAci().presets.map(p => [p.id, p.composed, p.price])),
-  [['taller', 399000, 399000], ['empresa', 899000, 899000], ['distribuidor', 1490000, 1490000]]);
+  [['taller', 438900, 438900], ['empresa', 988900, 988900], ['distribuidor', 1639000, 1639000]]);
 await page.click('#aciPresets [data-preset="taller"]');
 const totalMarcado = await page.evaluate(() => ({
   total: document.querySelector('#aciTotal span').textContent.replace(/[^\d]/g, ''),
@@ -897,7 +897,7 @@ const totalMarcado = await page.evaluate(() => ({
   nota: document.querySelector('#aciTotal .aci-total-note').textContent
 }));
 check('con el paquete Taller marcado, el total de la pantalla es la suma de sus partes',
-  [totalMarcado.total, totalMarcado.suma], ['399000', '399000']);
+  [totalMarcado.total, totalMarcado.suma], ['438900', '438900']);
 check('y el total nombra el paquete, la condición del mes y el precio del contrato',
   [/Precio del paquete «Taller»/.test(totalMarcado.nota), /mes a mes, sin contrato/.test(totalMarcado.nota), /299\.000/.test(totalMarcado.nota)], [true, true, true]);
 await page.click('#tabPlanes');
@@ -919,12 +919,12 @@ check('ninguna tarjeta de plan muestra el nombre interno, ni en el título ni en
   [0, 0, 0]);
 check('cada precio se arma con Store.money, no a mano',
   await page.$$eval('#plansGrid .plan-price', els => els.map(e => e.textContent)),
-  await page.evaluate(() => [299000, 799000, 1390000].map(n => Store.money(n) + ' + IVA COP / mes')));
-/* El precio del catálogo es ANTES de IVA y las tarjetas tienen que decirlo: cada una lleva su
- * «+ IVA» pegado a la cifra (el dueño: «esto es importante»). */
-check('cada tarjeta dice «+ IVA» junto a su precio',
-  await page.$$eval('#plansGrid .plan-card .plan-iva', els => els.map(e => e.textContent)),
-  ['+ IVA', '+ IVA', '+ IVA']);
+  await page.evaluate(() => [328900, 878900, 1529000].map(n => Store.money(n) + ' COP / mes')));
+/* El precio del catálogo sigue siendo ANTES de IVA, pero las tarjetas ya NO rotulan «+ IVA» junto a la
+ * cifra (dueño, 23/09): lo que se comprueba es que el rótulo no volvió — la factura es la que lo suma. */
+check('ninguna tarjeta dice «+ IVA»: el rótulo se retiró de las pantallas (dueño, 23/09)',
+  await page.$$eval('#plansGrid .plan-card', cards => cards.filter(c => /\+ IVA/.test(c.textContent)).length),
+  0);
 check('conteo de ítems — Taller: 17 Incluye + 7 Capacidad + 6 No incluye, Empresa: 11 + 7 + 4, Distribuidor: 7 + 7 + 4',
   await page.$$eval('#plansGrid .plan-card', cards => cards.map(c => {
     const lists = c.querySelectorAll('.plan-list');
@@ -972,7 +972,7 @@ check('por defecto Año está seleccionado, con los tres precios anuales y "con 
   await billingSwitchState(),
   {
     checked: [['anual', 'true'], ['mensual', 'false']],
-    prices: await page.evaluate(() => [299000, 799000, 1390000].map(n => Store.money(n) + ' + IVA COP / mes')),
+    prices: await page.evaluate(() => [328900, 878900, 1529000].map(n => Store.money(n) + ' COP / mes')),
     captions: ['con contrato de arrendamiento a 12 meses', 'con contrato de arrendamiento a 12 meses', 'con contrato de arrendamiento a 12 meses']
   });
 
@@ -982,16 +982,16 @@ check('clic en Mes cambia los tres precios, la leyenda y el aria-checked',
   await billingSwitchState(),
   {
     checked: [['anual', 'false'], ['mensual', 'true']],
-    prices: await page.evaluate(() => [399000, 899000, 1490000].map(n => Store.money(n) + ' + IVA COP / mes')),
+    prices: await page.evaluate(() => [438900, 988900, 1639000].map(n => Store.money(n) + ' COP / mes')),
     captions: ['mes a mes, sin contrato', 'mes a mes, sin contrato', 'mes a mes, sin contrato']
   });
 /* El paquete es el plan: en Mes las dos pantallas dicen el mismo número (el precio por mes). */
 check('Mes: las tarjetas y los paquetes recomendados dicen el mismo precio',
   await preciosDePaquetesYPlanes(),
-  { planes: ['399000', '899000', '1490000'], paquetes: ['399000', '899000', '1490000'] });
+  { planes: ['438900', '988900', '1639000'], paquetes: ['438900', '988900', '1639000'] });
 check('y en Mes cada tarjeta dice el monto de su activación inicial, leído del paquete',
   await page.$$eval('#plansGrid .plan-activation', els => els.map(e => e.textContent.replace(/\s+/g, ' '))),
-  await page.evaluate(() => [399000, 899000, 1490000].map(n => `Activación inicial: ${Store.money(n)} + IVA, una sola vez al contratar.`.replace(/\s+/g, ' '))));
+  await page.evaluate(() => [438900, 988900, 1639000].map(n => `Activación inicial: ${Store.money(n)}, una sola vez al contratar.`.replace(/\s+/g, ' '))));
 
 await page.reload();
 await page.waitForSelector('#appShell:not([hidden])');
@@ -1003,7 +1003,7 @@ check('el periodo elegido (Mes) sobrevive a un recargo de página',
   await billingSwitchState(),
   {
     checked: [['anual', 'false'], ['mensual', 'true']],
-    prices: await page.evaluate(() => [399000, 899000, 1490000].map(n => Store.money(n) + ' + IVA COP / mes')),
+    prices: await page.evaluate(() => [438900, 988900, 1639000].map(n => Store.money(n) + ' COP / mes')),
     captions: ['mes a mes, sin contrato', 'mes a mes, sin contrato', 'mes a mes, sin contrato']
   });
 
@@ -1015,7 +1015,7 @@ const invoicesBeforeMes = await page.evaluate(() => Store.all('invoices').length
 await page.click('#plansGrid [data-plan="Business"]');
 const mesDialogMsg = await page.textContent('#confirmModalBody');
 check('el modal cita el precio mensual de Distribuidor, no el anual, y la modalidad mes a mes',
-  mesDialogMsg, `¿Confirmas el cambio al plan Distribuidor por ${await page.evaluate(() => Store.money(1490000))} + IVA COP / mes, mes a mes y sin contrato?`);
+  mesDialogMsg, `¿Confirmas el cambio al plan Distribuidor por ${await page.evaluate(() => Store.money(1639000))} COP / mes, mes a mes y sin contrato?`);
 await page.click('#confirmCancel');
 check('cancelar deja el plan sin cambios, y cambiar el periodo tampoco lo cambió, y no crea factura',
   [await page.evaluate(() => Store.settings().plan), await page.evaluate(() => Store.all('invoices').length)],
@@ -1031,7 +1031,7 @@ check('flecha izquierda selecciona Año, mueve el foco y actualiza los precios',
     checked: document.querySelector('#billingSwitch [aria-checked="true"]').dataset.billing,
     price: document.querySelector('#plansGrid .plan-price').textContent
   })),
-  { active: 'anual', checked: 'anual', price: await page.evaluate(() => Store.money(299000) + ' + IVA COP / mes') });
+  { active: 'anual', checked: 'anual', price: await page.evaluate(() => Store.money(328900) + ' COP / mes') });
 
 const planStates = () => page.evaluate(() => [...document.querySelectorAll('#plansGrid .plan-card')].map(c => {
   const btn = c.querySelector('.plan-cta button');
@@ -1054,7 +1054,7 @@ const invoicesBeforePlan = await page.evaluate(() => Store.all('invoices').lengt
 await page.click('#plansGrid [data-plan="Business"]');
 const dialogMsg = await page.textContent('#confirmModalBody');
 check('el modal menciona el plan, el precio y la modalidad de arrendamiento anual',
-  dialogMsg, `¿Confirmas el cambio al plan Distribuidor por ${await page.evaluate(() => Store.money(1390000))} + IVA COP / mes, con contrato de arrendamiento a 12 meses?`);
+  dialogMsg, `¿Confirmas el cambio al plan Distribuidor por ${await page.evaluate(() => Store.money(1529000))} COP / mes, con contrato de arrendamiento a 12 meses?`);
 await page.click('#confirmCancel');
 check('cancelar deja a Essential como plan actual, y no crea ninguna factura',
   [await page.evaluate(() => Store.settings().plan), await page.evaluate(() => Store.all('invoices').length)],
@@ -1069,19 +1069,19 @@ check('el plan sigue en Essential mientras la factura está Pendiente',
 const planInvoice = await page.evaluate(() => Store.all('invoices')[0]);
 check('la factura queda Pendiente, con el monto de PLANS/planPrice() (nunca algo tecleado), la modalidad y el proveedor simulado',
   { status: planInvoice.status, amount: planInvoice.amount, kind: planInvoice.kind, target: planInvoice.target, billing: planInvoice.billing, provider: planInvoice.provider, paidAt: planInvoice.paidAt },
-  { status: 'Pendiente', amount: 1390000, kind: 'plan', target: 'Business', billing: 'anual', provider: 'BOLD (simulado)', paidAt: null });
+  { status: 'Pendiente', amount: 1529000, kind: 'plan', target: 'Business', billing: 'anual', provider: 'BOLD (simulado)', paidAt: null });
 check('la referencia y la URL de pago son obviamente falsas: simulado://, nunca checkout.bold.co ni ningún dominio real',
   /^simulado:\/\/pago\//.test(planInvoice.checkoutUrl) && planInvoice.reference.startsWith(`QAI-${planInvoice.id}-`), true);
 const planPayBody = await page.textContent('#payModalBody');
 check('el modal trae el concepto, el monto, la modalidad anual y la referencia',
-  [planPayBody.includes('Plan Distribuidor'), planPayBody.includes(await page.evaluate(() => Store.money(1390000))), planPayBody.includes('Año'), planPayBody.includes(planInvoice.reference)],
+  [planPayBody.includes('Plan Distribuidor'), planPayBody.includes(await page.evaluate(() => Store.money(1529000))), planPayBody.includes('Año'), planPayBody.includes(planInvoice.reference)],
   [true, true, true, true]);
 check('el modal muestra la etiqueta obligatoria de simulación, tal cual',
   planPayBody.includes('Simulación de pago · este prototipo no procesa pagos reales.'), true);
 /* El precio del catálogo es ANTES de IVA: la factura lo SUMA (19%) y el modal enseña el total a
  * pagar con su desglose — el mismo número que la tabla de Facturación. */
 check('el modal desglosa valor + IVA (19%) y el número grande es el total a pagar',
-  [planPayBody.includes(`Valor ${await page.evaluate(() => Store.money(1390000))}`),
+  [planPayBody.includes(`Valor ${await page.evaluate(() => Store.money(1529000))}`),
    planPayBody.includes('IVA (19%)'),
    planPayBody.includes(await page.evaluate(() => Store.money(264100))),
    await page.$eval('#payModalBody .pay-amount', e => e.textContent.replace(/[^\d]/g, ''))],
@@ -1218,7 +1218,7 @@ console.log('\nUPGRADE — confirmar la compra crea una factura Pendiente y abre
 await page.click('#packagesGrid [data-package="extra-user"]');
 const pkgDialogMsg = await page.textContent('#confirmModalBody');
 check('el modal menciona el paquete y su precio exacto',
-  pkgDialogMsg, `¿Confirmas la compra de Usuario adicional por ${await page.evaluate(() => Store.money(50000))} COP / mes + IVA?`);
+  pkgDialogMsg, `¿Confirmas la compra de Usuario adicional por ${await page.evaluate(() => Store.money(50000))} COP / mes?`);
 await page.click('#confirmOk');
 await page.waitForSelector('#payModal.open');
 check('el conteo sigue en 0 mientras la factura está Pendiente',
@@ -1349,7 +1349,7 @@ await openUsage();
 await up.waitForFunction(() => document.getElementById('usageLead').textContent.includes('Empresa de muebles'));
 check('the header and summary name the new plan and its price',
   await up.evaluate(() => [document.getElementById('usageLead').textContent, document.getElementById('usagePlanName').textContent, document.getElementById('usagePlanPrice').textContent]),
-  ['Así va el uso de tu plan Empresa de muebles este mes.', 'Plan Empresa de muebles', await up.evaluate(() => Store.money(799000) + ' COP / mes')]);
+  ['Así va el uso de tu plan Empresa de muebles este mes.', 'Plan Empresa de muebles', await up.evaluate(() => Store.money(878900) + ' COP / mes')]);
 check('users limit = Professional 3 + 1 purchased, and the card says where the extra comes from',
   await meter('users').then(m => [m.value, m.extra]), [`${usageStore.users} de 4`, 'Incluye 1 de paquetes']);
 check('a meter no package touched says nothing about packages', (await meter('locations')).extra, null);
@@ -1361,7 +1361,7 @@ await up.click('button[data-page="upgrade"]');
 await up.click('#tabPlanes'); // Paquetes quedó seleccionado más arriba; billingSwitch vive en el panel Planes.
 await up.click('#billingSwitch [data-billing="mensual"]');
 await up.waitForTimeout(100);
-const mensualUsagePrice = await up.evaluate(() => Store.money(899000) + ' COP / mes');
+const mensualUsagePrice = await up.evaluate(() => Store.money(988900) + ' COP / mes');
 // go('usage') fires renderUsage() without awaiting it (it resolves async, via
 // Photos.totalBytes()), and the 5-progressbar count openUsage() waits on is
 // already true from the previous render — so wait for the actual text

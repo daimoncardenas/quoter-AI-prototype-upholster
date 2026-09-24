@@ -1548,8 +1548,9 @@
       return Store.put('invoices', invoice);
     },
     /* IVA (Colombia, 19%): el precio del catálogo es ANTES de IVA y la factura lo suma. Es una
-     * constante del prototipo — una sola cifra para toda la app, la misma que las pantallas de
-     * precios insinúan con su «+ IVA» — no una tasa por cliente. */
+     * constante del prototipo — una sola cifra para toda la app — no una tasa por cliente. Las
+     * pantallas ya no rotulan el «+ IVA» junto a la cifra (dueño, 23/09); el impuesto se nombra en
+     * el desglose de la factura y en las condiciones generales. */
     IVA_RATE: 0.19,
     /* Desglose de una factura: valor de lista + IVA = total a pagar. El `amount` GUARDADO sigue
      * siendo el valor del catálogo (lo que sale de PLANS/PACKAGES, nunca algo tecleado); el IVA y

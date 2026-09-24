@@ -960,9 +960,12 @@ styled as their brand.
   **never from the DOM or anything the user typed**: in the real integration
   the browser must not be able to change what the backend charges. That stored
   `amount` is the catalog VALUE, which is **before IVA**: catalog prices are
-  pre-tax and every screen that shows one says so ("+ IVA" — plan cards, the
-  made-to-measure card, the confirm dialogs and all of "Configurar mi plan"), and
-  the INVOICE adds it — `Store.IVA_RATE` (0.19) and `Store.invoiceTotals(inv)` →
+  pre-tax. Until 23/09 every screen that showed one said so with a "+ IVA" next to
+  the figure (plan cards, the made-to-measure card, the confirm dialogs and all of
+  "Configurar mi plan"); the owner asked for that label to go and it is painted
+  nowhere now — the tax is named by the invoice's breakdown and by the general
+  conditions, and `tests/wiring.spec.mjs` fails if the label comes back. The
+  INVOICE adds it — `Store.IVA_RATE` (0.19) and `Store.invoiceTotals(inv)` →
   `{value, iva, total}` are the only place that arithmetic happens, so the
   Billing table (total with its breakdown) and the payment modal (big total, plus
   the value + IVA line) can never disagree.

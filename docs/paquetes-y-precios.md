@@ -49,7 +49,7 @@ quiera. La matriz actual **no se pierde**: cada preset es hoy un plan.
 | Distribuidor            | Business                | 8      |
 | **Armar mi ACI**        | (sin equivalente)       | a gusto |
 
-Los nombres y los precios de arriba salen del texto que me pasaste
+Los nombres y los precios de partida salen del texto que me pasaste
 (`Taller pequeño desde $299.000`, `Empresa de muebles desde $699.000`, `Distribuidor desde $1.2M`,
 `Core ACI $199.000`) y **están marcados como demo**: un número que describe realidad (un precio de
 venta) sale de ti o va rotulado como inventado. La composición de ejemplo del texto —Retapizado
@@ -173,20 +173,25 @@ contrato) y `Store.planPrice()` las sirve a las dos pantallas.
 
 | Paquete | Mes a mes (lo que suma la composición) | Con contrato de 12 meses | La suma, parte por parte |
 |---|---|---|---|
-| Taller | $399.000 / mes | $299.000 / mes | 299.000 + 100.000 |
-| Empresa de muebles | $899.000 / mes | $699.000 / mes | 299.000 + 415.000 + 185.000 |
-| Distribuidor | $1.490.000 / mes | $1.290.000 / mes | 299.000 + 685.000 + 506.000 |
+| Taller | $438.900 / mes | $328.900 / mes | 328.900 + 110.000 |
+| Empresa de muebles | $988.900 / mes | $878.900 / mes | 328.900 + 456.500 + 203.500 |
+| Distribuidor | $1.639.000 / mes | $1.529.000 / mes | 328.900 + 753.500 + 556.600 |
 
-La base es el **ACI Core, 299.000** (antes 199.000, por tu instrucción del 18 de septiembre): es lo que
-todo paquete incluye y de ahí para arriba suma cada uno. Lo que se movió además para que cuadrara
-(detalle y provenance en `pricingNota` del catálogo): suministro 50.000 (tu cifra, sin tocar),
-retapizado 80→50, cambio de tela 70→75, reparación 95→100, a la medida 130→140, proyecto comercial
-120→100, mantenimiento 85→70, marca blanca 45→25, plantillas 25→20, CSV 20→15, asistentes
-adicionales 100→96. Intactos de tu texto: arquitectónica 100.000, asignación 60.000, analítica
-80.000; investigados con fuente: soporte 190.000 y dominio 20.000.
+**23/09: todo el pliego subió un 10 %** por tu instrucción (Core, los seis precios de servicio, las
+ocho capacidades, el mes, el año y la activación). Las cifras de la tabla son las vigentes; las de la
+nota de provenance, las de su momento.
+
+La base es el **ACI Core, 328.900** (299.000 hasta el 23/09; antes 199.000, por tu instrucción del
+18 de septiembre): es lo que todo paquete incluye y de ahí para arriba suma cada uno. Lo que se movió
+además para que cuadrara (cifras de entonces, ×1,1 hoy; detalle y provenance en `pricingNota` del
+catálogo): suministro 50.000 (tu cifra, sin tocar), retapizado 80→50, cambio de tela 70→75,
+reparación 95→100, a la medida 130→140, proyecto comercial 120→100, mantenimiento 85→70, marca blanca
+45→25, plantillas 25→20, CSV 20→15, asistentes adicionales 100→96. Intactos de tu texto:
+arquitectónica 100.000, asignación 60.000, analítica 80.000; investigados con fuente: soporte 190.000
+y dominio 20.000.
 
 El total de «Configurar mi plan» es esa suma y lo dice con sus palabras: «Precio del paquete «Taller»
-· mes a mes, sin contrato · con contrato de arrendamiento a 12 meses $299.000». `tests/wiring.spec.mjs`
+· mes a mes, sin contrato · con contrato de arrendamiento a 12 meses $328.900». `tests/wiring.spec.mjs`
 sostiene la igualdad: si alguien mueve una cifra del catálogo, el test lo dice antes de que las dos
 cuentas se separen.
 
@@ -212,12 +217,14 @@ ancla para justificar un número. (CLAUDE.md, regla 10.)
 
 ## 13. IVA (19%)
 
-Los precios del catálogo son **antes de IVA** y las pantallas lo dicen («+ IVA» pegado a la cifra en
-las tarjetas de Planes, en la tarjeta a la medida, en las confirmaciones y en todo «Configurar mi
-plan»). La **factura lo suma**: `Store.IVA_RATE` (0.19) y `Store.invoiceTotals(inv)` →
+Los precios del catálogo son **antes de IVA**. Hasta el 23/09 las pantallas lo decían con un «+ IVA»
+pegado a la cifra (tarjetas de Planes, tarjeta a la medida, confirmaciones y «Configurar mi plan»);
+**el dueño pidió quitar el rótulo** y ya no se pinta en ninguna — lo que queda es la frase de las
+condiciones generales («no incluyen IVA») y, sobre todo, el desglose de la factura, que es donde el
+impuesto se nombra ahora. La **factura lo suma**: `Store.IVA_RATE` (0.19) y `Store.invoiceTotals(inv)` →
 `{value, iva, total}`, el único sitio donde se calcula, así que la tabla de Facturación y el modal de
-pago no pueden dar números distintos — la tabla muestra el total con su desglose («valor $ 399.000 +
-IVA $ 75.810») y el modal, el total grande con la línea del desglose.
+pago no pueden dar números distintos — la tabla muestra el total con su desglose («valor $ 438.900 +
+IVA $ 83.391») y el modal, el total grande con la línea del desglose.
 
 El `amount` GUARDADO en la factura sigue siendo el valor del catálogo (lo que sale de
 `PLANS`/`PACKAGES`, nunca algo tecleado): el IVA y el total son derivados. Si mañana el IVA cambia,

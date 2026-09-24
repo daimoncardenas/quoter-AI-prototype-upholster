@@ -132,7 +132,9 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   and opens the SIMULATED payment modal (`#payModal`) — see "Simulated
   payment (Bold)" in the root `CLAUDE.md`. The invoice's stored `amount` is the
   catalog value (pre-IVA) and the modal/table show the total to pay with its
-  breakdown (`Store.invoiceTotals()`: value + 19% IVA) — the plan cards' "+ IVA"
+  breakdown (`Store.invoiceTotals()`: value + 19% IVA). The plan cards no longer label the price
+  with "+ IVA" (owner, 23/09) — the invoice's breakdown is where the tax is named now, and a check
+  fails if the label comes back —
   says the same. The plan only changes once that
   payment is approved (`#payApprove`), with its own toast
   (`Pago aprobado. <concepto> activado.`) and re-rendered card state,
