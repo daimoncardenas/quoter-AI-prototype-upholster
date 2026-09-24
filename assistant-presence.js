@@ -1895,6 +1895,9 @@ function welcome() {
     '. Soy ', Object.assign(document.createElement('b'), { textContent: cfg.name }), ', si necesitas algo, aquí estaré para ayudarte.');
   bubble.hidden = false;
   requestAnimationFrame(() => bubble.classList.add('show'));
+  /* El progreso se guarda mientras la tarjeta está, igual que con un aviso: si no, sus pasos
+   * quedan DETRÁS del texto (medido: 4 de 8 a 1440×900). `hideBubble()` lo devuelve. */
+  journey?.classList.add('noticing');
   state = 'talking';
   playStanding('Wave', 0.25);
   Store.markAssistantWelcomed();

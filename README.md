@@ -34,6 +34,7 @@ Un `CLIENT` que no exista falla explicando qué clientes hay disponibles bajo
 | `clients/mediterranea/` | Real — reproduce la marca y los datos originales de Mediterránea Insumos tal cual |
 | `clients/macizo/` | **Diseño real, datos placeholder** — marca, colores, tipografía y logo tomados de macizocolombia.com (2026-09-14); los datos de demo (telas, puntos de atención, cotizaciones) siguen inventados; los usuarios son los compartidos; ver `clients/macizo/README.md` |
 | `clients/intertelas/` | **Diseño real, datos placeholder** — marca, colores, tipografía y logo tomados de intertelas.com (2026-09-15); prospecto de CARDYRAM, prototipo privado de demostración; los datos de demo (telas, puntos de atención, cotizaciones) siguen inventados; los usuarios son los compartidos; usa `colorMode: "inverted"` (ver más abajo); ver `clients/intertelas/README.md` |
+| `clients/cardyram/` | **Diseño real, datos compartidos** — paquete **institucional**: es la marca de CARDYRAM, no la de un cliente. Colores, tipografía y logo tomados de cardyram.com (2026-09-21), con `accent`, `red` y `success` derivados para que pasen el contraste sobre el lienzo claro; sin datos de demo propios (los compartidos, como todos); `senderEmail` es placeholder; ver `clients/cardyram/README.md` |
 
 ## Agregar un cliente nuevo
 

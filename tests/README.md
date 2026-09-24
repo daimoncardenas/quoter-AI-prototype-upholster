@@ -329,7 +329,10 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   (`.journey.noticing`: opacity + `pointer-events:none`, so the relay is instant and
   nothing invisible takes a click), with her name, its "Ver en el chat" action and an
   unread mark on "Pregúntale a"; and it leaves the moment the customer goes on with the
-  form.
+  form. The **welcome greeting** gets the same relay — it is the same bubble element,
+  so `welcome()` also raises `.journey.noticing` while it is up (measured: without it
+  the card sat over 4 of the line's 8 steps), and closing it returns the progress
+  without a reload.
   The 3D reaction hooks (`#assistantStage`
   `[data-reactions|data-reactions-suppressed|data-reaction|data-glance|data-chair-fabric|data-heady|data-crown|data-seat|data-hip|data-knee|data-foot|data-floor|data-hands|data-feet-flat|data-leg-reach|data-socket|data-sit-z|data-pose|data-sit-phase|data-travel|data-travel-peak|data-render|data-phys|data-pen|data-pen-peak|data-pen-frames|data-pen-phases|data-pen-part|data-pushes|data-push-root|data-shove]`)
   are asserted only when the layer actually starts, and reported as SKIP when it
@@ -407,7 +410,7 @@ prototypes are opened.
 
 Outside the chain above (and outside `npm test`) because it isn't written against
 Mediterránea's fixtures at all: it loops over every pack under `clients/` except
-`mediterranea` (currently `macizo`, `intertelas`), generating each into its own
+`mediterranea` (currently `macizo`, `intertelas`, `cardyram`), generating each into its own
 `generated-<slug>/` and checking generation succeeds with no leftover
 `{{PLACEHOLDER}}` tokens, that pack's own brand/theme/logo show up, its shared demo
 admin can log in, none of the OTHER packs' distinctive strings (display name,

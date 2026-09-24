@@ -520,13 +520,55 @@ check('en el celular el panel vuelve a flotar y la barra no se dibuja', await pa
 await page.setViewportSize({ width: 1440, height: 900 });
 
 console.log('\nLA PRESENCIA REACCIONA A LOS EVENTOS REALES (SI LA CAPA 3D ARRANCA)');
-await gotoWizard();
+/* La bienvenida se pide EN ESTE arranque (se limpia su marca antes de recargar): su burbuja
+ * solo existe cuando la capa 3D midió, y la regla que se comprueba abajo es la del aviso.
+ * La carga es SIN TOCAR NADA (un goto pelado): el primer clic en el formulario despide la
+ * bienvenida —su propio diseño—, así que elegir la línea antes de medirla la borraría. */
+await page.evaluate(() => localStorage.removeItem(Object.keys(localStorage).find(k => k.endsWith('assistantWelcomed')) || '_'));
+await page.goto(D + 'index.html');
 const stageOk = await page.waitForSelector('#assistantStage.ready', { timeout: 30000 }).then(() => true, () => false);
 const skip = n => console.log(`  SKIP  ${n}  (la capa 3D no arrancó en este navegador)`);
 if (!stageOk) {
   skip('una acción del cliente produce una reacción, y la siguiente se suprime');
   skip('el sillón viste la tela de la cotización, sin sondeos');
 } else {
+  /* La bienvenida es el MISMO trato que el aviso: mientras la tarjeta está, la barra guarda
+   * su progreso y sus pasos no quedan detrás del texto (dueño, 21/09: «remember when exist
+   * message... the system hidden sidebar»). Sin eso, medido a 1440×900, la burbuja tapaba
+   * 4 de los 8 pasos de la línea. */
+  const hayBienvenida = await page.waitForSelector('#assistantBubble:not([hidden])', { timeout: 12000 }).then(() => true, () => false);
+  if (!hayBienvenida) console.log('  estado al faltar la bienvenida: ' + JSON.stringify(await page.evaluate(() => {
+    try {
+      const bub = document.getElementById('assistantBubble');
+      return { welcomed: Store.assistantWelcomed(), enabled: Store.assistant().enabled, stage: document.getElementById('assistantStage').className, oculta: bub.hidden };
+    } catch (e) { return 'THROW: ' + e.message; }
+  })));
+  await page.waitForTimeout(400);
+  check('la bienvenida guarda el progreso y no deja un paso tapado', hayBienvenida ? await page.evaluate(() => {
+    const j = document.querySelector('.journey'), bub = document.getElementById('assistantBubble');
+    const r = bub.getBoundingClientRect();
+    const lista = document.querySelector('.step-list');
+    const pasos = [...lista.querySelectorAll('li:not([hidden])')];
+    const hueco = Math.round(Number(document.getElementById('assistantStage').dataset.crown) - r.bottom);
+    const oculta = getComputedStyle(lista).opacity === '0';
+    return {
+      noticing: j.classList.contains('noticing'),
+      intro: getComputedStyle(document.querySelector('.journey-intro')).opacity,
+      pasos: getComputedStyle(lista).opacity,
+      sobreSuCabeza: hueco >= 2 && hueco <= 14,
+      /* Pasos que de verdad quedan DETRÁS de la tarjeta: si el progreso se guardó, ninguno. */
+      tapados: oculta ? 0 : pasos.filter(li => { const q = li.getBoundingClientRect(); return q.bottom > r.top && q.top < r.bottom; }).length
+    };
+  }) : 'la bienvenida no apareció', { noticing: true, intro: '0', pasos: '0', sobreSuCabeza: true, tapados: 0 });
+  if (hayBienvenida) {
+    await page.click('#assistantBubble .bubble-close');
+    await page.waitForTimeout(400);
+    check('y al cerrarla el progreso vuelve, sin recargar', await page.evaluate(() => {
+      const j = document.querySelector('.journey'), pasos = document.querySelector('.step-list');
+      return [j.classList.contains('noticing'), getComputedStyle(pasos).pointerEvents];
+    }), [false, 'auto']);
+  }
+  await gotoWizard(); // y de ahí en adelante, el flujo de siempre (paso 1 = Tu mueble)
   await page.evaluate(() => { window.__aci = []; addEventListener('aci:event', e => window.__aci.push(e.detail)); });
   check('arranca sin tela y sin «pensar»', await page.getAttribute('#assistantStage', 'data-chair-fabric'), '');
   await page.click('.furniture-card:nth-child(2)');
