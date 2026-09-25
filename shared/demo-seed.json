@@ -1,5 +1,5 @@
 {
-  "nota": "Datos de demostración, LOS MISMOS para los tres paquetes (ningún pack trae un seed propio). Telas, vendedores y solicitudes son de relleno: nadie nos dio catálogo real todavía. cutDirection y patternMatch de estas seis telas son valores de DEMO para que el corte no cambie de número (docs/consumo-direccional.md), no una ficha técnica del producto.",
+  "nota": "Datos de demostración, LOS MISMOS para los tres paquetes (ningún pack trae un seed propio). Telas, vendedores y solicitudes son de relleno: nadie nos dio catálogo real todavía. cutDirection y patternMatch de estas seis telas son valores de DEMO para que el corte no cambie de número (docs/consumo-direccional.md), no una ficha técnica del producto. `novedad: true` marca las telas de las ÚLTIMAS COLECCIONES (Texturas y Performance) — el orden real de las colecciones tampoco nos lo dio nadie: es de DEMO, y el día que haya catálogo real este campo se llena de ahí. Lo usan la vitrina del paso de la lista (docs/telas-en-la-lista.md) y el catálogo que lee el asistente.",
   "fabrics": [
     {
       "id": 1,
@@ -69,6 +69,7 @@
       "id": 3,
       "name": "Bouclé Capri",
       "collection": "Texturas",
+      "novedad": true,
       "price": 137000,
       "color": "#ded3bd",
       "colorName": "Marfil",
@@ -100,6 +101,7 @@
       "id": 4,
       "name": "Náutica Bari",
       "collection": "Performance",
+      "novedad": true,
       "price": 108000,
       "color": "#606f78",
       "colorName": "Gris océano",
@@ -163,6 +165,7 @@
       "id": 6,
       "name": "Milo Protect",
       "collection": "Performance",
+      "novedad": true,
       "price": 144000,
       "color": "#767059",
       "colorName": "Oliva",

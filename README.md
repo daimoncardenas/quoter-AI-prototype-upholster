@@ -27,6 +27,20 @@ otro cliente sin tocar `.env`:
 Un `CLIENT` que no exista falla explicando qué clientes hay disponibles bajo
 `clients/`.
 
+## La IA del asistente
+
+El asistente conversa con la **API de DeepSeek** cuando la página se sirve por `npm run dev` y hay
+llave en `.env`:
+
+    # .env
+    DEEPSEEK_API_KEY=sk-…
+
+**La llave no viaja al navegador**: el servidor de desarrollo hace de puente (`/__ia/estado` y
+`/__ia/chat`) y la lee del archivo. Sin llave —y sin servidor, en la demo de doble clic— el
+asistente sigue funcionando con el cerebro simulado, y en un Chrome con modelo local usa ese modelo.
+`npm run dev` dice en la terminal cuál de los tres está activo. Diseño y criterios:
+`docs/ia-por-api.md`; la spec que lo cubre: `npm run test:assistant-api`.
+
 ## Clientes disponibles
 
 | Slug | Estado |

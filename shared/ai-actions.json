@@ -1,0 +1,41 @@
+{
+  "_nota": "Las ACCIONES estándar del asistente: las mismas para todas las líneas y ramas; ninguna línea inventa acciones propias. El flujo de cada rama decide cuáles corren —su paso está en el recorrido del contrato (shared/contracts/) y ahí se declaran—. Diseño: docs/contrato-conversacional.md § «Dos capas».",
+  "acciones": [
+    {
+      "id": "revisar-requerimientos",
+      "label": "Revisar los requerimientos",
+      "paso": 13,
+      "brain": "REVIEW",
+      "campo": "revision",
+      "boton": "#analyzeButton",
+      "hace": "Mira lo declarado —fotos, medidas, respuestas— y dice qué no cuadra. Deja la revisión hecha (`analizada`) para el paso, y la fila de la mirada de la foto cuando hay modelo."
+    },
+    {
+      "id": "revisar-medidas",
+      "label": "Revisar las medidas",
+      "paso": 9,
+      "brain": "MEASUREMENTS",
+      "campo": "medidas",
+      "boton": null,
+      "hace": "Juzga las medidas cuando se escriben y al salir del paso: la banda de lo habitual del mueble. Fuera del rango del formulario no se avanza; fuera de lo habitual avisa."
+    },
+    {
+      "id": "recomendar-tela",
+      "label": "Recomendar la tela",
+      "paso": 14,
+      "brain": "RECOMMENDATION",
+      "campo": "tela",
+      "boton": null,
+      "hace": "Ordena el catálogo con lo declarado y el presupuesto. Sin modelo, el orden determinista de siempre: el paso nunca se queda sin telas."
+    },
+    {
+      "id": "hacer-los-calculos",
+      "label": "Hacer los cálculos",
+      "paso": 16,
+      "brain": "ESTIMATE",
+      "campo": "estimacion",
+      "boton": null,
+      "hace": "La estimación del motivo (Store.lineQuote): el motor calcula —material, mano de obra, daños, piezas o m² según el oficio—; la conversación no calcula ni promete cifras."
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "_nota": "La general (docs/quote-request.interface.ts, QuoteRequest) peluqueada para ESTA rama: los campos que su caso produce, con su tipo, sin valores de nadie. Los del sistema (id, fecha, vendedor, estado) no viajan en la petición: los pone el cotizador al crear la cotización.",
+  "schemaVersion": 1,
+  "branch": "reupholstery",
+  "from": "QuoteRequest",
+  "serviceLine": "retapizado",
+  "fields": {
+    "furniture": {
+      "type": "string",
+      "note": "string?"
+    },
+    "photoIds": "string[]",
+    "measurements": {
+      "width": "number",
+      "height": "number",
+      "depth": "number",
+      "seats": "string?",
+      "cushions": "number | string | null",
+      "coverage": "string"
+    },
+    "damages": "string[]",
+    "supplies": [
+      {
+        "id": "string",
+        "label": "string",
+        "unit": "string?",
+        "cop": "number?",
+        "qty": "number"
+      }
+    ],
+    "preferences": {
+      "needs": "string[]",
+      "style": "string",
+      "colorRange": "string"
+    },
+    "budget": "number?",
+    "fabric": {
+      "fabricId": "number",
+      "reference": "string"
+    },
+    "customerCity": "string",
+    "serviceCity": "string",
+    "delivery": {
+      "method": "\"sede\" | \"envio\" | \"asesor\"",
+      "office": "string?"
+    },
+    "contact": {
+      "name": "string",
+      "email": "string",
+      "phone": "string",
+      "authorized": "boolean"
+    },
+    "billing": {
+      "modelo": "string",
+      "tecnico": "string",
+      "consumo": "[number, number]",
+      "facturable": "[number, number]",
+      "compra": "[number, number]",
+      "sobrante": "[number, number]"
+    },
+    "price": "[number, number]",
+    "clientEstimate": {
+      "consumption": { "min": "number", "max": "number", "unit": "string" },
+      "price": { "min": "number", "max": "number", "currency": "\"COP\"" }
+    }
+  },
+  "required": [
+    "furniture",
+    "photoIds",
+    "measurements",
+    "supplies",
+    "fabric",
+    "customerCity",
+    "serviceCity",
+    "contact"
+  ],
+  "system": ["id", "date", "seller", "sellerId", "status", "submittedAt"]
+}

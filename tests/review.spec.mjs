@@ -17,6 +17,11 @@ async function review({photo, furniture, w, h, d}) {
   if (furniture) await page.click(`.furniture-card[data-furniture="${furniture}"]`);
   await page.setInputFiles('#furniturePhoto', photo);
   await page.waitForFunction(()=>state.photos.length>=3);
+  /* Las fotos de prueba son ILUSTRACIONES lisas (nitidez medida ≈ 0: sin grano ni textura), y el
+   * medidor de foco —que es aritmética sobre los píxeles— tiene razón en avisar. Aquí lo que se
+   * prueba es la REVISIÓN con fotos nítidas: se declaran como tales; la medida del foco tiene su
+   * propia suite (tests/eleccion-y-memoria.spec.mjs). */
+  await page.evaluate(()=>{ state.photos.forEach(p=>{ p.nitidez = 999; }); });
   await page.click('#nextButton');
   /* Desde que el paso de Medidas NO deja seguir con una medida fuera de lo habitual, un caso
    * imposible no llega a la revisión por el camino normal: se inyecta la cifra y se salta al paso,
@@ -76,6 +81,9 @@ async function hastaLaRevision(p){
   await p.click('.furniture-card[data-furniture="Sofá"]');
   await p.setInputFiles('#furniturePhoto', BIG);
   await p.waitForFunction(() => state.photos.length >= 3);
+  /* Las ilustraciones de prueba son lisas (ver arriba): se declaran nítidas — el foco se mide en su
+   * propia suite (tests/eleccion-y-memoria.spec.mjs). */
+  await p.evaluate(() => { state.photos.forEach(ph => { ph.nitidez = 999; }); });
   await p.click('#nextButton');
   await p.evaluate(() => {
     document.getElementById('width').value = '210';
@@ -178,6 +186,9 @@ console.log('\nLA REVISIÓN MIRA LA FOTO (IA LOCAL) Y LA RELACIONA CON LO DECLAR
   await p.click('.furniture-card[data-furniture="Sofá"]');
   await p.setInputFiles('#furniturePhoto', BIG);
   await p.waitForFunction(() => state.photos.length >= 3);
+  /* Las ilustraciones de prueba son lisas (ver arriba): se declaran nítidas — el foco se mide en su
+   * propia suite (tests/eleccion-y-memoria.spec.mjs). */
+  await p.evaluate(() => { state.photos.forEach(ph => { ph.nitidez = 999; }); });
   await p.click('#nextButton');
   await p.evaluate(() => {
     document.getElementById('width').value = '210';
@@ -355,6 +366,9 @@ console.log('\nMIENTRAS MIRA LA FOTO, ELLA LEE SU DOCUMENTO');
   await p.click('.furniture-card[data-furniture="Sofá"]');
   await p.setInputFiles('#furniturePhoto', BIG);
   await p.waitForFunction(() => state.photos.length >= 3);
+  /* Las ilustraciones de prueba son lisas (ver arriba): se declaran nítidas — el foco se mide en su
+   * propia suite (tests/eleccion-y-memoria.spec.mjs). */
+  await p.evaluate(() => { state.photos.forEach(ph => { ph.nitidez = 999; }); });
   await p.click('#nextButton');
   await p.evaluate(() => {
     document.getElementById('width').value = '210';

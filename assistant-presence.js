@@ -914,6 +914,91 @@ async function loadCharacter(kind) {
   }
 }
 
+/* La conversación avisa cuando ella habla: el personaje lo acompaña con un gesto — el mismo
+ * vocabulario de gestos que ya usa (no se inventa una animación nueva). Si el rig no trae el
+ * gesto, `play` no hace nada: la capa nunca se queda a medias. */
+/* EL GLOBO DE COMENTARIO de ella: mientras habla, sobre su coronilla y con los puntos moviéndose.
+ * Se ancla al mismo sitio que el aviso (`--notice-bottom`, la medida real de su corona), así que
+ * aparece sobre su cabeza sin inventar geometría. El gesto del rig se sigue intentando aparte. */
+function elGloboDeVoz(on) {
+  let g = document.getElementById('assistantHabla');
+  if (!g) {
+    g = document.createElement('div');
+    g.id = 'assistantHabla';
+    g.className = 'assistant-bubble assistant-bubble--habla';
+    for (let i = 0; i < 3; i++) g.appendChild(document.createElement('span'));
+    const donde = document.getElementById('assistantStage');
+    (donde && donde.parentNode ? donde.parentNode : document.body).appendChild(g);
+  }
+  g.classList.toggle('show', !!on);
+}
+/* EL GLOBO DE VOZ, en three.js y AL LADO de ella: una burbuja con tres puntos que se mueve mientras
+ * habla. Va colgada de su propio cuerpo (`current.body`, el mismo espacio en unidades del rig que usa
+ * el resto de la capa), así que aparece a su lado sin inventar geometría de mundo. Los puntos se
+ * redibujan en un canvas: es la única animación propia; el resto sigue siendo su rig. */
+let globoVoz = null, globoVozTimer = null, globoVozPunto = 0;
+function pintarElGloboDeVoz(canvas, punto) {
+  const ctx = canvas.getContext('2d'); if (!ctx) return;
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = 'rgba(255,255,255,.97)';
+  const r = 22;
+  ctx.beginPath();
+  ctx.moveTo(r, 4); ctx.lineTo(w - r, 4); ctx.quadraticCurveTo(w - 4, 4, w - 4, 4 + r);
+  ctx.lineTo(w - 4, h - 4 - r); ctx.quadraticCurveTo(w - 4, h - 4, w - 4 - r, h - 4);
+  ctx.lineTo(w / 2 + 14, h - 4); ctx.lineTo(w / 2 - 2, h + 22); ctx.lineTo(w / 2 - 6, h - 4);
+  ctx.lineTo(r, h - 4); ctx.quadraticCurveTo(4, h - 4, 4, h - 4 - r);
+  ctx.lineTo(4, 4 + r); ctx.quadraticCurveTo(4, 4, r, 4);
+  ctx.closePath(); ctx.fill();
+  for (let i = 0; i < 3; i++) {
+    ctx.beginPath();
+    const sube = (i === punto) ? 4 : 0;
+    ctx.arc(w / 2 - 26 + i * 26, h / 2 - 2 - sube, i === punto ? 8 : 6, 0, Math.PI * 2);
+    ctx.fillStyle = i === punto ? 'rgba(60,70,90,1)' : 'rgba(130,140,160,.85)';
+    ctx.fill();
+  }
+}
+function elGloboDeVozTres(on) {
+  try {
+    if (!current || !current.body) return;
+    if (!globoVoz) {
+      const canvas = document.createElement('canvas'); canvas.width = 160; canvas.height = 120;
+      pintarElGloboDeVoz(canvas, 0);
+      const textura = new THREE.CanvasTexture(canvas);
+      textura.anisotropy = 4;
+      const alto = current.bodyH || 1.7;             /* su altura en unidades del rig */
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: textura, transparent: true, depthTest: false }));
+      sprite.renderOrder = 999;
+      sprite.scale.set(0.34 * alto, 0.26 * alto, 1);
+      /* A su lado, a la altura de la cabeza: +x es su izquierda en su propio espacio. */
+      sprite.position.set(0.30 * alto, 0.92 * alto, 0.06 * alto);
+      globoVoz = { sprite, canvas, textura };
+      current.body.add(sprite);
+      if (stage) stage.dataset.globoVoz = 'listo';
+    }
+    globoVoz.sprite.visible = !!on;
+    if (stage) stage.dataset.globoVoz = on ? 'hablando' : 'callada';
+    clearInterval(globoVozTimer); globoVozTimer = null;
+    if (on) {
+      globoVozPunto = 0;
+      globoVozTimer = setInterval(() => {
+        if (!globoVoz) return;
+        globoVozPunto = (globoVozPunto + 1) % 3;
+        pintarElGloboDeVoz(globoVoz.canvas, globoVozPunto);
+        globoVoz.textura.needsUpdate = true;
+      }, 380);
+    }
+  } catch (err) { /* sin globo: la capa sigue siendo ella */ }
+}
+if (typeof window !== 'undefined') {
+  window.addEventListener('assistant:hablando', e => {
+    const hablando = !!(e && e.detail && e.detail.hablando);
+    elGloboDeVoz(hablando);        /* el aviso del sidebar (texto) */
+    elGloboDeVozTres(hablando);    /* y la burbuja 3D a su lado */
+    if (hablando) playStanding('Interact', 0.2);
+  });
+}
+
 /* three's GLTFLoader runs node names through PropertyBinding.sanitizeNodeName(), which
  * drops reserved characters — the rig's 'UpperLeg.L' arrives as 'UpperLegL'. Try both
  * spellings, or a bone is silently missing and the pose half-applies. */

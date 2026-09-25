@@ -401,6 +401,79 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   Y que escribir una medida NO recrea la sesión del modelo (el hilo sigue), mientras que
   CAMBIAR DE LÍNEA sí la destruye: la pregunta siguiente abre una sesión nueva y su turno ya no
   lleva la medida de la línea anterior (`docs/cambio-de-linea.md`).
+- `assistant-api.spec.mjs` — la IA por API, en sus dos mitades. **La puerta** (`tools/ia-api.mjs`)
+  contra un DeepSeek de mentira: con llave dice que la API está lista y con qué modelo; el chat reenvía
+  al modelo del proyecto (`deepseek-flash`), sin streaming y sin modo de pensamiento, con la llave en su
+  cabecera DEL LADO DEL SERVIDOR — y la llave no aparece ni en el cuerpo ni en una cabecera de lo que
+  recibe el navegador; `pensar:true` enciende el pensamiento (la palanca del próximo feature); un error
+  del servicio (402 sin saldo) llega como error y sin contenido que mostrar; sin llave el estado dice
+  `{api:false}` y el chat queda cerrado con su `501`. **La página** servida por http con la puerta
+  interceptada: la nota dice que contesta la API y que lo escrito sale del equipo; la respuesta se muestra
+  cuando pasa el cerco y NO se muestra cuando promete transporte (ahí responde el cerebro simulado); la
+  historia viaja en cada turno (`system,user,assistant,user`) porque la API no tiene sesión con memoria; la
+  mirada recibe la foto como `image_url` en base64 —con la sonda de 1 píxel gastando la primera llamada— y
+  lo declarado entero en el carácter; la recomendación ordena la parrilla. No toca la red: `page.route`
+  contesta por la API (`docs/ia-por-api.md`).
+- `contrato.spec.mjs` — el contrato de la precotización, por su lado (`docs/contrato-conversacional.md`):
+  qué campos pide cada línea —los `skips` y los `asks` del catálogo, leídos del catálogo de verdad, y
+  los muebles con sus rangos leídos del propio cotizador—, qué falta y en qué orden, el progreso
+  contado **sobre lo que esa línea pide** (un contrato de siete campos lleno es el 100 %), y la lista
+  cerrada de lo que la conversación puede escribir: una medida imposible o de la banda del ±20 % se
+  rechaza, un mueble o una opción fuera del catálogo no entran, y la autorización, las fotos y la
+  estimación NUNCA las escribe la IA. Cierra comprobando que cada frase es la del formulario, palabra
+  por palabra, contra `generated/index.html` — y que las cuatro que nacen en el contrato no están ahí.
+- `conversacion.spec.mjs` — la conversación que llena el contrato (`docs/contrato-conversacional.md`),
+  sobre `file://` (sin API: pregunta el cerebro simulado y decide el contrato). Comprueba que la capa
+  es transparente y el formulario sigue detrás; que la primera pregunta nombra las líneas del plan;
+  que lo dicho entra al MISMO `state` (la línea, las tres medidas juntas «ancho 210 alto 85 fondo 90»,
+  las ciudades de sus dos selects, el contacto con correo y celular); que las fotos entran por el
+  componente del modal con la misma tubería (`loadPhotos`); que una medida imposible se rechaza con la
+  frase del formulario y NO llega al campo; y que la autorización no la firma la conversación (queda
+  pendiente, ella lo avisa, y `puedeEnviar` sigue en false).
+- `conversacion-api.spec.mjs` — el turno con el MODELO (el dueño, al ver el guion: «the AI repeat the
+  same phrase every moment until I complete this.. the idea is can interact with human... and
+  rephrase»). La puerta va interceptada y el modelo contesta guiones escritos: lo que se comprueba es
+  que su frase es la que se muestra (no una del guion), que lo que propone entra al formulario cuando
+  el contrato lo acepta (la línea, el mueble) y que una MEDIDA IMPOSIBLE que el modelo diga NO entra
+  (el campo queda vacío: el modelo nunca es la última palabra); que cada turno lleva el contrato («LO
+  QUE FALTA AHORA») y la instrucción de no repetirse; y que sin API el respaldo tampoco dice la misma
+  pregunta dos veces igual.
+- `voz.spec.mjs` — la voz de la conversación (`docs/contrato-conversacional.md`), con el dispositivo
+  Y el `AudioContext` DE MENTIRA (en WSL, sin tarjeta de sonido, el renderer se cae al crear el
+  primero de verdad y el servicio de voz se lo lleva por delante: medido), y todo lo demás real. El
+  micrófono: en reposo las barras están en el piso; encendido, el nivel del analizador las mueve (más
+  de 4 px), el botón queda pulsado y la pista viva; la nota dice de dónde es el reconocimiento ANTES
+  de hablar (el sustituto no trae `processLocally`, así que dice la verdad del navegador); dictar
+  entra por el mismo camino (voz → conversación → contrato → formulario: la línea queda elegida);
+  apagar devuelve las barras al piso y suelta el stream; su voz se silencia y se vuelve a encender; y
+  cerrar la capa apaga el micrófono. El micrófono REAL se prueba en el Chrome del dueño.
+- `telas-en-la-lista.spec.mjs` — las telas en el paso de la lista y los datos que el asistente ya
+  guarda (`docs/telas-en-la-lista.md`): la **reventa pregunta qué sabe el cliente** —«Sé qué tela
+  quiero» deja la lista y el cierre [0,18,22,23,20,16,15]; «Quiero sugerencias» pone las
+  características y la recomendación [0,18,22,23,12,14,16,15], donde se eligen **varias telas**, cada
+  una con su campo de cantidad que escribe su fila (y soltarla se lleva su fila), con sus dos avisos
+  —sin tela elegida y tela sin cantidad— y el paso de la lista que ya no vuelve—; el estado del turno
+  lleva la rama (ruta → propósito → saber), lo declarado en la lista y el pedido anterior, y del
+  contacto el HECHO de estar declarado (los valores solo con la autorización — se comprueba en las dos
+  direcciones); el prompt del modelo lleva el catálogo (colección y precio por metro, «última
+  colección» en las telas marcadas `novedad` en el seed — DEMO) y `lista`/`pedido` entran a lo que
+  puede llenar; la **vitrina** del paso, donde el camino no la respondió solo (el botón «Que <nombre>
+  sugiera telas» → panel con las tarjetas del catálogo, últimas colecciones de primeras, la elegida
+  entra en la fila que se está llenando por su select) y apagada en reventa; la conversación aplica
+  «veinte metros de lino verona» y «dos rollos de milo protect» (con la tela de rollo encendida por
+  el mismo camino del backoffice) y rechaza una referencia que no está en el catálogo; y el cerco deja
+  pasar el precio del catálogo y tumba la cifra inventada.
+- `eleccion-y-memoria.spec.mjs` — el asistente **elige el contrato**, la memoria es **de la
+  conversación** y una foto borrosa se nota (`docs/eleccion-y-memoria.md`). El **índice de contratos**
+  es, exactamente, las ramas del espejo (`tests/mirror/`, ni una de más; la línea con contrato
+  pendiente no se ofrece), cada una con su contrato de endpoint en `shared/contracts/`, viaja en el
+  prompt con la orden de elegir y anotar `rama`, y la rama dicha aplica la cadena entera por los
+  mismos controles —dos ramas distintas y una inventada que no entra—; la **memoria** vive en la
+  página mientras se conversa y **recargar empieza limpio** (no vuelve la rama, ni la compra, ni las
+  medidas, ni la conversación, y no queda borrador en el almacén), con «empezar de cero» y el cambio
+  de línea limpiando el caso dentro de la conversación; y la **nitidez** separa una foto nítida de una
+  desenfocada (los dos lados de `NITIDEZ_MINIMA`), la revisión la señala y las fotos chicas siguen
+  avisando por resolución.
 - `retapizado-trabajo.spec.mjs` — la promesa del trabajo de taller (`docs/retapizado-trabajo.md`):
   que la tela no manda sobre la obra (el mismo sofá con una tela de 89.000 y con una de 119.000
   paga la misma mano de obra por tabla), que los insumos del catálogo se suman con su precio
@@ -488,3 +561,46 @@ design: with nothing saved there is nothing applied, the pack's own defaults pas
 their own contrast checks, and a color saved in "Configuración de estilos" reaches
 that pack's cotizador (the header in normal mode, the brand canvas in inverted).
 Self-documented at its top.
+
+## Los contratos por rama (`npm run test:contrato-<línea>`)
+
+Fuera de `npm test` y **una suite por línea** (como la evaluación por línea: sola). Son DOS piezas y
+la suite comprueba que no se separen:
+
+- `shared/contracts/<branch>.json` — EL CONTRATO: puro dato, camelCase, **lo que el endpoint recibe**
+  cuando esa rama se completa (`schemaVersion`, `branch`, `source`, `brand`, `submittedAt` + los campos
+  del caso). Sin pasos ni selectores: eso es frontend. Convenciones y tabla de ramas:
+  `shared/contracts/README.md`; las claves válidas se declaran en `CLAVES_DE_CONTRATO`
+  (`tests/contratos.mjs`) antes de escribirlas.
+- `tests/mirror/<branch>.json` — EL ESPEJO: los pasos que el wizard muestra para esa rama, el control
+  que pinta cada campo y las entradas (tarjeta + camino + líneas apagadas). Verificación, no contrato.
+
+La suite de la línea camina cada entrada en el wizard RENDERIZADO y compara el espejo en las dos
+direcciones: cada paso declarado está en el wizard con su brain/id/ask; cada control declarado existe
+dentro de su paso; y ningún control del paso —un input nuevo, una grilla, un ask— se queda sin
+declarar. En datos (sin navegador): cada contrato tiene su espejo y los dos dicen la misma rama y la
+misma línea, la cadena es una rama real del catálogo (con las `line` indirectas, como el camino
+`reparación` de mantenimiento, que manda a la línea `reparacion`), ninguna tarjeta del catálogo se
+queda sin espejo, y las ACCIONES estándar (`shared/ai-actions.json`: revisar-requerimientos,
+revisar-medidas, recomendar-tela, hacer-los-calculos) coinciden con los pasos que las declaran y con
+el campo que involucran. La maquinaria compartida es `tests/contratos.mjs`. Diseño y porqué:
+`docs/contrato-conversacional.md`.
+
+- `contrato-suministro-tela.spec.mjs` — las siete ramas del suministro (compra → reventa · taller ×2 ·
+  mueble ×3, y el pedido).
+- `contrato-retapizado.spec.mjs`, `contrato-a-la-medida.spec.mjs`,
+  `contrato-proyecto-comercial.spec.mjs`, `contrato-tapiceria-arquitectonica.spec.mjs` — la rama de
+  cada línea, con sus asks (en tapicería, además, las fotos mudadas al primer paso de su cotización:
+  `reubicarLaSubida`).
+- `contrato-reparacion.spec.mjs` — las DOS entradas de la reparación: su tarjeta propia (con
+  mantenimiento apagado) y el camino «Reparación y restauración» de la tarjeta de mantenimiento.
+- **mantenimiento queda pendiente**: su rama de limpieza muestra hoy los pasos 21 y 20 (pedido y
+  lista, que son de los caminos del suministro) y `wizard.spec` lo tiene por rojo desde el 21/09
+  (esperaba 7 pasos para la línea y camina sin el paso del camino). El contrato y su suite entran
+  cuando el flujo quede arreglado (o con la decisión del dueño, si se prefiere congelar lo de hoy).
+
+Las **líneas terminadas hoy son dos** —«Suministro de tela» y «Retapizado de muebles» (dueño,
+24/09)—: esos contratos y sus suites son la palabra final de su rama. Los de las otras tarjetas
+(reparación, a la medida, proyecto comercial, tapicería arquitectónica) son el espejo del flujo
+ACTUAL de una línea en obra: valen como referencia mientras se termina, y el espejo avisa en rojo
+cuando el flujo se mueva.

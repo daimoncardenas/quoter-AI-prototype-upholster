@@ -41,8 +41,19 @@ sabía): el backoffice puede contarlos.
       → Sé cuánto necesito, no la tela        recomendación
       → No tengo claro ninguna de las dos     el recorrido guiado
 
-- **Reventa o inventario** no la hace: el que revende trae referencias, colores y cantidades por
-  producto, y cae directo en la lista. Sin cálculo y sin recomendación.
+- **Reventa o inventario** pregunta lo suyo (el dueño, 24/09 — antes caía directo en la lista sin
+  preguntar nada): **«¿Ya sabes qué tela quieres?»**
+
+      → Sé qué tela quiero    la lista y el cierre (referencias, colores y cantidades por producto)
+      → Quiero sugerencias    las características (uso, estilo, gama) + la recomendación: ahí se
+                              eligen VARIAS telas, cada una con su cantidad, y la lista no vuelve
+
+  El que revende trae referencias, colores y cantidades; el que pide sugerencias **arma su compra EN
+  la recomendación** (acción `recomendar-tela`, paso 14): elige varias telas y cada tarjeta elegida
+  lleva su cantidad (su unidad: metros, o rollos si esa tela se vende por rollo), que es su fila de la
+  compra — y sin tela elegida, o con una sin cantidad, no se pasa (el aviso dice cuál falta). Por eso
+  el paso de la lista (paso 20) no vuelve en ese camino: ya se declaró todo. En el camino de «sé qué
+  tela quiero» la lista es el paso corto de siempre. Los dos cierran en la estimación.
 - **Mi servicio de tapicería** pregunta dos cosas (las dos, o que se calcule el trabajo).
 - **Mi mueble o proyecto personal** pregunta tres (las dos, los metros, o que lo guíen).
 
@@ -108,8 +119,8 @@ guardarse sin número.
 
 - `tests/ruta-cantidad.spec.mjs` — la compra directa: la lista, la unidad de cada tela, la regla de
   cada fila, el alza que NO se aplica a lo declarado, el cierre y la solicitud congelada.
-- `tests/ruta-caminos.spec.mjs` — los tres propósitos y los cuatro saberes: qué recorrido abre cada
-  uno y qué pide la lista en cada caso.
+- `tests/ruta-caminos.spec.mjs` — los tres propósitos y los saberes de cada uno (los dos de la
+  reventa incluidos): qué recorrido abre cada respuesta y qué pide la lista en cada caso.
 - `tests/ruta-pedido.spec.mjs` — completar pedido: buscar la solicitud, traer su referencia, el
   faltante, y el lote/continuidad que confirma un asesor.
 - La caminata clásica sigue en `tests/wizard.spec.mjs`, `wiring`, `atencion` y `presupuesto`: el

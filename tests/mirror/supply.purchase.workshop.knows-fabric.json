@@ -1,0 +1,287 @@
+{
+  "_note": "The mirror of ONE branch: the steps the wizard shows for it and the control that paints each field. Verification, not contract (see shared/contracts/README.md).",
+  "branch": "supply.purchase.workshop.knows-fabric",
+  "line": "suministro-tela",
+  "chain": [
+    "suministro-tela",
+    "compra",
+    "taller",
+    "tela"
+  ],
+  "entries": [
+    {
+      "card": "suministro-tela",
+      "path": [
+        {
+          "nivel": "ruta",
+          "id": "compra",
+          "label": "Nueva compra"
+        },
+        {
+          "nivel": "proposito",
+          "id": "taller",
+          "label": "Mi servicio de tapicería"
+        },
+        {
+          "nivel": "saber",
+          "id": "tela",
+          "label": "Conozco la tela, no cuánto necesito"
+        }
+      ],
+      "disableLines": []
+    }
+  ],
+  "steps": [
+    {
+      "step": 0,
+      "brain": null,
+      "id": "serviceStep",
+      "ask": null,
+      "fields": [
+        {
+          "field": "linea",
+          "type": "tarjetas",
+          "controls": [
+            "#serviceGrid"
+          ]
+        }
+      ],
+      "actions": []
+    },
+    {
+      "step": 18,
+      "brain": null,
+      "id": "routeStep",
+      "ask": null,
+      "fields": [
+        {
+          "field": "ruta",
+          "type": "tarjetas",
+          "controls": [
+            "#routeGrid"
+          ]
+        }
+      ],
+      "actions": []
+    },
+    {
+      "step": 22,
+      "brain": "PROPOSITO",
+      "id": "purposeStep",
+      "ask": null,
+      "fields": [
+        {
+          "field": "proposito",
+          "type": "tarjetas",
+          "controls": [
+            "#purposeGrid"
+          ]
+        }
+      ],
+      "actions": []
+    },
+    {
+      "step": 23,
+      "brain": "SABER",
+      "id": "saberStep",
+      "ask": null,
+      "fields": [
+        {
+          "field": "saber",
+          "type": "tarjetas",
+          "controls": [
+            "#saberGrid"
+          ]
+        }
+      ],
+      "actions": []
+    },
+    {
+      "step": 1,
+      "brain": "FURNITURE",
+      "id": null,
+      "ask": null,
+      "fields": [
+        {
+          "field": "mueble",
+          "type": "tarjetas",
+          "controls": [
+            ".furniture-grid",
+            "#furnitureType"
+          ]
+        },
+        {
+          "field": "muebleOtro",
+          "type": "texto",
+          "controls": [
+            "#furnitureOther"
+          ]
+        },
+        {
+          "field": "fotos",
+          "type": "archivos",
+          "controls": [
+            "#uploadZone"
+          ]
+        }
+      ],
+      "actions": []
+    },
+    {
+      "step": 9,
+      "brain": "MEASUREMENTS",
+      "id": null,
+      "ask": null,
+      "fields": [
+        {
+          "field": "medidas.width",
+          "type": "numero",
+          "controls": [
+            "#width"
+          ]
+        },
+        {
+          "field": "medidas.height",
+          "type": "numero",
+          "controls": [
+            "#height"
+          ]
+        },
+        {
+          "field": "medidas.depth",
+          "type": "numero",
+          "controls": [
+            "#depth"
+          ]
+        },
+        {
+          "field": "medidas.puestos",
+          "type": "select",
+          "controls": [
+            "#seats"
+          ]
+        },
+        {
+          "field": "medidas.cojines",
+          "type": "select",
+          "controls": [
+            "#cushions"
+          ]
+        },
+        {
+          "field": "medidas.cobertura",
+          "type": "select",
+          "controls": [
+            "#coverage"
+          ]
+        }
+      ],
+      "actions": [
+        "revisar-medidas"
+      ]
+    },
+    {
+      "step": 20,
+      "brain": "LIST",
+      "id": "listStep",
+      "ask": null,
+      "fields": [
+        {
+          "field": "lista",
+          "type": "filas",
+          "controls": [
+            "#listRows",
+            "#telasGrid"
+          ]
+        }
+      ],
+      "actions": []
+    },
+    {
+      "step": 16,
+      "brain": "ESTIMATE",
+      "id": null,
+      "ask": null,
+      "fields": [
+        {
+          "field": "estimacion",
+          "type": "result",
+          "controls": [
+            "#priceRange"
+          ],
+          "action": "hacer-los-calculos"
+        }
+      ],
+      "actions": [
+        "hacer-los-calculos"
+      ]
+    },
+    {
+      "step": 15,
+      "brain": "CONTACT",
+      "id": null,
+      "ask": null,
+      "fields": [
+        {
+          "field": "entrega",
+          "type": "select",
+          "controls": [
+            "#entrega"
+          ]
+        },
+        {
+          "field": "atencion.cliente",
+          "type": "select",
+          "controls": [
+            "#customerCity",
+            "#customerCityOther"
+          ]
+        },
+        {
+          "field": "atencion.servicio",
+          "type": "select",
+          "controls": [
+            "#serviceCity",
+            "#serviceCityOther"
+          ]
+        },
+        {
+          "field": "sede",
+          "type": "select",
+          "controls": [
+            "#city"
+          ]
+        },
+        {
+          "field": "contacto.nombre",
+          "type": "texto",
+          "controls": [
+            "#fullName"
+          ]
+        },
+        {
+          "field": "contacto.correo",
+          "type": "correo",
+          "controls": [
+            "#email"
+          ]
+        },
+        {
+          "field": "contacto.celular",
+          "type": "tel",
+          "controls": [
+            "#phone"
+          ]
+        },
+        {
+          "field": "contacto.autoriza",
+          "type": "casilla",
+          "controls": [
+            "#consent"
+          ]
+        }
+      ],
+      "actions": []
+    }
+  ]
+}

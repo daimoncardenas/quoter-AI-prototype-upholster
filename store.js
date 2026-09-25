@@ -594,6 +594,10 @@
         out.push({
           id: s.id, label: s.label, hint: s.hint || '', journey: s.journey,
           requiredPlan: required,
+          /* El contrato de la línea: `pendiente` es que su JSON todavía no se escribe, así que su
+           * rama no entra al índice que el asistente usa para elegir el caso (el dueño: solo las
+           * líneas con contrato se ofrecen). */
+          contrato: s.contrato,
           /* Lo que la línea suma a la estimación y lo que pregunta de más (ver lineEstimate y
            * docs/journeys.md): la línea no es solo una etiqueta en la cotización. */
           laborPct: Math.max(0, +s.laborPct || 0),

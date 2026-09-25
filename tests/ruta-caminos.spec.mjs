@@ -58,12 +58,17 @@ const estadoDeLaLista = () => page.evaluate(() => ({
   sinTela: !!document.querySelector('#listRows .list-fabric option[value=""]'),
 }));
 
-console.log('\nREVENTA O INVENTARIO: DERECHO A LA LISTA');
+console.log('\nREVENTA O INVENTARIO: PREGUNTA QUÉ SABE Y VA A LA LISTA');
 await abrirLaCompra('Reventa o inventario');
-check('no pregunta qué se sabe —el que revende trae referencias y cantidades— y va a la lista',
+/* El dueño (24/09): también aquí se pregunta primero —«ya sabes qué tipo de tela requieres» o
+ * «quiero sugerencias»—, y la respuesta decide si el recorrido trae la recomendación. */
+check('pregunta qué sabe el cliente —las dos respuestas— y la respuesta no trae recomendación',
   await page.evaluate(() => [pasosVisibles(), document.getElementById('uploadZone').hidden,
-    [...document.querySelectorAll('#saberGrid .service-choice')].length]),
-  [[0, 18, 22, 20, 16, 15], true, 0]);
+    [...document.querySelectorAll('#saberGrid .service-choice')].map(c => (c.querySelector('b') || {}).textContent)]),
+  [[0, 18, 22, 23, 20, 16, 15], true, ['Sé qué tela quiero', 'Quiero sugerencias']]);
+await page.click('#saberGrid .service-choice:has-text("Sé qué tela quiero")');
+await page.waitForTimeout(200);
+await avanzar();
 check('y la lista pide referencia y cantidad, como el dibujo',
   await estadoDeLaLista(), { paso: 20, filas: 1, cantidad: true, sinTela: false });
 
@@ -76,24 +81,25 @@ check('pregunta solo dos cosas: la tela y la cantidad, o que se calcule el traba
 await page.click('#saberGrid .service-choice:has-text("Conozco la tela, no cuánto necesito")');
 await page.waitForTimeout(200);
 check('el taller que sabe la tela y no la cantidad describe su pieza (con fotos) y el motor la calcula',
-  await page.evaluate(() => [pasosVisibles(), !document.getElementById('uploadZone').hidden]),
-  [[0, 18, 22, 23, 20, 1, 9, 16, 15], true]);
+  await page.evaluate(() => [pasosVisibles(), document.getElementById('uploadZone').hidden]),
+  [[0, 18, 22, 23, 1, 9, 20, 16, 15], false]);
 check('y su lista solo pide la referencia: los metros los pone el motor',
   await page.evaluate(() => [!!document.querySelector('#listRows .list-metros'),
     document.querySelector('#listRows .sin-cantidad').textContent.trim()]),
   [false, 'Los metrosLos calculamos con tu mueble y sus medidas.']);
-await avanzar();
+await avanzar();                  // 23 → 1: el mueble y su foto
+await page.setInputFiles('#furniturePhoto', FOTOS);
+await page.waitForFunction(() => state.photos.length >= 3);
+await page.waitForTimeout(150);
+await avanzar();                  // 1 → 9: las medidas
+await page.fill('#width', '210'); await page.fill('#height', '85'); await page.fill('#depth', '90');
+await page.waitForTimeout(150);
+await avanzar();                  // 9 → 20: la lista, que solo pide la referencia
 await page.selectOption('#listRows .list-fabric', { label: 'Velvet Siena · Petróleo' });
 await page.waitForTimeout(200);
 check('la referencia elegida es la tela del proyecto',
   await page.evaluate(() => state.fabric && state.fabric.name), 'Velvet Siena');
-await avanzar();
-await page.setInputFiles('#furniturePhoto', FOTOS);
-await page.waitForFunction(() => state.photos.length >= 3);
-await avanzar();
-await page.fill('#width', '210'); await page.fill('#height', '85'); await page.fill('#depth', '90');
-await page.waitForTimeout(150);
-await avanzar();
+await avanzar();                  // 20 → 16: la estimación
 check('la estimación usa los metros del mueble con la regla de esa tela',
   await page.evaluate(() => {
     const c = consumo(), f = valorDeLaLista()[0];
@@ -115,24 +121,25 @@ check('pregunta las tres cosas del dibujo',
                          ['No tengo claro ninguna de las dos', false]] });
 await page.click('#saberGrid .service-choice:has-text("Sé cuánto necesito, no la tela")');
 await page.waitForTimeout(200);
-check('sabe los metros: la lista sin tela y la recomendación para elegirla',
-  await page.evaluate(() => pasosVisibles()), [0, 18, 22, 23, 20, 12, 14, 16, 15]);
-await avanzar();
-check('y la fila deja la referencia vacía, con su opción «aún no sé»',
-  await estadoDeLaLista(), { paso: 20, filas: 1, cantidad: true, sinTela: true });
-await page.fill('#listRows .list-metros', '20');
-await page.waitForTimeout(150);
-check('la cantidad declarada cuenta aunque todavía no haya tela (el precio espera)',
-  await page.evaluate(() => {
-    const f = valorDeLaLista()[0], q = billable();
-    return [f.sinTela, f.declarado, q.min, q.total, document.getElementById('priceRange').textContent];
-  }), [true, 20, 20, null, 'Por confirmar']);
+check('sabe los metros: la recomendación elige la tela y la lista cierra la cantidad',
+  await page.evaluate(() => pasosVisibles()), [0, 18, 22, 23, 12, 14, 20, 16, 15]);
 await avanzar();
 await avanzar();
 await page.click('#fabricGrid .fabric-card:has-text("Velvet Siena")');
 await page.waitForTimeout(200);
 await avanzar();
-check('y al elegir la tela el paso cotiza los metros que declaró',
+check('y la fila llega con la tela de la recomendación, esperando la cantidad',
+  await page.evaluate(() => {
+    const s = document.querySelector('#listRows .list-fabric');
+    return { paso: state.step, filas: document.querySelectorAll('#listRows .boq-row').length,
+             cantidad: !!document.querySelector('#listRows .list-metros'),
+             tela: s ? s.selectedOptions[0].textContent : null };
+  }),
+  { paso: 20, filas: 1, cantidad: true, tela: 'Velvet Siena · Petróleo' });
+await page.fill('#listRows .list-metros', '20');
+await page.waitForTimeout(150);
+await avanzar();
+check('y el paso cotiza los metros que declaró',
   await page.evaluate(() => {
     const f = valorDeLaLista()[0];
     return [state.step, state.fabric && state.fabric.name, f.name, f.declarado, f.facturable,
@@ -157,9 +164,19 @@ const elSendero = () => page.evaluate(() => {
            tramos: [...el.querySelectorAll('.crumb')].map(c => c.textContent), oculto: el.hidden };
 });
 await abrirLaCompra('Reventa o inventario');
-check('reventa: el sendero enseña el motivo, el camino y el propósito (y no inventa «qué sabes»)',
+/* El dueño (24/09): la reventa también pregunta qué sabe el cliente —«ya sabes qué tipo de tela
+ * requieres» / «quiero sugerencias»—, así que el sendero suma su tramo como en los demás caminos. */
+check('reventa: pregunta qué sabe el cliente, y el sendero suma los tres tramos',
   await elSendero(),
-  { barra: false, motivo: 'Suministro de tela', tramos: ['Nueva compra', 'Reventa o inventario'], oculto: false });
+  { barra: false, motivo: 'Suministro de tela', tramos: ['Nueva compra', 'Reventa o inventario', 'Sé qué tela quiero'], oculto: false });
+await page.click('#saberGrid .service-choice:has-text("Quiero sugerencias")');
+await page.waitForTimeout(200);
+check('«quiero sugerencias» mete la preferencia y la recomendación, y la lista NO vuelve',
+  await page.evaluate(() => pasosVisibles()), [0, 18, 22, 23, 12, 14, 16, 15]);
+await page.click('#saberGrid .service-choice:has-text("Sé qué tela quiero")');
+await page.waitForTimeout(200);
+check('y «sé qué tela quiero» lo deja en la lista y el cierre, sin recomendación',
+  await page.evaluate(() => pasosVisibles()), [0, 18, 22, 23, 20, 16, 15]);
 
 await abrirLaCompra('Mi mueble o proyecto personal');
 await page.click('#saberGrid .service-choice:has-text("No tengo claro ninguna de las dos")');

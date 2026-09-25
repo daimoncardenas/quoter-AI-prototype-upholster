@@ -46,6 +46,7 @@ El cerebro simulado y el modelo local recibían el contexto de maneras distintas
 | cambiar de línea y escribir una medida con la conversación abierta se refleja en el turno siguiente | `tests/assistant-ia-local.spec.mjs`, sección «El cliente cambia de línea…» |
 | y eso sin recrear la sesión (la conversación no pierde el hilo) | la misma sección (`__sesiones === 1`) |
 | las reglas siguen en el carácter, y el cerco sigue filtrando | `tests/assistant-ia-local.spec.mjs` (secciones «Con modelo» y el cerco por su lado) |
+| con la API, la historia la lleva la página (la API no tiene sesión con memoria) y viaja en cada turno | `tests/assistant-api.spec.mjs` («la historia de la conversación viaja en cada turno») |
 
 ## Lo que NO hace
 

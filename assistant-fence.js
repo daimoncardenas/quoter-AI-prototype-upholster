@@ -40,8 +40,12 @@
 
   /* Del motivo, de los datos del negocio o del propio formulario: una respuesta tiene que hablar de algo
    * de eso. No entiende de sentido —para eso está una persona—, pero impide que pase una respuesta que
-   * no responde. */
-  const TEMA = /retapiz|tela|tapiz|mueble|sof|sill|poltrona|asiento|relleno|espuma|coj[ií]n|cabecero|da[ñn]|reparaci|mantenimiento|limpieza|suministro|cambio de tela|a la medida|proyecto comercial|arquitect|medida|medici|foto|color|valor|precio|estimaci|precotizaci|cotizaci|asesor|motivo|paso|cat[aá]logo|punto de atenci[oó]n|sede|direcci[oó]n|horario|p[aá]gina|whatsapp|tel[eé]fono|correo|formulario|validaci|revisi|an[aá]lisis|observaci|corregir|datos|\d{1,2}:\d{2}/i;
+   * no responde. Esta lista es el PISO genérico del oficio; el tema fino es DATO del cliente y llega en
+   * `tema` (las telas, colecciones, líneas, muebles y ciudades de ESTE negocio, que el cotizador arma):
+   * así una tela o una colección nueva entran solas, sin sumar palabras a mano (el dueño: «¿cómo así
+   * toca arreglar por palabra?»). */
+  const TEMA = /retapiz|tela|tapiz|mueble|sof|sill|poltrona|asiento|relleno|espuma|coj[ií]n|cabecero|da[ñn]|reparaci|mantenimiento|limpieza|suministro|cambio de tela|a la medida|proyecto comercial|arquitect|medida|medici|foto|color|colecci|metro|rollo|referencia|disponibilidad|lote|valor|precio|estimaci|precotizaci|cotizaci|asesor|motivo|paso|cat[aá]logo|gama|estilo|punto de atenci[oó]n|sede|direcci[oó]n|horario|p[aá]gina|whatsapp|tel[eé]fono|correo|formulario|validaci|revisi|an[aá]lisis|observaci|corregir|datos|\d{1,2}:\d{2}/i;
+  const sinTildes = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   /* Ojo: en JavaScript \b es ASCII, así que «Sí,» no tiene frontera después de la «í». Se comprueba
  * con una mira negativa de letra, y solo para el piso del tema: una promesa que empiece con «Sí,»
  * se juzga igual. */
@@ -55,12 +59,15 @@
   }
 
   /* `estimacion` es el texto que el cliente tiene a la vista: cualquier otra cifra es inventada.
+   * `permitidas` son cifras que SÍ puede citar además de la estimación (los precios por metro del
+   * catálogo): el cerco deja pasar lo que viene del catálogo o de la estimación y nada más.
    * `permitido` es lo que el negocio declaró (hoy: nada). `sinTema` lo usa la mirada de la revisión:
    * una DESCRIPCIÓN de la foto no tiene que "responder" a nada —las reglas de promesa, cifras y
    * relleno sí valen—, y sin esta salida una descripción limpia se caía por no nombrar el motivo. */
   function revisar(texto, opciones) {
     const t = String(texto || '');
     const estimacion = String((opciones && opciones.estimacion) || '');
+    const permitidas = (opciones && opciones.permitidas) || [];
     const permitido = (opciones && opciones.permitido) || {};
     const frases = t.split(/(?<=[.!?¡¿])\s+|\n+/).filter(function (f) { return f.trim(); });
 
@@ -74,13 +81,22 @@
     if (frases.some(function (f) { return promete(f, AFIRMA.tocar); })) promesas.push('haber tocado precio, metros o estado');
 
     const base = estimacion.replace(/\s/g, '');
+    const limpias = permitidas.map(function (p) { return String(p).replace(/\s/g, ''); });
     const cifras = (t.match(/\$\s?[\d.]+/g) || []).map(function (c) { return c.replace(/\.+$/, ''); })
-      .filter(function (c) { return !base || !base.includes(c.replace(/\s/g, '')); });
+      .filter(function (c) { return !base || !base.includes(c.replace(/\s/g, '')); })
+      .filter(function (c) { return limpias.indexOf(c.replace(/\s/g, '')) < 0; });
 
     const limpio = t.trim();
+    /* El tema: el piso del oficio (TEMA) o el vocabulario del negocio que llega como DATO (`tema`). */
+    const vocab = (opciones && Array.isArray(opciones.tema)) ? opciones.tema : [];
+    const dicho = sinTildes(limpio);
+    const porVocabulario = vocab.some(function (v) {
+      const s = sinTildes(String(v || '').trim());
+      return s.length > 2 && dicho.indexOf(s) >= 0;
+    });
     const tema = (opciones && opciones.sinTema) ? []
       : (limpio.length < 12 || SALUDOS.test(limpio)) ? []
-      : (/[a-záéíóúñ]/i.test(limpio) && !TEMA.test(limpio) ? ['no habla del motivo ni de los datos del negocio'] : []);
+      : (/[a-záéíóúñ]/i.test(limpio) && !TEMA.test(limpio) && !porVocabulario ? ['no habla del motivo ni de los datos del negocio'] : []);
 
     return { cifras: cifras, promesas: promesas, tema: tema, limpia: !cifras.length && !promesas.length && !tema.length };
   }

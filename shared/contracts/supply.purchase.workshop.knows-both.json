@@ -1,0 +1,60 @@
+{
+  "_nota": "La general (docs/quote-request.interface.ts, QuoteRequest) peluqueada para ESTA rama: los campos que su caso produce, con su tipo, sin valores de nadie. Los del sistema (id, fecha, vendedor, estado) no viajan en la petición: los pone el cotizador al crear la cotización.",
+  "schemaVersion": 1,
+  "branch": "supply.purchase.workshop.knows-both",
+  "from": "QuoteRequest",
+  "serviceLine": "suministro-tela",
+  "route": "compra",
+  "purpose": "taller",
+  "knowledge": "ambas",
+  "fields": {
+    "purchase": [
+      {
+        "fabricId": "number",
+        "reference": "string",
+        "quantity": "number",
+        "unit": "\"m\" | \"roll\""
+      }
+    ],
+    "customerCity": "string",
+    "serviceCity": "string",
+    "delivery": {
+      "method": "\"sede\" | \"envio\" | \"asesor\"",
+      "office": "string?"
+    },
+    "contact": {
+      "name": "string",
+      "email": "string",
+      "phone": "string",
+      "authorized": "boolean"
+    },
+    "price": "[number, number]",
+    "clientEstimate": {
+      "consumption": {
+        "min": "number",
+        "max": "number",
+        "unit": "string"
+      },
+      "price": {
+        "min": "number",
+        "max": "number",
+        "currency": "\"COP\""
+      }
+    }
+  },
+  "required": [
+    "purchase",
+    "delivery",
+    "customerCity",
+    "serviceCity",
+    "contact"
+  ],
+  "system": [
+    "id",
+    "date",
+    "seller",
+    "sellerId",
+    "status",
+    "submittedAt"
+  ]
+}

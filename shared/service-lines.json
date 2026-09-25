@@ -295,7 +295,14 @@
           "_propositos": "Para qué necesita la tela: lo que decide el resto del recorrido (y lo que la empresa necesita saber de cada caso cuando habilita la línea). Se congela con la solicitud.",
           "propositos": [
             { "id": "reventa", "label": "Reventa o inventario", "hint": "Compra para stock o terceros",
-              "skips": ["saber", "furniture", "measurements", "preferences", "review", "recommendation", "photos", "order"] },
+              "skips": ["furniture", "measurements", "photos", "order"],
+              "saberes": [
+                { "id": "se-tela", "label": "Sé qué tela quiero", "hint": "Solo quiero el precio", "defecto": true, "vitrina": false,
+                  "skips": ["preferences", "review", "recommendation"],
+                  "_nota": "Dueño, 24/09: los ids de estos dos saberes venían de los rótulos viejos («ambas», «metros») y contradecían lo que dicen hoy. El índice de contratos nombra cada rama con el id de su JSON y el modelo elige con esa lista: un id que miente lo hace elegir mal. Ahora los ids dicen lo que son." },
+                { "id": "sugerencias", "label": "Quiero sugerencias", "hint": "Que me propongan telas y su precio", "vitrina": false, "variasTelas": true,
+                  "skips": ["review"] }
+              ] },
             { "id": "taller", "label": "Mi servicio de tapicería", "hint": "La tela para los trabajos de mi taller",
               "saberes": [
                 { "id": "ambas", "label": "Conozco la tela y cuánto necesito", "hint": "Solo quiero el precio", "defecto": true,
@@ -388,6 +395,7 @@
       "hint": "Paneles, muros y techos tapizados, con medidas y acabados de obra." },
     { "id": "mantenimiento", "label": "Mantenimiento", "journey": "existente", "minPlan": "Business",
       "pricing": "pieza", "laborPct": 0, "asks": ["limpieza", "traslado"],
+      "contrato": "pendiente",
       "skips": ["measurements", "preferences", "recommendation"],
       "hint": "Limpieza profunda y protección, o reparación con tela nueva.",
       "_rutas": "Dueño, 21/09: una tarjeta —«Mantenimiento»— con dos caminos adentro, con sus nombres: «limpieza» y «reparación y restauración». «Limpieza» es esta misma línea (por pieza, con sus preguntas); «reparación y restauración» no se re-cotiza aquí: corre la línea `reparacion` que ya existe (tela, daños y su mano de obra), y por eso el camino lleva `line`. La línea que otro camino usa no pinta tarjeta propia.",

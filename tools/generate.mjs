@@ -156,6 +156,15 @@ function assistantFenceTag() {
   return `<script>\n${js}\n</script>`;
 }
 
+/* El contrato de la precotización (docs/contrato-conversacional.md): el mismo patrón —script
+ * clásico, incrustado antes del wizard—, para que la página y la conversación compartan UNA sola
+ * declaración de lo que una cotización necesita. */
+function contratoTag() {
+  const js = readFileSync('contrato.js', 'utf8');
+  if (/<\/script/i.test(js)) throw new Error('contrato.js must not contain "</script" (would break the page\'s HTML)');
+  return `<script>\n${js}\n</script>`;
+}
+
 function assistantScriptTag() {
   const js = readFileSync('assistant-presence.js', 'utf8');
   if (/<\/script/i.test(js)) throw new Error('assistant-presence.js must not contain "</script" (would break the page\'s HTML)');
@@ -203,6 +212,7 @@ export function generate(clientEnvValue = resolveClient(), outDir = 'generated')
     ASSISTANT_MODELS: assistantModelTags(),
     ASSISTANT_SCRIPT: assistantScriptTag(),
     ASSISTANT_BRAIN_SCRIPT: assistantBrainTag(),
+    CONTRATO_SCRIPT: contratoTag(),
     ASSISTANT_FENCE_SCRIPT: assistantFenceTag(),
     NOT_OFFICIAL_INDEX: client.copy.notOfficialIndex,
     NOT_OFFICIAL_ADMIN: client.copy.notOfficialAdmin,

@@ -89,6 +89,7 @@ npm test                                          # generates, then all suites �
 npm run test:wiring                               # one suite (also: node tests/wiring.spec.mjs)
 npm run test:clients                              # browser pass for the ACTIVE pack (once, not per client)
 npm run test:packs                                # cada pack en datos: su marca en su salida y nada de otro pack (segundos)
+npm run test:contrato-<línea>                     # los contratos de UNA línea contra el wizard (una suite por línea, sola, fuera de npm test)
 npm run build                                     # generates, then writes dist/index.html + dist/admin.html
 npm run build:assistant                           # rebuilds assets/assistant/*.gltf (downloads the CC0 sources first)
 ```
@@ -860,7 +861,123 @@ Rules worth not breaking:
   block as `Mueble: Otro (el cliente lo describe: «…»)`, which is what closed the hole the model
   used to fill with a sofa. The quote record and the backoffice still say `Otro`: carrying the
   description there is the next step, parked (`docs/mueble-otro.md`).
-- **The review has eyes, and says whose they are.** Where the local model is ready, the step-4 card
+- **Dos modelos, un asistente: primero la API, el del navegador como respaldo.** Las palabras del
+  asistente pueden venir de tres sitios, en este orden: **la API de DeepSeek** (`proveedorIA() === 'api'`,
+  cuando la página se sirve por http(s) — `npm run dev` — y `GET /__ia/estado` contestó `{api:true}`),
+  **el modelo del navegador** (Gemini Nano, el respaldo sin llave y sin red) o **ninguno** — y entonces
+  responde el cerebro simulado en todo (la demo de doble clic). Los dos modelos viven detrás de UNA sola
+  pieza, `sesionDelProveedor(sistema, opciones)` → `{ pedir({texto, imagen}), soltar() }`: la sesión de la
+  API guarda la historia en su propio arreglo de mensajes (una API remota no tiene sesión con memoria), la
+  del navegador en su `LanguageModel` de siempre, y `pedir` da a cada API la imagen como la espera
+  (`image_url` en base64 vs `Blob`); el chat guarda una u otra en `sesionIA` y `resetProjectForLine` la
+  suelta igual. El cerco juzga CADA respuesta de los dos, como antes, y el cerebro simulado responde cuando
+  el turno lo rompe. La nota del panel dice la verdad de cada modo — con la API dice que lo que el cliente
+  escribe SÍ se envía al servicio (la frase vieja prometía que nada salía del equipo, y eso sería mentira
+  en cuanto contesta una API). **La llave no viaja al navegador**: vive en `.env` (`DEEPSEEK_API_KEY`,
+  ignorado por git como `CLIENT`) y la lee el servidor de desarrollo, que expone `GET /__ia/estado` y
+  `POST /__ia/chat` (`tools/ia-api.mjs`) y fija la llamada del proyecto: `model: deepseek-flash`,
+  `stream:false` y `thinking:{type:'disabled'}` (el modo de pensamiento viene encendido y un chat de
+  atención al cliente no paga esa latencia; `pensar:true` es la palanca del próximo feature). La página no
+  puede hablar con `api.deepseek.com` desde `file://`, y las rutas escuchan en 127.0.0.1 como todo lo
+  demás. `puedeVerLaFoto()` mantiene su honestidad con los dos: se mira una imagen real de 1 píxel antes de
+  pintar la fila. Diseño: `docs/ia-por-api.md`; cubierto por `tests/assistant-api.spec.mjs`.
+- **La conversación llena el contrato, y el formulario se mueve detrás.** El dueño: «the next feature
+  is... conversational voice contract... wizard is determinist way... if you require to AI a contract
+  before send pre-quoter... the system will be declarative and AI should complete the data for contract
+  JSON» y «you can hide the wizard with a modal voice... transparent design... the sound move this
+  component... see how before the wizard will be moving behind». El contrato vive en `contrato.js`
+  (campos, `faltantes()`, `progreso()`, `validarValor()`; spec B en `tests/contrato.spec.mjs`): sus
+  reglas son las del formulario —`validStep` al revés— y sus frases, las del formulario palabra por
+  palabra. La conversación es una capa TRANSPARENTE (`#vozModal`: velo de tinte + `backdrop-filter`,
+  el formulario visible y avanzando detrás) con tres piezas: la transcripción, el componente de FOTOS
+  (la misma tubería del formulario, `loadPhotos`) y el campo de respuesta, con el MICRÓFONO: la onda
+  se mueve con el nivel REAL del micrófono (`getUserMedia` + `AnalyserNode`, análisis local) y, cuando
+  habla ella, con los pulsos reales de `speechSynthesis` (`boundary`, uno por palabra: su voz la pone
+  el sistema y no se puede medir, así que no se finge una onda). La nota dice de dónde es el
+  reconocimiento ANTES de que el cliente hable (local si el navegador lo admite, y si no que puede
+  salir a su servicio). `speechSynthesis` la hace hablar, con su botón de silencio. El driver pregunta
+  por el PRIMER `faltante`, aplica lo dicho
+  por los MISMOS controles y eventos de un dedo (elegir tarjeta, escribir campo, marcar daño, subir
+  foto, correr la revisión) y lo que todavía no sabe llenar lo entrega al formulario con su paso a la
+  vista. La autorización, las fotos y la estimación no las escribe la conversación
+  (`NUNCA_LO_PONE_LA_IA`). El orden en que se pregunta es el del RECORRIDO de la rama (`m.flujo`), no
+  el de la lista de reglas: se recorren sus pasos, se valida el campo de cada uno y se pregunta el
+  primero que falte, en ciclo. Por eso la tela elegida a mano (paso 14), los insumos del taller (17),
+  el estilo/color (12) y el presupuesto (13) se cobran, y cada uno se llena por conversación (decir
+  la tela toca su tarjeta; «estímalos» corre la mano del taller; «revisa» corre la revisión aunque el
+  pendiente sea otro). La estimación no viaja al modelo hasta que tela, insumos y revisión estén
+  declarados. Diseño y lo que falta (la voz, el mapeo libre con la API): 
+  `docs/contrato-conversacional.md`; cubierto por `tests/conversacion.spec.mjs`.
+- **El contrato es el CUERPO DEL ENDPOINT; el espejo del wizard vive en las pruebas.** Dos piezas,
+  separadas a propósito (dueño, 24/09: «eso no tiene cara de endpoint de backend», «un mierdero de
+  indicaciones que son para el frontend... necesita datos claros y concretos», y los nombres de
+  archivo y de clave EN INGLÉS):
+  · `shared/contracts/<branch>.json` — EL CONTRATO: puro dato, camelCase, lo que el endpoint recibe
+  cuando esa rama se completa (`schemaVersion`, `branch`, `source`, `brand`, `submittedAt` + los
+  campos del caso: `serviceLine`/`route`/`purpose`/`knowledge`, `purchase`, `measurements`,
+  `contact`, `clientEstimate`…). La AUSENCIA de un campo ya dice de qué rama se trata; las claves
+  válidas se declaran en `CLAVES_DE_CONTRATO` (tests/contratos.mjs) antes de escribirlas. Convenciones
+  y tabla de ramas: `shared/contracts/README.md`.
+  · `tests/mirror/<branch>.json` — EL ESPEJO: los pasos que el wizard muestra para esa rama y el
+  control que pinta cada campo, con las entradas (tarjeta + camino + líneas apagadas).
+  El camino del cliente sigue saliendo del CATÁLOGO (la cadena es un camino real, con la línea
+  indirecta: el camino `reparación` de mantenimiento corre la línea `reparacion`); las ACCIONES
+  estándar —`revisar-requerimientos`, `revisar-medidas`, `recomendar-tela`, `hacer-los-calculos`, en
+  `shared/ai-actions.json`— son las mismas para todas las líneas, y un campo puede involucrarlas
+  (`revision`, `estimacion` y `tela` lo declaran). `npm run test:contrato-<línea>` camina cada rama
+  en el wizard renderizado y comprueba el espejo en las dos direcciones (paso declarado con su
+  brain/id/ask; control declarado dentro de su paso; ningún control del paso sin declarar), que cada
+  contrato tenga su espejo y los dos digan la misma rama, y las entradas contra el catálogo.
+  **Pendiente declarado**: la rama de limpieza de mantenimiento —su flujo muestra hoy los pasos 21 y
+  20, que son de los caminos del suministro (`wizard.spec` lleva rojo desde el 21/09 por eso)—; su
+  contrato entra cuando el flujo se arregle. Y los nombres internos del cotizador siguen en español
+  (`linea`, `lista`, `atencion`): el mapeo campo a campo se cierra cuando los nombres del endpoint
+  queden definidos. Diseño: `docs/contrato-conversacional.md`; maquinaria: `tests/contratos.mjs`.
+- **Las telas, en el paso de la lista (`docs/telas-en-la-lista.md`).** El dueño lo pidió después de
+  conversar con Lía en la ruta corta: la conversación tiene que GUARDAR lo declarado, y las ramas sin
+  paso de recomendación su vitrina de telas; y en la segunda pasada pidió que «Reventa o inventario»
+  pregunte primero —**«Sé qué tela quiero»** (por defecto: la lista y el cierre) o **«Quiero
+  sugerencias»** (las características, la recomendación y el cierre: la acción `recomendar-tela`)—,
+  sin el botón de la vitrina en ninguna de las dos; y en ese segundo camino la recomendación ARMA la
+  compra: se eligen VARIAS telas —no solo una—, cada tarjeta elegida lleva SU campo de cantidad (la
+  unidad de ESA tela) que escribe SU fila de la compra, sin tela elegida o con una sin cantidad no se
+  pasa (el aviso dice cuál falta), y el paso de la lista no vuelve (`variasTelas` en el saber,
+  24/09). El estado de cada turno suma la rama
+  (`ruta`/`proposito`/`saber`), la lista con sus unidades, el pedido anterior y el contacto (el
+  HECHO; los valores solo con la autorización); el prompt lleva el CATÁLOGO activo (colección, precio
+  por metro, «última colección») y `lista`/`pedido` se llenan por los mismos controles (los números
+  DICHOS también: «dos rollos»; el `select` de la fila decide la unidad); `#listaSugerir` abre la
+  vitrina del paso —mismo `Store.recommend`, últimas colecciones de primeras, el seed las marca
+  `novedad` (DEMO)— y la elegida entra en la fila; el camino que ya respondió la pregunta de la tela
+  la apaga con `vitrina:false` en su saber; y el cerco juzga también la CONVERSACIÓN, con `permitidas`
+  = los precios del catálogo (una cifra inventada sigue tumbándose) y con `tema` = el VOCABULARIO del
+  negocio (telas, colecciones, líneas, muebles, ciudades, armado del catálogo): el TEMA es dato, no
+  lista — la lista de palabras del oficio es solo el piso genérico, y una respuesta sobre las últimas
+  colecciones pasa sin sumar palabras a mano (el dueño: «¿cómo así toca arreglar por palabra?»).
+- **El asistente ELIGE el contrato y la memoria es DE LA CONVERSACIÓN** (docs/eleccion-y-memoria.md):
+  el prompt lleva el ÍNDICE DE CONTRATOS —una fila por rama con el id de su JSON, sacado del catálogo,
+  sin la línea de contrato pendiente— y la orden de elegir por el sentido y anotarlo en `rama`; el
+  turno con `rama` aplica la cadena entera por los mismos controles, nodo por nodo y validada (una
+  rama inventada no entra). Y el ESTADO ES LA VERDAD: el modelo no anuncia cambios del formulario que
+  no ve —la confirmación de lo anotado la da el SISTEMA («Anotado: …»)—, y «Lino Verona» es una tela,
+  no una ciudad. La memoria es de la conversación, no del navegador: lo declarado vive en la página
+  mientras se habla, **recargar empieza limpio** (nada vuelve, y no queda borrador en el almacén), y
+  dentro de la conversación «empezar de cero» o cambiar de línea limpian el caso —lo de una
+  pre-cotización no viaja a la siguiente—. La nitidez de una foto es aritmética sobre sus píxeles
+  (varianza del laplaciano, `NITIDEZ_MINIMA` calibrado con sus anclas) y la revisión la señala — el
+  modelo de visión no decide si una foto se puede leer. Una ciudad fuera de la lista entra por «Otra
+  ciudad…» con su nombre, no se cambia por otra. Prueba: `npm run test:eleccion-y-memoria`.
+  **Pendiente declarado (dueño, 24/09)**: «this register is need create in backoffice» — el registro
+  de la conversación (lo dicho y lo anotado, con su rama y su estimación) tiene que verse en el
+  backoffice, como las pre-cotizaciones; hoy vive solo en la página.
+- **El flujo del wizard viaja en el mundo.** `mundoDelContrato()` lleva `flujo` = `pasosVisibles()` y
+  el contrato (`contrato.js`, `pasoEnElFlujo`) lee de ahí qué pasos tiene la rama: mirar el atributo
+  `hidden` de las secciones MENTÍA —el wizard nunca lo pone, esconde con `skippedSteps`— y la
+  conversación pedía pasos que el recorrido no tiene (retapizado pedía «¿compra nueva o pedido?» y sus
+  fotos nunca se preguntaban; el progreso decía «Vamos -4 de 7»). Con `flujo` la conversación sigue la
+  rama: `tests/conversacion.spec.mjs` pasa entero.
+- **The review has eyes, and says whose they are.** Where a model is ready (the API, or the local one as
+  fallback), the step-4 card
   sends it the largest photo (`expectedInputs` with `image`) together with the same declared rows
   the customer is reading — one source, `declaredRows()` — and paints the answer as one more row,
   marked `IA local` (`#visionNote`, `.tag-ia`). While it works the row shows an indeterminate bar and a
@@ -890,7 +1007,8 @@ Rules worth not breaking:
   all the row stays out — nothing was promised there. Multimodal input lives behind its own flag and
   its own download,
   `chrome://flags/#prompt-api-multimodal-input`. The photo travels as a 1024 px JPEG built in the
-  browser (`fotoPequeña`); nothing leaves the equipment. The owner's ask:
+  browser (`fotoPequeña`); with the API only that copy leaves the equipment, and with the browser model
+  nothing does. The owner's ask:
   "this step needs eyes for validation of photos... and related with another information". Design:
   `docs/revision-con-ojos.md`; covered by `tests/review.spec.mjs`.
 - **La recomendación de telas también la ordena la IA local.** Al entrar al paso de recomendación, el modelo

@@ -9,7 +9,9 @@
  *
  * Bound to 127.0.0.1 on purpose: the backoffice login hashes with
  * crypto.subtle, which browsers only expose on secure contexts (localhost
- * counts, a LAN IP over plain http does not).
+ * counts, a LAN IP over plain http does not) — and the same bound is what
+ * keeps the DeepSeek key (tools/ia-api.mjs, DEEPSEEK_API_KEY in .env) from
+ * being reachable from anywhere but this machine. See docs/ia-por-api.md.
  *
  *   npm run dev                          -> CLIENT from .env, port 3000
  *   CLIENT=MACIZO PORT=4000 npm run dev  -> env var wins; .env edits are then ignored
@@ -20,6 +22,7 @@ import { watch } from 'node:fs';
 import { extname, resolve, sep } from 'node:path';
 import { generate } from './generate.mjs';
 import { resolveClient } from './env.mjs';
+import { atenderIA, claveDeDeepSeek, MODELO } from './ia-api.mjs';
 
 const OUT_DIR = 'generated';
 const ROOT = resolve(OUT_DIR);
@@ -83,6 +86,12 @@ async function handle(req, res) {
     res.write(': connected\n\n');
     listeners.add(res);
     req.on('close', () => listeners.delete(res));
+    return;
+  }
+
+  /* La puerta a la API de DeepSeek: la llave vive en .env y nunca viaja al navegador. */
+  if (url.pathname.startsWith('/__ia/')) {
+    await atenderIA(req, res, url);
     return;
   }
 
@@ -167,6 +176,9 @@ server.listen(PORT, HOST, () => {
 
   Watching index.html, admin.html, store.js, assistant-presence.js, clients/ and .env.
   Save a change and the browser reloads. Ctrl+C to stop.`);
+  console.log(claveDeDeepSeek()
+    ? `  IA: API de DeepSeek configurada (${MODELO}) — el asistente conversa, mira la foto y recomienda con ella.`
+    : '  IA: sin DEEPSEEK_API_KEY en .env — responde el modelo del navegador si está, o el asistente simulado.');
   if (CLIENT_FROM_SHELL) {
     console.log('  CLIENT comes from the shell, so editing .env will not switch clients.');
   }

@@ -1,0 +1,208 @@
+{
+  "_note": "The mirror of ONE branch: the steps the wizard shows for it and the control that paints each field. Verification, not contract (see shared/contracts/README.md).",
+  "branch": "commercial-project",
+  "line": "proyecto-comercial",
+  "chain": [
+    "proyecto-comercial"
+  ],
+  "entries": [
+    {
+      "card": "proyecto-comercial",
+      "path": [],
+      "disableLines": []
+    }
+  ],
+  "steps": [
+    {
+      "step": 0,
+      "brain": null,
+      "id": "serviceStep",
+      "ask": null,
+      "fields": [
+        {
+          "field": "linea",
+          "type": "tarjetas",
+          "controls": [
+            "#serviceGrid"
+          ]
+        }
+      ],
+      "actions": []
+    },
+    {
+      "step": 1,
+      "brain": "FURNITURE",
+      "id": null,
+      "ask": null,
+      "fields": [
+        {
+          "field": "mueble",
+          "type": "tarjetas",
+          "controls": [
+            ".furniture-grid",
+            "#furnitureType"
+          ]
+        },
+        {
+          "field": "muebleOtro",
+          "type": "texto",
+          "controls": [
+            "#furnitureOther"
+          ]
+        },
+        {
+          "field": "fotos",
+          "type": "archivos",
+          "controls": [
+            "#uploadZone"
+          ]
+        }
+      ],
+      "actions": []
+    },
+    {
+      "step": 7,
+      "brain": null,
+      "id": null,
+      "ask": "boq",
+      "fields": [
+        {
+          "field": "respuestas.boq",
+          "type": "ask",
+          "controls": [
+            "[data-ask-body=\"boq\"]"
+          ]
+        }
+      ],
+      "actions": []
+    },
+    {
+      "step": 8,
+      "brain": null,
+      "id": null,
+      "ask": "obra",
+      "fields": [
+        {
+          "field": "respuestas.obra",
+          "type": "ask",
+          "controls": [
+            "[data-ask-body=\"obra\"]"
+          ]
+        }
+      ],
+      "actions": []
+    },
+    {
+      "step": 13,
+      "brain": "REVIEW",
+      "id": null,
+      "ask": null,
+      "fields": [
+        {
+          "field": "presupuesto",
+          "type": "select",
+          "controls": [
+            "#budget"
+          ]
+        },
+        {
+          "field": "revision",
+          "type": "action",
+          "controls": [
+            "#analyzeButton"
+          ],
+          "action": "revisar-requerimientos"
+        }
+      ],
+      "actions": [
+        "revisar-requerimientos"
+      ]
+    },
+    {
+      "step": 16,
+      "brain": "ESTIMATE",
+      "id": null,
+      "ask": null,
+      "fields": [
+        {
+          "field": "estimacion",
+          "type": "result",
+          "controls": [
+            "#priceRange"
+          ],
+          "action": "hacer-los-calculos"
+        }
+      ],
+      "actions": [
+        "hacer-los-calculos"
+      ]
+    },
+    {
+      "step": 15,
+      "brain": "CONTACT",
+      "id": null,
+      "ask": null,
+      "fields": [
+        {
+          "field": "entrega",
+          "type": "select",
+          "controls": [
+            "#entrega"
+          ]
+        },
+        {
+          "field": "atencion.cliente",
+          "type": "select",
+          "controls": [
+            "#customerCity",
+            "#customerCityOther"
+          ]
+        },
+        {
+          "field": "atencion.servicio",
+          "type": "select",
+          "controls": [
+            "#serviceCity",
+            "#serviceCityOther"
+          ]
+        },
+        {
+          "field": "sede",
+          "type": "select",
+          "controls": [
+            "#city"
+          ]
+        },
+        {
+          "field": "contacto.nombre",
+          "type": "texto",
+          "controls": [
+            "#fullName"
+          ]
+        },
+        {
+          "field": "contacto.correo",
+          "type": "correo",
+          "controls": [
+            "#email"
+          ]
+        },
+        {
+          "field": "contacto.celular",
+          "type": "tel",
+          "controls": [
+            "#phone"
+          ]
+        },
+        {
+          "field": "contacto.autoriza",
+          "type": "casilla",
+          "controls": [
+            "#consent"
+          ]
+        }
+      ],
+      "actions": []
+    }
+  ]
+}

@@ -66,6 +66,15 @@
 /* Los insumos del trabajo: dos columnas (qué se repone · cuánto), sin el botón de quitar de la lista. */
 .insumo-row{grid-template-columns:1fr 150px}
 .insumo-unit{display:block;margin-top:3px;font-weight:400;font-size:.6rem;color:var(--muted)}
+/* La vitrina de telas del paso de la lista (docs/telas-en-la-lista.md): un panel del propio paso,
+   con las tarjetas del catálogo — no un modal: el wizard no tiene esa pieza y la fila tiene que
+   seguir a la vista mientras se elige. */
+.lista-sugerir{margin-top:4px}
+.lista-vitrina{margin-top:14px;border:1px solid var(--line);border-radius:6px;padding:14px 16px 4px;background:var(--tint-panel-wash)}
+.lista-vitrina[hidden]{display:none}
+.lista-vitrina-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.lista-vitrina-head b,.lista-vitrina-head small{display:block}
+.lista-vitrina-head small{font-size:.62rem;color:var(--muted);margin-top:3px;line-height:1.45}
 /* La mano de los insumos (docs/insumos-asistidos.md): las filas a la izquierda, la mano pegada al
    borde derecho del paso; en pantallas angostas baja debajo para no apretar las filas. */
 .insumo-layout{display:grid;grid-template-columns:minmax(0,1fr) 132px;gap:22px;align-items:start}
@@ -144,7 +153,8 @@
 @keyframes mirada-giro{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.mirada-espera:before{animation:none;transform:none;width:100%;opacity:.5}
   .analysis-checks>div>span.mirada-gira{animation:none}}
-.analyze{align-self:flex-start}.notice{display:flex;gap:11px;margin-top:16px;background:var(--tint-panel-wash);padding:12px 15px;color:var(--tint-notice-text)}.notice>span{flex:0 0 20px;height:20px;border:1px solid var(--tint-notice-icon-border);border-radius:50%;display:grid;place-items:center;font:600 .65rem serif}.notice p{font-size:.65rem;line-height:1.5;margin:0}.fabric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.fabric-card{border:1px solid var(--line);background:white;border-radius:4px;overflow:hidden;text-align:left;padding:0;transition:.2s}.fabric-card:hover{transform:translateY(-2px);box-shadow:0 10px 25px rgba(var(--rgb-shadow),.08)}.fabric-card.selected{border:2px solid var(--accent)}.fabric-card .swatch{position:relative}.best-match{position:absolute;left:0;top:0;background:var(--accent);color:#fff;font-size:.54rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:5px 9px}.fabric-card.over-budget{opacity:.72}.why{margin:9px 0 0;font-size:.62rem;line-height:1.5;color:var(--muted)}.why b{color:var(--ink-2)}.why.over{color:var(--amber)}.swatch{height:104px;position:relative}.swatch:after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 3px,rgba(255,255,255,.08) 3px 4px)}.swatch.has-photo:after{display:none}.fabric-card-body{padding:15px}.fabric-card b,.fabric-card small{display:block}.fabric-card b{font:600 1.05rem var(--font-heading);color:var(--ink)}.fabric-card small{font-size:.62rem;color:var(--muted);margin-top:4px;line-height:1.45}.fabric-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}.fabric-tags span{background:var(--tint-tag-bg);color:var(--ink-2);padding:4px 6px;font-size:.54rem;border-radius:10px}.quote-note{display:flex;gap:9px;margin:10px 0 0;background:#fbf6ec;border-left:3px solid #c9a227;padding:11px 14px;font-size:.66rem;line-height:1.5;color:#7a5c18}.quote-preview{display:flex;align-items:center;justify-content:space-between;margin-top:18px;background:var(--ink);color:white;padding:25px 30px}.quote-preview h3{font:600 1.6rem var(--font-heading);margin:6px 0 3px}.quote-preview p{font-size:.62rem;color:var(--tint-quote-preview-caption);margin:0}
+.analyze{align-self:flex-start}.notice{display:flex;gap:11px;margin-top:16px;background:var(--tint-panel-wash);padding:12px 15px;color:var(--tint-notice-text)}.notice>span{flex:0 0 20px;height:20px;border:1px solid var(--tint-notice-icon-border);border-radius:50%;display:grid;place-items:center;font:600 .65rem serif}.notice p{font-size:.65rem;line-height:1.5;margin:0}.fabric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.fabric-card{border:1px solid var(--line);background:white;border-radius:4px;overflow:hidden;text-align:left;padding:0;transition:.2s}.fabric-card:hover{transform:translateY(-2px);box-shadow:0 10px 25px rgba(var(--rgb-shadow),.08)}.fabric-card.selected{border:2px solid var(--accent)}.fabric-card .swatch{position:relative}.best-match{position:absolute;left:0;top:0;background:var(--accent);color:#fff;font-size:.54rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:5px 9px}.fabric-card.over-budget{opacity:.72}.why{margin:9px 0 0;font-size:.62rem;line-height:1.5;color:var(--muted)}.why b{color:var(--ink-2)}.why.over{color:var(--amber)}.swatch{height:104px;position:relative}.swatch:after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 3px,rgba(255,255,255,.08) 3px 4px)}.swatch.has-photo:after{display:none}.fabric-card-body{padding:15px}.fabric-card b,.fabric-card small{display:block}.fabric-card b{font:600 1.05rem var(--font-heading);color:var(--ink)}.fabric-card small{font-size:.62rem;color:var(--muted);margin-top:4px;line-height:1.45}.fabric-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}.fabric-tags span{background:var(--tint-tag-bg);color:var(--ink-2);padding:4px 6px;font-size:.54rem;border-radius:10px}.quote-note{display:flex;gap:9px;margin:10px 0 0;background:#fbf6ec;border-left:3px solid #c9a227;padding:11px 14px;font-size:.66rem;line-height:1.5;color:#7a5c18}.quote-preview{display:flex;align-items:center;justify-content:space-between;margin-top:18px;background:var(--ink);color:white;padding:25px 30px}.quote-preview h3{font:600 1.6rem var(--font-heading);margin:6px 0 3px}.reco-cantidad{display:flex;align-items:center;gap:12px;margin-top:16px;background:var(--tint-panel-wash);border:1px solid var(--line);border-radius:4px;padding:13px 16px}.reco-cantidad label{font-size:.72rem;font-weight:700;color:var(--ink);white-space:nowrap}.reco-cantidad .unit{color:var(--muted);font-weight:600}.reco-cantidad input{width:120px;padding:9px 11px;border:1px solid var(--line);border-radius:3px;font-size:.85rem;background:white}.reco-cantidad small{font-size:.62rem;color:var(--muted);line-height:1.45}.fabric-pick{display:block;width:100%;border:0;background:none;padding:0;text-align:left;cursor:pointer;font:inherit;color:inherit}
+.fabric-card .reco-cantidad{display:block;margin:12px 0 0;padding:10px 12px}.fabric-card .reco-cantidad label{display:block;margin-bottom:6px}.fabric-card .reco-cantidad input{width:100%}.fabric-card .reco-cantidad small{display:block;margin-top:6px}.quote-preview p{font-size:.62rem;color:var(--tint-quote-preview-caption);margin:0}
     /* El paso de la estimación: el número en su tarjeta oscura — el bloque de precio viene del paso
      * de telas, donde vivía sobre fondo oscuro — y al lado, con qué se calculó. */
     .estimate-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;margin-top:18px}
@@ -183,6 +193,14 @@
 .assistant-bubble.show{opacity:1;transform:none}
 .assistant-bubble:after{content:"";position:absolute;right:28px;bottom:-6px;width:14px;height:14px;background:#fff;transform:rotate(45deg)}
 .assistant-bubble p{margin:0;font-size:.74rem;line-height:1.5}
+/* El globo de comentario mientras ella habla: mismo anclaje que el aviso (--notice-bottom), con los
+ * tres puntos moviéndose. No lleva texto: la voz es la que habla. */
+.assistant-bubble--habla{position:absolute;right:26px;bottom:var(--notice-bottom,130px);left:auto;top:auto;display:flex;gap:5px;align-items:center;padding:10px 13px;border-left:0;border-radius:16px;width:max-content;pointer-events:none}
+.assistant-bubble--habla:after{right:20px}
+.assistant-bubble--habla span{width:6px;height:6px;border-radius:50%;background:var(--ink-2);animation:hablaPunto 1s infinite ease-in-out}
+.assistant-bubble--habla span:nth-child(2){animation-delay:.15s}
+.assistant-bubble--habla span:nth-child(3){animation-delay:.3s}
+@keyframes hablaPunto{0%,60%,100%{transform:translateY(0);opacity:.45}30%{transform:translateY(-3px);opacity:1}}
 .assistant-bubble button{pointer-events:auto;border:0;background:transparent;font-size:1.1rem;line-height:1;padding:4px}
 .assistant-bubble .bubble-close{position:absolute;top:4px;right:6px;color:var(--ink)}
 .assistant-bubble .bubble-action{display:block;margin-top:7px;padding:0;color:var(--ink-2);font-size:.64rem;font-weight:700;text-decoration:underline;text-underline-offset:2px}
@@ -241,6 +259,59 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
 #chatForm button[disabled]{opacity:.45;cursor:default}
 .aci-highlight{outline:3px solid rgba(var(--rgb-accent),.55)!important;outline-offset:3px;transition:outline-color .3s}
 .chat-fab[data-unread]::after{content:"";position:absolute;top:6px;right:8px;width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 2px var(--ink)}
+/* ── La conversación que llena el contrato ───────────────────────────────────────────────
+ * Transparente a propósito: el formulario se ve detrás y se mueve con lo que aquí se declara.
+ * El velo es de tinte, no de color: nada de negro (el cliente tiene que seguir viendo su cotización). */
+/* Los DOS botones del asistente, juntos y en el pie del sidebar (ella al lado): primero la
+ * conversación, después los mensajes. Vestidos como la casa — blancos sobre el azul del sidebar. */
+.asistente-cta{position:relative;z-index:8;grid-column:1/-1;margin:2px 0 0;display:flex;flex-direction:column;gap:8px;align-items:stretch}
+/* El personaje (z-index 7) pisa el pie del sidebar: el botón va POR ENCIMA de él, o queda tapado. */
+.asistente-cta .voz-fab{position:static;left:auto;right:auto;bottom:auto;top:auto;z-index:auto;width:100%;justify-content:center;font-size:.66rem;padding:10px 11px;white-space:nowrap;border-radius:40px}
+.asistente-cta .chat-fab{background:white!important;color:var(--ink)!important;border:1px solid var(--tint-quick-question-border);border-radius:40px;text-decoration:none!important}
+.asistente-cta .chat-fab b{font-weight:600;color:inherit}
+@media(max-width:650px){.asistente-cta{margin:10px 0 0}}
+.voz-fab span{font-size:.9rem;line-height:1}
+.voz-fab{border:1px solid var(--tint-quick-question-border);background:white;color:var(--ink);border-radius:40px;padding:9px 11px;font-size:.64rem;box-shadow:0 10px 30px rgba(var(--rgb-shadow),.16);display:flex;gap:7px;align-items:center}
+.voz-fab span{font-weight:700}
+.voz-modal{position:fixed;inset:0;z-index:6;display:grid;place-items:center;padding:20px;background:rgba(var(--rgb-shadow),.10);backdrop-filter:blur(3px) saturate(1.05);-webkit-backdrop-filter:blur(3px) saturate(1.05)}
+/* El velo cubre el FORMULARIO: el asistente queda por encima — su personaje (la capa 3D del
+ * sidebar, `#assistantStage`) y su panel. El z-index del personaje lo pone la propia capa
+ * (assistant-presence.js) cuando coloca; aquí se respeta esa jerarquía, no se pisa. */
+.chat-panel,#chatPanel,.assistant-stage,#assistantStage{z-index:7}
+.voz-modal[hidden]{display:none}
+.voz-card{width:min(560px,calc(100vw - 32px));max-height:min(80vh,720px);display:flex;flex-direction:column;border-radius:8px;overflow:hidden;background:rgba(255,255,255,.66);backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);border:1px solid rgba(255,255,255,.6);box-shadow:0 30px 90px rgba(var(--rgb-shadow-deep),.28)}
+.voz-card header{background:rgba(255,255,255,.72);border-bottom:1px solid var(--line);padding:14px 16px;display:flex;justify-content:space-between;align-items:center}
+.voz-card header>div{display:flex;gap:10px;align-items:center}
+.voz-card header p{margin:0}
+.voz-card header b,.voz-card header small{display:block}
+.voz-card header b{font-size:.74rem}
+.voz-card header small{font-size:.58rem;color:var(--muted);margin-top:3px}
+.voz-card header button{border:0;background:transparent;font-size:1.5rem;line-height:1;color:var(--ink)}
+.voz-messages{flex:1;min-height:180px;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.voz-messages .message{max-width:88%}
+.voz-fotos{padding:0 16px 6px}
+.voz-fotos .voz-foto-zona{display:flex;gap:12px;align-items:center;border:1px dashed var(--line);border-radius:6px;padding:10px 14px;background:rgba(255,255,255,.5);cursor:pointer;outline-offset:2px}
+.voz-fotos .voz-foto-zona p{margin:0}
+.voz-fotos .voz-foto-zona b{display:block;font-size:.68rem}
+.voz-fotos .voz-foto-zona small{font-size:.58rem;color:var(--muted)}
+.voz-fotos .voz-foto-zona>span{font-size:1.2rem;color:var(--accent)}
+.voz-fotos[hidden]{display:none}
+.voz-form{display:flex;gap:8px;align-items:center;border-top:1px solid var(--line);padding:10px 14px;background:rgba(255,255,255,.6)}
+.voz-form input{flex:1;border:1px solid var(--line);border-radius:4px;padding:9px 10px;font-size:.72rem;font-family:inherit;background:white}
+.voz-form button{width:36px;height:36px;border:0;border-radius:50%;background:var(--ink);color:white;font-size:.9rem}
+.voz-form .voz-mic{background:white;color:var(--ink);border:1px solid var(--line)}
+.voz-form .voz-mic:disabled{opacity:.45;cursor:not-allowed}
+.voz-form .voz-mic[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:white;box-shadow:0 0 0 4px rgba(var(--rgb-accent),.18)}
+.voz-head-actions{display:flex;gap:8px;align-items:center}
+.voz-head-actions button{font-size:1rem}
+.voz-onda{display:flex;gap:3px;align-items:flex-end;height:24px;padding:0 16px;flex:none}
+.voz-onda i{width:3px;height:4px;border-radius:2px;background:var(--line);transition:height .09s linear,background .3s}
+.voz-onda[data-estado="escuchando"] i{background:var(--accent)}
+.voz-onda[data-estado="hablando"] i{background:var(--gold)}
+.voz-nota{margin:4px 16px 8px;font-size:.56rem;color:var(--muted);line-height:1.4}
+.voz-nota[hidden]{display:none}
+html[data-assistant="off"] .voz-fab,html[data-assistant="off"] .voz-modal{display:none!important}
+@media(max-width:650px){.voz-fab{left:auto;right:14px;bottom:calc(128px + var(--banner-h,0px))}.voz-card{max-height:86vh}}
 @media(min-width:651px){
   html,body{height:100%;overflow:hidden}
   body{padding-bottom:0}
@@ -377,7 +448,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
         <li data-step-dot="7" data-ask-dot="boq" hidden><span>7</span><div><b></b><small></small></div></li>
         <li data-step-dot="8" data-ask-dot="obra" hidden><span>8</span><div><b></b><small></small></div></li>
         <li data-step-dot="9" data-brain="MEASUREMENTS"><span>2</span><div><b>Medidas</b><small>Datos principales</small></div></li>
-        <li data-step-dot="23" hidden><span>4</span><div><b>Insumos del trabajo</b><small>Lo que se repone</small></div></li>
+        <li data-step-dot="17" hidden><span>4</span><div><b>Insumos del trabajo</b><small>Lo que se repone</small></div></li>
         <li data-step-dot="10" data-ask-dot="materiales" hidden><span>10</span><div><b></b><small></small></div></li>
         <li data-step-dot="11" data-ask-dot="tapizado" hidden><span>11</span><div><b></b><small></small></div></li>
         <li data-step-dot="12" data-brain="PREFERENCES"><span>3</span><div><b>Preferencias</b><small>Uso y estilo</small></div></li>
@@ -409,9 +480,63 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       <!-- El aviso de ella: flota justo encima de su cabeza (--notice-bottom lo calcula la
            capa 3D desde el hueso de la cabeza), sobre la barra, sin tapar el cotizador. -->
       <div class="assistant-bubble" id="assistantBubble" role="status" aria-live="polite" hidden><p class="bubble-text"></p><p class="bubble-foot"><b class="bubble-who" data-assistant-name>{{ASSISTANT_DEFAULT_NAME}}</b><button type="button" class="bubble-action" data-open-chat>Ver en el chat</button></p><button type="button" class="bubble-close" aria-label="Cerrar mensaje">×</button></div>
+      <!-- La conversación que llena el contrato (docs/contrato-conversacional.md): una capa
+           TRANSPARENTE sobre el formulario, que se ve moverse detrás mientras ella pregunta.
+           El estado es uno solo: lo que aquí se declara es lo que el formulario ya dibuja. -->
+      <div class="voz-modal" id="vozModal" role="dialog" aria-modal="false" aria-label="Conversación para llenar tu cotización" hidden>
+        <div class="voz-card">
+          <header>
+            <div><span class="ai-orb">✦</span><p><b data-assistant-name>{{ASSISTANT_DEFAULT_NAME}}</b><small id="vozProgreso">Vamos paso a paso: te pregunto y el formulario se va llenando solo.</small></p></div>
+            <div class="voz-head-actions">
+              <button type="button" id="vozSonido" aria-pressed="false" title="Silenciar su voz" aria-label="Silenciar su voz">🔊</button>
+              <button type="button" id="vozCerrar" aria-label="Cerrar la conversación">×</button>
+            </div>
+          </header>
+          <div class="voz-messages" id="vozMessages"></div>
+          <!-- El componente que se mueve con el sonido: el nivel REAL del micrófono mientras el
+               cliente habla (análisis local, nada sale por aquí) y los pulsos reales de la voz de
+               ella (eventos `boundary` de speechSynthesis) mientras habla. -->
+          <div class="voz-onda" id="vozOnda" data-estado="callada" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <p class="voz-nota" id="vozNotaAudio" hidden></p>
+          <!-- El componente de fotos: la misma tubería del formulario (`loadPhotos`), no otra. -->
+          <div class="voz-fotos" id="vozFotos">
+            <div class="voz-foto-zona" id="vozFotoZona" tabindex="0" role="button" aria-label="Subir fotos del mueble">
+              <span aria-hidden="true">⤒</span>
+              <p><b>Sube las fotos aquí</b><small id="vozFotoCuenta"></small></p>
+            </div>
+            <input id="vozFotoInput" type="file" accept="image/*" multiple hidden>
+          </div>
+          <!-- El contacto se ESCRIBE aquí (dueño, 25/09: «email and phone is better when the customer
+               has to write… because email sometimes has different letters or characters… and numbers
+               sometimes repeat and can be confused»): son los MISMOS campos del formulario, escritos
+               por el cliente — el micrófono no adivina letras ni dígitos. -->
+          <div class="voz-contacto" id="vozContacto" hidden>
+            <p><b>Escríbelos aquí</b><small>así no se pierde ni una letra</small></p>
+            <label>Nombre<input type="text" id="vozNombre" autocomplete="name" placeholder="Tu nombre"></label>
+            <label>Correo<input type="email" id="vozCorreo" autocomplete="email" placeholder="tu@correo.com"></label>
+            <label>Celular<input type="tel" id="vozCelular" autocomplete="tel" placeholder="300 123 4567"></label>
+          </div>
+          <!-- La autorización se da AQUÍ: cuando el cierre llega, esta fila aparece y su botón
+               marca la casilla del formulario. Es del cliente, y por eso la toca él. -->
+          <div class="voz-permiso" id="vozPermiso" style="display:flex;gap:10px;align-items:center;justify-content:space-between;margin:10px 0 0;font-size:.72rem" hidden>
+            <p style="margin:0">¿Autorizas que un asesor te contacte con estos datos?</p>
+            <button type="button" class="secondary-button" id="vozPermisoSi">Sí, autorizo</button>
+          </div>
+          <form class="voz-form" id="vozForm">
+            <button type="button" class="voz-mic" id="vozMic" aria-pressed="false" title="Hablar" aria-label="Hablar">🎙</button>
+            <input id="vozInput" placeholder="Escribe tu respuesta…" aria-label="Tu respuesta">
+            <button aria-label="Enviar">↑</button>
+          </form>
+        </div>
+      </div>
       <div class="journey-foot">
+        <!-- Un solo botón, y es el de CONVERSAR: ocupa el lugar del «Pregúntale a Lía» (el dueño lo
+             pidió así: «replace pregúntale a lía… and instead put the button better»). Los mensajes
+             siguen alcanzables por el propio personaje (su zona `assistant-hit`). -->
         <div class="help-card">
-          <button type="button" class="text-button" data-open-chat data-assistant-label="Preguntar a {name}">Pregúntale a <span data-assistant-name>{{ASSISTANT_DEFAULT_NAME}}</span></button>
+          <div class="asistente-cta" role="group" aria-label="Conversar con {{ASSISTANT_DEFAULT_NAME}}">
+            <button type="button" class="voz-fab" id="vozFab" data-assistant-label="Conversar con {name}" aria-label="Conversar con {{ASSISTANT_DEFAULT_NAME}}"><span>💬</span> Conversar con <span data-assistant-name>{{ASSISTANT_DEFAULT_NAME}}</span></button>
+          </div>
         </div>
       </div>
     </aside>
@@ -488,38 +613,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
         <!-- Un solo paso para la cantidad declarada, con una tela o con veinte: la lista (más abajo).
              Nada de mueble, medidas, fotos ni recomendación en las ramas cortas. -->
 
-        <!-- Completar pedido: se busca la solicitud anterior en este navegador (o la busca un asesor
-             en el sistema) y su referencia se trae a la lista para escribir el faltante. Va ANTES de
-             la lista porque es lo que se pregunta primero en esa ruta (el orden del flujo es el
-             orden del documento). -->
-        <section class="wizard-step" data-step="21" id="pedidoStep" data-brain="ORDER">
-          <div class="step-heading">
-            <span class="eyebrow">Tu pedido anterior</span>
-            <h2>¿Qué pedido vas a completar?</h2>
-            <p>Escribe el número de la solicitud (por ejemplo COT-1042) o la referencia, y traemos lo que llevaba para que le agregues el faltante.</p>
-          </div>
-          <div class="select-grid">
-            <label>Número o referencia<input type="text" id="pedidoBusca" maxlength="40" placeholder="Ej. COT-1042"></label>
-          </div>
-          <button type="button" class="secondary-button" id="pedidoBuscar">Buscar el pedido</button>
-          <p class="field-error" id="pedidoError" hidden>No encontramos esa solicitud en este navegador. Un asesor la busca en el sistema y te dice qué lote hay.</p>
-          <div class="notice" id="pedidoHallado" hidden><span>i</span><p id="pedidoHalladoTexto"></p></div>
-          <p class="modal-hint">El lote y la continuidad del color los confirma un asesor: si no está el mismo lote, te propone la alternativa.</p>
-        </section>
-
-        <!-- La lista de compra: la MISMA para una tela o para veinte («compra con referencia y
-             cantidad») y para el faltante de un pedido anterior. Cada fila pasa por SU regla
-             comercial (mínimo, incremento, rollo) y por su propia disponibilidad. -->
-        <section class="wizard-step" data-step="20" id="listStep" data-brain="LIST">
-          <div class="step-heading">
-            <span class="eyebrow">Tu compra</span>
-            <h2>¿Qué referencias y cuántas?</h2>
-            <p>Una fila por referencia; si es una sola tela, llena una fila. Los mínimos, los incrementos y el rollo completo se aplican solos, y un asesor confirma disponibilidad y lote antes de cortar.</p>
-          </div>
-          <div class="boq-rows" id="listRows" data-rows></div>
-          <button type="button" class="secondary-button boq-add" id="listAdd">+ Agregar referencia</button>
-          <p class="field-error" id="listError" hidden>Agrega al menos una referencia con su cantidad para calcular tu estimación.</p>
-        </section>
         <section class="wizard-step active" data-step="1" data-brain="FURNITURE">
           <div class="step-heading">
             <span class="eyebrow" id="furnitureEyebrow">Empecemos</span>
@@ -672,7 +765,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
             </div>
           </div>
           <p class="field-error" id="analysisError" hidden>Revisa tu información para continuar.</p>
-          <div class="notice"><span>i</span><p id="reviewNotice">Esta revisión comprueba que la fotografía sea legible y que las medidas sean plausibles. Cuando el equipo tiene el modelo local, además describe lo que ve en la foto —en una fila <span data-assistant-copy>a nombre de <span data-assistant-name>{{ASSISTANT_DEFAULT_NAME}}</span></span><span data-assistant-off-copy>marcada «IA local»</span>—: no mide ni identifica el mueble con certeza; eso lo confirma un asesor junto con la cotización definitiva.</p></div>
+          <div class="notice"><span>i</span><p id="reviewNotice">Esta revisión comprueba que la fotografía sea legible y que las medidas sean plausibles. Cuando la mirada con IA está disponible, además describe lo que ve en la foto —en una fila <span data-assistant-copy>a nombre de <span data-assistant-name>{{ASSISTANT_DEFAULT_NAME}}</span></span><span data-assistant-off-copy>marcada «IA»</span>—: no mide ni identifica el mueble con certeza; eso lo confirma un asesor junto con la cotización definitiva.</p></div>
         </section>
 
         <section class="wizard-step" data-step="14" data-brain="RECOMMENDATION">
@@ -683,11 +776,58 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
           </div>
           <div class="analysis-checks vision" id="aiPick" hidden></div>
           <div class="fabric-grid" id="fabricGrid"></div>
+          <p class="field-error" id="recoError" hidden>Elige al menos una tela para continuar.</p>
           <input type="hidden" id="selectedFabric" value="Palermo Light">
           <div class="quote-preview">
             <div><span class="eyebrow gold">Estimación inicial</span><h3><span id="metersRange">14–17</span> metros de tela</h3><p>Incluye un margen aproximado para cortes y desperdicio.</p></div>
           </div>
           <p class="quote-note" id="quoteNote" hidden></p>
+        </section>
+
+        <!-- Completar pedido: se busca la solicitud anterior en este navegador (o la busca un asesor
+             en el sistema) y su referencia se trae a la lista para escribir el faltante. Va ANTES de
+             la lista porque es lo que se pregunta primero en esa ruta (el orden del flujo es el
+             orden del documento). -->
+        <section class="wizard-step" data-step="21" id="pedidoStep" data-brain="ORDER">
+          <div class="step-heading">
+            <span class="eyebrow">Tu pedido anterior</span>
+            <h2>¿Qué pedido vas a completar?</h2>
+            <p>Escribe el número de la solicitud (por ejemplo COT-1042) o la referencia, y traemos lo que llevaba para que le agregues el faltante.</p>
+          </div>
+          <div class="select-grid">
+            <label>Número o referencia<input type="text" id="pedidoBusca" maxlength="40" placeholder="Ej. COT-1042"></label>
+          </div>
+          <button type="button" class="secondary-button" id="pedidoBuscar">Buscar el pedido</button>
+          <p class="field-error" id="pedidoError" hidden>No encontramos esa solicitud en este navegador. Un asesor la busca en el sistema y te dice qué lote hay.</p>
+          <div class="notice" id="pedidoHallado" hidden><span>i</span><p id="pedidoHalladoTexto"></p></div>
+          <p class="modal-hint">El lote y la continuidad del color los confirma un asesor: si no está el mismo lote, te propone la alternativa.</p>
+        </section>
+
+        <!-- La lista de compra: la MISMA para una tela o para veinte («compra con referencia y
+             cantidad») y para el faltante de un pedido anterior. Cada fila pasa por SU regla
+             comercial (mínimo, incremento, rollo) y por su propia disponibilidad. -->
+        <section class="wizard-step" data-step="20" id="listStep" data-brain="LIST">
+          <div class="step-heading">
+            <span class="eyebrow">Tu compra</span>
+            <h2>¿Qué referencias y cuántas?</h2>
+            <p>Una fila por referencia; si es una sola tela, llena una fila. Los mínimos, los incrementos y el rollo completo se aplican solos, y un asesor confirma disponibilidad y lote antes de cortar.</p>
+          </div>
+          <div class="boq-rows" id="listRows" data-rows></div>
+          <button type="button" class="secondary-button boq-add" id="listAdd">+ Agregar referencia</button>
+          <!-- La VITRINA de telas del paso (docs/telas-en-la-lista.md): las rutas cortas no tienen paso
+               de recomendación, así que la sugerencia vive aquí, para la fila que se está llenando.
+               Las últimas colecciones van de primeras (el seed las marca `novedad`, DEMO). -->
+          <div class="lista-sugerir" id="listaSugerirFila">
+            <button type="button" class="secondary-button" id="listaSugerir" aria-expanded="false" aria-controls="listaVitrina">✦ <span data-assistant-copy>Que <span data-assistant-name>{{ASSISTANT_DEFAULT_NAME}}</span> sugiera telas</span><span data-assistant-off-copy>Sugerir telas</span></button>
+          </div>
+          <div class="lista-vitrina" id="listaVitrina" hidden>
+            <div class="lista-vitrina-head">
+              <div><b>Telas sugeridas</b><small id="telasPara">La que toques entra en la fila que estás llenando; las últimas colecciones van de primeras.</small></div>
+              <button type="button" class="text-button" id="telasCerrar" aria-label="Cerrar las telas sugeridas">✕</button>
+            </div>
+            <div class="fabric-grid" id="telasGrid"></div>
+          </div>
+          <p class="field-error" id="listError" hidden>Agrega al menos una referencia con su cantidad para calcular tu estimación.</p>
         </section>
 
         <!-- La estimación es SU PROPIO paso y TODOS los motivos llegan a él: cada oficio se cotiza a su
@@ -785,8 +925,6 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
     </section>
   </main>
 
-  <button class="chat-fab" type="button" data-open-chat data-assistant-label="Hablar con {name}" aria-label="Hablar con {{ASSISTANT_DEFAULT_NAME}}"><span>✦</span><b>¿Tienes dudas?</b></button>
-
   <!-- Assistant presence layer: fixed and outside the sidebar on purpose (the sidebar clips, the character must not). Hidden until assistant-presence.js has placed it. -->
   <div class="assistant-stage" id="assistantStage" hidden><canvas aria-hidden="true"></canvas></div>
   <button type="button" class="assistant-hit" id="assistantHit" data-open-chat data-assistant-label="Hablar con {name}" aria-label="Hablar con {{ASSISTANT_DEFAULT_NAME}}" hidden></button>
@@ -800,6 +938,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
     <p class="demo-author">Hecho por <b>CARDYRAM</b></p>
   </aside>
 {{ASSISTANT_BRAIN_SCRIPT}}
+{{CONTRATO_SCRIPT}}
 {{ASSISTANT_FENCE_SCRIPT}}
   <script>
 const state={step:1,furniture:'Sofá',furnitureNote:'',photos:[],analyzed:false,fabric:null,fabricTouched:false,service:null,damages:[],ruta:null,proposito:null,saber:null};
@@ -905,9 +1044,27 @@ const ACI=(()=>{
       /* La atención: de dónde escribe el cliente, para dónde es el servicio y su sede. La declaran
        * todas las líneas (vive en el último paso), así que va al contexto como las fotos. */
       location:(()=>atencionDeclarada())(),
+      /* La RAMA elegida (ruta → propósito → saber) y lo que las rutas cortas declaran (la lista, el
+       * pedido anterior): sin esto el asistente no sabe qué eligió el cliente y se lo vuelve a
+       * preguntar (dueño, 24/09: «the AI dont save data of customer in the interaction»). */
+      ruta:state.ruta?{id:state.ruta,label:((rutasLine().filter(r=>r.id===state.ruta)[0]||{}).label)||state.ruta}:null,
+      proposito:propositoActual()?{id:propositoActual().id,label:propositoActual().label}:null,
+      saber:saberActual()?{id:saberActual().id,label:saberActual().label}:null,
+      lista:filasDeLaLista().map(r=>{const f=telasActivas().filter(x=>String(x.id)===String(r.fabricId))[0]||null;
+        return {fabricId:r.fabricId||null,name:f?f.name:null,colorName:f?f.colorName:null,unidad:r.unidad,valor:r.valor,metros:r.metros}}),
+      order:{dicho:!!byId('pedidoBusca').value.trim(),pedido:pedidoBase?{id:pedidoBase.id,fabricName:pedidoBase.fabricName}:null},
+      delivery:(()=>{const f=byId('entregaField');return f&&!f.hidden?byId('entrega').value:null})(),
+      /* Del contacto viaja el HECHO de estar declarado (los valores solo con la autorización,
+       * unas líneas abajo): así no vuelve a pedir un correo que ya tiene. */
+      contactDeclared:{name:!!byId('fullName').value.trim(),email:!!byId('email').value.trim(),phone:!!byId('phone').value.trim()},
       analysis:{done:!!state.analyzed,warnings:state.review?state.review.warnings:[],oddMeasures:state.review?state.review.oddMeasures:[]},
-      fabric:pideRecomendacion()&&state.fabric?{id:state.fabric.id,name:state.fabric.name,colorName:state.fabric.colorName,auto:!state.fabricTouched}:null,
-      estimate:estimateSnapshot(),
+      fabric:pideRecomendacion()&&state.fabric?{id:state.fabric.id,name:state.fabric.name,colorName:state.fabric.colorName,auto:!state.fabricTouched,touched:!!state.fabricTouched}:null,
+      /* Los insumos del taller que el wizard ya estime (la mano, paso 17): el contrato los cobra. */
+      supplies:insumosMarcados(),
+      /* La estimación SOLO viaja cuando el recorrido tiene lo suyo: la tela elegida a mano, los
+       * insumos y la revisión hecha. Antes viajaba siempre y la conversación la soltaba antes de
+       * tiempo (dueño, 24/09: «¿qué es lo que quieres cobrarme?»). */
+      estimate:((!pideRecomendacion()||!!state.fabricTouched)&&(!asksInsumos()||insumosMarcados().length>0)&&!!state.analyzed)?estimateSnapshot():null,
       consent:byId('consent').checked
     };
     // Ley 1581: personal data only with the customer's authorization, which names the assistant.
@@ -1236,6 +1393,31 @@ function readImage(file){
   });
 }
 
+/* Cuán nítida es una foto: la varianza del laplaciano sobre el gris —la medida clásica de «fuera de
+ * foco»—, sobre una muestra de 480 px de ancho. Un borde duro la sube; una foto movida o desenfocada
+ * la deja baja, y no depende del modelo de visión: es aritmética sobre los píxeles.
+ * Calibración (medida en las pruebas, 900×650): nítida ≈ 2000 · desenfoque leve ≈ 80 · plano ≈ 0. */
+const NITIDEZ_MINIMA=200;
+async function medirNitidez(dataUrl){
+  try{
+    const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=dataUrl;});
+    const ancho=Math.min(480,img.naturalWidth||img.width||480);
+    const alto=Math.max(1,Math.round(ancho*((img.naturalHeight||img.height||ancho)/Math.max(1,img.naturalWidth||img.width||ancho))));
+    const cv=document.createElement('canvas');cv.width=ancho;cv.height=alto;
+    const cx=cv.getContext('2d',{willReadFrequently:true});cx.drawImage(img,0,0,ancho,alto);
+    const d=cx.getImageData(0,0,ancho,alto).data,g=new Float32Array(ancho*alto);
+    for(let i=0,j=0;i<d.length;i+=4,j++)g[j]=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+    let s=0,s2=0,n=0;
+    for(let y=1;y<alto-1;y++)for(let x=1;x<ancho-1;x++){
+      const i=y*ancho+x,lap=4*g[i]-g[i-1]-g[i+1]-g[i-ancho]-g[i+ancho];
+      s+=lap;s2+=lap*lap;n++;
+    }
+    if(!n)return null;
+    const media=s/n;
+    return Math.round(s2/n-media*media);
+  }catch(e){return null;}
+}
+
 async function loadPhotos(files){
   const {max}=photoLimits();
   const imagenes=[...files||[]].filter(f=>f&&f.type.startsWith('image/'));
@@ -1246,6 +1428,8 @@ async function loadPhotos(files){
     photoError.hidden=false;return;
   }
   const nuevas=(await Promise.all(imagenes.slice(0,hueco).map(readImage))).filter(Boolean);
+  /* La nitidez se mide UNA vez, al cargar: la revisión la lee sin volver a tocar la imagen. */
+  for(const ph of nuevas) ph.nitidez=await medirNitidez(ph.dataUrl);
   state.photos=state.photos.concat(nuevas);
   if(imagenes.length>hueco){
     photoError.textContent=`Solo agregamos ${hueco} ${hueco===1?'foto':'fotos'}: el máximo es ${max}.`;
@@ -1333,6 +1517,28 @@ function validStep(){
       decirError(damageError,damageError.textContent,'damageGrid');document.getElementById('damageGrid').scrollIntoView({behavior:'smooth',block:'center'});return false}}
   /* La lista no avanza sin lo que esa intención necesita: la cantidad —o, si la tela se conoce y la
    * cantidad la calcula el motor, la referencia—. */
+  /* La recomendación donde se eligen VARIAS telas: sin ninguna elegida no se pasa, y una elegida sin
+   * su cantidad tampoco — el aviso dice CUÁL falta (el dueño: «you cant pass if dont choose some
+   * fabric... and if some fabric dont have cantidad... then show alert for this»). */
+  if(state.step===14&&esVariasTelas()){
+    const err=document.getElementById('recoError');
+    const elegidas=[...document.querySelectorAll('#fabricGrid .fabric-card.selected')].map(c=>c.dataset.fabric);
+    if(!elegidas.length){
+      decirError(err,'Elige al menos una tela para continuar.','fabricGrid');
+      document.getElementById('fabricGrid').scrollIntoView({behavior:'smooth',block:'center'});
+      return false;
+    }
+    const sinCantidad=elegidas.filter(id=>{const f=filaDeLaListaPor(id);
+      return !(Number(f&&f.querySelector('.list-metros')&&f.querySelector('.list-metros').value)||0)});
+    if(sinCantidad.length){
+      const nombres=sinCantidad.map(id=>{const f=telasActivas().filter(x=>String(x.id)===String(id))[0];
+        return f?`${f.name} · ${f.colorName}`:id;});
+      decirError(err,`Dile cuánto necesitas de ${nombres.join(', ')} para continuar.`,'fabricGrid');
+      document.getElementById('fabricGrid').scrollIntoView({behavior:'smooth',block:'center'});
+      return false;
+    }
+    if(err)err.hidden=true;
+  }
   if(state.step===20&&!((esIntencionTela()?filasDeLaLista().length:leerLaLista().length))){
     const err=document.getElementById('listError');
     err.textContent=esIntencionTela()
@@ -1527,6 +1733,14 @@ function runReview(){
       detail:`Todas tienen resolución suficiente (la menor mide ${menor.width}×${menor.height} px).`});
   }
 
+  /* 1b. La NITIDEZ: medida sobre los píxeles al cargar (`medirNitidez`), no la palabra del modelo.
+   *     No bloquea —el asesor mira la foto igual—, pero se dice, y una foto repetida se agradece. */
+  const borrosas=state.photos.filter(ph=>typeof ph.nitidez==='number'&&ph.nitidez<NITIDEZ_MINIMA);
+  if(borrosas.length){
+    checks.push({ok:false,title:`${borrosas.length} foto${borrosas.length===1?'':'s'} fuera de foco`,
+      detail:`Se ve poco detalle${borrosas.length===1?'':' en ellas'}: vuelve a ${borrosas.length===1?'tomarla':'tomarlas'} con más luz y el teléfono quieto. El asesor las mira igual.`});
+  }
+
   // 2. the measurements — real arithmetic against plausible ranges, solo si la línea las pide:
   //    sin ese paso no hay rangos que aplicar ni medidas que corregir.
   if(pideMedidas()){
@@ -1554,7 +1768,37 @@ function runReview(){
   return checks;
 }
 
-/* ---- La mirada: el modelo local describe la foto, con lo declarado delante ----
+/* ── Quién le pone palabras al asistente ──────────────────────────────────────────────
+ * El cerebro simulado (assistant-brain.js) sigue siendo la respuesta por defecto: es lo que
+ * funciona con doble clic y lo que la demo muestra hoy. Encima hay DOS modelos, y el cerco
+ * (assistant-fence.js) juzga CADA respuesta de los dos: si el turno lo rompe, se muestra la
+ * respuesta preparada del cerebro. Ningún modelo tiene la última palabra sobre lo que lee el
+ * cliente.
+ *
+ *   1 · api     la API de DeepSeek, por la puerta del servidor de desarrollo (/__ia/*: la llave
+ *               vive en .env y no viaja al navegador). Es el proveedor del prototipo cuando la
+ *               página se sirve por http(s) y hay llave en este equipo.
+ *   2 · local   el modelo del navegador (Gemini Nano): sin llave y sin red.
+ *   3 · ninguno el cerebro simulado en todo.
+ *
+ * El estado vive aquí arriba porque lo leen la mirada y la recomendación; la sesión y la nota
+ * están más abajo, junto al chat. Diseño y criterios: docs/ia-por-api.md.
+ *
+ * `var` a propósito: estas lecturas las usan funciones declaradas antes de este bloque y llamadas
+ * después de la carga, así que ninguna puede caer en la zona muerta de un `const`. */
+var IA_LOCAL = (() => (typeof LanguageModel !== 'undefined' ? LanguageModel : (globalThis.ai && globalThis.ai.languageModel) || null))();
+var disponibilidadIA = 'unavailable';
+var IA_POR_HTTP = (location.protocol === 'http:' || location.protocol === 'https:');
+var apiLista = false, apiModelo = '';
+
+function iaLocalLista(){ return !!IA_LOCAL && !!window.isSecureContext && disponibilidadIA === 'available'; }
+/* Cuál contesta en este equipo y en este momento: la API manda (es la que tiene la fuerza para el
+ * próximo feature); el modelo del navegador es el respaldo sin llave; sin ninguno, el cerebro. */
+function proveedorIA(){ if (IA_POR_HTTP && apiLista) return 'api'; if (iaLocalLista()) return 'local'; return null; }
+function iaDisponible(){ return proveedorIA() !== null; }
+const nombreDelProveedor = () => proveedorIA() === 'api' ? 'la API de DeepSeek' : 'el modelo del navegador';
+
+/* ---- La mirada: el modelo describe la foto, con lo declarado delante ----
  * Nace de la petición del dueño: «this step needs eyes for validation of photos... and related with
  * another information». Mira la foto más grande —el mismo criterio con el que la revisión señala
  * «la menor»— y recibe las filas declaradas tal cual (declaredRows). Nunca decide nada: la fila es
@@ -1565,21 +1809,27 @@ function runReview(){
  * equipo» y ninguna frase puede sonar a persona. El dueño lo pidió así: «replace all text in the
  * application where says "AI local" or "local AI" or "AI"». Diseño: docs/errores-con-lia.md. */
 const asistenteCfg=()=>Store.assistant();
-const asistenteNombre=()=>asistenteCfg().enabled?asistenteCfg().name:'La IA local del equipo';
+/* Sin asistente el cotizador habla de «la IA»: decía «local», y con la API por delante eso sería
+ * mentira (el modelo ya no vive en el equipo). Con el asistente encendido manda su nombre. */
+const asistenteNombre=()=>asistenteCfg().enabled?asistenteCfg().name:(proveedorIA()==='api'?'La IA del equipo':'La IA local del equipo');
 /* La etiqueta de una fila del modelo dice QUIÉN la firma (su nombre), no la tecnología. */
-const etiquetaIA=()=>`<i class="tag-ia">${esc(asistenteCfg().enabled?asistenteCfg().name:'IA local')}</i>`;
+const etiquetaIA=()=>`<i class="tag-ia">${esc(asistenteCfg().enabled?asistenteCfg().name:(proveedorIA()==='api'?'IA':'IA local'))}</i>`;
 const FILA_MIRADA=(titulo,detalle,ok)=>`<div class="${ok?'':'warn'}"><span>${ok?'✓':'!'}</span>`+
   `<p><b>${esc(titulo)} ${etiquetaIA()}</b><small>${esc(detalle)}</small></p></div>`;
 /* Mientras mira: el título, el icono girando y una barra indeterminada — movimiento inequívoco. */
 const filaPensando=()=>`<div><span class="mirada-gira"></span><p><b>Mirando tus fotos ${etiquetaIA()}</b>`+
   `<small>${esc(asistenteNombre())} está analizando tus fotografías.</small>`+
   `<span class="mirada-espera" role="status" aria-label="${esc(asistenteNombre())} está analizando tus fotografías."></span></p></div>`;
-const MIRADA_NO_MOSTRABLE=`${asistenteNombre()} miró la fotografía, pero su respuesta no se puede mostrar aquí. Un asesor la revisa y te dice si sirve.`;
+const MIRADA_NO_MOSTRABLE=()=>`${asistenteNombre()} miró la fotografía, pero su respuesta no se puede mostrar aquí. Un asesor la revisa y te dice si sirve.`;
 /* Cuando el equipo no puede mirar —o el modelo se cae— la fila lo dice: el cliente tiene que ver qué
- * pasó con su foto. Dos frases distintas porque son dos cosas distintas: una capacidad que este equipo
- * no tiene, y un intento que se cayó. */
-const MIRADA_SIN_OJOS='En este equipo no puedo mirar la fotografía: al modelo local le falta la variante de imagen. Un asesor la revisa y te dice si sirve.';
-const MIRADA_FALLO='No pude mirar la fotografía con el modelo local de este equipo. Un asesor la mira y te dice si sirve.';
+ * pasó con su foto. Dos frases distintas porque son dos cosas distintas: una capacidad que este
+ * equipo no tiene, y un intento que se cayó — y con la API hablan de la API, no del navegador. */
+const MIRADA_SIN_OJOS=()=>proveedorIA()==='api'
+  ? 'La API del modelo no aceptó la fotografía, así que no la pude mirar. Un asesor la revisa y te dice si sirve.'
+  : 'En este equipo no puedo mirar la fotografía: al modelo local le falta la variante de imagen. Un asesor la revisa y te dice si sirve.';
+const MIRADA_FALLO=()=>proveedorIA()==='api'
+  ? 'No pude mirar la fotografía con la API del modelo. Un asesor la mira y te dice si sirve.'
+  : 'No pude mirar la fotografía con el modelo local de este equipo. Un asesor la mira y te dice si sirve.';
 /* Lo mínimo que se ven los puntos, aunque el equipo conteste al instante: la misma razón del chat
  * (`ESPERA_MINIMA_MS`) — una señal que parpadea no se lee como que el cotizador hizo algo. */
 const esperarLoMinimo=async desde=>{const falta=ESPERA_MINIMA_MS-(Date.now()-desde);
@@ -1592,7 +1842,8 @@ const bloquearContinuar=v=>{nextButton.disabled=v};
 const fotoMasGrande=()=>state.photos.reduce((a,b)=>(a.width*a.height>=b.width*b.height?a:b));
 
 /* La foto original puede pesar megas y al modelo solo va una mirada: se manda una copia de 1024 px
- * como máximo, hecha en el propio navegador (nada sale del equipo). */
+ * como máximo, hecha en el propio navegador (con la API, sale del equipo solo esa copia). Devuelve
+ * las dos formas de la misma copia: Blob para el modelo del navegador, data URL para la API. */
 function fotoPequeña(dataUrl,max=1024){
   return new Promise((resolve,reject)=>{
     const img=new Image();
@@ -1603,12 +1854,19 @@ function fotoPequeña(dataUrl,max=1024){
         lienzo.width=Math.max(1,Math.round(img.naturalWidth*escala));
         lienzo.height=Math.max(1,Math.round(img.naturalHeight*escala));
         lienzo.getContext('2d').drawImage(img,0,0,lienzo.width,lienzo.height);
-        lienzo.toBlob(b=>b?resolve(b):reject(new Error('la foto no se pudo reducir')),'image/jpeg',0.8);
+        const copia=lienzo.toDataURL('image/jpeg',0.8);
+        lienzo.toBlob(b=>b?resolve({blob:b,dataUrl:copia}):reject(new Error('la foto no se pudo reducir')),'image/jpeg',0.8);
       }catch(err){reject(err)}
     };
     img.onerror=()=>reject(new Error('la foto no se pudo leer'));
     img.src=dataUrl;
   });
+}
+/* La imagen mínima con la que se prueba la capacidad de mirar: un píxel blanco, en las dos formas. */
+function pixelBlanco(){
+  const pixel=document.createElement('canvas');pixel.width=pixel.height=1;
+  const dataUrl=pixel.toDataURL('image/jpeg',0.8);
+  return new Promise(resolve=>pixel.toBlob(b=>resolve({blob:b,dataUrl}),'image/jpeg',0.8));
 }
 function promptDeLaMirada(){
   return [
@@ -1639,17 +1897,29 @@ function pintarEspera(){
   caja.innerHTML=filaPensando();
   caja.hidden=false;
 }
-/* ¿Este equipo acepta imágenes en el modelo local? Se pregunta UNA vez, con una sesión que solo
- * declara la capacidad (y se destruye enseguida): un Chrome con el modelo listo para texto puede
- * rechazar las imágenes —la entrada multimodal vive detrás de su propia bandera y su propia
- * descarga—, y en ese equipo la fila no se pinta: mejor ninguna fila que ojos prometidos. */
+/* ¿Este equipo acepta imágenes? Se pregunta UNA vez y con una imagen DE VERDAD, no con la letra de
+ * la documentación. Con el modelo del navegador: `availability({expectedInputs:[{type:'image'}]})`
+ * primero y después mirar un píxel blanco, porque hay Chrome con el modelo listo para texto que
+ * acepta la sesión y RECHAZA la imagen al pedirla (medido el 19/09). Con la API, el mismo criterio
+ * un nivel más arriba: se le manda un píxel blanco y solo entonces la fila se pinta. Mejor ninguna
+ * fila que ojos prometidos. */
 let verComprobado=null;
-/* No basta con que la sesión se cree: hay navegadores que la aceptan y RECHAZAN la imagen al
- * pedirla (medido el 19/09 en el Chrome del dueño). La sonda mira una imagen de verdad —un píxel
- * blanco— y se destruye: la verdad del equipo, pagada una sola vez por carga. */
 async function puedeVerLaFoto(){
   if(verComprobado!==null)return verComprobado;
-  if(!iaDisponible()){verComprobado=false;return false}
+  const proveedor=proveedorIA();
+  if(!proveedor){verComprobado=false;return false}
+  if(proveedor==='api'){
+    try{
+      const sonda=await sesionDelProveedor('Contesta solo «ok».');
+      await sonda.pedir({texto:'ok',imagen:await pixelBlanco()});
+      sonda.soltar();
+      verComprobado=true;
+    }catch(err){
+      console.warn('[revisión] la API no mira fotos en este momento',err);
+      verComprobado=false;
+    }
+    return verComprobado;
+  }
   try{
     /* 1) Lo que el navegador DICE de la entrada de imagen: 'unavailable' (este equipo no tiene la
      * variante multimodal), 'downloadable'/'downloading' (existe y no está bajada — y aquí no se baja
@@ -1664,9 +1934,7 @@ async function puedeVerLaFoto(){
     /* 2) Y la verdad de verdad: mirar una imagen —un píxel blanco—, porque hay navegadores que
      * aceptan la sesión y RECHAZAN la imagen al pedirla (medido el 19/09 en el Chrome del dueño). */
     const sonda=await IA_LOCAL.create({expectedInputs:[{type:'image'}]});
-    const pixel=document.createElement('canvas');pixel.width=pixel.height=1;
-    const blanco=await new Promise(r=>pixel.toBlob(r,'image/jpeg',0.8));
-    await sonda.prompt([{role:'user',content:[{type:'text',value:'ok'},{type:'image',value:blanco}]}]);
+    await sonda.prompt([{role:'user',content:[{type:'text',value:'ok'},{type:'image',value:(await pixelBlanco()).blob}]}]);
     if(sonda.destroy)sonda.destroy();
     verComprobado=true;
   }catch(err){
@@ -1682,8 +1950,12 @@ const sinCapacidadDeImagen=err=>/image|imagen|not.?support|unsupported|NotSuppor
  * llegar es justo lo que este prototipo no hace. (Sin modelo no se añade nada: ahí no prometía.) */
 function marcarSinOjos(){
   const p=document.getElementById('reviewNotice');
-  if(p&&iaDisponible()&&!/no está activada/.test(p.textContent))p.textContent+=' En este equipo la mirada de '+
-    (asistenteCfg().enabled?asistenteCfg().name:'la IA local')+' no está activada.';
+  if(!p||!iaDisponible())return;
+  const quien=asistenteCfg().enabled?asistenteCfg().name:'la IA local';
+  const dicho=proveedorIA()==='api'
+    ? ' En este momento la API del modelo no puede mirar las fotografías.'
+    : ` En este equipo la mirada de ${quien} no está activada.`;
+  if(!/no está activada|no puede mirar/.test(p.textContent))p.textContent+=dicho;
 }
 async function mirarLaFoto(){
   if(mirandoFoto||!state.analyzed||!state.photos.length)return;
@@ -1702,18 +1974,13 @@ async function mirarLaFoto(){
     if(!await puedeVerLaFoto()){
       await esperarLoMinimo(vista);
       marcarSinOjos();
-      pintarLaMirada('Lo que veo en la foto',MIRADA_SIN_OJOS,false);
+      pintarLaMirada('Lo que veo en la foto',MIRADA_SIN_OJOS(),false);
       return;
     }
-    const blob=await fotoPequeña(fotoMasGrande().dataUrl);
-    const sesion=await IA_LOCAL.create({ initialPrompts:[{role:'system',content:promptDeLaMirada()}],
-      expectedInputs:[{type:'text',languages:['es']},{type:'image'}] });
-    /* La API quiere MENSAJES con role y content, no partes sueltas (medido el 19/09: «Failed to
-     * read the 'content' property from 'LanguageModelMessage'»). El arnés de tests ya lo exige. */
-    const crudo=String(await sesion.prompt([{role:'user',content:[
-      {type:'text',value:'Mira esta fotografía del mueble y dime qué ves.'},
-      {type:'image',value:blob}]}])).trim();
-    if(sesion.destroy)sesion.destroy();
+    const imagen=await fotoPequeña(fotoMasGrande().dataUrl);
+    const sesion=await sesionDelProveedor(promptDeLaMirada(),{expectedInputs:[{type:'text',languages:['es']},{type:'image'}]});
+    const crudo=String(await sesion.pedir({texto:'Mira esta fotografía del mueble y dime qué ves.',imagen})).trim();
+    sesion.soltar();
     const dicho=leerLaMirada(crudo);
     const frase=dicho?dicho.frase:crudo;
     /* `sinTema`: una descripción de la foto no tiene que "responder" a nada — sin esa salida, una
@@ -1727,14 +1994,14 @@ async function mirarLaFoto(){
       pintarLaMirada('Lo que veo en la foto',frase,dicho?dicho.veMueble:false);
     }else{
       console.warn('[revisión] la mirada no pasó el cerco',juicio);
-      pintarLaMirada('Lo que veo en la foto',MIRADA_NO_MOSTRABLE,false);
+      pintarLaMirada('Lo que veo en la foto',MIRADA_NO_MOSTRABLE(),false);
     }
   }catch(err){
     console.warn('[revisión] la mirada local no llegó',err);
     /* Rechazo de la imagen = este equipo no tiene ojos: la fila lo dice igual (y queda aprendido).
      * Otro fallo —la foto no se leyó, el modelo se cayó— también se dice, con sus palabras. */
-    if(sinCapacidadDeImagen(err)){verComprobado=false;marcarSinOjos();pintarLaMirada('Lo que veo en la foto',MIRADA_SIN_OJOS,false);}
-    else pintarLaMirada('Lo que veo en la foto',MIRADA_FALLO,false);
+    if(sinCapacidadDeImagen(err)){verComprobado=false;marcarSinOjos();pintarLaMirada('Lo que veo en la foto',MIRADA_SIN_OJOS(),false);}
+    else pintarLaMirada('Lo que veo en la foto',MIRADA_FALLO(),false);
   }finally{
     mirandoFoto=false;
     ACI.emit('LOOK_COMPLETED',{});   // la mirada tiene sus eventos: la barra que el cliente ve es la suya
@@ -1825,11 +2092,11 @@ function estimateBaseline(){
  * determinista de Store.recommend() se queda tal cual— y si el modelo está pero no da algo utilizable,
  * la fila lo dice en vez de callarse. */
 let ordenDeLaIA=null, recomendandoIA=false;
-/* El modelo local tarda segundos, pero una pantalla sin telas no puede durar para siempre: si no
- * contesta dentro de este tope, la parrilla vuelve con el orden determinista y la fila lo dice.
+/* El modelo tarda segundos, pero una pantalla sin telas no puede durar para siempre: si no contesta
+ * dentro de este tope, la parrilla vuelve con el orden determinista y la fila lo dice.
  * (La spec lo baja para probar esa salida sin esperar los 15 s.) */
 let TOPE_RECOMENDACION_MS=15000;
-const conTope=(p,ms)=>Promise.race([p,new Promise((_,no)=>setTimeout(()=>no(new Error('La IA local no contestó a tiempo')),ms))]);
+const conTope=(p,ms)=>Promise.race([p,new Promise((_,no)=>setTimeout(()=>no(new Error('la IA no contestó a tiempo')),ms))]);
 /* Las telas no se enseñan mientras la IA las está ordenando: la parrilla aparece cuando hay algo que
  * enseñar —su orden, o el determinista con la fila diciendo que la recomendación no llegó—, y el
  * bloque de metros aparece CON ellas (14–19 metros antes de ver la tela es una cifra sin contexto).
@@ -1894,9 +2161,9 @@ async function recomendarConIA(){
    * finally, con o sin recomendación: lo que se enseña es la espera, no el desenlace. */
   ACI.emit('RECOMMENDATION_STARTED',{});
   try{
-    const sesion=await conTope(IA_LOCAL.create({initialPrompts:[{role:'system',content:promptDeLaRecomendacion(ranked)}]}),TOPE_RECOMENDACION_MS);
-    const crudo=String(await conTope(sesion.prompt([{role:'user',content:[{type:'text',value:'Ordénalas para mí y dime por qué la primera.'}]}]),TOPE_RECOMENDACION_MS)).trim();
-    if(sesion.destroy)sesion.destroy();
+    const sesion=await conTope(sesionDelProveedor(promptDeLaRecomendacion(ranked)),TOPE_RECOMENDACION_MS);
+    const crudo=String(await conTope(sesion.pedir({texto:'Ordénalas para mí y dime por qué la primera.'}),TOPE_RECOMENDACION_MS)).trim();
+    sesion.soltar();
     const dicho=leerLaRecomendacion(crudo);
     /* El cerco juzga la razón: con los precios del catálogo como lo único que el cliente tiene a la
      * vista (así citar un precio real no es "inventar una cifra") y sin la regla del tema, que es del
@@ -1929,7 +2196,14 @@ function renderFabrics(){
     ranked=ordenDeLaIA.map(id=>porId.get(id)).filter(Boolean)
       .concat(ranked.filter(r=>ordenDeLaIA.indexOf(String(r.fabric.id))<0));
   }
-  const grid=document.getElementById('fabricGrid');grid.innerHTML='';
+  const grid=document.getElementById('fabricGrid');
+  /* SELECCIÓN y CANTIDAD del paso (el dueño: «you can choose several fabrics, not only one» y «one
+   * field cantidad for fabric»): donde el camino lo declara (`variasTelas` — la reventa que pide
+   * sugerencias), cada tarjeta elegida lleva SU campo de cantidad y SU fila en la lista: se eligen
+   * varias telas y cada una declara cuánto. En las demás ramas se elige UNA —la del proyecto— como
+   * siempre. */
+  const varias=esVariasTelas();
+  grid.innerHTML='';
   if(!ranked.length){
     grid.innerHTML='<p class="field-error">No hay telas disponibles en este momento. Un asesor te contactará con opciones.</p>';
     state.fabric=null;updateEstimate();return;
@@ -1943,19 +2217,47 @@ function renderFabrics(){
 
   const best=ordenDeLaIA?(ranked[0]?ranked[0].fabric.id:null):(ranked[0].score>0?ranked[0].fabric.id:null);
   ranked.forEach(r=>{
-    const f=r.fabric,on=String(f.id)===String(state.fabric.id);
-    const card=document.createElement('button');card.type='button';
+    const f=r.fabric;
+    /* Con varias telas la tarjeta está ELEGIDA si tiene su fila en la lista (se suelta quitándola);
+     * con una sola, si es la tela del proyecto. */
+    const on=varias?!!filaDeLaListaPor(f.id):String(f.id)===String(state.fabric.id);
+    const card=document.createElement('div');
     card.className='fabric-card'+(on?' selected':'')+(r.overBudget?' over-budget':'');
-    card.setAttribute('aria-pressed',String(on));
-    card.innerHTML=`<div class="swatch" style="background:${Store.swatch(f)}">`+
+    card.dataset.fabric=String(f.id);
+    if(!varias)card.setAttribute('role','button');
+    /* La tarjeta interior es un botón de verdad (con el campo de cantidad FUERA de él: un input
+     * dentro de un botón no es HTML válido y el clic no llegaría). */
+    const suya=filaDeLaListaPor(f.id);
+    const rules=Store.fabricRules(f)||{},porRollo=rules.saleUnit==='rollo';
+    const campoCantidad=(varias&&on)
+      ?`<div class="reco-cantidad"><label>Cantidad <span class="unit">${porRollo?'rollos':'m'}</span></label>`+
+       `<input type="number" class="reco-cantidad-input" min="0.1" step="0.1" inputmode="decimal" `+
+       `value="${suya?esc(String((suya.querySelector('.list-metros')||{}).value||'')):''}" placeholder="${porRollo?'Ej. 2':'Ej. 22'}">`+
+       `<small>Queda en tu lista, con esta referencia.</small></div>`
+      :'';
+    card.innerHTML=`<button type="button" class="fabric-pick" aria-pressed="${on}">`+
+      `<div class="swatch" style="background:${Store.swatch(f)}">`+
       `${String(f.id)===String(best)?'<span class="best-match">Mejor coincidencia</span>':''}</div>`+
       `<div class="fabric-card-body"><b>${esc(f.name)} · ${esc(f.colorName)}</b>`+
       `<small>${money(f.price)} por metro · Precio de referencia</small>`+
       `<div class="fabric-tags">${(f.tags||[]).map(t=>`<span>${esc(t)}</span>`).join('')}</div>`+
       (r.reasons.length?`<p class="why"><b>Por qué te la sugerimos:</b> ${esc(r.reasons.join(' · '))}</p>`:'')+
       (r.overBudget?`<p class="why over">Por encima del presupuesto que indicaste</p>`:'')+
-      `</div>`;
-    card.addEventListener('click',()=>{state.fabricTouched=true;state.fabric=f;renderFabrics();ACI.emit('FABRIC_SELECTED',ACI.fabricPayload(f,false))});
+      `</div></button>`+campoCantidad;
+    card.addEventListener('click',e=>{
+      if(e.target.closest('.reco-cantidad'))return;   // escribir la cantidad no cambia la elección
+      state.fabricTouched=true;state.fabric=f;
+      const errReco=document.getElementById('recoError');if(errReco)errReco.hidden=true;
+      if(varias){
+        /* Varias: la que ya tiene fila se suelta (su fila se va con ella); la que no, entra. */
+        const enLaLista=filaDeLaListaPor(f.id);
+        if(enLaLista){enLaLista.remove();updateEstimate()}
+        else{agregarFilaDeLaLista(f.id);quitarLaFilaVaciaDeLaLista()}
+      }
+      renderFabrics();ACI.emit('FABRIC_SELECTED',ACI.fabricPayload(f,false));
+    });
+    const cajaCantidad=card.querySelector('.reco-cantidad-input');
+    if(cajaCantidad)cajaCantidad.addEventListener('input',()=>escribirLaCantidadDeLaTela(f.id,cajaCantidad.value));
     grid.appendChild(card);
     // La imagen de la tela está en IndexedDB: la tarjeta nace con el color y
     // Store.paintSwatch la reemplaza si el backoffice cargó una foto.
@@ -2479,25 +2781,60 @@ function propose(actions){
   if(chatPanel.classList.contains('open'))yes.focus({preventScroll:true});
 }
 propose.seq=0;
-/* ── Lía con el modelo local, cuando el navegador lo trae ─────────────────────────────
- * El chat sigue teniendo el cerebro simulado (assistant-brain.js) como respuesta por
- * defecto: es lo que funciona con doble clic y lo que la demo muestra hoy. Si la página
- * se sirve por localhost en un Chrome con modelo local, además Lía conversa: el modelo
- * escribe con el contexto de la casa, el cerco (assistant-fence.js) revisa CADA respuesta
- * y, si el turno lo rompe, se muestra la respuesta preparada del cerebro. El modelo nunca
- * tiene la última palabra sobre lo que lee el cliente, y nada sale de este equipo. */
-const IA_LOCAL = (() => (typeof LanguageModel !== 'undefined' ? LanguageModel : (globalThis.ai && globalThis.ai.languageModel) || null))();
-let sesionIA = null, disponibilidadIA = 'unavailable';
+/* ── La sesión y la nota del chat: el modelo, cuando lo hay (el quién está más arriba) ─────
+ * Una sesión de cualquiera de los dos proveedores, con la misma cara: `pedir({texto, imagen})`
+ * devuelve el texto crudo y `soltar()` la cierra. La de la API conserva la historia en su propio
+ * arreglo de mensajes (la API de DeepSeek no tiene sesión con memoria); la del navegador, en su
+ * sesión de siempre. La imagen viaja como {blob, dataUrl}: el navegador la quiere como Blob y la
+ * API como image_url en base64. */
+let sesionIA = null;
 
-/* Lía usa el modelo SOLO si ya está listo en el equipo (availability() === 'available'). En
- * 'downloadable' no se toca: bajar cuatro gigas no puede ser el precio de abrir una cotización. */
-function iaDisponible(){ return !!IA_LOCAL && !!window.isSecureContext && disponibilidadIA === 'available'; }
+async function sesionDelProveedor(sistema, opciones = {}){
+  const temperatura = opciones.temperatura == null ? 0.3 : opciones.temperatura;
+  if (proveedorIA() === 'api') {
+    const historial = [{ role: 'system', content: sistema }];
+    return {
+      async pedir({ texto, imagen }){
+        const contenido = imagen
+          ? [{ type: 'text', text: texto }, { type: 'image_url', image_url: { url: imagen.dataUrl, detail: 'low' } }]
+          : texto;
+        historial.push({ role: 'user', content: contenido });
+        const r = await fetch('/__ia/chat', { method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ mensajes: historial, temperatura }) });
+        const d = await r.json().catch(() => null);
+        if (!r.ok || !d || typeof d.content !== 'string') throw new Error((d && d.error) || `la API de DeepSeek contestó ${r.status}`);
+        historial.push({ role: 'assistant', content: d.content });
+        return d.content;
+      },
+      soltar(){ /* la historia es de esta sesión: soltarla es dejar de usarla */ }
+    };
+  }
+  const s = await IA_LOCAL.create({ initialPrompts: [{ role: 'system', content: sistema }],
+    ...(opciones.expectedInputs ? { expectedInputs: opciones.expectedInputs } : {}),
+    temperature: temperatura });
+  return {
+    async pedir({ texto, imagen, suelto }){
+      /* La API del navegador acepta las dos formas: una pregunta pelada, o MENSAJES con role y content
+       * (medido el 19/09: «Failed to read the 'content' property from 'LanguageModelMessage'» — una
+       * petición mal formada se cae en el navegador del dueño, así que el arnés exige los mensajes).
+       * El chat pregunta pelado, como siempre; la mirada y la recomendación van en mensajes. */
+      const partes = suelto ? texto : [{ role: 'user', content: imagen
+        ? [{ type: 'text', value: texto }, { type: 'image', value: imagen.blob }]
+        : [{ type: 'text', value: texto }] }];
+      return String(await s.prompt(partes)).trim();
+    },
+    soltar(){ try { if (s.destroy) s.destroy(); } catch (err) { /* ya estaba cerrada */ } }
+  };
+}
 
-/* La nota del panel dice la verdad de cada modo. */
+/* La nota del panel dice la verdad de cada modo — y con la API la dice sobre lo que sale del
+ * equipo: lo que el cliente escribe viaja al servicio para que le conteste. */
 function notaDelChat(){
   const el = document.querySelector('.chat-sim-note'); if (!el) return;
-  if (iaDisponible()) {
-    const quien = asistenteCfg().enabled ? asistenteCfg().name : 'El asistente';
+  const quien = asistenteCfg().enabled ? asistenteCfg().name : 'El asistente';
+  if (proveedorIA() === 'api') {
+    el.textContent = `${quien} responde con la API de DeepSeek (no es una persona): lo que escribas se envía a ese servicio para que te conteste.`;
+  } else if (iaLocalLista()) {
     el.textContent = `${quien} responde con el modelo local del navegador (no es una persona): lo que escribas no sale de este equipo.`;
   } else if (disponibilidadIA === 'downloadable' || disponibilidadIA === 'downloading') {
     el.textContent = 'Respuestas simuladas: este equipo tiene el modelo local listo para activarse (se descarga una vez desde el navegador).';
@@ -2505,9 +2842,22 @@ function notaDelChat(){
     el.textContent = 'Respuestas simuladas: este prototipo no usa inteligencia artificial real.';
   }
 }
+
+/* ¿Hay llave en este equipo? Lo dice el servidor de desarrollo; si no contesta —o contesta que no—,
+ * todo sigue como estaba: sin llave no se promete nada. */
+async function preguntarPorLaAPI(){
+  if (!IA_POR_HTTP || typeof fetch !== 'function') return;
+  try {
+    const r = await fetch('/__ia/estado');
+    const d = r.ok ? await r.json() : null;
+    if (d && d.api) { apiLista = true; apiModelo = String(d.modelo || ''); }
+  } catch (err) { /* sin puerta no hay API: queda el respaldo de siempre */ }
+  notaDelChat();
+}
 if (IA_LOCAL && IA_LOCAL.availability) {
   IA_LOCAL.availability().then(a => { disponibilidadIA = a; notaDelChat(); }).catch(() => { disponibilidadIA = 'unavailable'; notaDelChat(); });
 } else { notaDelChat(); }
+preguntarPorLaAPI();
 
 /* Lo que Lía ES, y dura toda la conversación: persona, tono, el nombre del documento y las reglas
  * que no puede romper. Los HECHOS del caso NO viven aquí: viajan en cada turno
@@ -2533,6 +2883,9 @@ function estadoDelCotizador(c){
     `Paso del cliente: «${(c.currentStep && c.currentStep.name) || ''}»${c.submitted ? ', y ya envió su solicitud' : ''}.`,
     `Línea que está cotizando: «${(c.service && c.service.label) || 'todavía sin elegir'}».`,
   ];
+  /* La RAMA (ruta → propósito → saber): el cliente ya eligió por dónde va y el asistente tiene que
+   * saberlo, o vuelve a preguntarle lo mismo (dueño, 24/09). */
+  if (c.ruta || c.proposito || c.saber) partes.push(`Camino elegido por el cliente: ${[c.ruta, c.proposito, c.saber].filter(Boolean).map(x => '«' + x.label + '»').join(' → ')}.`);
   /* El mueble y las medidas solo se cuentan si la línea las pregunta: en «Tapicería arquitectónica»
    * (que no pregunta ninguna de las dos) el turno no puede hablar de un sofá. */
   const delMueble=c.asksFurniture ? `Mueble: ${c.selectedFurniture || 'sin elegir'}${c.furnitureNote ? ` (el cliente lo describe: «${c.furnitureNote}»)` : ''}` : '';
@@ -2541,6 +2894,14 @@ function estadoDelCotizador(c){
   if (c.measurements && c.measurements.ranges) partes.push(`Lo habitual para este mueble, según el propio cotizador: ${JSON.stringify(c.measurements.ranges)}.`);
   if (c.photos) partes.push(`Fotos cargadas: ${c.photos.count} (el cotizador pide entre ${c.photos.min} y ${c.photos.max}).`);
   if (c.analysis && c.analysis.done) partes.push(`Revisión del formulario: ${(c.analysis.warnings || []).concat(c.analysis.oddMeasures || []).join('; ') || 'sin observaciones'}. Si el cliente pregunta por su formulario, dile lo que dice esa revisión.`);
+  /* Una fila cuenta lo que DECLARA: la tela con su cantidad, o el hecho de estar elegida sin cantidad
+   * todavía — la fila de fábrica (una tela, 0 m) no se le cuenta a nadie como declarada. */
+  if ((c.lista || []).length) partes.push(`Lo declarado en la lista: ${c.lista.map(r => `${r.name || 'sin tela'}${r.valor ? ` ${r.valor} ${r.unidad}${r.unidad === 'rollos' && r.metros ? ` (${r.metros} m)` : ''}` : ' (sin cantidad todavía)'}`).join(' · ')}.`);
+  if (c.order && (c.order.dicho || (c.order.pedido && c.order.pedido.id))) partes.push(`Pedido anterior: ${c.order.pedido && c.order.pedido.id ? `«${c.order.pedido.id}» (${c.order.pedido.fabricName || 'sin tela registrada'})` : 'referencia escrita, todavía sin encontrar en este navegador'}.`);
+  if (c.location && (c.location.customerCity || c.location.serviceCity)) partes.push(`Atención: el cliente escribe desde «${c.location.customerCity || '—'}» y el servicio es para «${c.location.serviceCity || '—'}»${c.location.servicePoint ? `; sede «${c.location.servicePoint.name}»` : ''}.`);
+  if (c.contact) partes.push(`Datos de contacto (con la autorización dada): ${c.contact.name} · ${c.contact.email} · ${c.contact.phone}.`);
+  else if (c.contactDeclared && (c.contactDeclared.name || c.contactDeclared.email || c.contactDeclared.phone))
+    partes.push(`Datos de contacto: ya declarados ${['name', 'email', 'phone'].filter(k => c.contactDeclared[k]).map(k => ({ name: 'el nombre', email: 'el correo', phone: 'el celular' })[k]).join(', ')} (sin autorización todavía). No los vuelvas a pedir: falta la autorización, y la da el cliente.`);
   if (c.fabric) partes.push(`Tela elegida: ${c.fabric.name}${c.fabric.colorName ? ' (' + c.fabric.colorName + ')' : ''}${c.fabric.auto ? ', sugerida por el cotizador' : ''}.`);
   partes.push(`Estimación vigente: ${est.priceLabel || 'todavía sin calcular'}${(est.parts || []).length ? ' · se compone de ' + est.parts.map(p => p.label + ' ' + (p.text || '')).join(' + ') : ''}.`);
   if ((est.pending || []).length) partes.push(`Queda pendiente de confirmar por un asesor: ${est.pending.map(p => p.label || p).join(', ')}.`);
@@ -2551,11 +2912,11 @@ function estadoDelCotizador(c){
  * UNA sesión por conversación (la historia se conserva), y el estado viaja en el prompt de cada
  * turno: el cliente puede cambiar de paso, de línea o de medidas y la respuesta siguiente ya lo
  * sabe, sin volver a crear la sesión. */
-async function respuestaLocal(texto){
+async function respuestaDelModelo(texto){
   const c = ACI.context();
-  if (!sesionIA) sesionIA = await IA_LOCAL.create({ initialPrompts: [{ role: 'system', content: promptDeLaCasa() }], temperature: 0.3 });
-  const crudo = String(await sesionIA.prompt(`ESTADO ACTUAL DEL COTIZADOR\n${estadoDelCotizador(c)}\n\nEl cliente dice: «${String(texto)}»`)).trim();
-  const v = CercoAsistente.revisar(crudo, { estimacion: (c.estimate || {}).priceLabel || '' });
+  if (!sesionIA) sesionIA = await sesionDelProveedor(promptDeLaCasa());
+  const crudo = String(await sesionIA.pedir({ texto: `ESTADO ACTUAL DEL COTIZADOR\n${estadoDelCotizador(c)}\n\nEl cliente dice: «${String(texto)}»`, suelto: true })).trim();
+  const v = CercoAsistente.revisar(crudo, { estimacion: (c.estimate || {}).priceLabel || '', permitidas: preciosDelCatalogo(), tema: elVocabularioDelNegocio() });
   return v.limpia ? { message: crudo, proposedActions: [] } : null;
 }
 
@@ -2591,15 +2952,1226 @@ async function askAssistant(text){
   const responderSimulado = async () => { const out=AssistantBrain.respond(ACI.context(),text); await listo(); addMessage(out.message,'bot'); propose(out.proposedActions); };
   if (!iaDisponible()) { setTimeout(responderSimulado,350); return; }
   let out = null;
-  try { out = await respuestaLocal(text); } catch (err) { out = null; }
+  try { out = await respuestaDelModelo(text); } catch (err) { out = null; }
   if (out) { await listo(); addMessage(out.message,'bot'); } else await responderSimulado();
 }
 notaDelChat();
 document.querySelectorAll('#messages .quick-questions button').forEach(b=>b.addEventListener('click',()=>askAssistant(b.textContent)));
 document.getElementById('chatForm').addEventListener('submit',e=>{e.preventDefault();const input=document.getElementById('chatInput');const value=input.value;input.value='';askAssistant(value)});
-// Proactive, only for inconsistencies the wizard itself found, and never while the customer types.
+
+/* ── La conversación que llena el contrato (docs/contrato-conversacional.md) ──────────────
+ * El formulario es la referencia del QUÉ; ella elige el CÓMO. Todo lo que entra aquí se aplica
+ * por los MISMOS controles y eventos que un dedo del cliente (el asistente no tiene poderes
+ * extra), el contrato (`contrato.js`) dice qué falta y qué valores son legales, y el formulario
+ * —visible detrás del modal— se mueve solo porque el estado es uno. */
+const voz = {
+  abierta: false,
+  campo: null,            // el campo del contrato que se está preguntando
+  mensajes: [],
+  sesion: null,           // la sesión del modelo de la conversación (una por diálogo)
+  revisionDicha: false,   // lo que vio la revisión (fotos y medidas) se dice UNA vez
+  telaPreguntada: false,  // el cierre va por fases, en este mismo recuadro (nunca al formulario)
+  autorizacionPedida: false,
+  consentVigilado: false,
+  envioPedido: false
+};
+const textoVoz = el => (el ? String(el.textContent || '') : '');
+const normalizar = s => String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+
+/* El mundo del contrato, armado con lo que la página ya sabe (nada se duplica: los catálogos, los
+ * rangos y las cuentas salen de las mismas fuentes que el formulario). */
+function mundoDelContrato(){
+  const caja = id => document.getElementById(id);
+  const ruta = rutasLine().filter(r => r.id === state.ruta)[0] || null;
+  const prop = propositosRuta().filter(p => p.id === state.proposito)[0] || null;
+  const saberEl = saberesDelProposito().filter(s => s.id === state.saber)[0] || null;
+  const min = photoLimits();
+  return {
+    catalogo: {
+      muebles: Store.activeFurniture().map(f => f.name),
+      rangos: measureRanges,
+      danos: [...document.querySelectorAll('#damageGrid input')].map(i => i.value),
+      lineas: (Store.services() || []).map(s => ({ id: s.id, label: s.label }))
+    },
+    linea: state.service, proposito: prop, saber: saberEl,
+    /* El flujo del wizard (qué pasos tiene a la vista ESTA rama): el contrato lo lee para saber qué
+     * campos mandan — los pasos no se esconden con `hidden`, viajan con `skippedSteps`. */
+    flujo: typeof pasosVisibles === 'function' ? pasosVisibles() : [],
+    mueble: { nombre: state.furniture, descripcion: (caja('furnitureOther') || {}).value || '' },
+    ruta: ruta ? Object.assign({}, ruta, { rutasConLista: RUTAS_CON_LISTA }) : null,
+    rutas: rutasLine(), propositos: propositosRuta(), saberes: saberesDelProposito(),
+    fotos: { cargadas: state.photos.length, min: min.min },
+    danos: { marcados: damageIds().length },
+    medidas: { valores: { width: +(caja('width') || {}).value || 0, height: +(caja('height') || {}).value || 0, depth: +(caja('depth') || {}).value || 0 }, mueble: state.furniture },
+    /* La compra está declarada cuando la fila DECLARA algo: su cantidad (en metros, o rollos con su
+     * equivalente), o —cuando el cliente conoce la tela y no cuánto necesita— la referencia, que el
+     * motor convierte. La fila de nacimiento (la referencia por defecto del selector, 0 m) no cuenta:
+     * el contrato daba por llena una lista vacía y la conversación saltaba al contacto sin pedirla. */
+    lista: { filas: typeof filasDeLaLista === 'function' ? filasDeLaLista().filter(r => r.fabricId && ((typeof esIntencionTela === 'function' && esIntencionTela()) || r.metros > 0)).length : 0, intencionTela: !!(typeof esIntencionTela === 'function' && esIntencionTela()) },
+    pedido: { dicho: !!(caja('pedidoBusca') || {}).value },
+    revision: { analizada: state.analyzed },
+    respuestas: typeof askAnswers === 'function' ? (asksLine().reduce((o, a) => Object.assign(o, { [a]: askAnswers(a) }), {})) : {},
+    asks: asksLine().map(a => Object.assign({ id: a }, Store.askSpec(a))),
+    atencion: { cliente: (caja('customerCity') || {}).value || '', servicio: (caja('serviceCity') || {}).value || '' },
+    /* Los campos que el recorrido agregó al contrato (tela elegida a mano, insumos del taller,
+     * estilo/color y presupuesto): sin ellos aquí, la conversación no los ve — y los pedía el
+     * código del formulario, no el contrato (dueño, 24/09: «no has hecho lo de los insumos»,
+     * «no me dejaste escoger el color»). */
+    fabric: pideRecomendacion() && state.fabric
+      ? { id: state.fabric.id, name: state.fabric.name, colorName: state.fabric.colorName, auto: !state.fabricTouched, touched: !!state.fabricTouched }
+      : null,
+    supplies: insumosMarcados(),
+    preferencias: pidePreferencias()
+      ? { needs: [...document.querySelectorAll('#needsGrid input:checked')].map(x => x.value),
+          style: (caja('style') || {}).value || '', color: (caja('color') || {}).value || '' }
+      : null,
+    budget: presupuestoDeclarado(),
+    contacto: {
+      nombre: (caja('fullName') || {}).value || '', correo: (caja('email') || {}).value || '',
+      celular: (caja('phone') || {}).value || '', autoriza: !!((caja('consent') || {}).checked)
+    }
+  };
+}
+
+/* Lo que ella pregunta. La frase es suya (y con la API la dirá con sus palabras); el HECHO —qué
+ * falta y qué valores son legales— es del contrato. */
+const PREGUNTA_VOZ = {
+  linea: '¿Qué necesitas hacer? ' + (Store.services() || []).map(s => s.label).join(', ') + '.',
+  ruta: () => '¿Quieres una compra nueva o completar un pedido anterior?',
+  proposito: () => '¿Para qué necesitas la tela? ' + propositosRuta().map(p => p.label).join(', ') + '.',
+  saber: () => '¿Qué conoces ya? ' + saberesDelProposito().map(s => s.label).join(', ') + '.',
+  mueble: () => '¿Qué mueble vamos a cotizar? ' + Store.activeFurniture().map(f => f.name).join(', ') + '.',
+  fotos: (f) => `Porfa sube al menos ${f.restantes} ${f.restantes === 1 ? 'foto' : 'fotos'} para conocer mejor tu mueble.`,
+  danos: () => '¿Qué hay que revisar? ' + [...document.querySelectorAll('#damageGrid input')].map(i => i.dataset.label || i.value).join(', ') + ', o «que lo revisen».',
+  medidas: (f) => `¿Cuánto mide tu ${String(state.furniture || 'mueble').toLowerCase()}? Dime ancho, alto y fondo en centímetros.`,
+  revision: () => 'Cuando quieras reviso tu información: dime «revisa» y la miro.',
+  atencion: () => '¿En qué ciudad estás y para qué ciudad es el servicio?',
+  contacto: () => 'Para la pre-cotización necesito tu nombre, tu correo y tu celular. La autorización la marcas tú en el paso de contacto.',
+  lista: null, pedido: null
+};
+const PASO_DE = { linea: 0, mueble: 1, fotos: 1, danos: 2, medidas: 9, revision: 13, lista: 20, pedido: 21, atencion: 15, contacto: 15, ruta: 18, proposito: 22, saber: 23 };
+
+function decirEnLaConversacion(texto, quien = 'bot', callar = false){
+  const caja = document.getElementById('vozMessages'); if (!caja) return;
+  const m = document.createElement('div'); m.className = 'message ' + quien;
+  m.textContent = texto; caja.appendChild(m);
+  voz.mensajes.push({ quien, texto });
+  caja.scrollTop = caja.scrollHeight;
+  /* Ella lo dice también en voz alta (si hay voces en el sistema y no la silenciaron). `callar` es
+   * para los recibos del sistema («Anotado: …»): se leen en la conversación, no se hablan — hablar
+   * más rato deja el micrófono sordo mientras tanto (dueño: «ese micrófono se demora en
+   * escribir», «eso estaba bien»). Y con la ventana CERRADA no habla nunca: el turno en camino
+   * llegaba después del cierre y ella seguía sonando (dueño, 25/09). */
+  if (quien === 'bot' && !callar && voz.abierta) hablarConSuVoz(texto);
+}
+
+/* La rama del estado, como cadena de ids: es lo que el cotizador llama «el caso» que se está
+ * armando (línea → ruta → propósito → saber). */
+function laRamaDelEstado(){
+  const partes = [state.service && state.service.id, state.ruta, state.proposito, state.saber].filter(Boolean);
+  return partes.join('.');
+}
+function valorDeCampo(id){
+  const el = document.getElementById(id);
+  return el && 'value' in el ? String(el.value || '') : '';
+}
+
+/* OTRO CASO ES OTRO CASO: lo declarado pertenece a UNA pre-cotización, DENTRO de la conversación. Si
+ * el cliente se va a otra línea, o lo pide («empezar de cero», «otra cotización»), los datos del
+ * caso se van con la anterior — ni la ciudad, ni la compra, ni las medidas de un caso viajan al
+ * siguiente (el dueño: «¿qué pasa si el cliente quiere otra pre-cotización por otro motivo?»).
+ * Recargar la página también empieza limpio: la memoria es de la conversación, no del navegador. */
+function olvidarElCaso(){
+  const caja = document.getElementById('listRows'); if (caja) caja.innerHTML = '';
+  ['width', 'height', 'depth', 'furnitureNote', 'fullName', 'email', 'phone', 'pedidoBusca', 'vozInput'].forEach(id => {
+    const el = document.getElementById(id); if (el && 'value' in el) el.value = '';
+  });
+  ['style', 'color', 'budget', 'entrega', 'city', 'customerCity', 'serviceCity', 'customerCityOther', 'serviceCityOther', 'seats', 'cushions', 'coverage'].forEach(id => {
+    const el = document.getElementById(id); if (el && el.options && el.options.length) el.selectedIndex = 0;
+  });
+  document.querySelectorAll('#needsGrid input[type="checkbox"], #damageGrid input[type="checkbox"]').forEach(i => { i.checked = false; });
+  state.damages = [];
+  state.photos = [];
+  state.fabric = null;
+  state.analyzed = false;
+  try { voz.mensajes = []; const log = document.getElementById('vozMessages'); if (log) log.innerHTML = ''; } catch (err) { /* la capa puede no existir */ }
+  try { renderPhotos(); } catch (err) { /* sin fotos que pintar */ }
+  try { updateEstimate(); } catch (err) { /* la estimación se rehace al pasar */ }
+}
+function pintarProgresoDeLaConversacion(){
+  const el = document.getElementById('vozProgreso'); if (!el) return;
+  const p = Contrato.progreso(mundoDelContrato());
+  el.textContent = p.porcentaje >= 100
+    ? 'Listo: tengo todo lo que tu pre-cotización necesita.'
+    : `Vamos ${p.hechos} de ${p.total}: ${p.faltantes[0].etiqueta.toLowerCase()} es lo que falta ahora.`;
+  const cuenta = document.getElementById('vozFotoCuenta');
+  if (cuenta) {
+    const min = photoLimits().min;
+    cuenta.textContent = `${state.photos.length} de ${min}${state.photos.length >= min ? ' ✓' : ' (mínimo ' + min + ')'}`;
+  }
+}
+
+/* La parrilla de tarjetas (línea, camino, propósito, saber, mueble): se elige pulsando la tarjeta
+ * del catálogo, como lo haría el cliente. Devuelve el texto de la elegida, o null. */
+function elegirTarjeta(selector, texto, etiqueta){
+  /* La raíz de una palabra (cuatro letras) alcanza para que «retapizar» encuentre «Retapizado de
+   * muebles» y «tapicen» encuentre «Tapizado»: la conversación habla como la gente. Con la API el
+   * modelo hará este trabajo mejor; sin ella, esto es lo que hay y se dice por qué. */
+  const palabras = s => normalizar(s).split(/[^a-z0-9]+/).filter(w => w.length >= 4).map(w => w.slice(0, 4));
+  const dichas = palabras(texto);
+  const cartas = [...document.querySelectorAll(selector)];
+  const puntuar = c => palabras(textoVoz(c.querySelector('b')) + ' ' + (c.dataset.furniture || c.dataset.service || ''))
+    .filter(w => dichas.includes(w)).length;
+  const mejor = cartas.map(c => ({ carta: c, puntos: puntuar(c) })).sort((a, b) => b.puntos - a.puntos)[0];
+  if (!mejor || !mejor.puntos) return null;
+  mejor.carta.click();
+  return textoVoz(mejor.carta.querySelector('b')) || etiqueta;
+}
+/* Los selects de ciudad: se elige por el texto de sus opciones, con la misma raíz de cuatro letras
+ * (la opción dice «Bogotá · Principal» y el cliente dice «estoy en Bogotá»: gana la ciudad que
+ * aparece en sus palabras). */
+function elegirCiudad(id, texto){
+  const sel = document.getElementById(id); if (!sel) return null;
+  const palabras = s => normalizar(s).split(/[^a-z0-9]+/).filter(w => w.length >= 4).map(w => w.slice(0, 4));
+  const dichas = palabras(texto);
+  const opciones = [...sel.options].filter(o => o.value);
+  /* La ciudad vive en el rótulo del `optgroup` (el `option` solo dice el punto: «Principal»). */
+  const textoDe = o => o.textContent + ' ' + (o.parentNode && o.parentNode.tagName === 'OPTGROUP' ? o.parentNode.label : '');
+  const puntuar = o => palabras(textoDe(o)).filter(w => dichas.includes(w)).length;
+  const mejor = opciones.map(o => ({ o, puntos: puntuar(o) })).sort((a, b) => b.puntos - a.puntos)[0];
+  if (!mejor || !mejor.puntos) {
+    /* Una ciudad que no está en la lista no se pierde ni se cambia por la de arriba: entra por «Otra
+     * ciudad…» con su nombre escrito — el campo que ya existe para eso. Solo con un nombre propio
+     * (mayúscula inicial en lo que dijo): «no sé» no inventa una ciudad. */
+    const otras = opciones.filter(o => /otra/i.test(textoDe(o)))[0];
+    const palabra = (String(texto).match(/\b[A-ZÁÉÍÓÚÑ][a-záéíóúñü]{2,}/) || [])[0];
+    if (otras && palabra) {
+      sel.value = otras.value; sel.dispatchEvent(new Event('change', { bubbles: true }));
+      const caja = document.getElementById(id === 'customerCity' ? 'customerCityOther' : 'serviceCityOther');
+      if (caja) { caja.value = palabra; caja.dispatchEvent(new Event('input', { bubbles: true })); }
+      return palabra;
+    }
+    return null;
+  }
+  sel.value = mejor.o.value; sel.dispatchEvent(new Event('change', { bubbles: true }));
+  return mejor.o.textContent;
+}
+/* Los campos de texto del contacto: el valor entra por el mismo camino que un tecleo. */
+function escribirCampo(id, valor){
+  const el = document.getElementById(id); if (!el) return false;
+  el.value = valor; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true }));
+  return true;
+}
+
+/* Los números DICHOS —«dos rollos», «veinte metros»—: el cliente habla, no escribe dígitos. Los
+ * dígitos mandan cuando están; si no, la primera palabra-número. */
+const NUMEROS_DICHOS = { un: 1, uno: 1, una: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9,
+  diez: 10, once: 11, doce: 12, trece: 13, catorce: 14, quince: 15, dieciseis: 16, diecisiete: 17, dieciocho: 18,
+  diecinueve: 19, veinte: 20, veintiuno: 21, veintidos: 22, veintitres: 23, veinticuatro: 24, veinticinco: 25,
+  veintiseis: 26, veintisiete: 27, veintiocho: 28, veintinueve: 29, treinta: 30, cuarenta: 40, cincuenta: 50,
+  sesenta: 60, setenta: 70, ochenta: 80, noventa: 90, cien: 100, ciento: 100 };
+const numeroDicho = t => {
+  const d = /(\d+(?:[.,]\d+)?)\s*(rollos?|metros?|m\b)?/.exec(t);
+  if (d) return { valor: +String(d[1]).replace(',', '.'), unidad: d[2] || '' };
+  const palabras = Object.keys(NUMEROS_DICHOS).sort((a, b) => b.length - a.length).join('|');
+  const m = new RegExp('\\b(' + palabras + ')\\b\\s*(rollos?|metros?|m\\b)?').exec(t);
+  return m ? { valor: NUMEROS_DICHOS[m[1]], unidad: m[2] || '' } : { valor: 0, unidad: '' };
+};
+/* Lo que el cliente dijo, aplicado al formulario. Devuelve {ok} o {ok:false, motivo, paso}: lo que
+ * esta conversación todavía no sabe llenar se entrega al formulario, con su paso a la vista. */
+async function aplicarLoDicho(id, texto){
+  const t = normalizar(texto);
+  switch (id) {
+    /* La RAMA entera de una vez: el modelo elige el caso y anota el id de su contrato; aquí se
+     * aplica la cadena nodo por nodo con los MISMOS controles (la tarjeta de la línea, la del
+     * camino, la del propósito y la de lo que sabe), validando cada paso contra el catálogo. */
+    case 'rama': {
+      const c = elIndiceDeContratos().filter(x => x.id === String(texto || '').trim())[0];
+      if (!c) return { ok: false, motivo: 'no reconocí esa rama del catálogo', paso: 0 };
+      for (let i = 0; i < c.nodos.length; i++) {
+        const hecho = await aplicarValorDelContrato(c.nodos[i], c.cadena[i]);
+        if (!hecho || !hecho.ok) return hecho || { ok: false, motivo: 'no pude aplicar la rama', paso: 0 };
+      }
+      return { ok: true, dicho: `rama ${c.cadena.join(' → ')}` };
+    }
+    case 'linea': {
+      const dicho = elegirTarjeta('#serviceGrid .service-choice', texto);
+      return dicho ? { ok: true, dicho } : { ok: false, motivo: 'no reconocí esa línea', paso: 0 };
+    }
+    case 'ruta': {
+      const dicho = elegirTarjeta('#routeGrid .service-choice', texto);
+      return dicho ? { ok: true, dicho } : { ok: false, motivo: 'no reconocí ese camino', paso: 18 };
+    }
+    case 'proposito': {
+      const dicho = elegirTarjeta('#purposeGrid .service-choice', texto);
+      return dicho ? { ok: true, dicho } : { ok: false, motivo: 'no reconocí esa respuesta', paso: 22 };
+    }
+    case 'saber': {
+      const dicho = elegirTarjeta('#saberGrid .service-choice', texto);
+      return dicho ? { ok: true, dicho } : { ok: false, motivo: 'no reconocí esa respuesta', paso: 23 };
+    }
+    case 'mueble': {
+      const dicho = elegirTarjeta('.furniture-card', texto);
+      if (!dicho) return { ok: false, motivo: 'ese mueble no está en el catálogo', paso: 1 };
+      if (normalizar(dicho) === 'otro') {
+        const desc = String(texto).replace(/otro/i, '').replace(/[,.]/g, ' ').trim();
+        if (desc) { const campo = document.getElementById('furnitureOther'); if (campo) { campo.value = desc; campo.dispatchEvent(new Event('input', { bubbles: true })); } }
+      }
+      return { ok: true, dicho };
+    }
+    case 'fotos':
+      /* Las fotos no se escriben: se suben en la zona del modal (que está a la vista). Sin salto
+       * de paso: el paso del formulario que las aloja ya es el que está detrás. */
+      return { ok: false, motivo: 'las fotos se suben en la zona de aquí abajo, con el botón ⤒' };
+    case 'danos': {
+      const cajas = [...document.querySelectorAll('#damageGrid input')];
+      const dichos = cajas.filter(c => t.includes(normalizar(c.dataset.label || c.value)) || /revisen/.test(t) && /revision|que lo revisen/.test(normalizar(c.dataset.label || '')));
+      if (!dichos.length) return { ok: false, motivo: 'no reconocí qué hay que revisar', paso: 2 };
+      dichos.forEach(c => { c.checked = true; c.dispatchEvent(new Event('change', { bubbles: true })); });
+      return { ok: true, dicho: dichos.map(c => c.dataset.label || c.value).join(', ') };
+    }
+    case 'medidas': {
+      const nombres = { ancho: 'width', alto: 'height', fondo: 'depth', profundidad: 'depth', largo: 'width' };
+      const numeros = (String(texto).match(/\d+(?:[.,]\d+)?/g) || []).map(n => Math.round(+String(n).replace(',', '.')));
+      const porNombre = {};
+      for (const [palabra, campo] of Object.entries(nombres)) {
+        const m = new RegExp(palabra + '\\D{0,12}(\\d+(?:[.,]\\d+)?)').exec(normalizar(texto));
+        if (m) porNombre[campo] = Math.round(+String(m[1]).replace(',', '.'));
+      }
+      const orden = ['width', 'height', 'depth'];
+      const quiere = { width: porNombre.width, height: porNombre.height, depth: porNombre.depth };
+      /* Medidas de a POCO (dueño, 24/09: «de largo tiene 150 de alto 90…» y luego «de 90 también»):
+       * el cliente no dicta las tres en una frase. Un número suelto, si SOLO falta una, es ESA — y
+       * cada frase declara lo suyo sin exigir las tres (antes la respuesta se rechazaba entera y la
+       * conversación volvía a preguntar lo ya dicho). */
+      const vivas = orden.filter(c => (Number((((mundoDelContrato().medidas || {}).valores) || {})[c]) || quiere[c]));
+      const faltanAntes = orden.filter(c => !vivas.includes(c));
+      if (porNombre.width == null && porNombre.height == null && porNombre.depth == null
+        && numeros.length && faltanAntes.length === 1) quiere[faltanAntes[0]] = numeros[numeros.length - 1];
+      if (numeros.length === 3 && Object.values(porNombre).filter(Boolean).length < 3) {
+        orden.forEach((campo, i) => { if (!quiere[campo]) quiere[campo] = numeros[i]; });
+      }
+      const dadas = orden.filter(c => quiere[c]);
+      if (!dadas.length) return { ok: false, motivo: 'me faltan medidas', paso: 9 };
+      for (const campo of dadas) {
+        const revision = Contrato.validarValor(mundoDelContrato(), 'medidas', { campo, valor: quiere[campo] });
+        if (!revision.ok) return { ok: false, motivo: revision.motivo, paso: 9 };
+      }
+      dadas.forEach(campo => {
+        const el = document.getElementById(campo); if (!el) return;
+        el.value = String(quiere[campo]);
+        el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      const completo = orden.every(c => quiere[c]);
+      const escrito = orden.filter(c => quiere[c]).map(c => quiere[c]).join(' × ');
+      return { ok: true, dicho: completo ? `${quiere.width} × ${quiere.height} × ${quiere.depth} cm` : escrito + ' cm (y sigo con las que falten)' };
+    }
+    case 'revision': {
+      /* Solo cuando el cliente PIDE revisar: sin guarda, este caso se comía cualquier frase (medido:
+       * «y el fondo es de 90 también» disparaba la revisión y las medidas nunca entraban). */
+      if (!/\b(revis|chequea|valida|verifica|mira (todo|mi|esto)|dale una mirada)/i.test(normalizar(texto)))
+        return { ok: false, motivo: '¿reviso tu información? Dime «revisa» y la reviso', paso: 13 };
+      const boton = document.getElementById('analyzeButton');
+      if (!boton) return { ok: true, dicho: 'tu información ya estaba revisada' };
+      boton.click();
+      return { ok: true, dicho: 'reviso tu información' };
+    }
+    case 'lista': {
+      /* «dos rollos de lino verona», «veinte metros de velvet siena»: referencia del catálogo y
+       * cantidad en metros o rollos. Sin referencia no se escribe nada — una fila sin tela no es una
+       * fila declarada. */
+      const fab = telasActivas().filter(f => {
+        const n = normalizar(f.name);
+        return n && (t.includes(n) || n.split(/\s+/).some(w => w.length >= 4 && t.split(/\s+/).includes(w)));
+      })[0] || null;
+      if (!fab) return { ok: false, motivo: 'dime la referencia del catálogo y te digo sus metros' };
+      const dicho = numeroDicho(t);
+      if (!(dicho.valor > 0)) return { ok: false, motivo: 'dime la cantidad —en metros, o en rollos si es de rollo completo' };
+      return aplicarFilaDeLaLista({ fabricId: fab.id, cantidad: dicho.valor, unidad: /rollo/.test(dicho.unidad) ? 'rollos' : 'm' });
+    }
+    case 'pedido': {
+      /* Una solicitud se reconoce por su número (COT-####) o por un número DICHO como referencia —
+       * no por cualquier número suelto (medido: «ancho 2000…» daba «pedido 2000»). */
+      const mcot = (String(texto).match(/cot[-\s]?\d+/i) || [])[0];
+      const mnro = /(solicitud|pedido|referencia|orden)/i.test(String(texto)) ? (String(texto).match(/\b\d{3,}\b/) || [])[0] : null;
+      const ref = mcot || mnro;
+      if (!ref) return { ok: false, motivo: 'dime el número de la solicitud o su referencia, como COT-1042', paso: 21 };
+      if (!escribirCampo('pedidoBusca', ref.trim())) return { ok: false, motivo: 'no encuentro el campo del pedido', paso: 21 };
+      let hallado = false; try { hallado = buscarPedido(); } catch (err) { hallado = false; }
+      return { ok: true, dicho: `pedido ${ref.trim()}${hallado ? ' (lo encontré en este navegador)' : ''}` };
+    }
+    case 'atencion': {
+      const [cliente, servicio] = String(texto).split(/\s+(?:y|para)\s+/i);
+      const a = elegirCiudad('customerCity', cliente || texto);
+      const b = elegirCiudad('serviceCity', (servicio || cliente || texto));
+      if (!a && !b) return { ok: false, motivo: 'no reconocí la ciudad', paso: 15 };
+      return { ok: true, dicho: [a, b].filter(Boolean).join(' · ') };
+    }
+    case 'contacto': {
+      const correo = (String(texto).match(/[^\s@]+@[^\s@]+\.[^\s@]{2,}/) || [])[0];
+      const celular = (String(texto).match(/(\+?\d[\d\s.-]{6,}\d)/) || [])[0];
+      const nombre = String(texto).replace(correo || '', '').replace(celular || '', '').replace(/,| y /gi, ' ').trim();
+      /* El nombre no se adivina: se escribe si viene con su canal (correo o celular) o si el cliente
+       * lo presenta («soy…», «mi nombre es…»). Sin esto, CUALQUIER frase entraba como nombre —
+       * medido: «ancho 2000 alto 85 fondo 90» quedó de nombre y el recibo repetía la frase cruda. */
+      const candidato = String(nombre).replace(/\d+/g, ' ').replace(/\s+/g, ' ').trim();
+      const sePresenta = /\b(soy|me llamo|mi nombre es|nombre)\b/i.test(String(texto));
+      const pareceNombre = candidato && candidato.length <= 60 && candidato.split(' ').filter(w => w.length >= 2).length >= 2
+        && /^[a-záéíóúüñ' .-]+$/i.test(candidato);
+      let alguno = false;
+      if (correo) { const v = Contrato.validarValor(mundoDelContrato(), 'contacto', { campo: 'correo', valor: correo }); if (!v.ok) return { ok: false, motivo: v.motivo, paso: 15 }; alguno = escribirCampo('email', correo) || alguno; }
+      if (celular) { const v = Contrato.validarValor(mundoDelContrato(), 'contacto', { campo: 'celular', valor: celular }); if (!v.ok) return { ok: false, motivo: v.motivo, paso: 15 }; alguno = escribirCampo('phone', celular) || alguno; }
+      if (pareceNombre && (correo || celular || sePresenta)) alguno = escribirCampo('fullName', candidato) || alguno;
+      if (!alguno) return { ok: false, motivo: 'no reconocí tus datos de contacto', paso: 15 };
+      return { ok: true, dicho: [pareceNombre && (correo || celular || sePresenta) ? candidato : '', correo, celular].filter(Boolean).join(' · '), recordar: !((document.getElementById('consent') || {}).checked) };
+    }
+    case 'tela': {
+      /* Por el NOMBRE de la tela, contra las MISMAS tarjetas del cotizador: elegir aquí es elegir
+       * allá. ESTRICTO a propósito: la primera palabra del nombre (4+ letras) tiene que aparecer como
+       * palabra en lo que dijo el cliente — el match suelto marcaba una tela con un texto que no la
+       * nombraba (medido: «estoy en Bogotá y el servicio es en Bogotá» marcó el Lino Verona). Si el
+       * cliente acepta sin nombrarla («sí sería con eso», «esa misma»), vale la que le ofrecí: la que
+       * el cotizador tiene marcada como la mejor. */
+      const t = planoDe(texto);
+      const tarjetas = [...document.querySelectorAll('#fabricGrid .fabric-card')];
+      const porNombre = tarjetas.filter(c => {
+        const n = planoDe((c.querySelector('b') || {}).textContent || '');
+        if (!n) return false;
+        const primera = (n.split(/[\s·]+/).filter(w => w.length >= 4)[0] || '');
+        if (primera && new RegExp('(^|[^a-z0-9])' + primera + '([^a-z0-9]|$)', 'i').test(t)) return true;
+        return t.includes(n);
+      })[0];
+      const acepta = /\b(s[ií]|eso|esa|esa misma|con esa|con eso|de acuerdo|listo|me sirve|me gusta)\b/.test(t);
+      const mejor = document.querySelector('#fabricGrid .fabric-card .best-match');
+      const elegida = porNombre || (acepta ? (mejor && mejor.closest('.fabric-card')) || null : null);
+      if (!elegida) return { ok: false, motivo: 'esa tela no la tengo a la vista: dime el nombre de una de las que te nombré', paso: null };
+      elegida.click();
+      return { ok: true, dicho: 'tela: ' + ((elegida.querySelector('b') || {}).textContent || '').trim() };
+    }
+    case 'insumos': {
+      /* La mano del taller (paso 17): el cliente la pide por conversación y el cotizador estima con
+       * las medidas del mueble — el mismo gesto del botón, sin ir al paso. */
+      if (!/\b(s[ií]|claro|estima|est[íi]mala|est[íi]malos|adelante|hazlo|dale|d[eé]jal[oa]s?|as[ií] est[áa]|listo)\b/i.test(String(texto || '')))
+        return { ok: false, motivo: '¿estimo los insumos del taller con tus medidas? Dime «estímalos».', paso: 17 };
+      const mano = document.getElementById('insumoMano');
+      if (!mano) return { ok: false, motivo: 'no encuentro la mano del taller en este formulario', paso: null };
+      mano.click();
+      const filas = insumosMarcados();
+      return filas.length
+        ? { ok: true, dicho: 'insumos estimados: ' + filas.map(x => x.label || x.id).join(', ') }
+        : { ok: false, motivo: 'la mano no encontró insumos con esas medidas: los miramos en el paso del taller', paso: 17 };
+    }
+    case 'preferencias': {
+      /* Estilo y color, contra las MISMAS opciones de los selects del paso (por su texto). */
+      const plano = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const dicho = plano(texto);
+      const puestos = [];
+      for (const [id, que] of [['style', 'estilo'], ['color', 'color']]) {
+        const el = document.getElementById(id); if (!el) continue;
+        const op = [...el.options].find(o => o.value && dicho.includes(plano(o.text)));
+        if (op) { el.value = op.value; el.dispatchEvent(new Event('change', { bubbles: true })); puestos.push(que + ' ' + op.text); }
+      }
+      if (!puestos.length) return { ok: false, motivo: 'para el estilo y el color dime uno de los que tengo (por ejemplo «natural» o «grises») y los dejo puestos.', paso: 12 };
+      return { ok: true, dicho: puestos.join(' y ') };
+    }
+    case 'presupuesto': {
+      const plano = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const el = document.getElementById('budget');
+      if (!el) return { ok: false, motivo: 'no encuentro el presupuesto en este formulario', paso: null };
+      const op = [...el.options].find(o => o.value && plano(texto).includes(plano(o.text)));
+      if (!op) return { ok: false, motivo: 'dime un rango de los que tengo para el presupuesto (por ejemplo «entre 400 y 800 mil»), y si no lo sabes, dímelo y lo dejo.', paso: 13 };
+      el.value = op.value; el.dispatchEvent(new Event('change', { bubbles: true }));
+      return { ok: true, dicho: 'presupuesto ' + op.text };
+    }
+    case 'autorizacion': {
+      /* La firma es del cliente: solo entra si él lo dijo, y en respuesta a la pregunta. */
+      if (!/\b(s[ií]|claro|de acuerdo|autorizo|autorizaci[oó]n|pueden contactarme|est[áa] bien)\b/i.test(texto))
+        return { ok: false, motivo: 'para la autorización necesito tu «sí»: ¿autorizas que un asesor te contacte?', paso: null };
+      const c = document.getElementById('consent');
+      if (!c) return { ok: false, motivo: 'no encuentro la casilla de autorización en el formulario', paso: null };
+      c.checked = true; c.dispatchEvent(new Event('change', { bubbles: true }));
+      return { ok: true, dicho: 'autorización dada por el cliente' };
+    }
+    case 'envio': {
+      if (!/\b(env[ií]ala|env[ií]ar|env[ií]a|mandar|m[aá]ndala)\b/i.test(texto))
+        return { ok: false, motivo: '¿la envío? Dime «envíala» y la mando', paso: null };
+      const f = document.getElementById('quoteForm');
+      if (!f || !f.requestSubmit) return { ok: false, motivo: 'no puedo enviarla desde aquí', paso: null };
+      f.requestSubmit();
+      return { ok: true, dicho: 'pre-cotización enviada' };
+    }
+    default:
+      /* Lo único que NO puede hacer aquí: firmar por él o subir las fotos por el chat (van en su
+       * zona, aquí mismo). Ni una de estas frases lo manda al formulario. */
+      return { ok: false, motivo: id === 'fotos'
+        ? 'las fotos se suben en la zona de aquí abajo, en este mismo recuadro'
+        : 'la autorización la marcas tú al final del contacto: solo tú puedes firmarla', paso: PASO_DE[id] == null ? null : PASO_DE[id] };
+  }
+}
+
+/* Pregunta por el PRIMER campo que falta, o cierra la conversación si no falta nada.
+ * La misma pregunta NO se dice dos veces igual: el respaldo lleva su segunda versión y su
+ * contador por campo — el dueño lo vio con la primera: «the AI repeat the same phrase every
+ * moment until I complete this.. the idea is can interact with human... and rephrase». */
+const OTRA_PREGUNTA = {
+  linea: () => 'Cuéntame qué necesitas y lo dejamos listo: ' + (Store.services() || []).map(s => s.label).join(', ') + '.',
+  ruta: () => '¿Es una compra nueva o vamos a completar un pedido anterior?',
+  proposito: () => '¿Y esa tela es para qué? ' + propositosRuta().map(p => p.label).join(', ') + '.',
+  saber: () => '¿Qué tienes claro ya? ' + saberesDelProposito().map(s => s.label).join(', ') + '.',
+  mueble: () => '¿De qué mueble hablamos? ' + Store.activeFurniture().map(f => f.name).join(', ') + '.',
+  fotos: (f) => `Súbeme ${f.restantes} ${f.restantes === 1 ? 'foto' : 'fotos'} aquí abajo, porfa: con verlo me basta para entender tu mueble.`,
+  danos: () => '¿Algo que revisar además de la tela? ' + [...document.querySelectorAll('#damageGrid input')].map(i => i.dataset.label || i.value).join(', ') + '.',
+  medidas: () => `Dime tres números y listo — ancho, alto y fondo de tu ${String(state.furniture || 'mueble').toLowerCase()}, en centímetros.`,
+  revision: () => 'Dime «revisa» cuando quieras y le echo un ojo a tu información.',
+  atencion: () => '¿Desde qué ciudad me escribes, y dónde se entrega o presta el servicio?',
+  contacto: () => 'Para dejarte la pre-cotización me faltan tus datos: nombre, correo y celular.'
+};
+voz.preguntado = {};
+function preguntaDelRespaldo(f){
+  const veces = voz.preguntado[f.id] || 0;
+  voz.preguntado[f.id] = veces + 1;
+  const min = photoLimits().min;
+  const extra = f.id === 'fotos' ? { restantes: Math.max(1, min - state.photos.length) } : {};
+  const preparada = PREGUNTA_VOZ[f.id];
+  const otra = OTRA_PREGUNTA[f.id];
+  /* La segunda vez se dice distinto; de ahí en adelante, la versión corta (reformulada). */
+  const primera = typeof preparada === 'function' ? preparada(extra) : preparada;
+  if (veces === 0) return primera || f.mensaje;
+  const repetida = typeof otra === 'function' ? otra(extra) : otra;
+  return veces === 1 ? repetida : 'Sigo con esto: ' + (repetida || f.mensaje);
+}
+/* Los insumos del taller NO se le preguntan al cliente (dueño, 24/09: «dont show "insumos" to
+ * client»): los estima la mano sola en cuanto hay medidas — el cliente no tiene que saber qué lleva
+ * el trabajo por dentro. El campo del contrato se llena solo. Va en su propia función porque el
+ * camino con modelo, cuando su frase pasa el cerco, NO vuelve a preguntar y la llamada de adentro
+ * de `preguntarLoQueFalta` nunca corría (medido en la suite del camino con modelo, 25/09). */
+function estimarInsumosSiToca(){
+  try {
+    const medidasListas = ['width', 'height', 'depth']
+      .map(id => Number((document.getElementById(id) || {}).value) || 0).every(v => v > 0);
+    const hayQueEstimar = typeof insumosDeLaLinea === 'function' && insumosDeLaLinea().length
+      && typeof insumosMarcados === 'function' && !insumosMarcados().length;
+    if (hayQueEstimar && medidasListas) {
+      /* Las filas del paso se pintan AL ENTRAR al paso, y la mano sin filas no estima nada
+       * («Todavía no puedo estimarlas…»): aquí se pintan y después se pulsa. */
+      if (typeof pintarInsumos === 'function') pintarInsumos();
+      const mano = document.getElementById('insumoMano'); if (mano) mano.click();
+    }
+  } catch (err) { /* sin mano a la vista, el campo seguirá faltando para el taller */ }
+}
+function preguntarLoQueFalta(){
+  /* Con la ventana cerrada no se pregunta ni se habla: el cierre corta la capa entera. */
+  if (!voz.abierta) return;
+  estimarInsumosSiToca();
+  const faltantes = Contrato.faltantes(mundoDelContrato());
+  pintarProgresoDeLaConversacion();
+  const f = faltantes[0];
+  /* La zona de fotos está SIEMPRE a la vista (el dueño lo pidió con la captura: «pensé que el
+   * componente de subir fotos estaba aquí mismo» — y estaba, pero oculto mientras faltaba otra
+   * cosa). Subir fotos no espera a que el contrato las pida. */
+  /* El contrato está completo, o sólo le falta la FIRMA del cliente (los datos de contacto ya
+   * están y la casilla no): en los dos casos el cierre sigue aquí — nunca se le manda al paso. */
+  const soloLaFirma = faltantes.length === 1 && f.id === 'contacto'
+    && ['fullName', 'email', 'phone'].every(i => ((document.getElementById(i) || {}).value || '').trim());
+  if (!f || soloLaFirma) {
+    voz.campo = null;
+    return elCierreDeLaConversacion();
+    return false;
+  }
+  voz.campo = f.id;
+  /* El formulario de contacto se muestra SOLO cuando es lo que falta (y viene con lo ya escrito). */
+  { const caja = document.getElementById('vozContacto');
+    if (caja) {
+      caja.hidden = f.id !== 'contacto';
+      if (f.id === 'contacto') for (const [origen, destino] of [['vozNombre', 'fullName'], ['vozCorreo', 'email'], ['vozCelular', 'phone']]) {
+        const de = document.getElementById(origen), a = document.getElementById(destino);
+        if (de && a && !de.value) de.value = a.value || '';
+      }
+    } }
+  if (f.paso != null && typeof showStep === 'function' && state.step !== Number(f.paso)) showStep(Number(f.paso));
+  decirEnLaConversacion(preguntaDelRespaldo(f));
+  return true;
+}
+
+/* ---- El turno con el modelo, cuando lo hay: entiende y reformula (no lee un guion) ------------
+ * El CONTRATO decide qué falta y qué valores son legales; el modelo decide cómo decirlo, entiende
+ * lo que el cliente contestó (aunque conteste otra cosa) y vuelve a lo que falta. Lo que proponga
+ * se aplica SOLO si el contrato lo acepta: `aplicarValorDelContrato` pasa por los mismos controles
+ * del formulario y por `Contrato.validarValor`. */
+/* Las líneas habilitadas de ESTE cliente, leídas del propio cotizador (`#serviceGrid`, el paso 0):
+ * la misma lista que ve el cliente, para que la conversación no le niegue nada que su plan sí trae
+ * (el dueño: «dont have a context of line services… the assistant can read wizards»). */
+function lasLineasDelCliente(){
+  try {
+    return [...document.querySelectorAll('#serviceGrid .service-choice')].map(c => ({
+      id: (c.dataset && c.dataset.service) || '',
+      rotulo: textoVoz(c.querySelector('b')).trim(),
+      detalle: textoVoz(c.querySelector('small') || c.querySelector('p')).trim()
+    })).filter(l => l.rotulo);
+  } catch (e) { return []; }
+}
+/* Los valores legales de cada campo, leídos de las listas del propio cotizador: el modelo recibe EL
+ * CONTRATO (el dueño: «the AI dont have contract»), así que solo puede proponer lo que el cotizador
+ * acepta — y lo que no esté en la lista lo rechaza el validador de siempre. */
+function losValoresLegalesDe(id){
+  const rotulos = sel => [...document.querySelectorAll(sel)]
+    .map(c => (textoVoz(c.querySelector('b')) || textoVoz(c)).trim()).filter(Boolean);
+  switch (id) {
+    case 'rama': return elIndiceDeContratos().map(c => c.id);
+    case 'linea': return rotulos('#serviceGrid .service-choice');
+    case 'ruta': return rotulos('#routeGrid .service-choice');
+    case 'proposito': return rotulos('#purposeGrid .service-choice');
+    case 'saber': return rotulos('#saberGrid .service-choice');
+    case 'mueble': return rotulos('[data-furniture]');
+    case 'danos': return rotulos('#damageGrid .service-choice, #damageGrid button, #damageGrid label');
+    case 'lista': return telasActivas().map(f => `${f.name} · ${f.colorName}`)
+      .concat(['la cantidad en metros —o en rollos si la tela se vende por rollo—']);
+    case 'pedido': return ['el número de una solicitud anterior (COT-####) o su referencia'];
+    case 'atencion': return ['la ciudad del cliente y la del servicio, por su nombre'];
+    case 'medidas': return ['ancho, alto y fondo en centímetros, como los diga el cliente'];
+    case 'contacto': return ['nombre completo, correo y celular'];
+    case 'revision': return ['el cliente pide revisar («revisa»)'];
+    case 'fotos': return [];
+    default: return [];
+  }
+}
+function promptDeLaConversacion(mundo){
+  const faltan = Contrato.faltantes(mundo).map(f => '- ' + f.etiqueta + ' («' + f.id + '»)').join('\n');
+  return [
+    promptDeLaCasa(),
+    'Ahora estás llenando la pre-cotización conversando, en voz alta con el cliente: hablas corto (una o dos frases), natural, como una persona del taller — no como un formulario.',
+    'REGLA DE ORO: TODO se hace AQUÍ, en esta conversación. JAMÁS mandes al cliente al formulario ni le digas que toque opciones, pasos, ni zonas del cotizador: los pasos detrás son un espejo, y lo que él te declare aquí aparece allá solo. Si te falta la línea de servicio, OFRÉCELE TÚ las opciones aquí mismo (por ejemplo: «¿quieres retapizarlo, cambiarle la tela, o un mantenimiento?») y anótala con el id cuando responda — si dice el nombre, ya sabes cuál es. Si te dice que no entiende, explícale con un ejemplo cotidiano, aquí, sin señalarle ningún paso.',
+    'LAS LÍNEAS DE SERVICIO DE ESTE CLIENTE son las de su plan (las de abajo). Si pide algo que ENCAJA en una de ellas, esa es su línea: NUNCA le digas que eso no se hace aquí si la lista la tiene. Entiende por SIGNIFICADO, no por el nombre: si describe lo que la línea HACE, esa es la línea (comprar telas, una tela, cuántos metros → la línea de tela; cambiar la tela, forrar, tapizar → la de tapizado; fabricar, hacerlo a la medida → la de a medida; limpieza, proteger, reparar → mantenimiento). Anótala con el id.\n'
+      + (lasLineasDelCliente().map(l => '- ' + l.rotulo + (l.id ? ' («' + l.id + '»)' : '') + (l.detalle ? ': ' + l.detalle : '')).join('\n') || '- (ninguna a la vista)'),
+    'Lo único que te falta de la pre-cotización:',
+    faltan || '- nada, ya está todo',
+    'Lo que puedes llenar tú: linea (el id o el rótulo), ruta, proposito, saber, rama (el ID DEL CONTRATO de la rama — abajo están todas con su cadena: en cuanto sepas cuál es el caso, anótala aquí y sigue con los campos de ESE contrato), mueble (del catálogo), muebleOtro (la descripción si el mueble es «Otro»), medidas (ancho/alto/fondo en cm), danos, atencion (ciudades), contacto (nombre, correo, celular), lista (las referencias con su cantidad —metros, o rollos si la tela se vende por rollo—; una fila por referencia), pedido (el número de la solicitud anterior, ej. COT-1042).',
+    'LAS RAMAS Y SU CONTRATO (la lista completa de este negocio: elige la que corresponda a lo que el cliente pide —por el sentido, no por el nombre— y anótala en `rama` con su id; el contrato de esa rama manda qué campos faltan y qué acciones corren):\n' +
+      elIndiceDeContratos().map(c => `- ${c.cadena.join(' → ')} → contrato ${c.id}`).join('\n'),
+    'EL CATÁLOGO DE TELAS de este cliente (el precio es POR METRO —dato del catálogo, puedes nombrarlo y compararlo; nunca es el precio final de la solicitud):\n'
+      + (telasActivas().map(f => `- ${f.name} · ${f.colorName} — colección ${f.collection || '—'}${f.novedad ? ' (última colección)' : ''} — ${money(f.price)}/m${(f.tags || []).length ? ' — ' + f.tags.join(', ') : ''}`).join('\n') || '- (sin telas activas)'),
+    'LAS ÚLTIMAS COLECCIONES son las telas marcadas «última colección»: si el cliente las pide, ofrécele esas por su nombre (la vitrina del paso de la lista las enseña de primeras). Puedes citar el precio de catálogo por metro y los metros que el cotizador calcule; NUNCA inventes totales, descuentos ni cifras que no estén en el catálogo ni en la estimación vigente.',
+    'EL CONTRATO: por cada campo que falta, los valores que el cotizador ACEPTA (leídos de las mismas listas que ve el cliente — lo que no esté aquí, no entra; el cotizador lo rechaza y tú lo vuelves a preguntar):\n'
+      + (Contrato.faltantes(mundo).map(f => {
+        const valores = losValoresLegalesDe(f.id);
+        return '- ' + f.id + ' — ' + f.etiqueta + ': ' + (valores.length ? valores.join(' · ') : 'valor libre, con las palabras del cliente');
+      }).join('\n') || '- (nada: el contrato está completo)'),
+    'En cada turno te llega lo que el cliente dijo y el estado del formulario. Si te pregunta algo, contéstalo (con las reglas de arriba) y después sigue con lo que falta. NUNCA repitas una pregunta con las mismas palabras: si ya la hiciste, hazla distinta; si el cliente no entendió, explícala con un ejemplo.',
+    'EL ESTADO ES LA VERDAD —y lo que no esté ahí, no está. No afirmes que el cotizador anotó, cambió ni «ajustó» nada (ni ciudades, ni telas, ni metros) si no lo ves en el estado: si algo no aparece, di que lo anotas y sigue; para decir que algo quedó, míralo ahí primero. Nunca digas «en el cotizador quedó como…»: tú no ves sus controles. Y ojo con los nombres: «Lino Verona» es una TELA (nombre · color), no una ciudad — las ciudades son las de la línea «Atención» del estado, y no se mezclan.',
+    'La AUTORIZACIÓN se da AQUÍ MISMO, hablando: cuando llegue el momento él dice «sí, autorizo» — o toca el botón «Sí, autorizo» que le aparece en ese momento justo debajo de la conversación. NUNCA le digas que busque una casilla ni que marque nada «al final del recuadro»: no hay casilla a la vista; la del formulario la marcas tú cuando él autoriza por aquí.',
+    'FOTOS: se suben en la ZONA DE FOTOS que está en este mismo recuadro, debajo de vuestra conversación (no en otro paso, no por el chat): cuando falten, pídeselas ahí y dile que puede subirlas en esa zona. En el estado ves cuántas lleva.',
+    'AQUÍ SÍ PUEDES (el cotizador ya lo calculó, tú lo dices, nunca lo inventas): la RECOMENDACIÓN de tela — la que el cotizador marcó como la mejor para su mueble, con su razón — y lo que la REVISIÓN de las fotos vio (dilo tal cual, incluso si no se ve el mueble). NUNCA digas que «la tela te la dirá el asesor» ni que la recomendación toca esperarla: si el cotizador ya la calculó, la dices aquí. El asesor confirma el precio final, eso sí.',
+    'Contesta SOLO con este JSON: {"decir": "lo que le dices ahora, en tus palabras", "valores": {"<campo>": <valor>}}.',
+    'En "valores" va únicamente lo que el cliente ACABA de decir, con el valor ya normalizado (ids del catálogo, números, ciudades). Si no dijo nada nuevo, "valores" va vacío. Si el cliente solo charla, en "decir" le contestas y le vuelves a lo que falta, con otras palabras.'
+  ].join('\n');
+}
+/* EL CIERRE, también en la conversación: cuando el contrato está completo NO se manda a nadie al
+ * formulario — se sigue aquí, con las fases del final (la tela, la autorización y el envío), que
+ * son las del propio cotizador. Los nombres de las telas salen del catálogo, el número lo calcula
+ * el motor, y la autorización la da el cliente con sus palabras: el asistente no inventa ninguna
+ * de las tres. */
+function elCierreDeLaConversacion(){
+  /* 0 · LO QUE VIO LA REVISIÓN (fotos y medidas): el paso no se omite — se dice lo que el propio
+   * cotizador escribió en su resumen (`#aiSummary`), tal cual, o no se dice nada (el dueño:
+   * «tampoco omitir pasos de revision de fotos y recomendacion.... incluso revision de medidas»). */
+  if (state.analyzed && !voz.revisionDicha) {
+    const caja = document.getElementById('aiSummary');
+    const visto = caja ? String(caja.innerText || '').replace(/\s+/g, ' ').trim() : '';
+    voz.revisionDicha = true;
+    if (visto) decirEnLaConversacion('La revisión quedó así: ' + visto.slice(0, 420));
+  }
+  /* La autorización la marca él (con sus palabras, o tocando la casilla del paso), y ella lo
+   * confirma: se escucha la casilla, que es la verdad del formulario. */
+  if (!voz.consentVigilado) {
+    voz.consentVigilado = true;
+    const c = document.getElementById('consent');
+    const fila = document.getElementById('vozPermiso');
+    const boton = document.getElementById('vozPermisoSi');
+    /* El botón de la fila es la MANO del cliente: marca la casilla del formulario, igual que sus
+     * palabras. Ni el modelo ni el driver la marcan solos. */
+    if (boton) boton.addEventListener('click', () => {
+      if (!c || c.checked) return;
+      c.checked = true; c.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    if (c) c.addEventListener('change', () => {
+      if (voz.abierta && c.checked) {
+        if (fila) fila.hidden = true;
+        if (voz.campo === 'autorizacion') {
+          decirEnLaConversacion('Queda marcada tu autorización. Con eso ya un asesor puede contactarte.');
+          /* Su toque también empuja el cierre: si ya no falta nada, sigue con el número y el envío. */
+          preguntarLoQueFalta();
+        }
+      }
+    });
+  }
+  /* 1 · la tela: las mismas tarjetas del cotizador, ofrecidas aquí. Si el cliente YA eligió tela
+   * (por conversación o tocándola en el paso), no se vuelve a preguntar: el cierre saltaba a pedir
+   * una tela elegida (medido: la re-preguntaba teniéndola marcada y no llegaba a la autorización). */
+  if (!voz.telaPreguntada && !(state.fabric && state.fabricTouched)) {
+    /* Las tarjetas del cotizador se pintan cuando su paso se muestra: aquí se pintan para poder
+     * ofrecerlas, que es el mismo catálogo (no una copia). */
+    if (!document.querySelector('#fabricGrid .fabric-card') && typeof renderFabrics === 'function') {
+      try { renderFabrics(); } catch (e) { /* sin telas a la vista, el cierre sigue */ }
+    }
+    const tarjetas = [...document.querySelectorAll('#fabricGrid .fabric-card')];
+    const nombres = tarjetas.map(c => planoDe((c.querySelector('b') || {}).textContent || '')).filter(Boolean);
+    if (nombres.length) {
+      voz.telaPreguntada = true;
+      const actual = (document.getElementById('selectedFabric') || {}).value || '';
+      /* La RECOMENDACIÓN es del cotizador, no de ella: se lee de la tarjeta que el propio cotizador
+       * marcó como la mejor (`best-match`) y de su razón (`why`). Si no hay, no se inventa. */
+      const mejor = document.querySelector('#fabricGrid .fabric-card .best-match');
+      const caja = mejor ? mejor.closest('.fabric-card') : null;
+      const nombreMejor = caja ? ((caja.querySelector('b') || {}).textContent || '').trim() : '';
+      const razon = caja ? ((caja.querySelector('.why') || {}).textContent || '').trim() : '';
+      voz.campo = 'tela';
+      return decirEnLaConversacion((nombreMejor
+        ? `Para tu mueble, la que mejor te sirve es «${nombreMejor}»${razon ? ': ' + razon : ''}. `
+        : '')
+        + '¿Alguna tela en mente? También tengo ' + nombres.filter(n => !nombreMejor || !nombreMejor.toLowerCase().includes(n.split(' ')[0])).slice(0, 2).join(', ')
+        + (actual ? ', y ahora mismo llevas «' + actual + '»' : '') + '. Dime cuál y la marco aquí.');
+    }
+  }
+  /* 2 · la autorización: la da él, hablando — nunca la marca el asistente por su cuenta */
+  if (!(document.getElementById('consent') || {}).checked) {
+    const fila = document.getElementById('vozPermiso');
+    if (fila) fila.hidden = false;   /* la fila del permiso: lo que él puede TOCAR, no describir */
+    if (!voz.autorizacionPedida) {
+      voz.autorizacionPedida = true;
+      voz.campo = 'autorizacion';
+      return decirEnLaConversacion('Ya con eso te armo la pre-cotización. ¿Autorizas que un asesor te contacte con estos datos? Toca «Sí, autorizo» aquí abajo, o dímelo y la marco yo.');
+    }
+    voz.campo = 'autorizacion';
+    return;
+  }
+  /* 3 · el número: el que ya calculó el motor — ella solo lo LEE, jamás lo inventa */
+  const precio = String(((document.getElementById('priceRange') || {}).textContent) || '').trim();
+  const metros = String(((document.getElementById('metersRange') || {}).textContent) || '').trim();
+  if (!voz.envioPedido) {
+    voz.envioPedido = true;
+    voz.campo = 'envio';
+    decirEnLaConversacion((precio && !/por confirmar|—/.test(precio)
+      ? `La pre-cotización va en ${metros} metros de tela y ${precio} — ese número lo calcula el cotizador, no yo, y un asesor lo confirma contigo. Te la dejo creada ya mismo.`
+      : 'Ya está todo lo que necesito: te dejo la pre-cotización creada con lo que declaraste y un asesor la revisa.'));
+    /* SE CREA SOLA al completarse el contrato (dueño, 25/09: «dont create quote… cuando se termine,
+     * cree la cotización»): se guarda igual que si el cliente tocara «Enviar pre-cotización» — el
+     * cliente no tiene que buscar un botón que nadie le señaló. */
+    submitQuote().then(() => { voz.creada = true; }).catch(err => {
+      voz.creada = false;
+      console.warn('[conversación] no pude crear la pre-cotización', err);
+    });
+    return;
+  }
+  voz.campo = 'envio';
+}
+const planoDe = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+const loQueFaltaTexto = mundo => Contrato.faltantes(mundo).map((f, i) => `${i + 1}. ${f.etiqueta}: ${f.mensaje}`).join('\n');
+function leerElTurnoDelModelo(crudo){
+  try {
+    const d = JSON.parse(String(crudo).slice(String(crudo).indexOf('{'), String(crudo).lastIndexOf('}') + 1));
+    if (d && typeof d.decir === 'string' && d.decir.trim()) return { decir: d.decir.trim(), valores: d.valores || {} };
+  } catch (err) { /* prosa en vez de JSON: se usa tal cual, sin valores */ }
+  const texto = String(crudo || '').trim();
+  return texto ? { decir: texto, valores: {} } : null;
+}
+/* Una fila de la lista, escrita por los MISMOS controles que un dedo: la referencia entra en el
+ * select de su fila (se trae la fila si no existe) y la cantidad en su campo, en la unidad de ESA
+ * tela (rollos si es de rollo completo). */
+async function aplicarFilaDeLaLista(datos){
+  const ref = String(datos.fabricId || datos.fabric || datos.name || '').trim();
+  const clave = normalizar(ref.split('·')[0]);
+  const fab = telasActivas().filter(f => String(f.id) === ref
+    || normalizar(f.name) === clave || normalizar(`${f.name} · ${f.colorName}`) === normalizar(ref))[0] || null;
+  if (!fab) return { ok: false, motivo: `«${ref || 'sin referencia'}» no está entre las telas del catálogo` };
+  const cantidad = Number(datos.cantidad != null ? datos.cantidad : (datos.valor != null ? datos.valor : datos.metros)) || 0;
+  if (!(cantidad > 0)) return { ok: false, motivo: 'me falta la cantidad: dime cuántos metros (o rollos)' };
+  const caja = document.getElementById('listRows'); if (!caja) return { ok: false, motivo: 'esta cotización no tiene lista' };
+  const rules = Store.fabricRules(fab) || {}, porRollo = rules.saleUnit === 'rollo';
+  const enRollos = porRollo && String(datos.unidad || '').indexOf('rollo') >= 0;
+  if (String(datos.unidad || '').indexOf('rollo') >= 0 && !porRollo)
+    return { ok: false, motivo: `${fab.name} se vende por metros, no por rollos: dime cuántos metros` };
+  let fila = [...caja.querySelectorAll('.boq-row')].filter(r => { const s = r.querySelector('.list-fabric'); return s && String(s.value) === String(fab.id); })[0];
+  if (!fila) { agregarFilaDeLaLista(fab.id); fila = caja.querySelector('.boq-row:last-child'); }
+  if (!fila) return { ok: false, motivo: 'no pude agregar la fila' };
+  const sel = fila.querySelector('.list-fabric'); if (sel) { sel.value = String(fab.id); sel.dispatchEvent(new Event('change', { bubbles: true })); }
+  const escribir = porRollo && !enRollos ? cantidad / (rules.rollLengthM || 1) : cantidad;
+  const el = fila.querySelector('.list-metros');
+  if (el) { el.value = String(Math.round(escribir * 100) / 100); el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }
+  updateEstimate();
+  const metros = porRollo ? escribir * (rules.rollLengthM || 0) : cantidad;
+  return { ok: true, dicho: `${fab.name} · ${fab.colorName}: ${porRollo ? `${fmtM(escribir)} rollos` : `${fmtM(cantidad)} metros`}${porRollo && metros ? ` (${fmtM(metros)} m)` : ''}` };
+}
+
+/* Los valores del modelo, al formulario: por el MISMO camino que lo escrito (el parser y el
+ * contrato de cada campo validan otra vez — el modelo nunca es la última palabra). */
+async function aplicarValorDelContrato(id, valor){
+  const numero = n => String(n).replace(/\./g, '');
+  switch (id) {
+    /* El modelo elige el CASO: si su turno trae `rama` (el id del contrato), se aplica la cadena
+     * entera por los mismos controles — nodo por nodo, validada contra el catálogo. */
+    case 'rama': return aplicarLoDicho('rama', valor);
+    case 'medidas': {
+      const v = valor || {};
+      const ancho = v.width != null ? v.width : v.ancho, alto = v.height != null ? v.height : v.alto, fondo = v.depth != null ? v.depth : v.fondo;
+      if (!(ancho && alto && fondo)) return { ok: false, motivo: 'medidas incompletas' };
+      return aplicarLoDicho('medidas', `ancho ${numero(ancho)} alto ${numero(alto)} fondo ${numero(fondo)}`);
+    }
+    case 'danos': return aplicarLoDicho('danos', (Array.isArray(valor) ? valor : [valor]).join(', '));
+    case 'atencion': {
+      const cliente = valor.cliente || valor.customerCity || valor.ciudad; const servicio = valor.servicio || valor.serviceCity;
+      if (!cliente && !servicio) return { ok: false, motivo: 'sin ciudades' };
+      return aplicarLoDicho('atencion', `estoy en ${cliente || servicio} y el servicio es en ${servicio || cliente}`);
+    }
+    case 'contacto': {
+      const v = valor || {};
+      const dicho = [v.nombre, v.correo, v.celular].filter(Boolean).join(' ');
+      if (!dicho) return { ok: false, motivo: 'sin datos de contacto' };
+      return aplicarLoDicho('contacto', dicho);
+    }
+    case 'lista': {
+      const filas = Array.isArray(valor) ? valor : [valor];
+      const dichos = [];
+      for (const f of filas) {
+        const r = (f && typeof f === 'object') ? await aplicarFilaDeLaLista(f) : await aplicarLoDicho('lista', String(f == null ? '' : f));
+        if (r && r.ok) dichos.push(r.dicho);
+      }
+      return dichos.length ? { ok: true, dicho: dichos.join(' · ') } : { ok: false, motivo: 'no entendí la referencia con su cantidad' };
+    }
+    case 'pedido': {
+      const ref = String((valor && (valor.id || valor.referencia)) || valor || '').trim();
+      return aplicarLoDicho('pedido', ref);
+    }
+    case 'muebleOtro': {
+      const campo = document.getElementById('furnitureOther'); if (!campo) return { ok: false, motivo: 'sin campo' };
+      const limpio = String(valor || '').trim(); if (!limpio) return { ok: false, motivo: 'vacío' };
+      escribirCampo('furnitureOther', limpio); return { ok: true, dicho: limpio };
+    }
+    case 'revision': return aplicarLoDicho('revision', 'revisa');
+    default: return aplicarLoDicho(id, Array.isArray(valor) ? valor.join(', ') : String(valor == null ? '' : valor));
+  }
+}
+
+/* Un turno a la vez (como el chat): la conversación no puede estar a media respuesta cuando el
+ * cliente vuelve a hablar — y quien la prueba desde afuera puede esperar a que termine. */
+async function responderEnLaConversacion(texto){
+  const dicho = String(texto || '').trim(); if (!dicho || voz.turno) return;
+  voz.turno = true;
+  try { return await elTurnoDeLaConversacion(dicho); }
+  finally {
+    voz.turno = false;
+    /* Lo que el cliente dijo MIENTRAS el turno corría no se pierde: se atiende enseguida, en orden
+     * (antes se tiraba — dueño: «se le están escapando palabras que yo digo»). */
+    if (voz.cola && voz.cola.length) {
+      const siguiente = voz.cola.shift();
+      setTimeout(() => { responderEnLaConversacion(siguiente); }, 60);
+    }
+  }
+}
+async function elTurnoDeLaConversacion(dicho){
+  /* El turno SIEMPRE procesa (lo que el cliente dijo entra al caso aunque cierre al medio); lo que
+   * queda cortado con la ventana cerrada es hablar: `decirEnLaConversacion` y `preguntarLoQueFalta`
+   * tienen su propia puerta (dueño, 25/09: «despite the modal had been closed Lia continue speak»). */
+  decirEnLaConversacion(dicho, 'user');
+  /* «Otra cosa» es otro caso: si el cliente pide empezar de cero, se olvida lo anterior ANTES de
+   * responder — y ella lo confirma y vuelve a abrir. Frases completas, no palabras sueltas: «otra»
+   * sola es parte de cualquier charla. */
+  if (/empezar de cero|desde cero|otra (pre-?)?cotizaci|otro caso|borra(r)? (todo|el caso)|olvida(r)? todo/i.test(dicho)) {
+    olvidarElCaso();
+    decirEnLaConversacion('Listo: borrón y cuenta nueva. ¿Qué necesitas esta vez?');
+    return;
+  }
+  if (proveedorIA() === 'api') {
+    try {
+      const mundo = mundoDelContrato();
+      if (!voz.sesion) voz.sesion = await sesionDelProveedor(promptDeLaConversacion(mundo), { temperatura: 0.5 });
+      const crudo = await voz.sesion.pedir({ texto: `ESTADO DEL FORMULARIO (lo que el cliente ya declaró)\n${estadoDelCotizador(ACI.context())}\n\nLO QUE FALTA AHORA:\n${loQueFaltaTexto(mundo)}\n\nEl cliente dice: «${dicho}»` });
+      const turno = leerElTurnoDelModelo(crudo);
+      if (turno) {
+        const aplicados = [];
+        /* PRIMERO el parser del contrato para el campo que se está preguntando: entiende por raíz de
+         * palabra («comprar telas» → «Suministro de tela», «tapizar» → «Retapizado») y no depende de
+         * que el modelo acierte el sinónimo (el dueño: «the AI should understand synonyms»). Si el
+         * parser no lo reconoce, mandan los valores del modelo. */
+        const pendiente = voz.campo;
+        /* El parser del contrato prueba TODOS los campos del recorrido que faltan, en su orden — y
+         * manda SOBRE lo que proponga el modelo: entiende tu frase natural («de largo 90 de alto y 90
+         * de ancho») y escribe por los controles. Antes, si el modelo proponía un valor con forma
+         * equivocada, se saltaba el parser y no se guardaba NADA mientras la conversación decía
+         * «anoto…» (dueño, 25/09: «porque esto no está guardando los datos que le voy dando»). El
+         * primero que entienda el texto, manda. */
+        const porLlenar = [pendiente].concat(Contrato.faltantes(mundo).map(c => c.id))
+          /* Las fotos, la estimación y el precio no se dictan (los pone el cliente subiendo fotos o
+           * el motor): sus casos no deben comerse un texto que era de otro campo. */
+          .filter(id => id && ['fotos', 'estimacion', 'precio'].indexOf(id) < 0)
+          .filter((v, i, a) => a.indexOf(v) === i);
+        for (const campo of porLlenar) {
+          const mio = await aplicarLoDicho(campo, dicho).catch(() => ({ ok: false }));
+          if (mio && mio.ok) { aplicados.push(mio.dicho || campo); break; }
+        }
+        for (const [id, valor] of Object.entries(turno.valores)) {
+          if (aplicados.length && id === pendiente) continue;
+          const r = await aplicarValorDelContrato(id, valor).catch(() => ({ ok: false }));
+          if (r && r.ok) aplicados.push(r.dicho || id);
+        }
+        /* La confirmación la da el SISTEMA, no el modelo: el modelo habla en el mismo turno en que
+         * propone y no puede ver si entró —decía «te dejo 5 metros» con la lista vacía—. Aquí se
+         * dice lo que de verdad quedó anotado (y si no entró nada, no se dice nada). Va SIN VOZ: es
+         * un recibo para leer, y hablar de más deja sordo al micrófono. */
+        /* El recibo dice lo anotado, sin la etiqueta de la rama (no es un dato: «Retapizado de
+         * muebles · rama Retapizado de muebles» se leía mal). */
+        if (aplicados.length) decirEnLaConversacion('Anotado: ' + aplicados
+          .map(x => String(x).replace(/(\s*·\s*rama [^·]+)+\s*$/i, '').trim()).filter(Boolean).join(' · ') + '.', 'bot', true);
+        await new Promise(r => setTimeout(r, 220));
+        /* El cerco juzga también la conversación (el modelo nunca tiene la última palabra): una
+         * cifra fuera de la estimación y del catálogo, una promesa o una frase que no habla del
+         * caso no se dicen — la pregunta la hace el respaldo, con el contrato en la mano. */
+        const juicio = CercoAsistente.revisar(turno.decir, {
+          estimacion: (ACI.context().estimate || {}).priceLabel || '', permitidas: preciosDelCatalogo(),
+          tema: elVocabularioDelNegocio()
+        });
+        /* La mano del taller corre SIEMPRE tras aplicar (pase o no la frase del modelo por el cerco):
+         * si no, cuando el modelo habla bonito los insumos nunca se estimaban (medido, 25/09). */
+        estimarInsumosSiToca();
+        if (juicio.limpia) { decirEnLaConversacion(turno.decir); pintarProgresoDeLaConversacion(); }
+        else preguntarLoQueFalta();
+        const pendienteAhora = Contrato.faltantes(mundoDelContrato())[0];
+        voz.campo = pendienteAhora ? pendienteAhora.id : null;
+        /* El wizard se pone en el paso del nuevo pendiente (ver `preguntarLoQueFalta`). */
+        if (pendienteAhora && pendienteAhora.paso != null && typeof showStep === 'function'
+          && state.step !== Number(pendienteAhora.paso)) showStep(Number(pendienteAhora.paso));
+        return;
+      }
+    } catch (err) { console.warn('[conversación] el modelo no contestó; responde el respaldo', err); }
+  }
+  /* El respaldo: el guion con sus dos versiones y el parser del contrato. Si el pendiente no entiende
+   * la frase, se prueba con los DEMÁS campos que faltan, en el orden del recorrido — el cliente
+   * contesta lo que le da la gana y el contrato lo ubica. El primero que entienda, manda. */
+  const campo = voz.campo;
+  if (!campo) { preguntarLoQueFalta(); return; }
+  const porLlenar = [campo].concat(Contrato.faltantes(mundoDelContrato()).map(c => c.id))
+    .filter(id => id && ['fotos', 'estimacion', 'precio'].indexOf(id) < 0)
+    .filter((v, i, a) => a.indexOf(v) === i);
+  let resultado = { ok: false, motivo: 'no te entendí' };
+  let usado = campo;
+  for (const c of porLlenar) {
+    let r = { ok: false, motivo: 'no te entendí' };
+    try { r = await aplicarLoDicho(c, dicho); } catch (err) { console.warn('[contrato] respuesta no aplicada', err); }
+    if (r && r.ok) { resultado = r; usado = c; break; }
+    if (resultado.motivo === 'no te entendí' && r && r.motivo) resultado = r;
+  }
+  if (!resultado.ok) {
+    /* Un tropiezo NUNCA deja la misma frase: se dice qué pasó y se vuelve a preguntar distinto
+     * (si el campo tiene paso, además se deja el paso a la vista para llenarlo a mano). */
+    decirEnLaConversacion(resultado.motivo + '. Dímelo con otras palabras y lo anoto por aquí — no tienes que ir a ningún paso.');
+    if (resultado.paso != null) showStep(resultado.paso);
+    const pendiente = Contrato.faltantes(mundoDelContrato())[0];
+    decirEnLaConversacion(preguntaDelRespaldo(pendiente || { id: campo, mensaje: 'Sigamos.' }));
+    pintarProgresoDeLaConversacion();
+    return;
+  }
+  const revisado = Contrato.faltantes(mundoDelContrato()).length;
+  /* La revisión se hace sola en su paso y tarda (`setTimeout` en el manejador del botón): sin
+   * esperar a que el paso se asiente, la conversación vuelve a mirar el contrato antes de que el
+   * análisis haya entrado y se queda preguntando lo mismo. */
+  if (usado === 'revision') { for (let i = 0; i < 30 && !state.analyzed; i++) await new Promise(r => setTimeout(r, 150)); }
+  else await new Promise(r => setTimeout(r, 220));
+  decirEnLaConversacion(resultado.dicho ? 'Listo: ' + resultado.dicho + '.' : 'Listo.');
+  if (resultado.recordar) decirEnLaConversacion('Y no olvides marcar la autorización del paso de contacto: eso solo lo puedes hacer tú.');
+  pintarProgresoDeLaConversacion();
+  /* El formulario se mueve detrás: si el paso del campo que se acaba de declarar ya no es el que
+   * está a la vista, se lleva la vista a lo que falta ahora — el cliente ve el formulario llenarse. */
+  const siguiente = Contrato.faltantes(mundoDelContrato())[0];
+  if (siguiente && siguiente.paso != null && siguiente.paso !== state.step && PASO_DE[usado] === state.step) showStep(siguiente.paso);
+  preguntarLoQueFalta();
+  if (!revisado) decirEnLaConversacion('Con eso ya puedo calcular tu pre-cotización: la tienes en el último paso.');
+}
+
+function abrirLaConversacion(){
+  const modal = document.getElementById('vozModal'); if (!modal) return;
+  voz.abierta = true; modal.hidden = false;
+  if (!voz.mensajes.length) {
+    /* Saluda COMO PERSONA, no con guion: se presenta, dice a qué se dedica y le pide el caso.
+     * La pregunta por lo que falta la hace el turno siguiente (el modelo), ya con lo que él diga. */
+    decirEnLaConversacion(`Mucho gusto, soy ${asistenteCfg().enabled ? asistenteCfg().name : 'tu asistente'}. Estoy para servirte: prestamos servicios para muebles — cuéntame tu caso y así sé cómo dirigirte.`);
+    if (proveedorIA() !== 'api') preguntarLoQueFalta();
+  } else { preguntarLoQueFalta(); }
+  const input = document.getElementById('vozInput'); if (input) input.focus({ preventScroll: true });
+  /* Al abrir, el micrófono se pide de una: la conversación empieza hablando si él quiere. */
+  if (typeof encenderElMicrofono === 'function') encenderElMicrofono();
+  ACI.emit('CONVERSATION_OPENED', {});
+}
+function cerrarLaConversacion(){
+  const modal = document.getElementById('vozModal'); if (modal) modal.hidden = true;
+  voz.abierta = false;
+  /* Cerrar apaga el micrófono, calla la voz y corta el turno que venía: la capa se va entera. Sin
+   * esto, el turno en camino (la respuesta del modelo o un aviso) llegaba DESPUÉS del cierre y ella
+   * seguía hablando con la ventana cerrada (dueño, 25/09: «despite the model had been closed Lia
+   * continue speak»). Las puertas de `voz.abierta` están en `decirEnLaConversacion`,
+   * `preguntarLoQueFalta` y `elTurnoDeLaConversacion`. */
+  voz.turno = false;
+  if (Array.isArray(voz.cola)) voz.cola = [];
+  if (typeof apagarElMicrofono === 'function') apagarElMicrofono();
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  ACI.emit('CONVERSATION_CLOSED', {});
+}
+
+(function prepararLaConversacion(){
+  const fab = document.getElementById('vozFab'), modal = document.getElementById('vozModal');
+  if (!fab || !modal) return;
+  /* La entrada a la conversación es del asistente: `html[data-assistant="off"]` la apaga por CSS,
+   * como el chat (ahí no se decide nada por JS, que corre antes de que el paquete cargue). */
+  fab.addEventListener('click', abrirLaConversacion);
+  document.getElementById('vozCerrar').addEventListener('click', cerrarLaConversacion);
+  document.getElementById('vozForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const input = document.getElementById('vozInput'); const valor = input.value; input.value = '';
+    responderEnLaConversacion(valor);
+  });
+  /* El componente de fotos: la MISMA tubería del formulario (`loadPhotos`), no una segunda. */
+  const zona = document.getElementById('vozFotoZona'), entrada = document.getElementById('vozFotoInput');
+  zona.addEventListener('click', () => entrada.click());
+  zona.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); entrada.click(); } });
+  entrada.addEventListener('change', () => { loadPhotos(entrada.files); entrada.value = ''; setTimeout(pintarProgresoDeLaConversacion, 600); setTimeout(preguntarLoQueFalta, 900); });
+  /* El contacto se ESCRIBE (nombre, correo, celular): los mismos campos del formulario, llenados por
+   * el cliente — el micrófono no adivina letras ni dígitos (dueño, 25/09). */
+  const parejas = [['vozNombre', 'fullName'], ['vozCorreo', 'email'], ['vozCelular', 'phone']];
+  for (const [origen, destino] of parejas) {
+    const de = document.getElementById(origen), a = document.getElementById(destino);
+    if (!de || !a) continue;
+    de.addEventListener('input', () => {
+      a.value = de.value;
+      a.dispatchEvent(new Event('input', { bubbles: true }));
+      a.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  }
+  /* El micrófono: enciende y apaga (el navegador pide su permiso la primera vez). */
+  document.getElementById('vozMic').addEventListener('click', async e => {
+    const boton = e.currentTarget;
+    if (vozAudio.escuchando) { apagarElMicrofono(); return; }
+    const encendido = await encenderElMicrofono();
+    boton.setAttribute('aria-pressed', encendido ? 'true' : 'false');
+  });
+  /* Su voz: se silencia y se vuelve a encender. */
+  document.getElementById('vozSonido').addEventListener('click', e => {
+    const boton = e.currentTarget;
+    vozAudio.silenciada = !vozAudio.silenciada;
+    boton.setAttribute('aria-pressed', vozAudio.silenciada ? 'true' : 'false');
+    boton.textContent = vozAudio.silenciada ? '🔇' : '🔊';
+    if (vozAudio.silenciada && 'speechSynthesis' in window) speechSynthesis.cancel();
+  });
+})();
+
+/* ── La voz: el micrófono, su voz, y el componente que se mueve con el sonido ────────────
+ * Lo que se mueve dice la verdad. Mientras habla el CLIENTE, las barras van con el nivel REAL del
+ * micrófono (`getUserMedia` + `AnalyserNode`: el análisis es de este equipo y no sale de aquí);
+ * mientras habla ELLA, con los pulsos reales de `speechSynthesis` (un evento por palabra: la voz
+ * la pone el sistema, no se puede medir, así que no se finge una onda). El reconocimiento puede ser
+ * del equipo o del navegador, y eso se dice en la nota antes de que el cliente hable. */
+const vozAudio = { escuchando: false, hablando: false, silenciada: false,
+  stream: null, contexto: null, analizador: null, bucle: null, reconocedor: null };
+
+function pintarLaOnda(valores){
+  const onda = document.getElementById('vozOnda'); if (!onda) return;
+  [...onda.querySelectorAll('i')].forEach((barra, i) => {
+    barra.style.height = Math.max(3, Math.round((valores[i] || 0))) + 'px';
+  });
+}
+const ondaDeNivel = (nivel, barras = 7) => Array.from({ length: barras }, (_, i) => {
+  const centro = 1 - Math.abs(i - (barras - 1) / 2) / ((barras - 1) / 2);   // más alto en el centro
+  return 4 + nivel * (26 - 4) * (0.45 + 0.55 * centro);
+});
+
+function animarLaOnda(){
+  const datos = new Uint8Array(vozAudio.analizador.fftSize);
+  const paso = () => {
+    if (!vozAudio.escuchando) return;
+    vozAudio.analizador.getByteTimeDomainData(datos);
+    let suma = 0;
+    for (const v of datos) { const d = (v - 128) / 128; suma += d * d; }
+    const rms = Math.sqrt(suma / datos.length);
+    pintarLaOnda(ondaDeNivel(Math.min(1, rms * 4.5)));
+    vozAudio.bucle = requestAnimationFrame(paso);
+  };
+  paso();
+}
+
+/* La nota dice de dónde es el reconocimiento ANTES de que el cliente hable: el navegador puede
+ * mandar el audio a su servicio, y eso no se calla. Si el reconocimiento admite `processLocally`,
+ * se pide local y se dice. */
+function laNotaDeLaVoz(){
+  const el = document.getElementById('vozNotaAudio'); if (!el) return;
+  const Soporte = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let texto = 'El movimiento sigue el nivel real de tu micrófono, y lo mide este equipo.';
+  if (!Soporte) texto += ' Este navegador no sabe reconocer voz: escríbeme con el teclado.';
+  else if ('processLocally' in Soporte.prototype) texto += ' El reconocimiento se pide en el equipo.';
+  else texto += ' El reconocimiento de voz lo hace el navegador: puede enviar el audio a su servicio (el texto es lo único que entra a tu cotización).';
+  el.textContent = texto; el.hidden = false;
+}
+
+async function encenderElMicrofono(){
+  if (vozAudio.escuchando) return true;
+  laNotaDeLaVoz();
+  try {
+    /* Cancelación de eco del navegador: cuando el cliente la oye por parlantes, su voz vuelve más
+     * limpia y el reconocimiento no la toma por el cliente. */
+    vozAudio.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+  } catch (err) {
+    document.getElementById('vozNotaAudio').textContent = 'No pude usar el micrófono (permiso denegado o sin dispositivo): te leo por el teclado y no finjo que te escucho.';
+    return false;
+  }
+  vozAudio.contexto = new (window.AudioContext || window.webkitAudioContext)();
+  vozAudio.analizador = vozAudio.contexto.createAnalyser();
+  vozAudio.analizador.fftSize = 512;
+  vozAudio.contexto.createMediaStreamSource(vozAudio.stream).connect(vozAudio.analizador);
+  vozAudio.escuchando = true;
+  document.getElementById('vozOnda').dataset.estado = 'escuchando';
+  { const b = document.getElementById('vozMic'); if (b) b.setAttribute('aria-pressed', 'true'); }
+  animarLaOnda();
+  /* El reconocimiento es otra cosa que el nivel: si no está, el cliente escribe (y la onda sigue). */
+  const Soporte = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (Soporte) {
+    const r = new Soporte();
+    r.lang = 'es-CO'; r.continuous = true; r.interimResults = true;
+    /* EL RECONOCIMIENTO DEL NAVEGADOR, NO EL LOCAL (dueño, 25/09: «por qué no capta el audio de mi voz
+     * bien»). Aquí se pedía el modelo local (`processLocally`) cada vez que se abría: Chrome lo baja en
+     * el fondo y, cuando queda, empieza a usarlo — y ese motor es más lento y capta peor que el
+     * servicio. La tarde que el dueño aprobó no lo estaba usando. Se deja de pedir. */
+    /* La señal de que la reconoce: el campo lo dice mientras escucha (y vuelve al suyo al parar). */
+    r.onstart = () => { const i = document.getElementById('vozInput'); if (i && vozAudio.escuchando) i.placeholder = 'Te escucho… habla tranquilo'; };
+    r.onresult = ev => {
+      /* MIENTRAS ELLA HABLA, la casa suena: lo que entra por el micrófono es SU voz por los parlantes
+       * — no es el cliente. Se descarta entero: ni al campo ni a la conversación. COMO ESTABA (el
+       * dueño, 24/09: «el sonido esta tarde sí estaba bien»). */
+      if (vozAudio.hablando || (Date.now() - (vozAudio.vozDesde || 0)) < 1500) return;
+      let final = '', parcial = '';
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        const t = ev.results[i][0].transcript;
+        if (ev.results[i].isFinal) final += t; else parcial += t;
+      }
+      const input = document.getElementById('vozInput');
+      if (parcial) input.value = parcial;
+      if (final.trim()) {
+        input.value = '';
+        /* Si ya hay un turno corriendo, sus palabras NO se tiran: van a la cola y se atienden al
+         * terminar el turno (antes se perdían — dueño: «se le están escapando palabras que yo digo»). */
+        if (voz.turno) { voz.cola = (voz.cola || []).concat(final.trim()); }
+        else responderEnLaConversacion(final.trim());
+      }
+    };
+    /* Los tropiezos del reconocimiento SE DICEN: un micrófono encendido que no entiende nada es
+     * justo lo que no puede quedarse callado (el dueño: «the microphone seem is working but the
+     * assistant dont response»). `no-speech` y `aborted` son de la vida diaria y no se cuentan. */
+    vozAudio.tropiezos = 0;
+    r.onerror = ev => {
+      const err = ev && ev.error;
+      console.warn('[voz] el reconocimiento falló:', err, ev && ev.message);
+      if (err === 'no-speech' || err === 'aborted') return;
+      if (err === 'not-allowed' || err === 'service-not-allowed') {
+        const n = document.getElementById('vozNotaAudio');
+        if (n) { n.textContent = 'El navegador no dejó usar el reconocimiento en esta página (permiso del micrófono o del servicio de voz). Te leo por el teclado.'; n.hidden = false; }
+        apagarElMicrofono();
+        return;
+      }
+      vozAudio.tropiezos++;
+      const n = document.getElementById('vozNotaAudio');
+      if (n) {
+        n.textContent = err === 'network'
+          ? 'El servicio de voz del navegador no responde (parece que no hay salida a internet para él): escribe con el teclado y el micrófono sigue midiendo tu voz.'
+          : 'No pude reconocer tu voz (' + err + '): escribe con el teclado.';
+        n.hidden = false;
+      }
+      if (vozAudio.tropiezos >= 3) {
+        /* NO se apaga sola: se queda escuchando y volverá a intentar. Un micrófono que se apaga en
+         * silencio es justo lo que se siente como «no capta mi voz» (el botón cambia, pero el
+         * cliente no lo mira). La nota sí lo dice. */
+        vozAudio.tropiezos = 0;
+      }
+    };
+    r.onend = () => { if (vozAudio.escuchando && vozAudio.tropiezos < 3) { try { r.start(); } catch (err) { /* ya estaba arrancado */ } } };
+    try { r.start(); vozAudio.reconocedor = r; } catch (err) {
+      vozAudio.reconocedor = null;
+      console.warn('[voz] el reconocimiento no arrancó', err);
+    }
+  }
+  return true;
+}
+function apagarElMicrofono(){
+  vozAudio.escuchando = false;
+  /* El botón dice la verdad: apagado es apagado (lo mismo hace el encendido). */
+  const botonMic = document.getElementById('vozMic');
+  if (botonMic) botonMic.setAttribute('aria-pressed', 'false');
+  if (vozAudio.bucle) cancelAnimationFrame(vozAudio.bucle), vozAudio.bucle = null;
+  if (vozAudio.reconocedor) { try { vozAudio.reconocedor.onend = null; vozAudio.reconocedor.stop(); } catch (err) {} vozAudio.reconocedor = null; }
+  if (vozAudio.stream) { vozAudio.stream.getTracks().forEach(t => t.stop()); vozAudio.stream = null; }
+  if (vozAudio.contexto) { try { vozAudio.contexto.close(); } catch (err) {} vozAudio.contexto = null; }
+  const onda = document.getElementById('vozOnda'); if (onda) onda.dataset.estado = 'callada';
+  pintarLaOnda([]);
+  const boton = document.getElementById('vozMic'); if (boton) boton.setAttribute('aria-pressed', 'false');
+  const input = document.getElementById('vozInput'); if (input) input.placeholder = 'Escribe tu respuesta…';
+}
+
+/* Su voz, con la voz del sistema. Los eventos `boundary` son reales (uno por palabra): con ellos
+ * se mueve la onda mientras habla — no se inventa una onda de audio que no se puede medir. */
+/* La VOZ va con el asistente: la Web Speech API no dice el sexo, así que se elige por el nombre de
+ * la voz — y el sexo lo manda el pack del cliente (voz/sexo/genero) o, si no lo declara, el propio
+ * nombre del asistente (Lía femenina; Thomás masculina). Colombia primero. */
+function elSexoDelAsistente(){
+  const cfg = (typeof asistenteCfg === 'function' ? asistenteCfg() : null) || {};
+  const declarado = String(cfg.voz || cfg.sexo || cfg.genero || '').toLowerCase();
+  if (/fem|mujer/.test(declarado)) return 'femenina';
+  if (/mas|hombre|varon|varón/.test(declarado)) return 'masculina';
+  const nombre = String(cfg.name || '').toLowerCase();
+  return /thom|tom[aá]s|diego|jorge|carlos|andr[eé]s|miguel|mario|pablo|juan|luis|pedro|raul|raúl/.test(nombre) ? 'masculina' : 'femenina';
+}
+function laVozDelAsistente(){
+  if (!('speechSynthesis' in window)) return null;
+  const sexo = elSexoDelAsistente();
+  const femeninas = /monica|m[oó]nica|paulina|sabina|helena|laura|sof[ií]a|mar[ií]a|camila|valentina|isabela|luc[ií]a|elvira|esperanza|teresa|salom[eé]|ximena|catalina|angela|ángela|female|mujer|femenina/i;
+  const masculinas = /jorge|diego|carlos|pablo|juan|luis|miguel|andr[eé]s|mario|alfonso|ra[uú]l|gonzalo|pedro|male|hombre|masculina/i;
+  const espanolas = (speechSynthesis.getVoices() || []).filter(v => /^es/i.test(v.lang));
+  const pesoDeAcento = v => /-co/i.test(v.lang) ? 0 : /-419|-mx|-us|-ve|-pe|-ec|-ar|-cl/i.test(v.lang) ? 1 : 2;
+  /* La CALIDAD primero entre acentos iguales (el dueño: «ese ruido al final de la voz»):
+   * las voces nuevas del sistema (Natural/Neural/Online/Premium) salen limpias; las viejas chasquean
+   * al cerrar la frase. Si solo hay viejas, se usa la mejor que haya — la página no puede inventarlas. */
+  const pesoDeCalidad = v => /natural|neural|online|premium|plus/i.test(v.name) ? 0 : 1;
+  const ordenadas = espanolas.slice().sort((a, b) => pesoDeAcento(a) - pesoDeAcento(b) || pesoDeCalidad(a) - pesoDeCalidad(b));
+  const quiere = sexo === 'masculina' ? masculinas : femeninas;
+  const laOtra = sexo === 'masculina' ? femeninas : masculinas;
+  return ordenadas.filter(v => quiere.test(v.name))[0]
+    || ordenadas.filter(v => !laOtra.test(v.name))[0]
+    || ordenadas[0] || null;
+}
+/* Aviso de que ELLA habla, para quien quiera acompañarla (la capa 3D hace su gesto): un evento
+ * del DOM, que no depende del bus y cualquiera puede escuchar. */
+function avisarQueHabla(hablando){ try { window.dispatchEvent(new CustomEvent('assistant:hablando', { detail: { hablando: !!hablando } })); } catch (e) {} }
+/* Su voz, como estaba (el dueño: «eso estaba bien»): cada línea se dice al momento, cancelando lo que
+ * hubiera sonando. La versión con fila (encolar y decir una tras otra) hacía que hablara más rato
+ * seguido y el micrófono quedaba sordo mientras tanto — se revirtió. */
+function hablarConSuVoz(texto){
+  if (vozAudio.silenciada || !('speechSynthesis' in window)) return false;
+  const limpio = String(texto || '').replace(/[«»]/g, '').slice(0, 300);
+  if (!limpio) return false;
+  speechSynthesis.cancel();
+  const dicho = new SpeechSynthesisUtterance(limpio);
+  /* COMO ESTABA (el dueño, 24/09: «esta tarde estaba… ni ruidoso»): idioma es-CO fijo, la voz a
+   * cargo del sistema. El cambio de idioma a `voz.lang` se probó y se revirtió. */
+  dicho.lang = 'es-CO';
+  const voz = laVozDelAsistente();
+  /* Una voz que el motor no acepte (lista vieja) no puede tumbar su frase: se queda la de por
+   * defecto del sistema. */
+  if (voz) { try { dicho.voice = voz; } catch (err) { /* la voz de por defecto */ } }
+  let pulso = 0;
+  dicho.onstart = () => { avisarQueHabla(true); vozAudio.hablando = true; vozAudio.vozDesde = Date.now(); document.getElementById('vozOnda').dataset.estado = 'hablando'; };
+  dicho.onboundary = () => { pulso++; pintarLaOnda(ondaDeNivel(0.35 + (pulso % 3) * 0.25)); };
+  dicho.onend = dicho.onerror = () => { avisarQueHabla(false); vozAudio.hablando = false;
+    if (!vozAudio.escuchando) { document.getElementById('vozOnda').dataset.estado = 'callada'; pintarLaOnda([]); } };
+  speechSynthesis.speak(dicho);
+  return true;
+}
+
 /* Un aviso por campo mientras siga fuera de rango: corregirlo lo borra, y volver a
  * escribir el mismo error lo vuelve a avisar. El asistente no repite ni insiste. */
+// Proactive, only for inconsistencies the wizard itself found, and never while the customer types.
 const avisos=new Set();
 addEventListener('aci:event',e=>{
   if(!assistantOn())return;
@@ -2920,6 +4492,10 @@ function applyOptionalSteps(){
     const brain=(s.dataset.brain||'').toLowerCase();
     if(brain&&saltos.indexOf(brain)>=0)skippedSteps.add(+s.dataset.step);
   });
+  /* Donde la recomendación arma la lista (varias telas, cada una con su cantidad), el paso de la
+   * lista NO se repite: el cliente ya dijo sus referencias y sus cantidades ahí (el dueño, 24/09:
+   * «after this step... dont show this......this step is innecessary after that»). */
+  if(esVariasTelas())skippedSteps.add(20);
   const v=pasosVisibles();
   /* La barra se aprieta según los pasos VISIBLES (ver el CSS de [data-rows]): con nueve pasos el
    * hueco de Lía y el pie tienen que quedar donde quedan con siete. */
@@ -2931,6 +4507,15 @@ function applyOptionalSteps(){
     const spec=li.dataset.askDot?Store.askSpec(li.dataset.askDot):null;
     if(spec){li.querySelector('b').textContent=spec.eyebrow;li.querySelector('small').textContent=spec.title;}
   });
+  /* El orden de la barra es el del RECORRIDO, no el del documento: con la lista después de la
+   * recomendación, el documento y el flujo dejan de coincidir y la barra enumeraba 1,5,6,2,3,4
+   * (medido en la reventa). Los puntos se reordenan siguiendo `pasosVisibles()`. */
+  {const ul=document.querySelector('.step-list');
+   if(ul){const orden=new Map(v.map((paso,i)=>[paso,i]));
+     [...ul.querySelectorAll('[data-step-dot]')]
+       .sort((a,b)=>((orden.has(+a.dataset.stepDot)?orden.get(+a.dataset.stepDot):999)-
+                     (orden.has(+b.dataset.stepDot)?orden.get(+b.dataset.stepDot):999)))
+       .forEach(li=>ul.appendChild(li));}}
   buildDamageGrid();renderAskSteps();pintarInsumos();reubicarLaSubida();aplicarElEscogedor();
   /* La ruta, sus dos preguntas (para qué y qué se sabe) y su paso de la lista —que trae la
    * referencia del pedido anterior cuando se está completando uno—, y la entrega (que solo pregunta
@@ -2940,6 +4525,22 @@ function applyOptionalSteps(){
     if(haySaberStep())renderSaberOptions();
     if(esRutaLista())pintarFilasDeLaLista();}
   const ef=document.getElementById('entregaField');if(ef)ef.hidden=!hayRutaStep();
+  /* El título del paso de las preferencias habla del MUEBLE solo cuando la rama lo pregunta: en las
+   * ramas donde el mueble no existe (reventa) el título habla de la tela — el paso quedó con el
+   * mismo texto en todas las ramas y el dueño lo vio en la reventa (24/09). */
+  const tituloPref=document.querySelector('.wizard-step[data-step="12"] h2');
+  if(tituloPref)tituloPref.textContent=skippedSteps.has(1)?'¿Cómo se usará la tela?':'¿Cómo se usará el mueble?';
+  /* La VITRINA de telas del paso de la lista: la ofrece el camino que NO respondió ya la pregunta de
+   * la tela (catálogo: `vitrina:false` en el saber — «sé qué tela quiero», donde el cliente la sabe,
+   * y «quiero sugerencias», que trae su propio paso de recomendación con la acción del asistente). */
+  const filaSugerir=document.getElementById('listaSugerirFila');
+  if(filaSugerir){
+    const s=saberActual(),sin=!!(s&&s.vitrina===false);
+    filaSugerir.hidden=sin;
+    if(sin){const p=document.getElementById('listaVitrina'),b=document.getElementById('listaSugerir');
+      if(p)p.hidden=true;if(b)b.setAttribute('aria-expanded','false');}
+  }
+
 }
 /* ------------------------------------------------------------------ volver a cero --
  * Cambiar de LÍNEA DE SERVICIO empieza de cero: lo que el cliente declaró para la línea anterior
@@ -2978,9 +4579,12 @@ function resetProjectForLine(){
     else el.value=el.defaultValue;
   });
   const otro=document.getElementById('furnitureOther');if(otro)otro.value='';
-  // 3 · el chat: el historial del modelo local guarda la línea anterior; se suelta y la próxima
+  // 3 · el chat: el historial del modelo guarda la línea anterior; se suelta y la próxima
   //     pregunta abre una sesión nueva con el estado ya limpio.
-  if(sesionIA){try{sesionIA.destroy&&sesionIA.destroy()}catch(err){}sesionIA=null}
+  if(sesionIA){try{sesionIA.soltar&&sesionIA.soltar()}catch(err){}sesionIA=null}
+  /* La conversación también suelta su sesión: su historia guarda la línea vieja. */
+  if(voz.sesion){try{voz.sesion.soltar&&voz.sesion.soltar()}catch(err){}voz.sesion=null}
+  voz.preguntado={};
   // 4 · lo que se pinta
   renderPhotos();renderFurnitureOptions();renderPreferenceOptions();buildDamageGrid();
   const titulo=document.getElementById('analysisTitle');if(titulo)titulo.textContent=REVIEW_INICIAL.title;
@@ -3106,8 +4710,50 @@ let pedidoBase=null;   // la solicitud anterior que se está completando (paso 2
  * del pedido. No basta la ruta: el recorrido completo («no tengo claro ninguna de las dos») NO tiene
  * lista, y sin ella la estimación es la del motor clásico (material + mano de obra del oficio). */
 const RUTAS_CON_LISTA=['compra','pedido'];
-const esRutaLista=()=>hayRutaStep()&&RUTAS_CON_LISTA.indexOf(state.ruta||'')>=0&&!skippedSteps.has(20);
+/* La rama declara cantidades (la lista). El paso de la lista puede no estar a la vista y la rama
+ * seguir declarando: donde la recomendación arma la compra (`variasTelas`), la cantidad se escribe en
+ * la tarjeta y el paso no vuelve — pero la estimación tiene que leer ESA cantidad, no el consumo del
+ * mueble (medido: con el paso fuera, el cierre cotizaba el sofá de fábrica, 14–19 m). */
+const esRutaLista=()=>hayRutaStep()&&RUTAS_CON_LISTA.indexOf(state.ruta||'')>=0
+  &&(!skippedSteps.has(20)||!!(saberActual()&&saberActual().variasTelas));
 const telasActivas=()=>Store.all('fabrics').filter(f=>f.active);
+/* El ÍNDICE DE CONTRATOS: una fila por rama, con el id de su contrato (el nombre de su JSON). Es lo
+ * que la conversación le da al modelo para que ELIJA el caso —el dueño: «el modelo tiene que elegir
+ * cuál JSON es de acuerdo al caso y las primeras preguntas de sondeo»— y lo que puede anotar en
+ * `rama`; el sistema lo valida y aplica la cadena entera. */
+function elIndiceDeContratos(){
+  const out=[], arr=x=>Array.isArray(x)?x:[];
+  (Store.services()||[]).filter(l=>l.contrato!=='pendiente').forEach(linea=>{
+    const L=linea.label||linea.id;
+    const rutas=arr(linea.rutas);
+    if(!rutas.length){out.push({id:linea.id,cadena:[L],nodos:['linea']});return;}
+    rutas.forEach(ruta=>{
+      const props=arr(ruta.propositos);
+      if(!props.length){out.push({id:`${linea.id}.${ruta.id}`,cadena:[L,ruta.label||ruta.id],nodos:['linea','ruta']});return;}
+      props.forEach(prop=>{
+        const sabes=arr(prop.saberes);
+        if(!sabes.length){out.push({id:`${linea.id}.${ruta.id}.${prop.id}`,cadena:[L,ruta.label||ruta.id,prop.label||prop.id],nodos:['linea','ruta','proposito']});return;}
+        sabes.forEach(s=>out.push({id:`${linea.id}.${ruta.id}.${prop.id}.${s.id}`,
+          cadena:[L,ruta.label||ruta.id,prop.label||prop.id,s.label||s.id],nodos:['linea','ruta','proposito','saber']}));
+      });
+    });
+  });
+  return out;
+}
+/* El vocabulario del negocio: el TEMA de una respuesta es suyo —sus telas y colecciones, sus líneas,
+ * sus muebles, sus ciudades—, no una lista de palabras fija. Así una tela o una colección nueva entran
+ * solas (el dueño: «¿cómo así toca arreglar por palabra?»). */
+function elVocabularioDelNegocio(){
+  const out=[];
+  try{(Store.services()||[]).forEach(s=>{if(s.label)out.push(s.label)});}catch(e){}
+  try{telasActivas().forEach(f=>{if(f.name)out.push(f.name);if(f.colorName)out.push(f.colorName);if(f.collection)out.push(f.collection)});}catch(e){}
+  try{(Store.activeFurniture()||[]).forEach(m=>{if(m.name)out.push(m.name)});}catch(e){}
+  try{(Store.activeServicePoints()||[]).forEach(p=>{if(p.city)out.push(p.city)});}catch(e){}
+  return out;
+}
+/* Los precios POR METRO del catálogo, permitidos en lo que ella dice: el cerco deja pasar las
+ * cifras que vienen de ahí —no solo las de la estimación— porque son dato del catálogo. */
+const preciosDelCatalogo=()=>telasActivas().map(f=>money(f.price));
 /* La referencia de cada fila: el catálogo activo. Cuando el comprador sabe los metros pero NO la
  * tela (intención «metros»), la fila puede quedar sin referencia: la elige después, en la
  * recomendación, y hasta entonces el valor queda por confirmar. */
@@ -3115,6 +4761,35 @@ const opcionesDeTelas=(sel,sinTela)=>(sinTela&&!sel
     ?'<option value="" selected>Aún no sé la tela (la elijo en la recomendación)</option>':'')
   +telasActivas().map(f=>
     `<option value="${esc(f.id)}"${String(f.id)===String(sel)?' selected':''}>${esc(f.name)} · ${esc(f.colorName)}</option>`).join('');
+/* La cantidad del paso de la RECOMENDACIÓN (el dueño: «one field cantidad for fabric»): el campo vive
+ * en la tarjeta de ESA tela y escribe SU fila de la lista —una sola fuente de verdad—, así que las
+ * telas elegidas y sus metros llegan juntos al paso de la compra. */
+const filaDeLaListaPor=fabricId=>{
+  const caja=document.getElementById('listRows');if(!caja)return null;
+  return [...caja.querySelectorAll('.boq-row')].filter(r=>{const s=r.querySelector('.list-fabric');
+    return s&&String(s.value)===String(fabricId)})[0]||null;
+};
+/* La fila vacía con la que nace la lista (referencia «aún no sé», sin cantidad) se va cuando el
+ * cliente arma la suya en la recomendación: nadie quiere una fila en blanco en su compra. */
+const quitarLaFilaVaciaDeLaLista=()=>{
+  const caja=document.getElementById('listRows');if(!caja)return;
+  [...caja.querySelectorAll('.boq-row')].forEach(r=>{
+    const s=r.querySelector('.list-fabric'),mes=r.querySelector('.list-metros');
+    if(s&&!String(s.value||'').trim()&&!(Number(mes&&mes.value)||0))r.remove();
+  });
+};
+const escribirLaCantidadDeLaTela=(fabricId,valor)=>{
+  const fab=telasActivas().filter(x=>String(x.id)===String(fabricId))[0];if(!fab)return;
+  const cajita=document.getElementById('listRows');if(!cajita)return;
+  const n=Number(String(valor==null?'':valor).replace(',','.'))||0;
+  let fila=filaDeLaListaPor(fab.id);
+  if(!fila){agregarFilaDeLaLista(fab.id,n||undefined);fila=cajita.querySelector('.boq-row:last-child')}
+  if(!fila)return;
+  const el=fila.querySelector('.list-metros');
+  if(el){el.value=n?String(n):'';el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))}
+  const errReco=document.getElementById('recoError');if(errReco)errReco.hidden=true;
+  updateEstimate();
+};
 /* Cuando sabe la tela y NO la cantidad (intención «tela»), la referencia de la fila ES la tela del
  * proyecto: el motor calcula sus metros y el resumen, la solicitud y el chat la ven igual que en el
  * recorrido clásico. */
@@ -3157,6 +4832,10 @@ const unidadDeLaFila=fila=>{
 };
 function pintarFilasDeLaLista(){
   const caja=document.getElementById('listRows');if(!caja)return;
+  /* Donde se eligen VARIAS telas no hay fila de nacimiento: la fila es del CLIENTE (nace cuando
+   * elige una tela, y se va cuando la suelta) — sembrarla aquí le marcaba una tela que nadie eligió
+   * y el paso no podía avisar «elige al menos una» (medido: la tela por defecto ya venía marcada). */
+  if(esVariasTelas())return;
   if(!caja.querySelector('.boq-row')){
     /* El pedido anterior trae su referencia a la lista: es lo que se está completando. */
     let id=null;
@@ -3186,11 +4865,81 @@ function filasDeLaLista(){
   }).filter(r=>r.metros>0||r.fabricId);
 }
 const leerLaLista=()=>filasDeLaLista().filter(r=>r.metros>0);
+/* ---- la VITRINA de telas del paso de la lista (docs/telas-en-la-lista.md) -------------------------
+ * Las rutas cortas («reventa», «pedido») no tienen paso de recomendación, y su cliente quiere ver
+ * telas. La vitrina es del PASO: el ranking del cotizador (Store.recommend — el mismo motor del paso
+ * de la recomendación), con las ÚLTIMAS COLECCIONES de primeras (el seed las marca `novedad`), y la
+ * elegida entra en la fila que se está llenando por el select de la fila, como un dedo. */
+function filaParaLaVitrina(){
+  const caja=document.getElementById('listRows');if(!caja)return null;
+  const activa=document.activeElement&&document.activeElement.closest?document.activeElement.closest('.boq-row'):null;
+  if(activa&&caja.contains(activa))return activa;
+  const filas=[...caja.querySelectorAll('.boq-row')];
+  return filas[filas.length-1]||null;
+}
+function pintarLaVitrina(){
+  const grid=document.getElementById('telasGrid');if(!grid)return;
+  const val=id=>{const el=document.getElementById(id);return el?el.value:''};
+  const needs=[...document.querySelectorAll('#needsGrid input:checked')].map(x=>x.value);
+  const ranked=Store.recommend({needs,style:val('style'),color:val('color'),budget:+val('budget')||0});
+  /* Las últimas colecciones primero, sin tocar el ranking del paso de la recomendación (sort
+   * estable: dentro de cada grupo manda el motor). */
+  ranked.sort((a,b)=>((b.fabric.novedad?1:0)-(a.fabric.novedad?1:0)));
+  const fila=filaParaLaVitrina();
+  const actual=fila?String(((fila.querySelector('.list-fabric')||{}).value)||''):'';
+  grid.innerHTML='';
+  const pista=document.getElementById('telasPara');
+  if(pista)pista.textContent=fila?'La que toques entra en la fila que estás llenando; las últimas colecciones van de primeras.':'La que toques entra en una fila nueva; las últimas colecciones van de primeras.';
+  ranked.forEach(r=>{
+    const f=r.fabric,on=String(f.id)===actual;
+    const card=document.createElement('button');card.type='button';
+    card.className='fabric-card'+(on?' selected':'')+(r.overBudget?' over-budget':'');
+    card.setAttribute('aria-pressed',String(on));
+    card.innerHTML=`<div class="swatch" style="background:${Store.swatch(f)}">`+
+      `<span class="best-match">${f.novedad?'Última colección':'Colección '+esc(f.collection||'—')}</span></div>`+
+      `<div class="fabric-card-body"><b>${esc(f.name)} · ${esc(f.colorName)}</b>`+
+      `<small>${money(f.price)} por metro · Precio de referencia</small>`+
+      `<div class="fabric-tags">${(f.tags||[]).map(t=>`<span>${esc(t)}</span>`).join('')}</div>`+
+      (r.reasons.length?`<p class="why"><b>Por qué te la sugerimos:</b> ${esc(r.reasons.join(' · '))}</p>`:'')+
+      (r.overBudget?`<p class="why over">Por encima del presupuesto que indicaste</p>`:'')+
+      `</div>`;
+    card.addEventListener('click',()=>elegirTelaParaLaFila(f));
+    grid.appendChild(card);
+    Store.paintSwatch(card.querySelector('.swatch'),f);
+  });
+}
+function elegirTelaParaLaFila(f){
+  const caja=document.getElementById('listRows');if(!caja)return;
+  let fila=filaParaLaVitrina();
+  if(!fila){agregarFilaDeLaLista(f.id);fila=caja.querySelector('.boq-row:last-child')}
+  if(!fila)return;
+  const sel=fila.querySelector('.list-fabric');
+  if(sel){sel.value=String(f.id);sel.dispatchEvent(new Event('change',{bubbles:true}))}
+  const el=fila.querySelector('.list-metros');if(el&&!el.value)el.focus({preventScroll:true});
+  cerrarLaVitrina();
+  ACI.emit('FABRIC_SUGGESTED',{fabricId:f.id,label:`${f.name} · ${f.colorName}`});
+}
+function abrirLaVitrina(){
+  const panel=document.getElementById('listaVitrina'),boton=document.getElementById('listaSugerir');
+  if(!panel)return;pintarLaVitrina();panel.hidden=false;if(boton)boton.setAttribute('aria-expanded','true');
+}
+function cerrarLaVitrina(){
+  const panel=document.getElementById('listaVitrina'),boton=document.getElementById('listaSugerir');
+  if(panel)panel.hidden=true;if(boton)boton.setAttribute('aria-expanded','false');
+}
+(function prepararLaVitrina(){
+  const boton=document.getElementById('listaSugerir');if(!boton)return;
+  boton.addEventListener('click',()=>{const p=document.getElementById('listaVitrina');if(p&&p.hidden)abrirLaVitrina();else cerrarLaVitrina()});
+  const cerrar=document.getElementById('telasCerrar');if(cerrar)cerrar.addEventListener('click',cerrarLaVitrina);
+})();
 /* En «sé los metros, no la tela» la referencia sale de la RECOMENDACIÓN: la fila se queda con la
  * tela que se está cotizando (la de la recomendación manda), para que el cliente vea la misma y el
  * valor deje de esperar. */
 function sincronizarFilasConLaTela(){
   if(!esIntencionDeMetros()||!state.fabric)return;
+  /* Donde se eligen VARIAS telas la fila es del cliente: no se re-etiqueta con la última elegida
+   * (serían todas la misma). */
+  if(esVariasTelas())return;
   const caja=document.getElementById('listRows');if(!caja)return;
   caja.querySelectorAll('.boq-row').forEach(r=>{
     const sel=r.querySelector('.list-fabric');
@@ -3317,6 +5066,10 @@ const saberEs=id=>haySaberStep()&&!!saberActual()&&saberActual().id===id;
  * mueble) y los metros (la tela la recomienda el catálogo). */
 const esIntencionTela=()=>esRutaLista()&&saberEs('tela');
 const esIntencionDeMetros=()=>esRutaLista()&&saberEs('metros');
+/* El dueño (24/09): «you can choose several fabrics, not only one» — donde el camino lo declara
+ * (`variasTelas` en el catálogo: la reventa que pide sugerencias), la recomendación arma la lista con
+ * VARIAS telas, cada una con SU cantidad. En las demás ramas se elige una: la del proyecto. */
+const esVariasTelas=()=>!!(saberActual()&&saberActual().variasTelas);
 function aplicarPropositoPorDefecto(){
   const lista=propositosRuta();
   if(!lista.length){state.proposito=null;state.saber=null;return}
@@ -3400,6 +5153,8 @@ function renderServiceOptions(){
       /* Solo hay algo que borrar si YA había una línea elegida: en la primera elección (página
        * recién abierta) no se toca nada — no hay declaración que pueda viajar. */
       const cambiaDeLinea=!!state.service&&state.service.id!==s.id;
+      /* Cambiar de línea EMPIEZA DE CERO: lo declarado era de la línea anterior. */
+      if(cambiaDeLinea)olvidarElCaso();
       state.service=s;state.damages=[];
       /* La ruta de la línea nueva y sus dos preguntas por defecto: volver a pulsar la misma línea no
        * cambia nada (no hay ruta vieja que borrar). */
