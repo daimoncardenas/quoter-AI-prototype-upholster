@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 import { PHOTOS_DB } from './client.mjs';
-import { openAdmin, openWizard, setTags } from './helpers.mjs';
+import { openAdmin, openWizard, setTags, elegirMueble } from './helpers.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 let fails = 0;
 const check = (n, got, want) => { const ok = JSON.stringify(got)===JSON.stringify(want); if(!ok)fails++;
@@ -12,7 +12,7 @@ const fresh = async f => { await page.goto(D+f); await page.evaluate((db)=>{loca
 console.log('\nTODA ENTIDAD DEL COTIZADOR VIVE EN EL STORE');
 await fresh('index.html');
 check('los muebles salen del store, no del markup',
-  await page.$$eval('.furniture-card', e=>e.map(c=>c.dataset.furniture)),
+  await page.$$eval('.pieza-mueble option', e=>e.map(o=>o.value).filter(Boolean)),
   ['Sofá','Sofá en L','Poltrona','Silla','Cabecero','Otro']);
 check('las necesidades salen del store',
   await page.$$eval('#needsGrid input', e=>e.map(i=>i.value)),
@@ -48,8 +48,8 @@ check('guardar confirma que el cotizador ya lo usa',(await page.textContent('#to
 
 await openWizard(page, D);
 check('el mueble nuevo se ofrece al cliente',
-  await page.$$eval('.furniture-card', e=>e.map(c=>c.dataset.furniture).includes('Puf')), true);
-await page.click('.furniture-card[data-furniture="Puf"]');
+  await page.$$eval('.pieza-mueble option', e=>e.map(o=>o.value).includes('Puf')), true);
+await elegirMueble(page, 'Puf');
 check('con su etiqueta de cantidad', await page.textContent('#quantityLabel'), 'Cantidad de pufs');
 check('y su unidad', await page.$$eval('#seats option', e=>e.map(o=>o.text)),
   ['1 puf','2 pufs','3 pufs','4 pufs','5 o más pufs']);
@@ -77,7 +77,7 @@ await page.selectOption(F+'[name=active]','false');
 await page.click(F+'button.primary');
 await openWizard(page, D);
 check('la silla desaparece para el cliente',
-  await page.$$eval('.furniture-card', e=>e.map(c=>c.dataset.furniture).includes('Silla')), false);
+  await page.$$eval('.pieza-mueble option', e=>e.map(o=>o.value).includes('Silla')), false);
 
 console.log('\nLAS OPCIONES DEL CUESTIONARIO SON CONFIGURABLES');
 await openAdmin(page,D);

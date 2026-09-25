@@ -98,7 +98,35 @@ check('una rama inventada no entra y lo dice',
     return [r.ok, /no reconocí/.test(r.motivo || '')];
   }), [false, true]);
 
-console.log('LA MEMORIA ES DE LA CONVERSACIÓN — RECARGAR EMPIEZA LIMPIO');
+console.log('\nLA MEMORIA PRESENTE: SE ESCRIBE MIENTRAS SE HABLA, Y SE BORRA AL CARGAR (dueño, 25/09: «el problema es que no tiene memoria presente» · «si local storage» · «pero cuando recargue sí debe resetearse»)');
+/* La conversación viva se guarda con cada mensaje (así no se pierde mientras el cliente habla) y en la
+ * clave del propio cliente (`cdy.v1.memoria-presente`), al lado de su almacén. */
+check('lo que se dice queda escrito en localStorage, con cada mensaje',
+  await page.evaluate(() => {
+    decirEnLaConversacion('apunta: vivo en Bogotá y quiero telas');
+    decirEnLaConversacion('y el mueble es un sofá de tres puestos');
+    const guardado = leerLaMemoriaPresente() || [];
+    return [Array.isArray(leerLaMemoriaPresente()), guardado.length >= 2,
+      /vivo en Bogotá/.test(JSON.stringify(guardado)) && /sofá de tres puestos/.test(JSON.stringify(guardado)),
+      Object.keys(localStorage).some(k => new RegExp(Store.ns() + 'memoria-presente').test(k))];
+  }), [true, true, true, true]);
+/* Y el turno con el modelo la lleva: la memoria presente es lo que el asistente tiene delante para no
+ * volver a preguntar lo ya dicho. */
+check('y el turno del modelo lleva esa conversación (es su memoria presente)',
+  await page.evaluate(() => {
+    decirEnLaConversacion('apunta: vivo en Bogotá y quiero telas', 'user');
+    const texto = laConversacionHastaAhora();
+    return [/CLIENTE: apunta: vivo en Bogotá/.test(texto), /apunta: vivo en Bogotá/.test(texto)];
+  }), [true, true]);
+check('y «empezar de cero» la vacía: lo de un caso no viaja al otro',
+  await page.evaluate(async () => {
+    await elTurnoDeLaConversacion('quiero empezar de cero con otra cosa');
+    const guardado = leerLaMemoriaPresente() || [];
+    return [guardado.length, /vivo en Bogotá/.test(JSON.stringify(guardado)),
+      guardado.every(m => /borrón y cuenta nueva/.test(m.texto)), /borrón y cuenta nueva/.test(document.getElementById('vozMessages').textContent)];
+  }), [1, false, true, true]);
+
+console.log('\nLA MEMORIA ES DE LA CONVERSACIÓN — RECARGAR EMPIEZA LIMPIO');
 await fresh();
 check('lo declarado vive en la conversación (la rama, la compra, los campos y los mensajes, en la página)',
   await page.evaluate(async () => {
@@ -112,8 +140,10 @@ check('y RECARGAR empieza limpio: no vuelve la rama, ni la compra, ni las medida
   await page.reload().then(() => page.waitForTimeout(900)).then(() => page.evaluate(() => ({
     rama: laRamaDelEstado(), filas: filasDeLaLista().filter(r => r.metros > 0).length,
     medida: valorDeCampo('width'), mensajes: document.getElementById('vozMessages').textContent.trim() === '',
-    enAlmacen: Object.keys(localStorage).filter(k => /draft|borrador/i.test(k))
-  }))), { rama: '', filas: 0, medida: '', mensajes: true, enAlmacen: [] });
+    enAlmacen: Object.keys(localStorage).filter(k => /draft|borrador/i.test(k)),
+    /* La memoria presente también se borra al cargar: recargar empieza limpio (dueño, 25/09). */
+    memoriaPresente: Object.keys(localStorage).filter(k => /memoria-presente/i.test(k))
+  }))), { rama: '', filas: 0, medida: '', mensajes: true, enAlmacen: [], memoriaPresente: [] });
 check('y pedir «empezar de cero» olvida el caso DENTRO de la conversación (sin recargar)',
   await page.evaluate(async () => {
     await aplicarValorDelContrato('rama', 'suministro-tela.compra.reventa.sugerencias');

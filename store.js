@@ -233,7 +233,68 @@
       // user; failing silently would lose their data without warning.
       throw new Error('No se pudo guardar "' + entity + '": ' + err.name);
     }
+    if (entity === 'quotes') baseEmpujar(rows);
     return rows;
+  }
+
+  /* ------------------------------------------- la base del servidor (SQLite) --
+   * El prototipo guarda en el navegador, y eso deja a cada navegador con lo suyo: una pre-cotización
+   * creada en uno no existe en el otro. Cuando el servidor de desarrollo está delante (`/api/quotes`,
+   * ver `tools/api.mjs`), las solicitudes se comparten: al guardar se empujan, al cargar se traen. Sin
+   * servidor —una demo abierta como archivo— todo sigue igual: la base es un extra, nunca un requisito. */
+  var baseViva = null;              // null = sin preguntar · true = hay base · false = no hay
+  var basePorEmpujar = null;
+
+  function baseEnviar(rows) {
+    try {
+      fetch('/api/quotes', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ns: NS, quotes: rows })
+      }).catch(function () { /* sin servidor: se queda en el navegador */ });
+    } catch (err) { /* fetch no disponible */ }
+  }
+
+  function baseEmpujar(rows) {
+    if (typeof fetch !== 'function') return;
+    if (baseViva === true) return baseEnviar(rows);
+    basePorEmpujar = rows;
+    if (baseViva === null) {
+      baseViva = undefined;                            // preguntando
+      syncQuotes().then(function () {
+        if (baseViva === true && basePorEmpujar) { baseEnviar(basePorEmpujar); basePorEmpujar = null; }
+      });
+    }
+  }
+
+  /* Trae lo de la base y lo mezcla con lo del navegador (por id: nadie pisa a nadie). Devuelve una
+   * promesa: las pantallas la esperan antes de pintar cuando quieren ver lo que llegó de otro navegador. */
+  function syncQuotes() {
+    if (typeof fetch !== 'function') { baseViva = false; return Promise.resolve(false); }
+    return fetch('/api/quotes?ns=' + encodeURIComponent(NS))
+      .then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+      .then(function (dato) {
+        baseViva = true;
+        var delServidor = (dato && dato.quotes) || [];
+        /* LA BASE MANDA (dueño, 25/09): lo que ella tiene gana —el navegador es solo la última copia—,
+         * y lo que exista únicamente en el navegador se queda y se empuja, para que también entre. */
+        var marca = String((dato && dato.resetAt) || '');
+        var porId = {}, cambios = 0;
+        read('quotes').forEach(function (q) {
+          if (!q || !q.id) return;
+          /* Lo del navegador que es MÁS VIEJO que el último reinicio de las seeds se descarta: si no,
+           * una copia vieja resucitaría lo que el botón acaba de borrar. */
+          if (marca && String(q.date || '') < marca.slice(0, 10)) return;
+          porId[q.id] = q;
+        });
+        delServidor.forEach(function (q) {
+          if (!q || !q.id) return;
+          porId[q.id] = q;                       // gana la base, sin mirar fechas
+          cambios++;
+        });
+        write('quotes', Object.keys(porId).map(function (k) { return porId[k]; }));
+        return true;
+      })
+      .catch(function () { baseViva = false; return false; });
   }
 
   /* --------------------------------------------------------- quote cycle --
@@ -279,6 +340,7 @@
   /* ----------------------------------------------------------------- store -- */
 
   var Store = {
+    syncQuotes: function () { return syncQuotes(); },
     all: function (entity) { return read(entity); },
 
     get: function (entity, id) {
@@ -361,6 +423,28 @@
      * empty — this is the one place that decides "missing" means "none". */
     quoteComments: function (quote) { return (quote && quote.comments) || []; },
 
+    /* Quitar una cotización la quita TAMBIÉN de la base: si el navegador solo la borrara aquí, volvería
+     * en el siguiente traído. */
+    /* Publicar UNA cotización con sus fotos. La lista del navegador va liviana (solo los ids de las
+     * fotos); las imágenes viajan aquí, una vez, cuando la solicitud se envía: en la base quedan como
+     * archivo (`data/photos/…`) y su fila, así que se ven desde cualquier navegador. */
+    publicarCotizacion: function (cotizacion) {
+      if (typeof fetch !== 'function' || !cotizacion || !cotizacion.id) return Promise.resolve(false);
+      return fetch('/api/quotes', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ns: NS, quotes: [cotizacion] })
+      }).then(function (r) { baseViva = r.ok ? true : baseViva; return r.ok; }).catch(function () { return false; });
+    },
+    /* El botón «Restablecer datos de demo»: se corre la base y quedan solo las seeds. */
+    reiniciarLaBase: function () {
+      if (typeof fetch !== 'function') return Promise.resolve(false);
+      return fetch('/api/reset?ns=' + encodeURIComponent(NS), { method: 'POST' })
+        .then(function (r) { return r.ok; }).catch(function () { return false; });
+    },
+    removeDeLaBase: function (id) {
+      if (typeof fetch !== 'function' || baseViva !== true) return;
+      try { fetch('/api/quotes/' + encodeURIComponent(id) + '?ns=' + encodeURIComponent(NS), { method: 'DELETE' }).catch(function () { }); } catch (err) { }
+    },
     remove: function (entity, id) {
       write(entity, read(entity).filter(function (r) { return String(r.id) !== String(id); }));
     },
@@ -389,6 +473,9 @@
      * parsed with new Date('YYYY-MM-DD'), which is UTC midnight and would
      * push the first/last evening of a month into the wrong one. */
     monthKey: function (date) { return monthKey(date); },
+    /* El prefijo de las claves de ESTE cliente (`cdy.v1.`): lo que la página guarde por su cuenta vive
+     * al lado del almacén, con el mismo espacio de nombres (la memoria presente de la conversación). */
+    ns: function () { return NS; },
 
     quotesThisMonth: function () {
       var key = monthKey();

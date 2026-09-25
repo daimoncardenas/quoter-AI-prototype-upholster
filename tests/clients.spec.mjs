@@ -251,7 +251,7 @@ for (const slug of SLUGS) {
   /* Con el paso de la línea activo, la grilla de muebles (paso 1) está OCULTA: waitForSelector
    * espera visible por defecto, así que se espera cualquiera de los dos — el selector de línea
    * cuando existe, o la grilla cuando no hay paso de línea. */
-  await indexPage.waitForSelector('#serviceGrid .service-choice, .furniture-grid .furniture-card', { timeout: 10000 });
+  await indexPage.waitForSelector('#serviceGrid .service-choice, .piezas-lista .pieza-mueble', { timeout: 10000 });
   const pasoUno = await indexPage.evaluate(() => ({
     habilitadas: Store.servicesEnabled().map(s => s.label),
     paso: !document.querySelector('[data-step-dot="0"]').hidden,
@@ -345,7 +345,7 @@ for (const slug of SLUGS) {
   await loop.click(F + 'button.primary');
   await openWizard(loop, D);
   check('un mueble creado en el backoffice aparece en el cotizador',
-    await loop.$$eval('.furniture-card', els => els.map(c => c.dataset.furniture).includes('Puf Prueba')), true);
+    await loop.$$eval('.pieza-mueble option', els => els.map(o => o.value).includes('Puf Prueba')), true);
 
   await openAdmin(loop, D);
   await loop.click('button[data-page="settings"]');

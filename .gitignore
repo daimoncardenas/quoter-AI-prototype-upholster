@@ -17,3 +17,6 @@ generated-*/
 
 # Downloaded CC0 sources for tools/build-assistant-assets.mjs (see assets/assistant/README.md).
 assets/assistant/sources/
+
+# la base del servidor: estado local, no viaja en git
+data/

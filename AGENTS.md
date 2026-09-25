@@ -13,12 +13,22 @@ qué es el producto están en `CLAUDE.md`.
 Las de CÓMO trabajar viven en **`CLAUDE.md`, sección «Ritmo y verificación»** — ahí las leen también
 Claude Code y las demás herramientas. Resumen, para quien sólo lea este archivo:
 
-1. Cambio visual o CSS → se verifica **mirando**: aplicar, UNA captura de la zona, mirarla, responder
+1. **Diseño primero, y solo el diseño.** Un cambio de interfaz se hace visual (marcado y estilos, sin
+   lógica nueva) y se le enseña al dueño con UNA captura, **rápido**: la lógica y las pruebas se
+   conectan **solo después** de que él apruebe el diseño. Sin suites mientras él mira un diseño.
+   (Dueño, 25/09, ya dicho varias veces: «primero diseño de ahora en adelante» · «solo diseño» · «y si
+   se aprueba, se conecta logica y demas para testing».)
+2. Cambio visual o CSS → se verifica **mirando**: aplicar, UNA captura de la zona, mirarla, responder
    con la captura. Sin tests funcionales, sin worktrees, sin barrer historial.
-2. Cambio funcional → su test puntual. La **batería completa** (`npm test`, ~13 min) va UNA vez al
-   cerrar el lote o antes de un commit.
-3. Al **sumar** a un selector o condición, se suma, no se sustituye (y se comprueba con
+3. **Las suites solo se corren AL DESPLEGAR** (dueño, 25/09: «the suite only should be run when is
+   deploy»): mientras se trabaja, un cambio funcional se verifica **en vivo** —el navegador, un guion
+   corto que lee el estado, o una captura—, nunca con `npm test` ni con la batería por edición.
+4. Al **sumar** a un selector o condición, se suma, no se sustituye (y se comprueba con
    `git diff <archivo> | grep <lo que tocaste>`).
-4. Ediciones de texto: imprimir cuántas líneas se borran **antes** de escribir.
-5. Verificar con código de salida y `ALL PASS` / `TODO PASA`, nunca con `grep -c FAIL`.
-6. Si el dueño está molesto: responder **en español**, corto, sin discursos.
+5. Ediciones de texto: imprimir cuántas líneas se borran **antes** de escribir.
+6. Verificar con código de salida y `ALL PASS` / `TODO PASA`, nunca con `grep -c FAIL`.
+7. Si el dueño está molesto: responder **en español**, corto, sin discursos.
+8. **Si no lees un archivo, no lo actualices.** Este agente lee y escribe `AGENTS.md`; `CLAUDE.md` es
+   de las otras herramientas y del dueño (dueño, 25/09: «si no lees claude... no actualices claude»).
+9. **Pregunta sencilla → respuesta inmediata.** Una línea, sin herramientas, sin análisis ni vueltas.
+   Al dueño le molesta la demora y que «piense tanto» en cosas simples (25/09).

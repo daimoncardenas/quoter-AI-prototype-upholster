@@ -105,6 +105,8 @@ check('la frase natural entra al formulario aunque el modelo proponga otra forma
   await p.evaluate(() => ['width', 'height', 'depth'].map(i => document.getElementById(i).value)), ['90', '90', '90']);
 check('y el recibo del sistema dice lo anotado de verdad',
   await p.evaluate(() => /Anotado:[^.]*90/.test(document.getElementById('vozMessages').innerText)), true);
+if (!await p.evaluate(() => /Anotado:[^.]*90/.test(document.getElementById('vozMessages').innerText)))
+  console.log('        conversación: ' + (await p.innerText('#vozMessages')).replace(/\n/g, ' | ').slice(-320));
 check('y los insumos del taller se estiman solos: no se le preguntan al cliente',
   await p.evaluate(() => ({ estimados: insumosMarcados().length > 0,
     preguntado: /insumos del taller/i.test(document.getElementById('vozMessages').innerText) })), { estimados: true, preguntado: false });
@@ -145,6 +147,25 @@ check('y la instrucción de no repetir la misma pregunta',
   [/NUNCA repitas una pregunta con las mismas palabras/.test(ultimoPedido), /"decir"/.test(ultimoPedido)], [true, true]);
 check('y la regla de oro: nunca manda al formulario (todo se llena en la conversación)',
   [/JAMÁS mandes al cliente al formulario/.test(ultimoPedido), /OFRÉCELE TÚ las opciones/.test(ultimoPedido)], [true, true]);
+/* LA MEMORIA PRESENTE (dueño, 25/09: «el problema es que no tiene memoria presente»): cada turno
+ * lleva la conversación VIVA —lo que él dijo antes y lo que ella contestó—, no solo el turno de ahora.
+ * Se comprueba contra lo que de verdad se dijo en la página, palabra por palabra. */
+const memoriaPresente = await p.evaluate(() => {
+  const msgs = voz.mensajes || [];
+  /* Lo que el payload del ÚLTIMO turno pudo llevar: el log hasta el mensaje del cliente inclusive (lo
+   * que ella contestó DESPUÉS todavía no existía cuando se armó el turno). */
+  const ultimoUser = msgs.map((m, i) => (m.quien === 'user' ? i : -1)).filter(i => i >= 0).pop() ?? msgs.length - 1;
+  return {
+    antes: msgs.slice(0, ultimoUser).filter(m => m.quien === 'user').map(m => m.texto).slice(-2),
+    deElla: msgs.slice(0, ultimoUser).filter(m => m.quien === 'bot').map(m => m.texto).slice(-2)
+  };
+});
+check('y el turno lleva LA CONVERSACIÓN HASTA AHORA: lo que él dijo antes y lo que ella contestó',
+  [/LO QUE YA SE DIJERON EN ESTA CONVERSACIÓN/.test(ultimoPedido),
+    memoriaPresente.antes.every(t => ultimoPedido.includes(String(t).replace(/\s+/g, ' ').slice(0, 40))),
+    memoriaPresente.deElla.every(t => ultimoPedido.includes(String(t).replace(/\s+/g, ' ').slice(0, 40))),
+    /lo último es lo que él acaba de decir/.test(ultimoPedido)],
+  [true, true, true, true]);
 
 console.log('\nY EL RESPALDO (SIN API) TAMPOCO REPITE IGUAL');
 await p.evaluate(() => { /* se apaga la API: la página cae al respaldo */ });

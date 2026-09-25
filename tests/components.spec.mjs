@@ -107,7 +107,7 @@ check('a type with no template returns null instead of a wrong number',
   await est('Poltrona', SOFA, 140), null);
 check('and the wizard still quotes it, from the baseline range',
   await page.evaluate(() => {
-    document.querySelector('.furniture-card[data-furniture="Poltrona"]').click();
+    (() => { const s = document.querySelector('.pieza-mueble'); s.value = 'Poltrona'; s.dispatchEvent(new Event('change', { bubbles: true })); })();
     document.getElementById('width').value = '90';
     document.getElementById('height').value = '95';
     document.getElementById('depth').value = '85';
@@ -124,7 +124,7 @@ check('the template declares which optional fields it consumes',
   [true, false, false]);
 check('so cojines is asked on the sofa and hidden everywhere else',
   await page.evaluate(() => {
-    const ver = n => { document.querySelector(`.furniture-card[data-furniture="${n}"]`).click();
+    const ver = n => { const s = document.querySelector('.pieza-mueble'); s.value = n; s.dispatchEvent(new Event('change', { bubbles: true }));
                        return !document.getElementById('cushionsField').hidden; };
     return ['Sofá','Poltrona','Silla','Cabecero'].map(ver);
   }), [true, false, false, false]);
@@ -132,7 +132,7 @@ check('so cojines is asked on the sofa and hidden everywhere else',
 // chose for that furniture.
 check('and a hidden field contributes nothing to the estimate',
   await page.evaluate(() => {
-    document.querySelector('.furniture-card[data-furniture="Poltrona"]').click();
+    (() => { const s = document.querySelector('.pieza-mueble'); s.value = 'Poltrona'; s.dispatchEvent(new Event('change', { bubbles: true })); })();
     document.getElementById('cushions').value = '5';
     return wizardInputs().cushions;
   }), 0);
@@ -144,7 +144,7 @@ console.log('\nCOVERAGE: PERCENTAGES FOR THE BASELINE, PIECES FOR THE TEMPLATE')
 // backoffice mueva el número creyendo que el sofá se entera.
 await page.evaluate(() => { Store.saveSettings({ coverageSeats: [10,10], coveragePartial: [5,5] }); });
 const proporcion = (mueble, ancho) => page.evaluate(([m, w]) => {
-  document.querySelector(`.furniture-card[data-furniture="${m}"]`).click();
+  (() => { const s = document.querySelector('.pieza-mueble'); s.value = m; s.dispatchEvent(new Event('change', { bubbles: true })); })();
   document.getElementById('width').value = w;
   document.getElementById('height').value = '85';
   document.getElementById('depth').value = '90';

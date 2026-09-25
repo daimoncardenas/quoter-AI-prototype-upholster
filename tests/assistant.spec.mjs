@@ -12,7 +12,7 @@
 import { chromium } from 'playwright';
 import { readFileSync } from 'node:fs';
 import { client, slug, userEmail } from './client.mjs';
-import { openAdmin, openWizard } from './helpers.mjs';
+import { openAdmin, openWizard, elegirMueble, elegirMueblePorIndice, elegirPrimerMueble } from './helpers.mjs';
 import { validateAssistant } from '../tools/client-pack.mjs';
 
 const D = 'file://' + process.cwd() + '/generated/';
@@ -290,10 +290,11 @@ const ultimo = async tipo => (await eventos(tipo)).at(-1);
 check('el adaptador es la superficie del asistente en la página (y en window)', await watch(),
   ['context', 'emit', 'env', 'execute', 'fabricPayload', 'isTyping', 'stepId']);
 const mueble = await page.evaluate(() => {
-  const c = document.querySelectorAll('.furniture-card')[1];
-  return { name: c.dataset.furniture, id: (furnitureRules[c.dataset.furniture] || {}).id };
+  const s = document.querySelector('.pieza-mueble');
+  const name = [...s.options].map(o => o.value).filter(Boolean)[1];
+  return { name, id: (furnitureRules[name] || {}).id };
 });
-await page.click('.furniture-card:nth-child(2)');
+await elegirMueble(page, mueble.name);
 check('elegir un mueble publica el tipo y su id, no un clic', await ultimo('FURNITURE_SELECTED'), { furniture: mueble.name, furnitureId: mueble.id });
 await page.setInputFiles('#furniturePhoto', TRES);
 await page.waitForFunction(() => state.photos.length === 3);
@@ -451,7 +452,7 @@ await page.evaluate(() => Store.markAssistantWelcomed());
 await gotoWizard();
 /* El cliente abre el chat y llena el formulario: no ha escrito nada EN el chat todavía. */
 await page.click('.journey .help-card [data-open-chat]');
-await page.evaluate(() => { const c = document.querySelector('.furniture-card'); if (c) c.click(); });
+await elegirPrimerMueble(page);
 await page.setInputFiles('#furniturePhoto', TRES);
 await page.waitForFunction(() => state.photos.length >= 3);
 for (let i = 0; i < 4 && await page.evaluate(() => ACI.stepId(state.step) !== 'MEASUREMENTS'); i++) { await page.click('#nextButton'); await page.waitForTimeout(200); }
@@ -571,11 +572,11 @@ if (!stageOk) {
   await gotoWizard(); // y de ahí en adelante, el flujo de siempre (paso 1 = Tu mueble)
   await page.evaluate(() => { window.__aci = []; addEventListener('aci:event', e => window.__aci.push(e.detail)); });
   check('arranca sin tela y sin «pensar»', await page.getAttribute('#assistantStage', 'data-chair-fabric'), '');
-  await page.click('.furniture-card:nth-child(2)');
+  await elegirMueblePorIndice(page, 1);
   await page.waitForFunction(() => document.getElementById('assistantStage').dataset.reactions === '1');
   check('una acción del cliente, una reacción', await page.getAttribute('#assistantStage', 'data-reaction'), 'look-selection');
   check('y mira lo que acaba de tocar', await page.getAttribute('#assistantStage', 'data-glance'), 'selection');
-  await page.click('.furniture-card:nth-child(1)');
+  await elegirMueblePorIndice(page, 0);
   await page.waitForFunction(() => document.getElementById('assistantStage').dataset.reactionsSuppressed === '1');
   check('la siguiente, dentro de la pausa, se suprime y se cuenta',
     await page.evaluate(() => [document.getElementById('assistantStage').dataset.reactions, document.getElementById('assistantStage').dataset.reaction]), ['1', 'look-selection']);

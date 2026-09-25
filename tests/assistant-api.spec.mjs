@@ -20,7 +20,7 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, resolve, sep } from 'node:path';
 import { PHOTOS_DB } from './client.mjs';
-import { openWizard } from './helpers.mjs';
+import { openWizard, elegirMueble } from './helpers.mjs';
 import { atenderIA } from '../tools/ia-api.mjs';
 
 let fails = 0;
@@ -223,7 +223,7 @@ console.log('\nLA MIRADA Y LA RECOMENDACIÓN, POR LA API');
   await p.goto(S + 'index.html');
   await p.evaluate((db) => { localStorage.clear(); indexedDB.deleteDatabase(db); }, PHOTOS_DB);
   await openWizard(p, S);
-  await p.click('.furniture-card[data-furniture="Sofá"]');
+  await elegirMueble(p, 'Sofá');
   await p.setInputFiles('#furniturePhoto', ['1','2','3'].map(n => new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname));
   await p.waitForFunction(() => state.photos.length >= 3);
   await p.click('#nextButton');

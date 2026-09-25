@@ -87,6 +87,62 @@ const primera = await ultimoDicho();
 const lineas = await p.evaluate(() => lasLineasDelCliente().map(l => l.rotulo));
 check('pregunta por la línea y dice las opciones', lineas.every(l => primera.includes(l)), true);
 
+console.log('\nLA CHARLA Y LA CALMA NO SON DATOS (dueño, 25/09: «Anotado: Claro.» · «assistant should interact… not robot»)');
+/* Su queja, con la transcripción en la mano: le contestaba «Anotado: Claro.», le anotaba «Aunque ·
+ * Aunque» como si fuera un dato, y le repetía la misma pregunta en el mismo aliento cuando él pedía
+ * tiempo («Sí sí sí pero dame unos segundos»). */
+check('el recibo dice lo anotado UNA vez y sin la etiqueta de la rama',
+  await p.evaluate(() => elReciboDeLoAnotado(['Retapizado de muebles', 'Retapizado de muebles · rama Retapizado de muebles', 'rama Retapizado de muebles'])),
+  'Retapizado de muebles');
+check('y las palabras de charla se reconocen como charla, no como un valor',
+  await p.evaluate(() => ['Claro.', 'Aunque', 'gracias', 'ok', 'listo'].map(t => esCharlaSuelta(t))), [true, true, true, true, true]);
+check('y la cortesía se distingue del asentimiento: una no se pregunta, el otro sí',
+  await p.evaluate(() => [CORTESIA.test('gracias'), CORTESIA.test('ok'), ASENTIMIENTO.test('ok'), ASENTIMIENTO.test('gracias')]),
+  [true, false, true, false]);
+check('y pedir tiempo se reconoce (con sus palabras, tal como lo dijo)',
+  await p.evaluate(() => ['Sí sí sí pero dame unos segundos por favor', 'Dame unos minutos', 'Aunque bueno realmente tengo que tomar las medidas Dame unos minutos', 'ya te digo']
+    .map(t => PIDE_UN_MOMENTO.test(t))), [true, true, true, true]);
+/* Y NINGUNA DE ESAS FRASES ES UNA CIUDAD: la rama de «Otra ciudad…» de `elegirCiudad` escribía el primer
+ * nombre propio de la frase («Claro», «Aunque») en la ciudad del cliente. Se prueba en las dos
+ * direcciones: la charla no escribe ciudad, y una ciudad con su pista sí entra. */
+check('la charla con mayúsculas NO se escribe como ciudad (y una ciudad con su pista sí)',
+  await p.evaluate(() => {
+    const limpia = () => ['customerCity', 'serviceCity'].forEach(id => {
+      const s = document.getElementById(id); if (!s) return;
+      s.selectedIndex = 0; s.dispatchEvent(new Event('change', { bubbles: true }));
+      const otro = document.getElementById(id + 'Other'); if (otro) otro.value = '';
+    });
+    limpia();
+    const charla = elegirCiudad('customerCity', 'Claro que sí Dame un momento y ya subo las fotos');
+    const charla2 = elegirCiudad('serviceCity', 'Sí ya te doy las medidas Aunque Bueno realmente tengo que tomar las medidas Dame unos minutos');
+    const escrito = document.getElementById('customerCityOther').value;
+    limpia();
+    const conPista = elegirCiudad('customerCity', 'vivo en Manizales');
+    return [charla, charla2, escrito, conPista, document.getElementById('customerCityOther').value];
+  }), [null, null, '', 'Manizales', 'Manizales']);
+const preguntadoAntes = await p.evaluate(() => JSON.stringify(voz.preguntado || {}));
+/* Las frases de la cortesía son de la app: se leen de la página para comparar contra ellas. */
+const listas = await p.evaluate(() => ({ calmas: LAS_CALMAS, acuses: LOS_ACUSES }));
+await responder('sí sí sí pero dame unos segundos por favor');
+const trasLaCalma = await p.evaluate(() => {
+  const suyos = [...document.querySelectorAll('#vozMessages .message.bot')].map(x => x.textContent.trim());
+  return { ultimo: suyos[suyos.length - 1], preguntado: JSON.stringify(voz.preguntado || {}), cuantos: suyos.length };
+});
+check('pedir tiempo: se le contesta con calma, no se anota nada y NO se le repite la pregunta',
+  [listas.calmas.indexOf(trasLaCalma.ultimo) >= 0, /Anotado|Listo:|¿/.test(trasLaCalma.ultimo), trasLaCalma.preguntado === preguntadoAntes],
+  [true, false, true]);
+await responder('gracias');
+const trasElAgradecimiento = await p.evaluate(() => {
+  const suyos = [...document.querySelectorAll('#vozMessages .message.bot')].map(x => x.textContent.trim());
+  return { ultimo: suyos[suyos.length - 1], preguntado: JSON.stringify(voz.preguntado || {}) };
+});
+check('un «gracias» se contesta como persona (y tampoco se anota ni se pregunta)',
+  [listas.acuses.indexOf(trasElAgradecimiento.ultimo) >= 0, trasElAgradecimiento.preguntado === preguntadoAntes, /Anotado|¿/.test(trasElAgradecimiento.ultimo)],
+  [true, true, false]);
+await responder('listo');
+check('pero un «listo»/«dale» sí avanza: vuelve a preguntar por lo que falta',
+  await p.evaluate(antes => JSON.stringify(voz.preguntado || {}) !== antes, preguntadoAntes), true);
+
 console.log('\nLO DICHO ENTRA AL FORMULARIO (estado uno solo)');
 /* EL WIZARD CAMINA SOLO (dueño, 25/09: «assistant can click and "continuar"» y «dont push
  * continue… should continue with the next step»): ella pulsa el botón de verdad y el formulario

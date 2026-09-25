@@ -13,7 +13,7 @@
  * supone: la primera versión de este archivo comparaba «una pieza cotiza menos», con un ancho de
  * 210 cm metido a una poltrona; el criterio era del evaluador, no del producto, y se corrigió. */
 import { chromium } from 'playwright';
-import { elegirAtencion } from './helpers.mjs';
+import { elegirAtencion, elegirMueble } from './helpers.mjs';
 import { createRequire } from 'node:module';
 import { PHOTOS_DB } from './client.mjs';
 const brain = createRequire(import.meta.url)('../assistant-brain.js');
@@ -77,7 +77,7 @@ async function hastaEstimacion(max = 16) {
 async function recorrer({ mueble, fila, medidas, piezas }) {
   await entrar(fila);
   await avanzar();
-  if (mueble) { await page.click(`.furniture-card[data-furniture="${mueble}"]`); await page.waitForTimeout(200); }
+  if (mueble) { await elegirMueble(page, mueble); await page.waitForTimeout(200); }
   if (piezas) await page.evaluate(n => {                                  // null = el control como venga
     const s = document.getElementById('seats');
     s.value = String(n); s.dispatchEvent(new Event('change', { bubbles: true }));

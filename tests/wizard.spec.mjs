@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 import { PHOTOS_DB } from './client.mjs';
-import { openWizard, elegirAtencion, elegirElRecorridoCompleto } from './helpers.mjs';
+import { openWizard, elegirAtencion, elegirElRecorridoCompleto, elegirMueble, elegirPrimerMueble } from './helpers.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 const png = ['1','2','3'].map(n=>new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
 let fails = 0;
@@ -54,7 +54,7 @@ check('el resumen del cierre concuerda con la tela elegida', await page.textCont
 
 console.log('\nBLOCKER #3 — quantity counts, and is named correctly');
 await fresh();
-await page.click('.furniture-card[data-furniture="Cabecero"]');
+await elegirMueble(page, 'Cabecero');
 check('label follows the furniture type', await page.textContent('#quantityLabel'), 'Número de cabeceros');
 check('options name what is counted',
   await page.evaluate(()=>[...document.getElementById('seats').options].map(o=>o.text)),
@@ -77,7 +77,7 @@ check('sofá "puestos" does NOT double-count against width', await page.evaluate
   return r.every(x=>x>0.8&&x<1.5);
 }), true);
 await fresh();
-await page.click('.furniture-card[data-furniture="Cabecero"]');
+await elegirMueble(page, 'Cabecero');
 await reach(6);
 await page.evaluate(()=>{document.getElementById('seats').value='4';updateSummary()});
 check('summary names the right unit', await page.textContent('#summaryFurniture'), 'Cabecero · 4 cabeceros');
@@ -103,14 +103,27 @@ check('and it still blocks', await page.evaluate(()=>state.step), antesDelBloque
 await page.click('#analyzeButton'); await page.waitForFunction(()=>state.analyzed);
 check('error clears once analysed', await page.isVisible('#analysisError'), false);
 
-console.log('\nA11Y — real radiogroup');
-await fresh();
-await page.focus('.furniture-card[data-furniture="Sofá"]');
-await page.keyboard.press('ArrowRight');
-check('arrow keys move the selection', await page.evaluate(()=>state.furniture), 'Sofá en L');
-check('roving tabindex follows', await page.$$eval('.furniture-card', e=>e.map(c=>c.tabIndex)), [-1,0,-1,-1,-1,-1]);
-check('aria-checked mirrors it', await page.$$eval('.furniture-card', e=>e.map(c=>c.getAttribute('aria-checked'))),
-  ['false','true','false','false','false','false']);
+console.log('\nA11Y — la lista del mueble: un desplegable por pieza');
+/* La rejilla de tarjetas con teclado (radiogroup) se fue con ella: el dueño pidió una lista con
+ * desplegable (25/09: «I prefer list and dropdown for each select»). Un `select` nativo ya trae el
+ * teclado; lo que hay que probar es que arranca SIN elegir y que lo que llega por el teclado ENTRE al
+ * estado igual que el desplegable a mano. (Aquí no se usa `fresh()`: ese ayudante ya elige el primer
+ * mueble para poder pasar del paso 1.) */
+await page.goto(D + 'index.html');
+await page.evaluate((db)=>{localStorage.clear();indexedDB.deleteDatabase(db)}, PHOTOS_DB);
+await page.goto(D + 'index.html');
+await page.waitForTimeout(500);
+check('el desplegable trae el catálogo del pack, con el vacío delante',
+  await page.$$eval('.piezas-lista .pieza-mueble option', os => os.map(o => o.value)),
+  ['', 'Sofá', 'Sofá en L', 'Poltrona', 'Silla', 'Cabecero', 'Otro']);
+check('al abrir, nada viene elegido — ni en el desplegable ni en el estado',
+  [await page.$eval('.piezas-lista .pieza-mueble', s => s.value), await page.evaluate(()=>state.furniture)],
+  ['', '']);
+await page.focus('.piezas-lista .pieza-mueble');
+await page.keyboard.press('ArrowDown');
+await page.waitForTimeout(300);
+check('con el teclado se elige y la página se entera', await page.evaluate(()=>state.furniture), 'Sofá');
+check('y el desplegable lo muestra', await page.$eval('.piezas-lista .pieza-mueble', s => s.value), 'Sofá');
 
 console.log('\nEL DIBUJO DE MEDIDAS SIGUE AL MUEBLE');
 // El paso 2 es donde le pedimos al cliente que mida: el dibujo es la
@@ -118,7 +131,7 @@ console.log('\nEL DIBUJO DE MEDIDAS SIGUE AL MUEBLE');
 await fresh();
 const dibujos = {};
 for (const m of ['Sofá','Sofá en L','Poltrona','Silla','Cabecero','Otro']) {
-  await page.click(`.furniture-card[data-furniture="${m}"]`);
+  await elegirMueble(page, m);
   dibujos[m] = await page.$eval('#drawingShape', e => e.innerHTML.trim());
 }
 check('cada mueble dibuja lo suyo, no todos un sofá',
@@ -376,7 +389,7 @@ const enMueble=()=>page.evaluate(()=>({
   mueble:state.furniture,
   nota:ACI.context().furnitureNote}));
 check('con un mueble normal el campo no existe', [(await enMueble()).campo,(await enMueble()).visible], [false,false]);
-await page.click('.furniture-card:has-text("Otro")');
+await elegirMueble(page, 'Otro');
 const conOtro=await enMueble();
 check('elegir «Otro» abre el campo para contarlo', [conOtro.campo, conOtro.visible, conOtro.mueble], [true, true, 'Otro']);
 await page.setInputFiles('#furniturePhoto', png);
@@ -399,7 +412,7 @@ await fresh();
 /* `openWizard` (dentro de `fresh`) ya dejó la línea y el camino elegidos y el wizard en «Tu mueble»:
  * volver a pulsar la línea empieza de cero —es lo que hace cuando alguien cambia de línea— y dejaría
  * el flujo en el paso de la línea. */
-await page.evaluate(()=>{document.querySelector('.furniture-card').click()});   // Sofá
+await elegirPrimerMueble(page);   // el primero del catálogo
 await page.setInputFiles('#furniturePhoto', png);
 await page.waitForFunction(()=>state.photos.length>=3);
 for(let i=0;i<4 && await page.evaluate(()=>ACI.stepId(state.step)!=='MEASUREMENTS');i++){ await page.click('#nextButton'); await page.waitForTimeout(200); }
@@ -459,7 +472,7 @@ console.log('\nEL ERROR LO DICE ELLA EN SU BURBUJA, AL INSTANTE (SIN PULSAR NADA
  * click». Se prueba en Medidas: al confirmar el campo (`change`), el aviso de ella ya está pintado y
  * dice la MISMA frase que la línea del paso. */
 await fresh();
-await page.evaluate(()=>{document.querySelector('.furniture-card').click()});
+await elegirPrimerMueble(page);
 await page.setInputFiles('#furniturePhoto', png);
 await page.waitForFunction(()=>state.photos.length>=3);
 for(let i=0;i<4 && await page.evaluate(()=>ACI.stepId(state.step)!=='MEASUREMENTS');i++){ await page.click('#nextButton'); await page.waitForTimeout(200); }
@@ -508,13 +521,13 @@ console.log('\nUNA LÍNEA NUEVA NO HEREDA LO DECLARADO PARA LA ANTERIOR');
 await fresh();
 /* Punto de partida de fábrica: contra esto se compara después. */
 const fabrica = await page.evaluate(() => ({
-  mueble: document.querySelector('.furniture-card').dataset.furniture,
+  mueble: document.querySelector('.pieza-mueble').value,
   estilo: document.getElementById('style').value,
   color: document.getElementById('color').value }));
 const muebleOtro = await page.evaluate(() => {
-  const cards = [...document.querySelectorAll('.furniture-card')];
-  const otra = cards.find(c => !c.classList.contains('selected'));
-  otra.click(); return otra.dataset.furniture; });
+  const s = document.querySelector('.pieza-mueble');
+  const otra = [...s.options].map(o => o.value).filter(Boolean).find(n => n !== s.value);
+  s.value = otra; s.dispatchEvent(new Event('change', { bubbles: true })); return otra; });
 await page.setInputFiles('#furniturePhoto', png);
 await page.waitForFunction(() => state.photos.length >= 3);
 await page.click('#nextButton');

@@ -429,7 +429,11 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   las ciudades de sus dos selects, el contacto con correo y celular); que las fotos entran por el
   componente del modal con la misma tubería (`loadPhotos`); que una medida imposible se rechaza con la
   frase del formulario y NO llega al campo; y que la autorización no la firma la conversación (queda
-  pendiente, ella lo avisa, y `puedeEnviar` sigue en false).
+  pendiente, ella lo avisa, y `puedeEnviar` sigue en false). Y **la charla y la calma no son datos**
+  (dueño, 25/09: «Anotado: Claro.» · «assistant should interact… not robot»): el recibo dice lo
+  anotado una sola vez y sin la etiqueta de la rama; «gracias» se contesta con una cortesía corta sin
+  volver a preguntar y «dame unos segundos» con calma, tampoco; y un «ok»/«listo» sí avanza (vuelve a
+  preguntar por lo que falta).
 - `conversacion-api.spec.mjs` — el turno con el MODELO (el dueño, al ver el guion: «the AI repeat the
   same phrase every moment until I complete this.. the idea is can interact with human... and
   rephrase»). La puerta va interceptada y el modelo contesta guiones escritos: lo que se comprueba es
@@ -446,7 +450,11 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   de hablar (el sustituto no trae `processLocally`, así que dice la verdad del navegador); dictar
   entra por el mismo camino (voz → conversación → contrato → formulario: la línea queda elegida);
   apagar devuelve las barras al piso y suelta el stream; su voz se silencia y se vuelve a encender; y
-  cerrar la capa apaga el micrófono. El micrófono REAL se prueba en el Chrome del dueño.
+  cerrar la capa apaga el micrófono. **El turno, en las dos direcciones** (dueño, 25/09): su propio
+  eco (sus palabras por los parlantes) no entra a la conversación ni la corta; lo que NO suena como
+  ella mientras habla ES el cliente interrumpiéndola —se la calla (`cancel`) y sus palabras entran—; y
+  con el micrófono oyendo al cliente (el nivel de mentira, subido con `window.__nivel`) su frase NO
+  arranca hasta que él calla. El micrófono REAL se prueba en el Chrome del dueño.
 - `telas-en-la-lista.spec.mjs` — las telas en el paso de la lista y los datos que el asistente ya
   guarda (`docs/telas-en-la-lista.md`): la **reventa pregunta qué sabe el cliente** —«Sé qué tela
   quiero» deja la lista y el cierre [0,18,22,23,20,16,15]; «Quiero sugerencias» pone las
@@ -464,7 +472,12 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   el mismo camino del backoffice) y rechaza una referencia que no está en el catálogo; y el cerco deja
   pasar el precio del catálogo y tumba la cifra inventada.
 - `eleccion-y-memoria.spec.mjs` — el asistente **elige el contrato**, la memoria es **de la
-  conversación** y una foto borrosa se nota (`docs/eleccion-y-memoria.md`). El **índice de contratos**
+  conversación** y una foto borrosa se nota (`docs/eleccion-y-memoria.md`). La **memoria presente**
+  (dueño, 25/09: «el problema es que no tiene memoria presente» · «si local storage» · «pero cuando
+  recargue sí debe resetearse»): lo que se dice queda escrito en `localStorage` con cada mensaje —en la
+  clave del cliente, `cdy.v1.memoria-presente`—, el turno del modelo lleva esa conversación viva (lo
+  que él dijo y lo que ella contestó, no solo el turno de ahora), «empezar de cero» la vacía, y **al
+  cargar la página se borra** (recargar empieza limpio, sin rastro en el almacén). El **índice de contratos**
   es, exactamente, las ramas del espejo (`tests/mirror/`, ni una de más; la línea con contrato
   pendiente no se ofrece), cada una con su contrato de endpoint en `shared/contracts/`, viaja en el
   prompt con la orden de elegir y anotar `rama`, y la rama dicha aplica la cadena entera por los
@@ -604,3 +617,24 @@ Las **líneas terminadas hoy son dos** —«Suministro de tela» y «Retapizado 
 (reparación, a la medida, proyecto comercial, tapicería arquitectónica) son el espejo del flujo
 ACTUAL de una línea en obra: valen como referencia mientras se termina, y el espejo avisa en rojo
 cuando el flujo se mueva.
+
+## La lista del mueble (paso 1) y sus ayudantes
+
+El paso 1 ya no es una rejilla de tarjetas: es una **lista con un desplegable por pieza** (mueble y
+cantidad), con `+ Agregar otra pieza` y el ✕ para quitar; la fila en foco es la que llenan los pasos de
+abajo (dueño, 25/09: «I prefer list and dropdown for each select... because the first part is waste
+space» — `docs/piezas-en-la-cotizacion.md`). Las pruebas lo manejan con tres ayudantes de
+`tests/helpers.mjs`, para no volver a sembrar el selector por todo el repo:
+
+- `elegirMueble(page, nombre, pieza = 0)` — elige por NOMBRE del catálogo en esa fila.
+- `elegirMueblePorIndice(page, i, pieza = 0)` — por posición en el catálogo (el relevo de los
+  `nth-child(2)` de las tarjetas).
+- `elegirPrimerMueble(page, pieza = 0)` — «el primero de la lista», y **nunca pisa un mueble ya
+  elegido**: por eso `continuar()` puede llamarlo en cada paso sin borrar lo que la prueba declaró.
+
+Hallazgos de paso que quedaron escritos en las suites: `wizard.spec` comprueba el catálogo del
+desplegable (con el vacío delante) y que elegir con el TECLADO entra al estado igual que a mano;
+`clients.spec` espera el desplegable (`.piezas-lista .pieza-mueble`) cuando la línea no trae paso de
+línea; y `openWizard` elige el mueble OTRA VEZ después de los caminos (18/22/23), porque con una línea
+que los trae el paso del mueble llega después y el wizard quedaba parado sin mueble — era el rojo que
+escondía el resto de `wizard.spec`.

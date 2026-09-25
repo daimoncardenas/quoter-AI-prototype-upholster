@@ -390,6 +390,10 @@
   {{MODE_STYLES}}
   <!-- store.js loads in <head> so Brand.apply() can paint any saved brand overrides (colors, fonts, header variant, title) before first paint; it is a no-op when nothing is overridden. -->
   <script src="store.js"></script>
+  <!-- Los módulos del frontend (src/), empaquetados por tools/generate.mjs: archivos separados en el
+       repo, un solo script aquí. Antes del script de la página para que `window.Tenant`/`window.UI`
+       existan cuando corre. -->
+  <script>{{SRC_BUNDLE}}</script>
   <script>Brand.apply()</script>
 </head>
 <body>
@@ -428,7 +432,7 @@
         <button data-page="upgrade"><span class="nav-icon">✦</span>Upgrade</button>
         <button data-page="usage"><span class="nav-icon">◔</span>Usage</button>
       </nav>
-      <div class="side-foot"><p>Los cambios de este prototipo se conservan únicamente en este navegador.</p><a class="public-link" href="index.html" target="_blank">Abrir cotizador público ↗</a><button class="button danger reset-data" id="resetData">Restablecer datos de demo</button></div>
+      <div class="side-foot"><p>Las cotizaciones se guardan en la base del servidor (las ven todos los navegadores); telas, vendedores y ajustes, solo en este navegador.</p><a class="public-link" href="index.html" target="_blank">Abrir cotizador público ↗</a><button class="button danger reset-data" id="resetData">Restablecer datos de demo</button></div>
     </aside>
     <main class="content">
       <section class="page active" id="dashboard">
@@ -700,7 +704,12 @@
     // interpolated into innerHTML raw.
     const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
     const safeColor=c=>/^#[0-9a-f]{3,8}$/i.test(String(c||''))?c:'#cccccc';
-    function toast(msg){const el=$('#toast');el.textContent=msg;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2400)}
+    /* El aviso vive en src/ui/toast.js (corte 2). El cuerpo de respaldo es por si alguien lo pide ANTES
+     * de que el módulo cargue (los módulos entran diferidos): mismo comportamiento, sin sorpresas. */
+    function toast(msg){
+      if(window.UI&&UI.toast){UI.toast.mostrar(msg);return}
+      const el=$('#toast');el.textContent=msg;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2400)
+    }
     // A hidden nav button keeps its click handler, so a role that cannot see a
     // section must not be able to reach its content by forcing that click
     // some other way (devtools, a stale bookmark) either — same demo-gate
@@ -735,312 +744,58 @@
      * those the client accepted, and how long a case sits open. Every metric
      * below is derived from `qs` (already scoped to the signed-in adviser when
      * they are one), never hand-kept in a separate counter. */
+    /* ── EL RESUMEN vive en src/backoffice/resumen.js (corte 3). La LISTA con su detalle se muda en su
+     * propio corte: son dos asuntos. ─────────────────────────────────────────────────────────────── */
     function renderDashboard(){
-      const qs=me&&me.role==='seller'?quotesAll().filter(q=>quoteIsFor(q,me)):quotesAll();
-      const by=s=>qs.filter(q=>q.status===s).length;
-      const nuevas=by('Nueva'),gestion=by('En gestión'),cotizadas=by('Cotizada'),aceptadas=by('Aceptada'),rechazadas=by('Rechazada');
-      $('#statTotal').textContent=qs.length;
-      $('#statUnassigned').textContent=qs.filter(q=>!quoteSellerName(q)).length;
-      const donut=$('#donut');donut.dataset.total=qs.length;
-      const pct=n=>qs.length?(n/qs.length*100):0;
-      const a=pct(nuevas),b=a+pct(gestion),c=b+pct(cotizadas),d=c+pct(aceptadas);
-      donut.style.background=`conic-gradient(var(--ink) 0 ${a}%,var(--accent) ${a}% ${b}%,var(--tint-donut-third) ${b}% ${c}%,var(--green) ${c}% ${d}%,var(--red) ${d}% 100%)`;
-      $('#legNew').textContent=nuevas;$('#legProgress').textContent=gestion;$('#legSent').textContent=cotizadas;
-      $('#legAccepted').textContent=aceptadas;$('#legRejected').textContent=rechazadas;
-      $('#activityFeed').innerHTML=qs.slice(0,5).map(q=>{const quien=quoteSellerName(q);return `<li><span class="activity-icon">${quien?'♙':'◇'}</span><div><b>${esc(quien?`${q.id} asignada a ${quien}`:`Nueva cotización ${q.id}`)}</b><small>${esc([q.furniture,q.quantityLabel,Store.pointName(q)].filter(Boolean).join(' · '))}</small></div><time>${esc(fmtDate(q.date))}</time></li>`}).join('')
-        ||'<li><div><b>Aún no hay solicitudes</b><small>Las cotizaciones enviadas desde el cotizador aparecerán aquí.</small></div></li>';
-
-      // Casos cerrados: aceptados + rechazados, sobre el total visible.
-      const cerradas=aceptadas+rechazadas;
-      $('#metricClosed').textContent=cerradas;
-      $('#metricClosedPct').textContent=`${qs.length?Math.round(cerradas/qs.length*100):0}% del total`;
-
-      // Aceptación: solo tiene sentido sobre lo que sí llegó a cotizarse.
-      const conCotizacion=cotizadas+cerradas;
-      $('#metricAcceptRate').textContent=conCotizacion?`${Math.round(aceptadas/conCotizacion*100)}%`:'—';
-
-      // Tiempo promedio de cierre: de la fecha de la solicitud a closedAt, en
-      // días, solo sobre los casos que sí cerraron.
-      const cerradasConFecha=qs.filter(q=>q.closedAt);
-      if(cerradasConFecha.length){
-        // q.date is a LOCAL calendar day ('YYYY-MM-DD', written with
-        // getFullYear/getMonth/getDate — see index.html); new Date('YYYY-MM-DD')
-        // parses that as UTC midnight instead, which in Bogotá (UTC-5) inflates
-        // every duration by up to ~a day. Appending T00:00:00 (no offset) makes
-        // it local midnight, per the spec, matching how it was written.
-        const dias=cerradasConFecha.reduce((sum,q)=>{
-          const ms=new Date(q.closedAt)-new Date(q.date+'T00:00:00');
-          return sum+(isFinite(ms)?Math.max(0,ms/86400000):0);
-        },0)/cerradasConFecha.length;
-        $('#metricAvgDays').textContent=`${dias.toFixed(1).replace('.',',')} días`;
-      }else{
-        $('#metricAvgDays').textContent='—';
-      }
-
-      // La tabla por vendedor solo tiene sentido para quien ve a todo el
-      // equipo — un vendedor ya ve nada más lo suyo en el resto del panel.
-      const soyAdmin=!(me&&me.role==='seller');
-      $('#sellerCycleTablePanel').hidden=!soyAdmin;
-      if(soyAdmin){
-        $('#sellerCycleRows').innerHTML=sellersAll().map(s=>{
-          const propias=quotesAll().filter(q=>quoteIsFor(q,{sellerId:s.id,name:s.name}));
-          const cot=propias.filter(q=>['Cotizada','Aceptada','Rechazada'].includes(q.status)).length;
-          const cer=propias.filter(q=>Store.isQuoteClosed(q)).length;
-          const ace=propias.filter(q=>q.status==='Aceptada').length;
-          return `<tr><td><strong>${esc(s.name)}</strong></td><td>${propias.length}</td><td>${cot}</td><td>${cer}</td><td>${ace}</td></tr>`;
-        }).join('')||'<tr><td colspan="5">No hay vendedores configurados.</td></tr>';
-      }
+      const vista=window.Backoffice&&Backoffice.resumen;
+      if(vista)return vista.pintarResumen();
+    }
+    /* UN punto donde se enganchan todas: así el arranque no depende del orden de los cortes. */
+    function conectarLasVistas(){
+      conectarLaVistaDePuntos();conectarLaVistaDeVendedores();conectarLaVistaDeTelas();
+      conectarLaVistaDeAjustes();conectarLaVistaDeServicios();conectarLaVistaDeResumen();
+      conectarLaVistaDeCotizaciones();
+    }
+    function conectarLaVistaDeResumen(){
+      const vista=window.Backoffice&&Backoffice.resumen;
+      if(vista)vista.conectar(window.Casa);
     }
 
     /* --------------------------------------------------------------- quotes -- */
+    /* CÓMO SE LLAMA UNA SOLICITUD EN LA LISTA: con varias piezas, la fila dice cuántas son y cuáles
+     * —el mueble suelto es solo la pieza en foco— (docs/piezas-en-la-cotizacion.md). */
+    function projectLabel(r){
+      const pz=(r.pieces&&r.pieces.length)?r.pieces:[];
+      if(pz.length>1)return `${pz.length} piezas · ${pz.map(x=>x.furniture).join(', ')}`;
+      return [r.furniture,r.quantityLabel].filter(Boolean).join(' · ');
+    }
+    /* ── LA LISTA DE COTIZACIONES CON SU DETALLE vive en src/backoffice/cotizaciones.js (corte 3): la
+     * tabla con búsqueda y filtro, el visor de fotos, el detalle con la tabla de piezas, el estado con
+     * comentarios y la exportación a CSV. Aquí quedan las puertas. ─────────────────────────────────── */
     function renderQuotes(){
-      const q=$('#quoteSearch').value.toLowerCase(),f=$('#statusFilter').value;
-      const mine=me&&me.role==='seller';
-      const rows=quotesAll().filter(r=>(!mine||quoteIsFor(r,me))&&(!f||r.status===f)&&
-        [r.id,r.customer&&r.customer.name,r.furniture,r.city,quoteSellerName(r),r.status,r.fabricName,(r.service&&r.service.label)||''].join(' ').toLowerCase().includes(q));
-      $('#quoteRows').innerHTML=rows.map(r=>{
-        const asesor=quoteSellerName(r),who=asesor||'Sin asignar';
-        const project=[r.furniture,r.quantityLabel].filter(Boolean).join(' · ');
-        return `<tr><td><strong>${esc(r.id)}</strong><br><small>${esc(fmtDate(r.date))}</small></td>`+
-          `<td>${esc((r.customer&&r.customer.name)||'—')}</td>`+
-          `<td>${esc(project)}${r.service?`<br><small>${esc(r.service.label)}</small>`:''}${r.fabricName?`<br><small>${esc(r.fabricName)}</small>`:''}</td>`+
-          `<td>${esc(Store.pointName(r)||'—')}</td>`+
-          `<td><span class="mini-user"><i class="mini-avatar">${esc(asesor?initialsOf(asesor):'—')}</i>${esc(who)}</span></td>`+
-          `<td><span class="status ${statusClass(r.status)}">${esc(r.status)}</span></td>`+
-          `<td><button class="row-action" data-quote="${esc(r.id)}" aria-label="Ver detalle">⋯</button></td></tr>`;
-      }).join('')||'<tr><td colspan="7">No se encontraron solicitudes.</td></tr>';
+      const vista=window.Backoffice&&Backoffice.cotizaciones;
+      if(vista)return vista.pintar();
     }
-    $('#quoteRows').addEventListener('click',e=>{const b=e.target.closest('[data-quote]');if(b)openQuote(b.dataset.quote)});
-
-    let currentQuote=null;
-    /* El visor de fotos: una miniatura de 118 px no deja leer una mancha ni un daño, y hasta ahora
-     * el clic sobre la foto no hacía nada. Vive DENTRO del detalle de la solicitud, así que se
-     * cierra solo (Esc, fondo o ×) sin llevarse el detalle, que sigue abierto debajo — el mismo
-     * trato que #payModal y #confirmModal, que también se anidan. */
-    let galeriaFotos=[],fotoActual=0,fotoOrigen=null;
-    function renderPhoto(){
-      const x=galeriaFotos[fotoActual];if(!x)return;
-      const q=Store.get('quotes',currentQuote)||{};
-      const total=(q.photoIds||[]).length||galeriaFotos.length;
-      $('#photoModalImg').src=x.f;
-      $('#photoModalImg').alt=`Fotografía ${x.i+1} de ${total} de la solicitud ${q.id||''}`.trim();
-      $('#photoModalCaption').textContent=`Fotografía ${x.i+1} de ${total} · ${(q.customer&&q.customer.name)||'Cliente'}`;
-      $('#photoCounter').textContent=`${fotoActual+1} / ${galeriaFotos.length}`;
-      $('#photoPrev').disabled=fotoActual===0;
-      $('#photoNext').disabled=fotoActual===galeriaFotos.length-1;
+    /* El visor de fotos se cerró cuando se mudó la vista: la página solo pregunta si había una abierta.
+     * Devuelve `true` si cerró algo, para no cerrar también el detalle que hay debajo. */
+    function cerrarLaFoto(){
+      const vista=window.Backoffice&&Backoffice.cotizaciones;
+      return !!(vista&&vista.cerrarFoto?vista.cerrarFoto():false);
     }
-    function openPhoto(i){
-      if(!galeriaFotos.length)return;
-      fotoActual=Math.max(0,Math.min(i,galeriaFotos.length-1));
-      const pos=galeriaFotos[fotoActual].i;
-      fotoOrigen=document.querySelector(`#quoteDetail .quote-gallery button[data-photo="${pos}"]`);
-      renderPhoto();
-      $('#photoModal').classList.add('open');
-      $('#photoModal [data-close]').focus();
+    function conectarLaVistaDeCotizaciones(){
+      const vista=window.Backoffice&&Backoffice.cotizaciones;
+      if(vista)vista.conectar(window.Casa);
     }
-    function closePhoto(){
-      if(!$('#photoModal').classList.contains('open'))return false;
-      $('#photoModal').classList.remove('open');
-      if(fotoOrigen&&fotoOrigen.focus){fotoOrigen.focus();fotoOrigen=null}
-      return true;
-    }
-    function moverFoto(paso){
-      const siguiente=fotoActual+paso;
-      if(siguiente<0||siguiente>=galeriaFotos.length)return;
-      fotoActual=siguiente;renderPhoto();$('#photoModal [data-close]').focus();
-    }
-    $('#photoPrev').onclick=()=>moverFoto(-1);
-    $('#photoNext').onclick=()=>moverFoto(1);
-    document.addEventListener('keydown',e=>{
-      if(!$('#photoModal').classList.contains('open'))return;
-      if(e.key==='ArrowLeft'){e.preventDefault();moverFoto(-1)}
-      if(e.key==='ArrowRight'){e.preventDefault();moverFoto(1)}
-    });
-    async function openQuote(id){
-      const q=Store.get('quotes',id);if(!q)return;
-      currentQuote=id;
-      const m=q.measures,price=q.price,meters=q.meters,bill=q.billing,est=q.estimate;
-      /* Lo que se le mostró al cliente: la estimación congelada con la solicitud. Una solicitud
-       * vieja (o una que no llegó a estimar) cae al rango de tela, que es lo único que guardaba. */
-      const rangoPesos=v=>{const a=[].concat(v||[]).map(x=>+x||0).sort((x,y)=>x-y);if(!a.length)return '—';
-        return a[0]===a[a.length-1]?money(a[0]):`${money(a[0])} – ${money(a[a.length-1])}`};
-      const plano=v=>Array.isArray(v)?v.join('/'):(v&&typeof v==='object'?JSON.stringify(v):String(v));
-      // Un par [min,max] se lee mejor sin repetir cuando los dos coinciden.
-      const numM=n=>String(Math.round((+n||0)*100)/100).replace('.',',');
-      // El sobrante decrece cuando el consumo sube (16-15=1, pero 20-20=0), así
-      // que un par puede llegar al revés. Un rango nunca se lee de mayor a menor.
-      const rango=v=>{const a=[].concat(v).sort((x,y)=>x-y);return a[0]===a[a.length-1]?numM(a[0]):`${numM(a[0])}–${numM(a[a.length-1])}`};
-      /* La galería respeta el ORDEN de `photoIds` y dice cuántas faltan: `Photos.getAll` filtra las
-       * que no están y una galería más corta parecía una solicitud con menos fotos. Cada foto es un
-       * botón (se abre en grande) y cada hueco dice por qué está vacío. */
-      const ids=q.photoIds||(q.photoId?[q.photoId]:[]);
-      const fotos=await Promise.all(ids.map(id=>Photos.get(id)));
-      const conFoto=fotos.map((f,i)=>({f,i})).filter(x=>x.f);
-      const faltan=ids.length-conFoto.length;
-      const galeria=ids.length
-        ? `<div class="quote-gallery">${fotos.map((f,i)=>f
-            ? `<button type="button" data-photo="${i}" aria-label="Ver la fotografía ${i+1} de ${ids.length} en grande"><img src="${f}" alt="Fotografía ${i+1} enviada por el cliente"></button>`
-            : `<div class="photo-missing">Fotografía ${i+1} · no está en este navegador</div>`).join('')}</div>`+
-          (faltan?`<p class="modal-hint">${faltan} de ${ids.length} fotografías no están en este navegador (se borraron o se subieron desde otro).</p>`:'')
-        : `<p class="modal-hint">Esta solicitud no incluye fotografías.</p>`;
-      galeriaFotos=conFoto;
-      $('#quoteDetail').innerHTML=
-        galeria+
-        `<div class="form-grid">`+
-        [['Solicitud',q.id],['Fecha',fmtDate(q.date)],['Cliente',(q.customer&&q.customer.name)||'—'],
-         ['Correo',(q.customer&&q.customer.email)||'—'],['Celular',(q.customer&&q.customer.phone)||'—'],
-         ['Mueble',[q.furniture,q.quantityLabel].filter(Boolean).join(' · ')||'—'],
-         ['Línea de servicio',(q.service&&q.service.label)||'—'],
-         ['Medidas',m?`${m.width} × ${m.height} × ${m.depth} cm`:'—'],
-         ['Ciudad',Store.pointName(q)||'—'],['Vendedor',quoteSellerName(q)||'Sin asignar'],
-         ['Tela',q.fabricName||'—'],
-         ['Modelo de cálculo',bill?(bill.modelo==='componentes'
-            ? `Por piezas · rollo de ${bill.rollWidthCm} cm · ${bill.piezas} tipos de corte`
-            : 'Rango base del mueble'):'—'],
-         ['Consumo técnico',bill&&bill.tecnico?`${numM(bill.tecnico)} m (antes de desperdicio y margen)`:'—'],
-         ['Consumo estimado',meters?`${rango(meters)} m`:'—'],
-         ['Cantidad a comprar',bill?`${rango(bill.compra)} m`:'—'],
-         ['Cantidad facturable',bill?`${rango(bill.facturable)} m`:'—'],
-         ['Sobrante estimado',bill?`${rango(bill.sobrante)} m`:'—'],
-         ['Estimación mostrada',est&&est.total?rangoPesos(est.total):(price?rangoPesos(price):'—')],
-         ['Motor',est?`${est.kind||'—'} · snapshot v${est.engineVersion||1}`:'Sin snapshot: rango de tela de una solicitud vieja'],
-         ['Necesidades',(q.needs&&q.needs.length?q.needs.join(', '):'—')],
-         ['Estado',q.status]
-        ].map(([k,v])=>`<label class="field">${esc(k)}<input value="${esc(v)}" readonly></label>`).join('')+`</div>`+
-        // Las razones se congelaron con la solicitud: dicen por qué se cotizó
-        // esa cantidad, aunque hoy la tela se venda de otra forma.
-        (bill&&bill.razones&&bill.razones.length
-          ? `<p class="quote-reasons">${esc(bill.razones.join(' '))}</p>` : '')+
-        /* El desglose y las entradas de esa estimación: la solicitud tiene que poder explicarse
-         * sola aunque el catálogo haya cambiado desde entonces. */
-        (est&&est.parts&&est.parts.length
-          ? `<div class="quote-estimate"><h4>Así se compuso</h4><ul>`+
-            est.parts.map(p=>`<li><span>${esc(p.label)}</span><b>${esc(rangoPesos(p.value))}</b></li>`).join('')+
-            `<li class="total"><span>Total mostrado al cliente</span><b>${esc(rangoPesos(est.total))}</b></li></ul></div>` : '')+
-        (est&&est.inputs
-          ? `<div class="quote-inputs"><h4>Entradas de la estimación · motor v${esc(est.engineVersion||1)}</h4><dl>`+
-            [['Mueble',est.inputs.furnitureId||'—'],
-             ['Cantidad',est.inputs.quantity!=null?String(est.inputs.quantity):'—'],
-             ['Rango de material',rangoPesos(est.inputs.materialRange)],
-             ['Tela por m²',est.inputs.fabricPerM2?`${money(est.inputs.fabricPerM2)} / m²`:'—'],
-             ['Daños',(est.inputs.damages&&est.inputs.damages.length?est.inputs.damages.join(', '):'—')],
-             ['Respuestas',(est.inputs.answers&&Object.keys(est.inputs.answers).length?Object.entries(est.inputs.answers).map(([k,v])=>`${k}: ${plano(v)}`).join(' · '):'—')],
-             ['Filas BOQ',(est.inputs.boq&&est.inputs.boq.length?est.inputs.boq.map(r=>`${r.cantidad} × ${r.furniture||'—'}`).join(' · '):'—')],
-             ['Calculada',est.calculatedAt||'—']]
-              .map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')+
-            `</dl></div>` : '');
-      $$('#quoteDetail .quote-gallery button').forEach(b=>b.onclick=()=>openPhoto(+b.dataset.photo));
-      renderQuoteStatus(q);
-      renderQuoteComments(q);
-      $('#quoteModal').classList.add('open');
-    }
-
-    /* Nueva/En gestión/Cotizada mueven libremente, en cualquier sentido — un
-     * vendedor a menudo tiene que devolver una solicitud (el cliente pidió
-     * cambios después de cotizada). Cerrar el caso (Aceptada/Rechazada) solo
-     * se ofrece desde Cotizada, pide confirmación porque no se puede
-     * deshacer, y una vez cerrado no se ofrece ningún control: Store.put ya
-     * lo bloquea en la capa de datos, así que esto es solo reflejar esa
-     * regla en la interfaz. */
-    function renderQuoteStatus(q){
-      const box=$('#quoteStatusControl');
-      if(Store.isQuoteClosed(q)){
-        // closedAt can be missing on a row that got a final status some other
-        // way (a hand-edited pack, an import) — isQuoteClosed still locks it,
-        // so the copy has to hold up without a date to show.
-        const cuando=q.closedAt?` el ${esc(fmtDate(q.closedAt))}`:'';
-        box.innerHTML=`<h3 class="modal-section">Estado</h3>`+
-          `<p class="modal-hint">Este caso quedó cerrado como <strong>${esc(q.status)}</strong>${cuando}. El estado ya no se puede modificar.</p>`;
-        return;
-      }
-      const pill=s=>`<button type="button" class="button ${s===q.status?'primary':'secondary'}" data-set-status="${esc(s)}">${esc(s)}</button>`;
-      let html=`<h3 class="modal-section">Estado</h3><div class="save-block" style="flex-wrap:wrap">${Store.QUOTE_NON_FINAL_STATUSES.map(pill).join('')}</div>`;
-      if(q.status==='Cotizada'){
-        html+=`<p class="modal-hint" style="margin-top:12px">Esto cierra el caso y no se puede deshacer.</p>`+
-          `<div class="save-block" style="flex-wrap:wrap;margin-top:8px">`+
-          `<button type="button" class="button gold" data-close-status="Aceptada">Marcar como aceptada</button>`+
-          `<button type="button" class="button danger" data-close-status="Rechazada">Marcar como rechazada</button></div>`;
-      }
-      box.innerHTML=html;
-    }
-    $('#quoteStatusControl').addEventListener('click',async e=>{
-      const setBtn=e.target.closest('[data-set-status]');
-      const closeBtn=e.target.closest('[data-close-status]');
-      if(setBtn){
-        const status=setBtn.dataset.setStatus,q=Store.get('quotes',currentQuote);
-        if(!q||status===q.status)return;
-        try{Store.setQuoteStatus(currentQuote,status)}catch(err){return toast(err.message)}
-        renderAll();openQuote(currentQuote);toast(`${q.id} → ${status}`);
-        return;
-      }
-      if(closeBtn){
-        const status=closeBtn.dataset.closeStatus;
-        const ok=await askConfirm({title:'Cerrar caso',
-          message:`Esto cierra el caso y no se puede deshacer. ¿Marcar esta solicitud como "${status}"?`,
-          confirmText:'Sí, continuar',danger:true});
-        if(!ok)return;
-        let q;
-        try{q=Store.setQuoteStatus(currentQuote,status)}catch(err){return toast(err.message)}
-        renderAll();openQuote(currentQuote);toast(`${q.id} cerrada como ${status}`);
-      }
-    });
-
-    /* Los comentarios se admiten en cualquier estado, cerrado incluido: son
-     * notas del equipo sobre el caso, no parte del flujo de estado. Se listan
-     * del más antiguo al más reciente y no se pueden editar ni borrar. */
-    function renderQuoteComments(q){
-      const list=Store.quoteComments(q);
-      const box=$('#quoteComments');
-      box.innerHTML=`<h3 class="modal-section">Comentarios</h3>`+
-        (list.length
-          ? `<ul class="activity">${list.map(c=>`<li><span class="activity-icon">✎</span><div><b>${esc(c.author||'—')}</b><small>${esc(c.text)}</small></div><time>${esc(fmtDate(c.date))}</time></li>`).join('')}</ul>`
-          : `<p class="modal-hint">Todavía no hay comentarios.</p>`)+
-        `<form id="commentForm"><label class="field full">Agregar comentario<textarea id="commentText" placeholder="Escribe una nota para el equipo…"></textarea></label>`+
-        `<div style="display:flex;justify-content:flex-end;margin-top:8px"><button type="submit" class="button secondary">Agregar comentario</button></div></form>`;
-    }
-    $('#quoteComments').addEventListener('submit',e=>{
-      if(e.target.id!=='commentForm')return;
-      e.preventDefault();
-      const text=$('#commentText').value.trim();
-      if(!text)return toast('El comentario no puede quedar vacío');
-      try{Store.addComment(currentQuote,{author:me.name,authorId:me.id,text})}catch(err){return toast(err.message)}
-      openQuote(currentQuote);
-    });
 
     /* -------------------------------------------------------------- fabrics -- */
+    /* ── LA VISTA DEL CATÁLOGO DE TELAS vive en src/backoffice/telas.js (corte 3) ──────────────────── */
     function renderFabrics(){
-      const q=$('#fabricSearch').value.toLowerCase(),f=$('#fabricFilter').value;
-      const all=fabricsAll();
-      const list=all.filter(x=>(!f||(f==='active')===!!x.active)&&[x.name,x.collection,x.use].concat(x.tags||[]).join(' ').toLowerCase().includes(q));
-      $('#fabricGrid').innerHTML=list.map(x=>`<article class="fabric"><div class="swatch" style="background:${Store.swatch(x)}"></div><div class="fabric-body"><div class="fabric-top"><div><h3>${esc(x.name)}</h3><p>${esc(x.collection)} · ${esc(x.colorName)}<br>Desde ${money(x.price)} / metro</p></div><span class="availability ${x.active?'':'off'}" title="${x.active?'Activa':'Inactiva'}"></span></div><div class="tags">${(x.tags||[]).map(t=>`<span>${esc(t)}</span>`).join('')}<span>${esc(x.use)}</span></div>${(x.needs||[]).length||(x.styles||[]).length||x.colorFamily?`<p class="reco">Recomendable para: ${esc([].concat(x.needs||[],x.styles||[],x.colorFamily||[]).join(' · '))}</p>`:'<p class="reco none">Sin criterios de recomendación</p>'}</div><div class="fabric-actions"><button data-edit-fabric="${esc(x.id)}">Editar</button><button data-toggle-fabric="${esc(x.id)}">${x.active?'Desactivar':'Activar'}</button></div></article>`).join('')
-        ||'<p>No hay telas que coincidan con la búsqueda.</p>';
-      // La imagen vive en IndexedDB, así que la tarjeta se pinta primero con el
-      // color y Store.paintSwatch la reemplaza cuando la foto llega.
-      $$('#fabricGrid .fabric .swatch').forEach((el,i)=>Store.paintSwatch(el,list[i]));
-      $('#fabricCount').textContent=all.filter(x=>x.active).length;
+      const vista=window.Backoffice&&Backoffice.telas;
+      if(vista)return vista.pintar();
     }
-    $('#fabricGrid').addEventListener('click',e=>{
-      const ed=e.target.closest('[data-edit-fabric]'),tg=e.target.closest('[data-toggle-fabric]');
-      if(ed)editFabric(ed.dataset.editFabric);
-      if(tg){const x=Store.get('fabrics',tg.dataset.toggleFabric);if(!x)return;x.active=!x.active;
-        try{Store.put('fabrics',x)}catch(err){return toast(err.message)}
-        renderAll();toast(x.active?'Tela activada':'Tela desactivada')}
-    });
-    function editFabric(id){
-      const x=Store.get('fabrics',id),form=$('#fabricForm');if(!x)return;
-      form.reset();fillRecommendationOptions();
-      Object.keys(x).forEach(k=>{const el=form.elements[k];
-        if(!el||el.multiple||el.type==='checkbox')return;
-        el.value=Array.isArray(x[k])?x[k].join(', '):x[k];});
-      // Los valores por defecto viven en Store.fabricRules, así que una tela
-      // creada antes de estas reglas abre el modal con los suyos y no en blanco.
-      const reglas=Store.fabricRules(x);
-      Object.keys(reglas).forEach(k=>{const el=form.elements[k];if(!el)return;
-        if(el.type==='checkbox')el.checked=!!reglas[k];else el.value=reglas[k];});
-      setMulti(form.elements.needs,x.needs);setMulti(form.elements.styles,x.styles);
-      form.elements.colorFamily.value=x.colorFamily||'';
-      resetFabricPhoto(x);
-      $('#fabricModalTitle').textContent='Editar tela';openModal('#fabricModal');
+    function conectarLaVistaDeTelas(){
+      const vista=window.Backoffice&&Backoffice.telas;
+      if(vista)vista.conectar(window.Casa);
     }
 
     /* ------------------------------------------------------------- muebles -- */
@@ -1109,20 +864,15 @@
     // Los chips muestran el nombre del punto resuelto por id, no el texto libre
     // que ya no existe: un punto renombrado se refleja aquí sin tocar al vendedor.
     const sellerPointNames=x=>(x.servicePointIds||[]).map(id=>{const p=Store.get('servicePoints',id);return p?p.name:null}).filter(Boolean);
+    /* ── LA VISTA DE VENDEDORES vive en src/backoffice/vendedores.js (corte 3) ─────────────────────── */
     function renderSellers(){
-      $('#sellerGrid').innerHTML=sellersAll().map(x=>`<article class="seller"><div class="seller-head"><div class="seller-id"><span class="avatar">${esc(initialsOf(x.name))}</span><div><h3>${esc(x.name)}</h3><p>${esc(x.email)}</p></div></div><button class="toggle ${x.active?'on':''}" data-toggle-seller="${esc(x.id)}" aria-label="Activar o desactivar vendedor"></button></div><div class="seller-meta"><span>Solicitudes este mes<strong>${quotesAll().filter(q=>quoteIsFor(q,{sellerId:x.id,name:x.name})).length}</strong></span><span>Estado<strong>${x.active?'Recibe asignaciones':'Pausado · sin acceso'}</strong></span></div><div class="zones">${sellerPointNames(x).map(z=>`<span>${esc(z)}</span>`).join('')}</div><div class="seller-actions"><button data-edit-seller="${esc(x.id)}">Editar datos</button></div></article>`).join('');
+      const vista=window.Backoffice&&Backoffice.vendedores;
+      if(vista)return vista.pintar();
     }
-    $('#sellerGrid').addEventListener('click',e=>{
-      const ed=e.target.closest('[data-edit-seller]');
-      if(ed)return editSeller(ed.dataset.editSeller);
-      const t=e.target.closest('[data-toggle-seller]');if(!t)return;
-      const x=Store.get('sellers',t.dataset.toggleSeller);if(!x)return;
-      x.active=!x.active;
-      try{Store.put('sellers',x)}catch(err){return toast(err.message)}
-      // Pausing an adviser has to close their account too, or the toggle lies.
-      Auth.setSellerActive(x.id,x.active);
-      renderAll();toast(x.active?'Vendedor activado · recupera el acceso':'Vendedor pausado · pierde el acceso');
-    });
+    function conectarLaVistaDeVendedores(){
+      const vista=window.Backoffice&&Backoffice.vendedores;
+      if(vista)vista.conectar(window.Casa);
+    }
 
     /* --------------------------------------------------------------- puntos -- */
     // Mismo criterio que Store usa para comparar zonas: sin acentos ni mayúsculas,
@@ -1130,66 +880,18 @@
     const normName=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
     // La etiqueta que se congela en cada cotización — misma forma que Store.pointName.
     const pointLabel=p=>`${p.city} · ${p.name}`;
+    /* ── LA VISTA DE PUNTOS DE ATENCIÓN vive en src/backoffice/puntos.js (corte 3 del refactor) ──────
+     * Aquí queda solo la puerta: pintar y enganchar. El puente de la transición es `window.Casa` (abajo):
+     * lo que la vista necesita de esta página —almacén, avisos, confirm, lecturas y helpers— se lo pasa
+     * la página a mano. Cuando el núcleo sea modular, el puente se borra y esto serán imports. */
     function renderPoints(){
-      const auto=Store.settings().autoAssignByZone;
-      $('#pointRows').innerHTML=pointsAll().map(p=>{
-        const covers=sellersAll().filter(s=>s.active&&(s.servicePointIds||[]).some(id=>String(id)===String(p.id))).length;
-        const warn=auto&&p.active&&!covers;
-        return `<tr><td><strong>${esc(p.name)}</strong>`+
-          (warn?`<br><small style="color:var(--amber)">Sin vendedor activo · las solicitudes quedan sin asignar</small>`:'')+
-          `</td><td>${esc(p.city||'—')}</td><td>${covers}</td><td>${esc(p.order||0)}</td>`+
-          `<td><span class="status ${p.active?'sent':'progress'}">${p.active?'Activo':'Pausado'}</span></td>`+
-          `<td><button class="row-action" data-edit-point="${esc(p.id)}" aria-label="Editar">⋯</button></td></tr>`;
-      }).join('')||'<tr><td colspan="6">No hay puntos de atención configurados. El cotizador no podrá ofrecer ninguna ciudad.</td></tr>';
+      const vista=window.Backoffice&&Backoffice.puntos;
+      if(vista)return vista.pintar();
     }
-    $('#pointRows').addEventListener('click',e=>{
-      const b=e.target.closest('[data-edit-point]');if(b)editPoint(b.dataset.editPoint);
-    });
-    function fillPointForm(p){
-      const form=$('#pointForm'),E=form.elements;
-      form.reset();
-      E.id.value=p?p.id:'';
-      E.name.value=p?p.name:'';
-      E.city.value=p?(p.city||''):'';
-      E.address.value=p?(p.address||''):'';
-      E.phone.value=p?(p.phone||''):'';
-      E.order.value=p?(p.order||1):(pointsAll().length+1);
-      E.active.value=p?String(!!p.active):'true';
-      $('#deletePoint').style.display=p?'':'none';
+    function conectarLaVistaDePuntos(){
+      const vista=window.Backoffice&&Backoffice.puntos;
+      if(vista)vista.conectar(window.Casa);
     }
-    function editPoint(id){
-      const p=Store.get('servicePoints',id);if(!p)return;
-      fillPointForm(p);$('#pointModalTitle').textContent='Editar punto';openModal('#pointModal');
-    }
-    $('#newPoint').onclick=()=>{fillPointForm(null);$('#pointModalTitle').textContent='Nuevo punto';openModal('#pointModal')};
-    $('#pointForm').onsubmit=e=>{
-      e.preventDefault();
-      const d=Object.fromEntries(new FormData(e.target));
-      const name=String(d.name||'').trim(),city=String(d.city||'').trim();
-      if(!name)return toast('El nombre no puede quedar vacío');
-      if(!city)return toast('La ciudad no puede quedar vacía');
-      const dup=pointsAll().some(p=>normName(p.city)===normName(city)&&normName(p.name)===normName(name)&&String(p.id)!==String(d.id));
-      if(dup)return toast('Ya existe un punto de atención con ese nombre en esa ciudad');
-      const prev=d.id?Store.get('servicePoints',d.id):null;
-      const item={id:d.id||('sp-'+Date.now()),name,city,address:String(d.address||'').trim(),
-        phone:String(d.phone||'').trim(),order:+d.order||1,active:d.active==='true'};
-      try{Store.put('servicePoints',item)}catch(err){return toast(err.message)}
-      // La etiqueta queda repetida en cada cotización; sin refrescarla la
-      // búsqueda y el CSV seguirían leyendo el nombre o la ciudad anteriores.
-      const retag=prev&&pointLabel(prev)!==pointLabel(item)?Store.retagQuotePoints(item.id,pointLabel(item)):0;
-      renderAll();closeModals();
-      toast(retag?`Punto guardado · ${retag} ${retag===1?'solicitud renombrada':'solicitudes renombradas'}`:'Punto guardado — el cotizador ya lo usa');
-    };
-    $('#deletePoint').onclick=async()=>{
-      const id=$('#pointForm').elements.id.value;if(!id)return;
-      const ok=await askConfirm({title:'Eliminar punto de atención',
-        message:'¿Eliminar este punto de atención? Las cotizaciones ya enviadas conservan su texto.',
-        confirmText:'Sí, continuar',danger:true});
-      if(!ok)return;
-      const touched=Store.removeServicePoint(id);
-      renderAll();closeModals();
-      toast(touched?`Punto eliminado · ${touched} ${touched===1?'vendedor perdió esa cobertura':'vendedores perdieron esa cobertura'}`:'Punto eliminado');
-    };
 
     /* ------------------------------------------------------------- settings -- */
     /* Estos porcentajes solo mandan donde el consumo sale del rango base. Los
@@ -1197,293 +899,66 @@
      * tapizan, que es el mecanismo correcto — multiplicar encima contaría dos
      * veces lo mismo. Decir a cuáles aplica evita que alguien mueva el número
      * esperando que el sofá se entere. */
+    /* ── LA VISTA DE CONFIGURACIONES vive en src/backoffice/ajustes.js (corte 3). El bloque de «lo que
+     * este negocio presta HOY» (líneas de servicio y Mi ACI) sigue aquí y se mudará aparte. ────────── */
     function renderCoverageScope(){
-      const todos=furnitureAll();
-      const piezas=todos.filter(f=>Store.hasComponentModel(f)).map(f=>f.name);
-      const base=todos.filter(f=>!Store.hasComponentModel(f)).map(f=>f.name);
-      $('#coverageScope').textContent=base.length
-        ? `Solo se aplican a los muebles que se estiman por rango base: ${base.join(', ')}.`
-        : 'Ningún mueble se estima ya por rango base, así que hoy no se aplican a ninguno.';
-      $('#coveragePieces').textContent=piezas.length
-        ? `${piezas.join(', ')} no los usa${piezas.length>1?'n':''}: calcula${piezas.length>1?'n':''} la proporción a partir de las piezas que se tapizan.`
-        : '';
-      $('#coveragePieces').hidden=!piezas.length;
+      const vista=window.Backoffice&&Backoffice.ajustes;
+      if(vista)return vista.pintarAlcance();
     }
 
     /* Configuración: lo que este negocio presta HOY. Prender y apagar, sin precios: aquí no se
      * contrata nada (eso es Upgrade → Mi ACI), solo se dice qué se ofrece. */
+    /* ── LÍNEAS DE SERVICIO + MI ACI viven en src/backoffice/servicios.js (corte 3) ──────────────────
+     * Es otro asunto que los ajustes (allí se ajustan números, aquí se decide qué se ofrece), aunque
+     * compartan pantalla. Aquí quedan las puertas. */
     function renderServiceLines(){
-      const list=$('#serviceLinesCfg');if(!list)return;
-      /* La línea que otra usa como camino (catálogo: `rutas` con `line`) no se lista aparte: la
-       * reparación se elige DENTRO de Mantenimiento (dueño, 21/09). Se acá y en Mi ACI. */
-      const esCaminoDeOtra=s=>Store.services().some(o=>(o.rutas||[]).some(r=>r.line===s.id));
-      list.innerHTML=Store.services().filter(s=>!esCaminoDeOtra(s)).map(s=>
-        `<li><label class="line-row"><input type="checkbox" data-line="${esc(s.id)}"${s.enabled?' checked':''}>`+
-        `<span><strong>${esc(s.label)}</strong></span></label>`+
-        `<span class="aci-value">${s.enabled?'Habilitada':'Deshabilitada'}</span></li>`).join('');
-      list.querySelectorAll('input[data-line]').forEach(cb=>{
-        cb.addEventListener('change',()=>{
-          try{ const l=Store.setLineEnabled(cb.dataset.line,cb.checked); toast(`${l.label}: ${cb.checked?'habilitada':'deshabilitada'}`); }
-          catch(err){ cb.checked=!cb.checked; toast(err.message); }
-          renderServiceLines(); renderMyAci();
-        });
-      });
-      renderLineWork();
+      const vista=window.Backoffice&&Backoffice.servicios;
+      if(vista)return vista.pintarServicios();
     }
-
-    /* Mano de obra e insumos (docs/retapizado-trabajo.md): lo único que el taller edita aquí es CÓMO
-     * se cobra su obra y CUÁNTO por metro de tela. La base por mueble vive en el catálogo del
-     * producto (valores DEMO) y los precios de los insumos también: esta tarjeta es una decisión, no
-     * un formulario. La edición vive como override de ESTE cliente (`settings.lineOverrides`), así
-     * regenerar el paquete no borra lo que el taller eligió. */
     function renderLineWork(){
-      const box=$('#lineWorkCfg');if(!box)return;
-      const lineas=Store.services().filter(s=>(s.labor&&s.labor.mode==='tabla')||(s.insumos||[]).length);
-      if(!lineas.length){box.innerHTML='';return}
-      box.innerHTML=lineas.map(s=>{
-        const lab=s.labor||{mode:'pct',pct:0,perMeter:0,porMueble:{}};
-        const filasInsumo=(s.insumos||[]).map(x=>
-          `<li><label><b>${esc(x.label)}</b> <em>por ${esc(x.unit||'unidad')}</em><input type="number" min="0" step="1000" data-insumo-cop="${esc(x.id)}" value="${x.cop}" placeholder="—"></label></li>`).join('');
-        return `<div class="line-work" data-line-work="${esc(s.id)}">`+
-          `<h3>Mano de obra e insumos — ${esc(s.label)}</h3>`+
-          `<div class="line-work-grid">`+
-            `<label>Se cobra por<select data-obra-modo>`+
-              `<option value="tabla"${lab.mode==='tabla'?' selected':''}>Por mueble + por metro</option>`+
-              `<option value="pct"${lab.mode!=='tabla'?' selected':''}>Porcentaje de la tela</option>`+
-            `</select></label>`+
-            `<label data-obra-metro${lab.mode==='tabla'?'':' hidden'}>Por metro de tela (COP)<input type="number" min="0" step="500" data-obra-metro-campo value="${lab.perMeter||''}" placeholder="—"></label>`+
-            `<label data-obra-pct${lab.mode==='tabla'?' hidden':''}>Porcentaje de la tela (%)<input type="number" min="0" max="200" step="1" data-obra-pct-campo value="${lab.pct||''}" placeholder="60"></label>`+
-          `</div>`+
-          `<h4>Insumos que repone — precio del catálogo</h4><ul class="line-work-rows">${filasInsumo||'<li>Esta línea no pregunta insumos.</li>'}</ul>`+
-        `</div>`;
-      }).join('');
-      const cambiarModo=(caja)=>{
-        const modo=caja.querySelector('[data-obra-modo]').value;
-        caja.querySelector('[data-obra-metro]').hidden=modo!=='tabla';
-        caja.querySelector('[data-obra-pct]').hidden=modo==='tabla';
-      };
-      box.querySelectorAll('[data-line-work]').forEach(caja=>{
-        const guardar=()=>{
-          const id=caja.dataset.lineWork;
-          const s=Store.services().filter(x=>x.id===id)[0];
-          /* La base por mueble NO se toca desde aquí: viaja tal como está (catálogo u override). */
-          const labor={mode:caja.querySelector('[data-obra-modo]').value,
-                       pct:+caja.querySelector('[data-obra-pct-campo]').value||0,
-                       perMeter:+caja.querySelector('[data-obra-metro-campo]').value||0,
-                       porMueble:Object.assign({},(s.labor||{}).porMueble||{})};
-          const insumos=(s.insumos||[]).map(x=>{
-            const campo=caja.querySelector(`[data-insumo-cop="${x.id}"]`);
-            return Object.assign({},x,{cop:campo?Math.max(0,+campo.value||0):x.cop});
-          });
-          const todos=Object.assign({},Store.settings().lineOverrides||{});todos[id]={labor,insumos};
-          Store.saveSettings({lineOverrides:todos});
-          toast(`${s.label}: obra ${labor.mode==='tabla'?'por mueble + por metro':'por porcentaje'}`);
-        };
-        caja.addEventListener('change',()=>{cambiarModo(caja);guardar()});
-      });
+      const vista=window.Backoffice&&Backoffice.servicios;
+      if(vista)return vista.pintarObra();
     }
-
-    /* Mi ACI (Upgrade): el mercado. El Core es fijo, los paquetes recomendados son un atajo y cada
-     * servicio lleva su precio; abajo se compone el total. Es la cara comercial del mismo estado
-     * que se prende en Configuraciones (disabledLines), así que las dos pantallas coinciden. */
     function renderMyAci(){
-      const list=$('#serviceLines');if(!list)return;
-      const money=v=>Store.money(v||0);
-      const aci=Store.myAci();
-      const core=$('#aciCore');
-      if(core)core.innerHTML=
-        `<div class="aci-head"><b>${esc(aci.core.label)}</b><em>${money(aci.core.price)} / ${esc(aci.period)}</em></div>`+
-        `<ul class="aci-includes">${(aci.core.includes||[]).map(x=>`<li>✓ ${esc(x)}</li>`).join('')}</ul>`;
-      /* Consumo: la cuota del paquete. Los paquetes de consumo comprados (25 cotizaciones,
-       * 100 interacciones, GB, usuario, sede) viven en la pestaña Paquetes, no aquí: el dueño
-       * señaló que repetirlos en Mi ACI era información duplicada. */
-      const cap=$('#aciCapacity');
-      if(cap){
-        const q=aci.quotaActual;
-        cap.innerHTML=`<h4 class="aci-section">Consumo</h4>`+
-          (q?`<ul class="aci-capacity aci-quota-actual"><li><span>${aci.presetActual?`Incluido en el paquete «${esc(aci.presetActual.label)}»`:'Incluido en tu cuenta (paquete a la medida)'}</span><em>${q.quotes} cotizaciones · ${q.aiCredits} interacciones de IA · ${q.storageGB} GB · ${q.users} usuario${q.users===1?'':'s'} · ${q.locations} sede${q.locations===1?'':'s'} · ${q.historyMonths} meses de historial</em></li></ul>`:'');
-      }
-      /* Capacidades: cada una se activa por su cuenta y con su valor (nada de «venía en»). */
-      const capa=$('#aciCapabilities');
-      if(capa){
-        capa.innerHTML=`<h4 class="aci-section">Capacidades</h4><ul class="service-lines">`+
-          aci.capabilities.map(c=>`<li><label class="line-row"><input type="checkbox" data-cap="${esc(c.id)}"${c.enabled?' checked':''}>`+
-            `<span><strong>${esc(c.label)}</strong>${c.hint?`<small class="aci-hint">${esc(c.hint)}</small>`:''}</span></label>`+
-            `<span class="aci-value">+${money(c.price)} / ${esc(aci.period)}</span></li>`).join('')+
-          `</ul>`;
-        capa.querySelectorAll('input[data-cap]').forEach(cb=>cb.addEventListener('change',()=>{
-          try{ Store.setCapability(cb.dataset.cap,cb.checked); }
-          catch(err){ cb.checked=!cb.checked; toast(err.message); }
-          renderMyAci(); renderServiceLines();
-        }));
-      }
-      const box=$('#aciPresets');
-      if(box){
-        /* El precio del botón es el del PLAN (p.price, del catálogo): el paquete y su tarjeta en
-         * Planes muestran el mismo número. La suma de sus partes (p.composed) es el precio de
-         * lista, y no se enseña aquí: el total de abajo explica la diferencia cuando la hay. */
-        box.innerHTML=aci.presets.map(p=>{
-          const q=p.quota?`${p.quota.quotes} cotizaciones · ${p.quota.users} usuario${p.quota.users===1?'':'s'} · ${p.quota.locations} sede${p.quota.locations===1?'':'s'}`:'';
-          return `<button type="button" class="aci-preset${aci.presetActual&&aci.presetActual.id===p.id?' current':''}" data-preset="${esc(p.id)}">`+
-            `<b>${esc(p.label)}</b><small>${esc(p.hint)}</small>`+
-            (q?`<small class="aci-quota">${esc(q)}</small>`:'')+
-            `<em>${money(p.price)} / ${esc(aci.period)}</em></button>`;
-        }).join('');
-        box.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{
-          const p=Store.presets().presets.find(x=>x.id===b.dataset.preset);
-          /* El paquete es un punto de partida: servicios + capacidades + cuota de una vez, y después
-           * el cliente agrega o quita lo que necesite (cada casilla tiene su valor). */
-          try{ Store.setBundle(p.id); toast(`Paquete «${p.label}» aplicado: puedes agregar o quitar lo que quieras.`); }
-          catch(err){ toast(err.message); }
-          renderMyAci(); renderServiceLines();
-        }));
-      }
-      /* La copia de `aci.services` no lleva `rutas`: la verdad está en el catálogo (`Store.services()`).
-       * Sin esto, «Reparación y restauración» seguía apareciendo suelta con «incluido» (dueño, 21/09). */
-      const conRutas=Store.services()||[];
-      const esCaminoDeOtra=id=>conRutas.some(o=>(o.rutas||[]).some(r=>r.line===id));
-      list.innerHTML=aci.services.filter(s=>!esCaminoDeOtra(s.id)).map(s=>
-        `<li><label class="line-row"><input type="checkbox" data-line="${esc(s.id)}"${s.enabled?' checked':''}>`+
-        `<span><strong>${esc(s.label)}</strong>${s.hint?`<small class="aci-hint">${esc(s.hint)}</small>`:''}</span></label>`+
-        `<span class="aci-value">${s.price?'+'+money(s.price)+' / '+esc(aci.period):'incluido'}</span></li>`).join('');
-      list.querySelectorAll('input[data-line]').forEach(cb=>{
-        cb.addEventListener('change',()=>{
-          try{ const l=Store.setLineEnabled(cb.dataset.line,cb.checked); toast(`${l.label}: ${cb.checked?'habilitada':'deshabilitada'}`); }
-          catch(err){ cb.checked=!cb.checked; toast(err.message); }
-          renderMyAci(); renderServiceLines();
-        });
-      });
-      const total=$('#aciTotal');
-      if(total){
-        /* La suma de lo marcado ES el precio POR MES del paquete (Core + servicios + capacidades
-         * suman exacto lo que se paga cada mes): si lo marcado es un paquete del catálogo se dice
-         * su nombre, la condición mes a mes y, aparte, el precio del contrato de 12 meses. */
-        const nota=aci.presetActual
-          ?`Precio del paquete «${aci.presetActual.label}» · ${BILLING_CAPTIONS.mensual} · ${BILLING_CAPTIONS.anual} ${money(aci.presetActual.priceYearly)}`
-          :`A la medida: Core + servicios + capacidades, cada uno con su precio · ${BILLING_CAPTIONS.mensual}`;
-        total.innerHTML=`<b>Tu plan</b><span>${money(aci.total)} / ${esc(aci.period)}</span>`+
-          `<small class="aci-total-note">${esc(nota)}</small>`+
-          (aci.demo?'<small>Precios demo del prototipo</small>':'');
-      }
+      const vista=window.Backoffice&&Backoffice.servicios;
+      if(vista)return vista.pintarMiAci();
+    }
+    function conectarLaVistaDeServicios(){
+      const vista=window.Backoffice&&Backoffice.servicios;
+      if(vista)vista.conectar(window.Casa);
     }
 
     /* Campo de etiquetas, sin dependencias y reutilizable: escribir y Enter (o
      * coma) agrega, la × o Backspace quita. La lista vive en JavaScript, no en
      * el valor de un input, así que nadie tiene que volver a partir por comas. */
-    function tagField(el){
-      if(el._tags)return el._tags;
-      const numerico=el.dataset.type==='number';
-      let items=[],cargando=false;
-      /* Las etiquetas no son un <input>, así que no emiten 'input' solas y el
-       * aviso de "sin guardar" no se enteraría. Se emite a mano — menos durante
-       * set(), que es la carga inicial y no un cambio del usuario. */
-      const avisa=()=>{if(!cargando)el.dispatchEvent(new Event('input',{bubbles:true}))};
-      const campo=document.createElement('input');
-      campo.type='text';campo.placeholder=el.dataset.placeholder||'';
-      campo.setAttribute('aria-label',el.dataset.placeholder||'Agregar');
-      const etiqueta=v=>numerico?Number(v).toLocaleString('es-CO'):v;
-      const pinta=()=>{
-        el.querySelectorAll('.tag').forEach(x=>x.remove());
-        items.forEach((v,i)=>{
-          const chip=document.createElement('span');chip.className='tag';
-          chip.textContent=etiqueta(v);
-          const x=document.createElement('button');x.type='button';x.textContent='×';
-          x.setAttribute('aria-label',`Quitar ${etiqueta(v)}`);
-          /* En mousedown, no en click: el blur del input dispara primero, repinta
-           * las etiquetas y se lleva por delante este mismo botón, así que el
-           * click nunca llegaba y la × no hacía nada. preventDefault además
-           * evita el blur, así el foco no se va del campo. */
-          x.addEventListener('mousedown',e=>{e.preventDefault();e.stopPropagation();
-            items.splice(i,1);pinta();avisa();campo.focus()});
-          chip.appendChild(x);el.insertBefore(chip,campo);
-        });
-      };
-      const agrega=texto=>{
-        const antes=items.length;
-        // Pegar "Mascotas, Suave, Sol" tiene que dar tres etiquetas, no una.
-        String(texto||'').split(',').forEach(t=>{
-          const v=t.trim();if(!v)return;
-          if(numerico){const n=+v.replace(/[^\d.]/g,'');if(!(n>0)||items.includes(n))return;items.push(n)}
-          else if(!items.some(x=>x.toLowerCase()===v.toLowerCase()))items.push(v);
-        });
-        // Repintar sin necesidad destruye nodos que alguien puede estar clickeando.
-        if(items.length===antes&&!campo.value)return;
-        campo.value='';pinta();avisa();
-      };
-      campo.addEventListener('keydown',e=>{
-        if(e.key==='Enter'||e.key===','){e.preventDefault();agrega(campo.value)}
-        else if(e.key==='Backspace'&&!campo.value&&items.length){items.pop();pinta();avisa()}
-      });
-      // Escribir algo y hacer clic en Guardar no puede perderlo.
-      campo.addEventListener('blur',()=>agrega(campo.value));
-      el.addEventListener('click',e=>{if(e.target===el)campo.focus()});
-      el.appendChild(campo);
-      el._tags={
-        get:()=>items.slice(),
-        set:v=>{cargando=true;items=[];agrega((v||[]).join(','));cargando=false;}
-      };
-      return el._tags;
-    }
-    const tags=id=>tagField($(id));
-
-    /* Guardar es un botón aparte arriba de la página, así que la pantalla tiene
-     * que decir cuándo hay algo pendiente. Con las etiquetas hace más falta que
-     * antes: ver aparecer un chip al pulsar Enter se siente guardado, y no lo
-     * está — un campo de texto nunca dio esa impresión. */
+    /* Las etiquetas, el aviso de «sin guardar» y el guardado viven en src/backoffice/ajustes.js.
+     * Aquí quedan las puertas: el resto de la página sigue llamando a `loadSettings()` y
+     * `marcarSucio(…)` como siempre. */
     function marcarSucio(hay){
-      $('#settingsDirty').hidden=!hay;
-      $('#saveSettings').classList.toggle('dirty',hay);
-      $('#saveSettings').textContent=hay?'Guardar cambios':'Guardado';
+      const vista=window.Backoffice&&Backoffice.ajustes;
+      if(vista)return vista.marcarSucio(hay);
     }
-    ['input','change'].forEach(ev=>
-      $('#settings').addEventListener(ev,()=>marcarSucio(true)));
-
     function loadSettings(){
-      const s=Store.settings();
-      $('#setWaste').value=s.wastePct;$('#setMargin').value=s.marginPct;$('#setTolerance').value=s.rangeTolerancePct;
-      $('#setCurrency').value=s.currency;$('#setMessage').value=s.confirmationMessage;
-      $('#setSender').value=s.senderEmail;$('#setResponse').value=s.responseTime;
-      tags('#setNeeds').set(s.needs);tags('#setStyles').set(s.styles);
-      tags('#setColors').set(s.colors);tags('#setBudgets').set(s.budgets);
-      $('#setMaxQty').value=s.maxQuantity;
-      $('#setCovSeatsMin').value=s.coverageSeats[0];$('#setCovSeatsMax').value=s.coverageSeats[1];
-      $('#setCovPartMin').value=s.coveragePartial[0];$('#setCovPartMax').value=s.coveragePartial[1];
-      renderCoverageScope();
-      renderServiceLines(); renderMyAci();
-      $('#setAutoAssign').classList.toggle('on',!!s.autoAssignByZone);
-      $('#setEmailCopy').classList.toggle('on',!!s.emailClientCopy);
-      $('#setAiCheck').classList.toggle('on',!!s.aiPhotoCheck);
-      marcarSucio(false);
+      const vista=window.Backoffice&&Backoffice.ajustes;
+      if(vista)return vista.cargarAjustes();
     }
-    $('#saveSettings').onclick=()=>{
-      try{
-        Store.saveSettings({
-          wastePct:+$('#setWaste').value||0,marginPct:+$('#setMargin').value||0,
-          rangeTolerancePct:+$('#setTolerance').value||0,
-          currency:$('#setCurrency').value,
-          confirmationMessage:$('#setMessage').value,senderEmail:$('#setSender').value,
-          responseTime:$('#setResponse').value,
-          needs:tags('#setNeeds').get(),styles:tags('#setStyles').get(),colors:tags('#setColors').get(),
-          budgets:tags('#setBudgets').get().sort((a,b)=>a-b),
-          maxQuantity:Math.max(2,+$('#setMaxQty').value||5),
-          coverageSeats:[+$('#setCovSeatsMin').value||68,+$('#setCovSeatsMax').value||70],
-          coveragePartial:[+$('#setCovPartMin').value||45,+$('#setCovPartMax').value||50],
-          autoAssignByZone:$('#setAutoAssign').classList.contains('on'),
-          emailClientCopy:$('#setEmailCopy').classList.contains('on'),
-          aiPhotoCheck:$('#setAiCheck').classList.contains('on')
-        });
-      }catch(err){return toast(err.message)}
-      renderAll();marcarSucio(false);toast('Configuraciones de cotizador guardadas — el cotizador ya las usa');
-    };
+    function conectarLaVistaDeAjustes(){
+      const vista=window.Backoffice&&Backoffice.ajustes;
+      if(vista)vista.conectar(window.Casa);
+    }
 
     /* ------------------------------------------------------------------ misc -- */
     $('#resetData').onclick=async()=>{
       const ok=await askConfirm({title:'Restablecer datos',
-        message:'Se borrarán las telas, vendedores, cotizaciones y ajustes guardados en este navegador. ¿Continuar?',
+        message:'Vuelven los datos de demo: se borran las cotizaciones —también las de la base del servidor— junto con las telas, vendedores y ajustes de este navegador. ¿Continuar?',
         confirmText:'Sí, continuar',danger:true});
       if(!ok)return;
       // Store.reset() also drops the brand overrides, so repaint the pack's look.
-      Store.reset();Brand.apply();renderAll();loadSettings();
+      /* EL BOTÓN DE LAS SEEDS: primero se corre la base (queda vacía para este paquete), y después el
+       * navegador vuelve a las seeds —que se empujan solas— así la base queda con los datos de demo y
+       * sin nada de las pruebas. Al revés se perdería: la base se correría DESPUÉS de sembrarla. */
+      var volverALasSeeds=()=>{Store.reset();Brand.apply();renderAll();loadSettings()};
+      (Store.reiniciarLaBase?Store.reiniciarLaBase().then(volverALasSeeds,volverALasSeeds):volverALasSeeds());
       if($('#styles').classList.contains('active'))renderStyles();
       if($('#assistant').classList.contains('active'))renderAssistant();
       toast('Datos de demo restablecidos');
@@ -2406,7 +1881,7 @@
 
     /* ---------------------------------------------------------------- modals -- */
     function openModal(id){$(id).classList.add('open')}
-    function closeModals(){$$('.modal-backdrop').forEach(x=>x.classList.remove('open'))}
+    function closeModals(){if(window.UI&&UI.modal)UI.modal.resolver(false);$$('.modal-backdrop').forEach(x=>x.classList.remove('open'))}
     // The in-app confirm (askConfirm(), right below) can open ON TOP of
     // another already-open modal — e.g. "Eliminar este mueble?" while
     // #furnitureModal is still open — so its own ×/Cancel/backdrop/Esc must
@@ -2417,20 +1892,20 @@
     $$('[data-close]').forEach(x=>x.onclick=()=>{
       if(x.closest('#confirmModal')){resolveConfirm(false);return}
       if(x.closest('#payModal')){closePayModal();return}
-      if(x.closest('#photoModal')){closePhoto();return}
+      if(x.closest('#photoModal')){cerrarLaFoto();return}
       closeModals();
     });
     $$('.modal-backdrop').forEach(x=>x.addEventListener('click',e=>{
       if(e.target!==x)return;
-      if(x.id==='confirmModal'){resolveConfirm(false);return}
+      if(x.id==='confirmModal')return;              // el fondo del confirm lo cierra src/ui/modal.js
       if(x.id==='payModal'){closePayModal();return}
-      if(x.id==='photoModal'){closePhoto();return}
+      if(x.id==='photoModal'){cerrarLaFoto();return}
       closeModals();
     }));
     document.addEventListener('keydown',e=>{
       if(e.key!=='Escape')return;
-      if(openConfirm){resolveConfirm(false);return}
-      if(closePhoto())return;                 // el visor se cierra solo; el detalle sigue abierto
+      if(window.UI&&UI.modal.hayConfirmAbierto())return;   // el Escape del confirm lo atiende src/ui/modal.js
+      if(cerrarLaFoto())return;                 // el visor se cierra solo; el detalle sigue abierto
       closeModals();
     });
 
@@ -2444,195 +1919,19 @@
      * every other modal already has, so both color modes work for free.
      * Returns a Promise<boolean>, so a call site reads almost like the old
      * `if(!confirm(...))return`: `if(!await askConfirm({...}))return`. */
-    let openConfirm=null; // {resolve, trigger} while a confirm is open — never two at once
-    function trapConfirmTab(e){
-      if(e.key!=='Tab')return;
-      const items=$$('#confirmModal button:not([disabled])');
-      if(!items.length)return;
-      e.preventDefault();
-      let i=items.indexOf(document.activeElement);
-      if(i<0)i=0;
-      i=(i+(e.shiftKey?-1:1)+items.length)%items.length;
-      items[i].focus();
-    }
-    // Settles whichever confirm is open, however it closed (button, ×,
-    // backdrop, Esc). A Promise only ever settles once, so if the OK button
-    // already resolved it true, a later closeModals()->resolveConfirm(false)
-    // here is a harmless no-op.
-    function resolveConfirm(value){
-      if(!openConfirm)return;
-      const {resolve,trigger}=openConfirm;
-      openConfirm=null;
-      document.removeEventListener('keydown',trapConfirmTab,true);
-      $('#confirmModal').classList.remove('open');
-      resolve(value);
-      if(trigger&&typeof trigger.focus==='function')trigger.focus();
-    }
+    /* El confirm —con su foco atrapado, su fondo y su Escape— vive desde el corte 2 en src/ui/modal.js:
+     * aquí solo queda la puerta, para no tener dos manos sobre el mismo modal. */
     function askConfirm(opts){
-      opts=opts||{};
-      if(openConfirm)return Promise.resolve(false); // never two dialogs at once
-      const trigger=document.activeElement;
-      $('#confirmModalTitle').textContent=opts.title||'Confirmar';
-      $('#confirmModalBody').textContent=opts.message||'';
-      const okBtn=$('#confirmOk');
-      okBtn.textContent=opts.confirmText||(opts.danger?'Sí, continuar':'Confirmar');
-      okBtn.className='button '+(opts.danger?'danger':'primary');
-      $('#confirmCancel').textContent=opts.cancelText||'Cancelar';
-      $('#confirmModal').classList.add('open');
-      document.addEventListener('keydown',trapConfirmTab,true);
-      okBtn.focus();
-      return new Promise(resolve=>{openConfirm={resolve,trigger}});
+      if(window.UI&&UI.modal)return UI.modal.confirmar(opts);
+      return Promise.resolve(false);
     }
-    $('#confirmOk').onclick=()=>resolveConfirm(true);
 
-    // The choices come from Configuración, so a renamed option never drifts.
-    function fillRecommendationOptions(){
-      const cfg=Store.settings(),F=$('#fabricForm').elements;
-      F.needs.innerHTML=(cfg.needs||[]).map(n=>`<option>${esc(n)}</option>`).join('');
-      F.styles.innerHTML=(cfg.styles||[]).map(n=>`<option>${esc(n)}</option>`).join('');
-      F.colorFamily.innerHTML='<option value="">Sin definir</option>'+(cfg.colors||[]).map(n=>`<option>${esc(n)}</option>`).join('');
-    }
-    const setMulti=(sel,vals)=>[...sel.options].forEach(o=>{o.selected=(vals||[]).includes(o.value)});
-    /* La imagen de la tela vive en IndexedDB igual que las fotos del cliente:
-     * pesa demasiado para localStorage y el registro solo guarda su id. */
-    let fabricPhoto;   // undefined = sin tocar · null = quitada · string = nueva
-    function showFabricPhoto(url){
-      const t=$('#fabricPhotoThumb');
-      t.style.backgroundImage=url?`url("${url}")`:'';
-      t.classList.toggle('filled',!!url);
-      $('#fabricPhotoDrop').hidden=!url;
-      $('#fabricPhotoPick').textContent=url?'Cambiar imagen':'Subir imagen';
-      $('#fabricPhotoNote').textContent=url
-        ?'Se muestra en el catálogo y en el cotizador, en lugar del color de muestra.'
-        :'Opcional. Si la cargas, reemplaza al color de muestra en el catálogo y en el cotizador.';
-    }
-    function resetFabricPhoto(fabric){
-      fabricPhoto=undefined;$('#fabricPhotoInput').value='';showFabricPhoto(null);
-      if(fabric&&fabric.photoId)Photos.get(fabric.photoId)
-        // Solo pinta si el usuario no cargó ni quitó otra mientras tanto.
-        .then(url=>{if(url&&fabricPhoto===undefined)showFabricPhoto(url)}).catch(()=>{});
-    }
-    $('#fabricPhotoPick').onclick=()=>$('#fabricPhotoInput').click();
-    $('#fabricPhotoDrop').onclick=()=>{fabricPhoto=null;$('#fabricPhotoInput').value='';showFabricPhoto(null)};
-    $('#fabricPhotoInput').onchange=async e=>{
-      const file=e.target.files&&e.target.files[0];if(!file)return;
-      const url=await readFabricImage(file);
-      if(!url)return toast('No pudimos leer esa imagen');
-      fabricPhoto=url;showFabricPhoto(url);
-    };
-    /* La imagen nunca se ve más grande que la tarjeta del catálogo, así que se
-     * reduce antes de guardarla: una foto de celular de 4 MB queda en ~80 KB. */
-    function readFabricImage(file){
-      return new Promise(resolve=>{
-        if(!file.type.startsWith('image/'))return resolve(null);
-        const reader=new FileReader();
-        reader.onerror=()=>resolve(null);
-        reader.onload=ev=>{
-          const img=new Image();
-          img.onerror=()=>resolve(null);
-          img.onload=()=>{
-            const k=Math.min(1,900/(img.naturalWidth||1));
-            const c=document.createElement('canvas');
-            c.width=Math.max(1,Math.round(img.naturalWidth*k));
-            c.height=Math.max(1,Math.round(img.naturalHeight*k));
-            c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-            // Un canvas contaminado lanza en vez de devolver: ahí se guarda el original.
-            try{resolve(c.toDataURL('image/jpeg',.82))}catch(err){resolve(ev.target.result)}
-          };
-          img.src=ev.target.result;
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-    $('#newFabric').onclick=()=>{const f=$('#fabricForm');f.reset();fillRecommendationOptions();f.elements.id.value='';f.elements.color.value='#a79579';resetFabricPhoto(null);
-      const base=Store.fabricRules(null);
-      Object.keys(base).forEach(k=>{const el=f.elements[k];if(!el)return;
-        if(el.type==='checkbox')el.checked=!!base[k];else el.value=base[k];});$('#fabricModalTitle').textContent='Nueva tela';openModal('#fabricModal')};
-    $('#fabricForm').onsubmit=e=>{
-      e.preventDefault();
-      const d=Object.fromEntries(new FormData(e.target));
-      const picked=n=>[...e.target.elements[n].selectedOptions].map(o=>o.value);
-      const item={id:d.id||Date.now(),name:d.name,collection:d.collection,price:+d.price||0,color:d.color,
-                  colorName:d.colorName||'Sin nombre',use:d.use,
-                  tags:String(d.tags||'').split(',').map(x=>x.trim()).filter(Boolean),active:d.active==='true',
-                  needs:picked('needs'),styles:picked('styles'),colorFamily:d.colorFamily||'',
-                  rollWidthCm:+d.rollWidthCm||140,rollLengthM:+d.rollLengthM||30,
-                  saleUnit:d.saleUnit==='rollo'?'rollo':'metro',
-                  incrementM:+d.incrementM||0.1,minOrderM:+d.minOrderM||0,
-                  supplierMinM:+d.supplierMinM||0,
-                  /* La orientación del corte es de la tela, no del mueble: sin el
-                   * dato el cotizador NO gira piezas (docs/consumo-direccional.md). */
-                  cutDirection:(d.cutDirection==='free'||d.cutDirection==='directional')?d.cutDirection:'unknown',
-                  patternMatch:d.patternMatch==='none'?'none':'confirm',
-                  reusableRemainder:e.target.elements.reusableRemainder.checked};
-      /* El item se arma desde el formulario, que no tiene la imagen: sin este
-       * bloque, editar cualquier campo borraría la foto de la tela. */
-      const prev=Store.get('fabrics',item.id);
-      if(fabricPhoto===undefined){if(prev&&prev.photoId)item.photoId=prev.photoId}
-      else{
-        const pid=Store.fabricPhotoId(item.id);
-        if(fabricPhoto){item.photoId=pid;
-          Photos.put(pid,fabricPhoto).catch(err=>console.warn('[telas] imagen no guardada',err))}
-        else Photos.remove(pid).catch(()=>{});
-      }
-      try{Store.put('fabrics',item)}catch(err){return toast(err.message)}
-      renderAll();closeModals();toast('Tela guardada — ya aparece en el cotizador');
-    };
 
-    // Las casillas se listan siempre, no solo las que el vendedor ya cubre —
-    // así se puede sumar cobertura nueva desde el mismo formulario.
-    function fillSellerPointChecks(seller){
-      const box=$('#sellerPointChecks'),points=pointsAll();
-      const selected=(seller&&seller.servicePointIds||[]).map(String);
-      box.innerHTML=points.map(p=>`<label class="check"><input type="checkbox" name="servicePointIds" value="${esc(p.id)}"${selected.includes(String(p.id))?' checked':''}> ${esc(p.name)}${p.active?'':' (pausado)'}</label>`).join('');
-      $('#sellerPointsHint').hidden=!!points.length;
-    }
-    const checkedPoints=form=>[...form.querySelectorAll('[name=servicePointIds]:checked')].map(c=>c.value);
-    $('#newSeller').onclick=()=>{const f=$('#sellerForm');f.reset();f.elements.id.value='';
-      f.elements.active.value='true';$('#sellerAccountHint').hidden=true;
-      fillSellerPointChecks(null);
-      $('#sellerModalTitle').textContent='Nuevo vendedor';openModal('#sellerModal')};
-    function editSeller(id){
-      const x=Store.get('sellers',id),f=$('#sellerForm');if(!x)return;
-      f.reset();
-      f.elements.id.value=x.id;f.elements.name.value=x.name;f.elements.email.value=x.email;
-      f.elements.active.value=String(!!x.active);
-      fillSellerPointChecks(x);
-      $('#sellerAccountHint').hidden=false;
-      $('#sellerModalTitle').textContent='Editar vendedor';openModal('#sellerModal');
-    }
-    $('#sellerForm').onsubmit=e=>{
-      e.preventDefault();
-      const d=Object.fromEntries(new FormData(e.target));
-      const nuevo=!d.id,prev=nuevo?null:Store.get('sellers',d.id);
-      if(!nuevo&&!prev)return toast('Ese vendedor ya no existe');
-      // El correo es el usuario con el que entra al backoffice: si se repite, el
-      // login encuentra la otra cuenta y esta persona no vuelve a entrar nunca.
-      if(Auth.emailInUse(d.email,nuevo?null:prev.id))return toast('Ese correo ya lo usa otra cuenta');
-      const servicePointIds=checkedPoints(e.target);
-      if(!servicePointIds.length)return toast('Elige al menos un punto de atención');
-      let seller;
-      try{seller=Store.put('sellers',{id:nuevo?Date.now():prev.id,name:String(d.name).trim(),
-          email:String(d.email).trim(),
-          servicePointIds,
-          active:nuevo?true:d.active==='true',quotes:prev?prev.quotes:0})}
-      catch(err){return toast(err.message)}
-      if(nuevo){
-        // A new adviser needs a way in, so the account is created with them.
-        Auth.ensureUserForSeller(seller).catch(err=>console.warn('[auth]',err));
-        renderAll();e.target.reset();closeModals();
-        return toast(`Vendedor agregado · contraseña ${Auth.DEMO_PASSWORD}`);
-      }
-      // El vendedor y su cuenta son dos registros: sin esto, corregir un correo
-      // dejaría el login en la dirección vieja y pausar aquí no cerraría el acceso.
-      Auth.syncSellerAccount(seller);
-      Auth.setSellerActive(seller.id,seller.active);
-      // La cotización guarda el nombre como etiqueta, así que la búsqueda y el CSV
-      // seguirían leyendo el anterior si no se refresca.
-      const retag=prev.name!==seller.name?Store.retagQuotes(seller.id,seller.name):0;
-      renderAll();closeModals();
-      toast(retag?`Vendedor actualizado · ${retag} ${retag===1?'solicitud renombrada':'solicitudes renombradas'}`:'Vendedor actualizado');
-    };
+    /* El formulario de la tela (criterios de recomendación, foto, nueva y guardar) vive en el mismo
+     * módulo que su rejilla: src/backoffice/telas.js. Aquí solo queda el aviso de que se fue. */
+
+    /* El formulario de vendedores (casillas de puntos, nuevo, editar y guardar) vive en el mismo módulo
+     * que la vista: src/backoffice/vendedores.js. Aquí solo queda la lista. */
 
     /* ------------------------------------------------------------- toolbars -- */
     $('#quoteSearch').oninput=renderQuotes;$('#statusFilter').onchange=renderQuotes;
@@ -2642,17 +1941,7 @@
       $(id).onclick=()=>{$(id).classList.toggle('on');marcarSucio(true)}});
 
     // Real export now that the quotes are real records rather than a fixed array.
-    $('#exportBtn').onclick=()=>{
-      const rows=quotesAll();
-      if(!rows.length)return toast('No hay solicitudes para exportar');
-      const cols=['id','date','customer.name','customer.email','customer.phone','furniture','quantityLabel','city','seller','fabricName','status'];
-      const val=(o,path)=>{const v=path.split('.').reduce((a,k)=>a==null?a:a[k],o);return v==null?'':v};
-      const csv=[cols.join(',')].concat(rows.map(r=>cols.map(c=>`"${String(val(r,c)).replace(/"/g,'""')}"`).join(','))).join('\n');
-      const url=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));
-      const a=document.createElement('a');a.href=url;a.download='cotizaciones.csv';document.body.appendChild(a);a.click();a.remove();
-      setTimeout(()=>URL.revokeObjectURL(url),1000);
-      toast('CSV exportado');
-    };
+    /* La exportación a CSV vive con la lista: src/backoffice/cotizaciones.js. */
 
     /* ------------------------------------------------------------------ sesion -- */
     let me=null;
@@ -2688,7 +1977,12 @@
       $('#loginScreen').hidden=!!me;
       $('#appShell').hidden=!me;
       if(!me){$('#loginEmail').focus();return}
-      renderAll();loadSettings();applyRole();
+      /* LA BASE COMPARTIDA: primero se trae lo que haya en el servidor —así una solicitud enviada en
+       * cualquier otro navegador aparece aquí— y después se pinta. Sin servidor, pinta igual que antes. */
+      /* PRIMERO se enganchan las vistas y DESPUÉS se pinta: una vista que se pinta antes de estar
+       * enganchada deja su tabla vacía (pasó con las cotizaciones, que se sirven desde su módulo). */
+      var pintar=()=>{conectarLasVistas();renderAll();loadSettings();applyRole()};
+      (Store.syncQuotes?Store.syncQuotes():Promise.resolve(false)).then(pintar).catch(pintar);
     }
 
     $('#loginForm').onsubmit=async e=>{
@@ -2703,8 +1997,23 @@
     };
     $('#logoutBtn').onclick=()=>{Auth.logout();me=null;location.reload()};
 
+    /* EL PUENTE DE LA TRANSICIÓN (se borra cuando el núcleo sea modular): lo que las vistas ya mudadas a
+     * src/backoffice/ necesitan de esta página —almacén, avisos, confirm, lecturas y helpers—. Va al
+     * FINAL, cuando todo está declarado: puesto antes, una `const` sin inicializar deja el puente en el
+     * aire y la página entera se cae (pasó, y por eso está aquí). */
+    window.Casa={
+      Store, Auth, Photos, money, esc, normName, BILLING_CAPTIONS,
+      /* `me` cambia con el login: se pasa como función para que la vista lea el de AHORA. */
+      usuario:()=>me, fmtDate, quoteSellerName, projectLabel, etiquetaDelProyecto:r=>projectLabel(r),
+      pointsAll, sellersAll, pointLabel, fabricsAll, furnitureAll,
+      initialsOf, quotesAll, quoteIsFor, sellerPointNames,
+      openModal, closeModals, renderAll, toast, askConfirm
+    };
+
     syncBannerHeight();
     boot();
   </script>
+  <!-- Los módulos del frontend (src/): la marca como dato. Se asoman por `window.Tenant`
+       mientras el resto siga siendo scripts clásicos — el puente de la transición. -->
 </body>
 </html>

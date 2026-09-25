@@ -5,6 +5,7 @@
  * taller), los insumos se suman con su precio congelado, y las líneas que siguen cotizando por
  * porcentaje no se movieron. */
 import { chromium } from 'playwright';
+import { elegirMueble } from './helpers.mjs';
 
 const D = 'file://' + process.cwd() + '/generated/';
 
@@ -104,7 +105,7 @@ async function hastaInsumos(opts = {}) {
   const { mueble = 'Sofá', medidas = [210, 85, 90], puestos, cobertura } = opts;
   await abrirLaLinea('Retapizado de muebles');
   await avanzar();
-  await page.click(`.furniture-card[data-furniture="${mueble}"]`);
+  await elegirMueble(page, mueble);
   await page.waitForTimeout(150);
   if (puestos) await page.evaluate(n => {
     const s = document.getElementById('seats');

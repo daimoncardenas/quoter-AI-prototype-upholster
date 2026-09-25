@@ -6,6 +6,7 @@
  * comprueba qué recorrido abre cada propósito y qué pide la lista en cada uno. */
 import { chromium } from 'playwright';
 import { PHOTOS_DB } from './client.mjs';
+import { elegirPrimerMueble } from './helpers.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 const FOTOS = ['1', '2', '3'].map(n => new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
 
@@ -196,7 +197,7 @@ check('y lo que todavía no se pregunta no aparece (el mueble va después de lo 
  * no hay tramo que sumar. */
 await avanzar();
 await page.waitForTimeout(150);
-await page.click('.furniture-card');
+await elegirPrimerMueble(page);
 await page.waitForTimeout(150);
 check('al llegar al mueble, su tramo se suma al sendero',
   (await elSendero()).tramos.slice(3), [await page.evaluate(() => state.furniture)]);

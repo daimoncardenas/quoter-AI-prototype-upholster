@@ -18,10 +18,11 @@
  *   node tools/generate.mjs             -> uses CLIENT from .env / env var
  *   CLIENT=MACIZO node tools/generate.mjs
  */
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { resolveClient } from './env.mjs';
 import { loadClientPack, listAvailableModes } from './client-pack.mjs';
+import { empaquetar } from './bundle.mjs';
 
 const MODES_DIR = 'modes';
 
@@ -187,6 +188,22 @@ export function generate(clientEnvValue = resolveClient(), outDir = 'generated')
 
   const theme = client.theme;
   validateTheme(theme, slug);
+  /* LA MARCA COMO DATO (src/tenant/): lo que el frontend puede leer sin saber de qué cliente se trata.
+   * Solo marca: ni un precio, ni un servicio, ni un dato de demo — eso vive en shared/. */
+  const tenantConfig = {
+    slug: slug,
+    name: client.displayName,
+    displayName: client.displayName,
+    shortName: client.shortName,
+    assistant: client.assistant,
+    theme: theme,
+    fonts: client.fonts,
+    colorMode: client.colorMode,
+    senderEmail: client.senderEmail,
+    namespace: client.storageNamespace,
+    meta: client.meta
+  };
+
   const htmlValues = {
     META_COPYRIGHT: client.meta.copyright,
     META_DESCRIPTION_INDEX: client.meta.descriptionIndex,
@@ -219,6 +236,13 @@ export function generate(clientEnvValue = resolveClient(), outDir = 'generated')
     LOGIN_EMAIL_PLACEHOLDER: client.copy.loginEmailPlaceholder,
     FONTS_HREF: client.fonts.href,
     THEME_VARS: themeCssVars(theme, client.fonts),
+    /* Los módulos de src/ empaquetados: archivos separados en el repo, UN script en la página — el
+     * navegador no carga módulos ES desde file:// y el prototipo se abre con doble clic. */
+    SRC_BUNDLE: empaquetar('src', {
+      'tenant/config.generated.js':
+        '/* GENERADO por tools/generate.mjs — no editar a mano. */\n' +
+        'export const TENANT = ' + JSON.stringify(tenantConfig, null, 2) + ';\n'
+    }).replace(/<\//g, '<\\/'),
     /* The print watermark is an SVG data URI, where var() cannot reach, so
      * its fill is still a generate-time literal (inside --print-watermark in
      * each page's :root); Brand.apply() rewrites that property when an
@@ -263,6 +287,44 @@ export function generate(clientEnvValue = resolveClient(), outDir = 'generated')
   writeFileSync(`${outDir}/index.html`, render(readFileSync('index.html', 'utf8'), htmlValues));
   writeFileSync(`${outDir}/admin.html`, render(readFileSync('admin.html', 'utf8'), htmlValues));
   writeFileSync(`${outDir}/store.js`, render(readFileSync('store.js', 'utf8'), storeValues));
+
+  /* ── los módulos del frontend (src/) ────────────────────────────────────────
+   * Se copian tal cual al build y el paquete entra como UN módulo generado
+   * (`config.generated.js`): así el código no lleva nunca un valor de cliente dentro. */
+  const modulos = [];
+  (function recorrer(dir) {
+    for (const entrada of readdirSync(dir, { withFileTypes: true })) {
+      const ruta = `${dir}/${entrada.name}`;
+      if (entrada.isDirectory()) recorrer(ruta);
+      else if (entrada.name.endsWith('.js')) modulos.push(ruta);
+    }
+  })('src');
+  for (const ruta of modulos) {
+    mkdirSync(`${outDir}/${path.dirname(ruta)}`, { recursive: true });
+    writeFileSync(`${outDir}/${ruta}`, readFileSync(ruta, 'utf8'));
+  }
+  mkdirSync(`${outDir}/src/tenant`, { recursive: true });
+  writeFileSync(`${outDir}/src/tenant/config.generated.js`,
+    '/* GENERADO por tools/generate.mjs — no editar a mano.\n' +
+    '   La marca contratada (el paquete) tal como la declaró el cliente. */\n' +
+    'export const TENANT = ' + JSON.stringify(tenantConfig, null, 2) + ';\n');
+  console.log(`  Módulos: ${modulos.length} archivo(s) de src/ + la marca generada`);
+
+  /* ── el script de cada página tiene que PARSEAR ─────────────────────────────
+   * Un corte mal medido deja un script sin cerrar y la página se cae entera EN EL NAVEGADOR, no aquí:
+   * pasó al mudar una vista. Esto no ejecuta nada —solo parsea— y avisa con la página y el error. */
+  for (const pagina of ['index.html', 'admin.html']) {
+    const html = readFileSync(`${outDir}/${pagina}`, 'utf8');
+    /* Solo los scripts de la app: los `type="application/json"` (los modelos 3D), el `importmap` y los
+     * `type="module"` no son código clásico y `new Function` no los lee. */
+    const bloques = [...html.matchAll(/<script(?![^>]*\bsrc=)(?![^>]*\btype\s*=)[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+    bloques.forEach((codigo, i) => {
+      try { new Function(codigo); }
+      catch (err) {
+        throw new Error(`El script ${i + 1} de ${pagina} no parsea: ${err.message}. Revisa el último corte.`);
+      }
+    });
+  }
 
   console.log(`Generated ${outDir}/ for CLIENT=${clientEnvValue} (pack: clients/${slug}/)`);
   return { slug, client, outDir };

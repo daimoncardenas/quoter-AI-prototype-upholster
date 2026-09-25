@@ -23,10 +23,33 @@ export async function elegirElRecorridoCompleto(page) {
 
 /* «Continuar» como lo haría una persona: el mueble ya no viene marcado por defecto (dueño, 25/09:
  * «no you need put without select default»), así que si su paso está a la vista y nadie eligió, se
- * elige la primera tarjeta antes de avanzar — o el paso no deja pasar. */
+ * elige el primer mueble de la lista antes de avanzar — o el paso no deja pasar. */
 export async function continuar(page) {
-  if (await page.isVisible('.wizard-step.active .furniture-card')) await page.click('.wizard-step.active .furniture-card');
+  if (await page.isVisible('.wizard-step.active .piezas-lista')) await elegirPrimerMueble(page);
   await page.click('#nextButton');
+}
+
+/* ELEGIR EL MUEBLE — la lista del paso 1 trae un desplegable por pieza (dueño, 25/09: «I prefer list
+ * and dropdown for each select... because the first part is waste space»; ya no hay rejilla de tarjetas).
+ * `elegirMueble` deja el mueble en la pieza que se diga (la primera por defecto) y devuelve su nombre;
+ * `elegirMueblePorIndice` usa la posición en el catálogo, como los `nth-child` de las pruebas viejas;
+ * `elegirPrimerMueble` es «el primero de la lista» y NUNCA pisa un mueble ya elegido. */
+export async function elegirMueble(page, nombre, pieza = 0) {
+  const sel = `.piezas-lista .pieza-fila:nth-child(${pieza + 1}) .pieza-mueble`;
+  await page.selectOption(sel, nombre);
+  await page.waitForTimeout(140);
+  return nombre;
+}
+export async function elegirMueblePorIndice(page, i, pieza = 0) {
+  const sel = `.piezas-lista .pieza-fila:nth-child(${pieza + 1}) .pieza-mueble`;
+  const nombres = await page.$$eval(`${sel} option`, os => os.map(o => o.value).filter(Boolean));
+  return elegirMueble(page, nombres[i], pieza);
+}
+export async function elegirPrimerMueble(page, pieza = 0) {
+  const sel = `.piezas-lista .pieza-fila:nth-child(${pieza + 1}) .pieza-mueble`;
+  const actual = await page.$eval(sel, s => s.value).catch(() => '');
+  if (actual) return actual;
+  return elegirMueblePorIndice(page, 0, pieza);
 }
 
 export async function openWizard(page, D) {
@@ -37,8 +60,13 @@ export async function openWizard(page, D) {
   }
   /* El mueble ya no viene marcado por defecto (dueño, 25/09: «no you need put without select
    * default»): se elige como lo haría una persona, o el paso no deja avanzar. */
-  if (await page.isVisible('.furniture-card')) await page.click('.furniture-card');
+  if (await page.isVisible('.wizard-step.active .piezas-lista')) await elegirPrimerMueble(page);
   await elegirElRecorridoCompleto(page);
+  /* Y SE ELIGE OTRA VEZ AL FINAL: con una línea que trae CAMINOS, el paso del mueble (1) llega DESPUÉS
+   * de los caminos (18/22/23) — la primera elección caía en un paso que todavía no estaba a la vista, y
+   * el wizard quedaba parado en su paso 1 sin mueble (medido: `wizard.spec` se caía en `reach(3)` con
+   * `measurements.ranges` en null porque no había mueble activo). */
+  if (await page.isVisible('.wizard-step.active .piezas-lista')) await elegirPrimerMueble(page);
 }
 
 export async function openAdmin(page, D, email = ADMIN_EMAIL) {

@@ -228,8 +228,9 @@ const errs = [];
     [!despues.ancho, ultimoTurno.includes('233')], [true, false]);
   /* Y con «Otro» elegido, la descripción del cliente viaja pegada al mueble. */
   await p.evaluate(() => {
-    const card = [...document.querySelectorAll('.furniture-card')].find(c => c.dataset.furniture === 'Otro');
-    card.click();
+    const s = document.querySelector('.pieza-mueble');
+    s.value = 'Otro';
+    s.dispatchEvent(new Event('change', { bubbles: true }));
     const campo = document.getElementById('furnitureOther');
     campo.value = 'silla de barbería';
     campo.dispatchEvent(new Event('input', { bubbles: true }));

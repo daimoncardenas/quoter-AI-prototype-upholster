@@ -33,8 +33,13 @@ p.on('pageerror', e => errs.push(String(e && e.stack || e)));
  * el silencio. El micrófono REAL (permiso, dispositivo y reconocimiento) se prueba en el Chrome del
  * dueño, que es el único con uno. */
 await p.addInitScript(() => {
-  const onda = (buf) => { const t = performance.now() / 1000;
-    for (let i = 0; i < buf.length; i++) buf[i] = 128 + Math.round(42 * Math.sin(2 * Math.PI * 220 * (t + i / 48000))); };
+  /* El nivel del micrófono lo manda el test con `window.__nivel` (amplitud de la onda): el de siempre
+   * (42) mueve las barras —no es voz, es un tono parejo—, y 0 es un cuarto en silencio. Con eso se
+   * prueba que ella NO interrumpe al cliente: con voz (42) espera, en silencio (0) habla. */
+  const onda = (buf) => { const amp = (typeof window.__nivel === 'number') ? window.__nivel : 42;
+    if (amp <= 0) { buf.fill(128); return; }
+    const t = performance.now() / 1000;
+    for (let i = 0; i < buf.length; i++) buf[i] = 128 + Math.round(amp * Math.sin(2 * Math.PI * 220 * (t + i / 48000))); };
   class AudioContextFalso {
     constructor() { this.state = 'running'; this.sampleRate = 48000; }
     createAnalyser() { return { fftSize: 512, getByteTimeDomainData: onda }; }
@@ -137,7 +142,10 @@ console.log('\nSU VOZ AVISA AL PERSONAJE (el gesto de la capa 3D)');
 const gestos = await p.evaluate(async () => {
   const vistos = [];
   window.addEventListener('assistant:hablando', e => vistos.push(!!(e && e.detail && e.detail.hablando)));
-  /* La prueba es de la costura, no del botón de silencio: se asegura que ella puede hablar. */
+  /* La prueba es de la costura, no del botón de silencio: se asegura que ella puede hablar. Y el
+   * cuarto está en silencio (`__nivel = 0`): con el tono del micrófono de mentira sonando, ella
+   * ESPERA al cliente —que es la regla de abajo— y no hablaría todavía. */
+  window.__nivel = 0; vozAudio.piso = 0.002;
   vozAudio.silenciada = false; vozAudio.hablando = false;
   const real = window.speechSynthesis;
   /* `window.speechSynthesis` es un ACCESOR del navegador: asignarle un doble se pierde en silencio
@@ -152,15 +160,67 @@ const gestos = await p.evaluate(async () => {
   return vistos;
 });
 check('hablar avisa al personaje (y callar también)', gestos, [true, false]);
-/* Su propia voz no es el cliente: lo que el micrófono oiga MIENTRAS ella habla se descarta. */
-const antesDeDictar = await p.evaluate(() => voz.mensajes.length);
-await p.evaluate(() => { vozAudio.hablando = true; vozAudio.vozDesde = Date.now(); window.__dictar = 'papá'; });
-await p.waitForTimeout(900);
-const mientrasHabla = await p.evaluate(() => ({ mensajes: voz.mensajes.length, servicio: state.service && state.service.id }));
-await p.evaluate(() => { vozAudio.hablando = false; vozAudio.vozDesde = 0; });
-check('mientras ella habla, lo que suena NO entra a la conversación ni responde (su eco no es el cliente)',
-  [mientrasHabla.mensajes, mientrasHabla.servicio], [antesDeDictar, null]);
-await p.evaluate(() => { window.__dictar = 'quiero retapizar el sofá de mi casa'; });
+
+console.log('\nELLA NO INTERRUMPE, Y A ELLA SÍ SE LA PUEDE INTERRUMPIR (dueño, 25/09)');
+/* La síntesis de mentira cuenta lo que se dice y lo que se calla, y `window.__nivel` dice si el
+ * micrófono está oyendo al cliente: con esas dos costuras se prueban las dos reglas del dueño —
+ * «the customer can interrupt to assistant... but assistant can not interrupt to customer». */
+/* 1) SU ECO NO ES EL CLIENTE: ella habla y por el micrófono vuelven SUS palabras (los parlantes). */
+const suEco = await p.evaluate(async () => {
+  const eventos = [];
+  Object.defineProperty(window, 'speechSynthesis', { value: {
+    speak(u) { eventos.push('S:' + String(u.text).slice(0, 18)); setTimeout(() => u.onstart && u.onstart(), 5); },
+    cancel() { eventos.push('C'); }, getVoices() { return []; } }, configurable: true });
+  vozAudio.silenciada = false; vozAudio.piso = 0.002; window.__nivel = 0;
+  decirEnLaConversacion('Mucho gusto, soy Lía. Estoy para servirte: prestamos servicios para muebles.', 'bot');
+  await new Promise(r => setTimeout(r, 150));
+  const antes = voz.mensajes.length, hablando = vozAudio.hablando;
+  window.__dictar = 'mucho gusto soy lía estoy para servirte prestamos servicios para muebles';
+  await new Promise(r => setTimeout(r, 800));
+  return { antes, despues: voz.mensajes.length, hablando, sigue: vozAudio.hablando, eventos };
+});
+/* El recibo de la costura: se calló una vez para decir su frase ('C', 'S:…') y nada más — el eco no
+ * añadió otro turno (serían más eventos) ni la cortó (no hay un 'C' después del 'S'). */
+check('mientras ella habla, su propio eco no entra a la conversación ni la corta',
+  [suEco.hablando, suEco.eventos.length, /^S:/.test(suEco.eventos[1] || ''), suEco.despues, suEco.sigue],
+  [true, 2, true, suEco.antes, true]);
+/* 2) EL CLIENTE LA INTERRUMPE: lo que dice mientras ella habla no suena como ella → ella se calla y él entra. */
+const interrupcion = await p.evaluate(async () => {
+  const eventos = [];
+  Object.defineProperty(window, 'speechSynthesis', { value: {
+    speak(u) { eventos.push('S:' + String(u.text).slice(0, 18)); setTimeout(() => u.onstart && u.onstart(), 5); },
+    cancel() { eventos.push('C'); }, getVoices() { return []; } }, configurable: true });
+  vozAudio.silenciada = false; vozAudio.piso = 0.002; window.__nivel = 0;
+  decirEnLaConversacion('Te cuento: la tela de siempre va bien para el uso de tu casa, y el precio lo miramos al final.', 'bot');
+  await new Promise(r => setTimeout(r, 150));
+  const hablando = vozAudio.hablando, antes = voz.mensajes.length, corte = eventos.length;
+  window.__dictar = 'perdón, pero yo necesito otra cosa';
+  await new Promise(r => setTimeout(r, 900));
+  return { hablando, antes, despues: voz.mensajes.length, corte, eventos };
+});
+/* La interrupción se ve en la costura: después de su frase ('C','S:…') viene OTRO 'C' — la cortó en el
+ * sitio — y las palabras del cliente abren turno (los mensajes crecen). */
+check('el cliente la interrumpe: ella se calla en el sitio y sus palabras SÍ entran a la conversación',
+  [interrupcion.hablando, interrupcion.eventos[2], interrupcion.despues > interrupcion.antes],
+  [true, 'C', true]);
+/* 3) ELLA NO INTERRUMPE: con el micrófono oyendo al cliente, su frase espera la pausa. */
+const suTurno = await p.evaluate(async () => {
+  const dicho = [];
+  Object.defineProperty(window, 'speechSynthesis', { value: {
+    speak(u) { dicho.push(u.text); setTimeout(() => u.onstart && u.onstart(), 5); setTimeout(() => u.onend && u.onend(), 45); },
+    cancel() {}, getVoices() { return []; } }, configurable: true });
+  vozAudio.silenciada = false; vozAudio.hablando = false;
+  vozAudio.piso = 0.002; window.__nivel = 42;      // el cliente está hablando
+  decirEnLaConversacion('¿Cómo quieres la tela?', 'bot');
+  await new Promise(r => setTimeout(r, 700));
+  const mientrasElHabla = dicho.length;
+  window.__nivel = 0;                              // y ahora se calla
+  await new Promise(r => setTimeout(r, 900));
+  return { mientrasElHabla, despues: dicho.length, frase: dicho[dicho.length - 1] || '' };
+});
+check('mientras el cliente habla ella NO arranca, y habla en cuanto él calla (no lo interrumpe)',
+  [suTurno.mientrasElHabla, suTurno.despues > 0, /Cómo quieres la tela/.test(suTurno.frase)], [0, true, true]);
+await p.evaluate(() => { window.__dictar = 'quiero retapizar el sofá de mi casa'; vozAudio.vozHasta = 0; });
 await p.waitForTimeout(1200);
 const trasDictar = await p.evaluate(() => ({ servicio: state.service && state.service.id,
   ultimo: document.getElementById('vozMessages').innerText.slice(-260) }));

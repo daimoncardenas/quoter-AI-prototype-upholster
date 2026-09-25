@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 import { PHOTOS_DB } from './client.mjs';
-import { openWizard } from './helpers.mjs';
+import { openWizard, elegirMueble } from './helpers.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 const BIG = ['1','2','3'].map(n=>new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);   // 1200x900
 const SMALL = BIG.slice(0,2).concat(new URL('./fixture-sofa-baja.png', import.meta.url).pathname); // una de 463x259
@@ -14,7 +14,7 @@ async function review({photo, furniture, w, h, d}) {
   await page.goto(D+'index.html');
   await page.evaluate((db)=>{localStorage.clear();indexedDB.deleteDatabase(db)}, PHOTOS_DB);
   await openWizard(page, D);
-  if (furniture) await page.click(`.furniture-card[data-furniture="${furniture}"]`);
+  if (furniture) await elegirMueble(page, furniture);
   await page.setInputFiles('#furniturePhoto', photo);
   await page.waitForFunction(()=>state.photos.length>=3);
   /* Las fotos de prueba son ILUSTRACIONES lisas (nitidez medida ≈ 0: sin grano ni textura), y el
@@ -78,7 +78,7 @@ async function hastaLaRevision(p){
   await p.goto(D + 'index.html');
   await p.evaluate((db) => { localStorage.clear(); indexedDB.deleteDatabase(db); }, PHOTOS_DB);
   await openWizard(p, D);
-  await p.click('.furniture-card[data-furniture="Sofá"]');
+  await elegirMueble(p, 'Sofá');
   await p.setInputFiles('#furniturePhoto', BIG);
   await p.waitForFunction(() => state.photos.length >= 3);
   /* Las ilustraciones de prueba son lisas (ver arriba): se declaran nítidas — el foco se mide en su
@@ -183,7 +183,7 @@ console.log('\nLA REVISIÓN MIRA LA FOTO (IA LOCAL) Y LA RELACIONA CON LO DECLAR
   await p.goto(D + 'index.html');
   await p.evaluate((db) => { localStorage.clear(); indexedDB.deleteDatabase(db); }, PHOTOS_DB);
   await openWizard(p, D);
-  await p.click('.furniture-card[data-furniture="Sofá"]');
+  await elegirMueble(p, 'Sofá');
   await p.setInputFiles('#furniturePhoto', BIG);
   await p.waitForFunction(() => state.photos.length >= 3);
   /* Las ilustraciones de prueba son lisas (ver arriba): se declaran nítidas — el foco se mide en su
@@ -363,7 +363,7 @@ console.log('\nMIENTRAS MIRA LA FOTO, ELLA LEE SU DOCUMENTO');
   /* La capa 3D tarda en levantar (modelos + WebGL): sin esperarla, la prueba mediría el
    * atributo que todavía no existe — pasó, y el fallo se veía como tres checks raros. */
   await p.waitForFunction(() => document.querySelector('#assistantStage')?.dataset.pose === 'standing', null, { timeout: 15000 });
-  await p.click('.furniture-card[data-furniture="Sofá"]');
+  await elegirMueble(p, 'Sofá');
   await p.setInputFiles('#furniturePhoto', BIG);
   await p.waitForFunction(() => state.photos.length >= 3);
   /* Las ilustraciones de prueba son lisas (ver arriba): se declaran nítidas — el foco se mide en su

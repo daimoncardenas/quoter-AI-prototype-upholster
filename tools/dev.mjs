@@ -23,6 +23,7 @@ import { extname, resolve, sep } from 'node:path';
 import { generate } from './generate.mjs';
 import { resolveClient } from './env.mjs';
 import { atenderIA, claveDeDeepSeek, MODELO } from './ia-api.mjs';
+import { laBase } from './api.mjs';
 
 const OUT_DIR = 'generated';
 const ROOT = resolve(OUT_DIR);
@@ -95,6 +96,9 @@ async function handle(req, res) {
     return;
   }
 
+  /* LA BASE COMPARTIDA (SQLite): las pre-cotizaciones viven aquí, no en cada navegador. */
+  if (laBase(req, res, url)) return;
+
   let pathname;
   try {
     pathname = decodeURIComponent(url.pathname);
@@ -104,8 +108,12 @@ async function handle(req, res) {
   }
   if (pathname === '/') pathname = '/index.html';
 
-  const file = resolve(ROOT, '.' + pathname);
-  if (!file.startsWith(ROOT + sep)) {
+  /* LAS FOTOS DE LA BASE viven en el proyecto (`data/photos/…`), no en el build: se sirven desde la
+   * raíz del proyecto para que el backoffice las muestre aunque `generated/` se regenere. */
+  const esFotoDeLaBase = pathname.startsWith('/data/photos/');
+  const raizDeLaFoto = esFotoDeLaBase ? process.cwd() : ROOT;
+  const file = resolve(raizDeLaFoto, '.' + pathname);
+  if (!file.startsWith(raizDeLaFoto + sep)) {
     res.writeHead(403).end('Forbidden');
     return;
   }

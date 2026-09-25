@@ -203,9 +203,55 @@ paso y el campo por nombre.
    tercer intento se ofrece el formulario para ese campo.
 6. **Nada de cifras ni promesas.** El cerco sigue juzgando cada turno, también lo que ella dice en voz
    alta.
+7. **La charla y la calma no son datos** (dueño, 25/09: «Anotado: Claro.» · «assistant should
+   interact… not robot»). `CORTESIA` (gracias, hola, por favor…), `ASENTIMIENTO` (ok, listo, dale,
+   claro…) y `PIDE_UN_MOMENTO` (dame un momento, ya te digo, espérame, tomar las medidas…) no llenan
+   ningún campo —el parser no los toca, ni el del contrato ni los valores del modelo— y el recibo dice
+   lo anotado UNA vez, sin la etiqueta de la rama. La **cortesía** se contesta corta y variada y NO se
+   le repite la pregunta en el mismo aliento; la **calma** igual, con su frase de espera; el
+   **asentimiento** sí avanza (se vuelve a preguntar por lo que falta: el cliente dijo «dale»).
 
 Antes del bucle va la fase de clasificación (arriba): el bucle llena el contrato que la clasificación
 eligió, y solo con las preguntas que esa rama pide.
+
+## La memoria presente: la conversación viva, en cada turno (dueño, 25/09)
+
+> «el problema es que no tiene memoria presente» · «si local storage» · «pero cuando recargue sí debe
+> resetearse»
+
+El modelo no recuerda entre llamadas: lo que no viaja en el turno, no lo sabe. Así que cada turno lleva
+**la conversación viva** —lo que el cliente dijo y lo que ella contestó, en orden, con el aviso de que lo
+último es lo que él acaba de decir— además del estado del formulario y de lo que falta
+(`laConversacionHastaAhora()`, hasta 12 mensajes de una línea). Y esa conversación se escribe en
+`localStorage` con cada mensaje (clave del cliente, `cdy.v1.memoria-presente`), para que no se pierda
+mientras se habla; **al cargar la página se borra**: recargar empieza limpio, que es la regla de la casa
+(el cliente puede querer otra precotización por otro motivo). Es la memoria de AHORA, no la del navegador.
+
+## Un solo escritor: el modelo llena, la página escribe (dueño, 25/09)
+
+> «eso con función que escriba es muy riesgoso… con razón había visto varios inputs rellenados raros»
+
+Con la API puesta, el **parser del contrato solo mira el campo que se está preguntando** (ahí la forma
+del cliente importa: «de ancho 210, de largo 90»); **todos los demás campos los llena el modelo** con sus
+`valores`, que entran por los mismos controles y con la misma validación (`aplicarValorDelContrato` →
+`aplicarLoDicho`). Antes había DOS escritores: el modelo y un adivinador que probaba todos los campos del
+recorrido en cada frase — ése fue el que escribió «Claro» como ciudad del cliente. Sin API (el demo de
+doble clic) el respaldo sigue adivinando: ahí no hay quien analice el texto.
+
+- Los `valores` del modelo se aceptan en las formas razonables: `{"atencion": "Manizales"}` (texto) o
+  `{"atencion": {"cliente": …, "servicio": …}}`, `{"medidas": {"ancho|width": …}}`, `{"contacto":
+  {"nombre|correo|celular": …}}` o la frase tal cual. Perder una forma es perder lo que el cliente dijo
+  (medido: el modelo mandó la ciudad como texto y no entraba).
+- El recibo dice lo anotado UNA vez y con los números dentro («90 × 90 × 90 cm» es un recibo válido).
+
+## El seguimiento: lo que pasó, turno por turno
+
+`node tools/seguir-conversacion.mjs ["frase" …]` habla con la asistente (modelo real si el server está
+encendido) y deja en `generated/seguimiento/` una captura por turno más un `seguimiento-<fecha>.md` con:
+lo que dijo el cliente, **el JSON que decidió el modelo**, lo que entró al formulario, lo declarado, lo
+que falta y el paso del wizard. La página expone el último turno en `voz.ultimoTurno` (dicho, decir,
+valores, aplicados, respaldo) para que el seguimiento no adivine. `node tools/atlas.mjs` hace lo mismo
+con las pantallas: una captura por paso de cada línea, en `generated/atlas/`.
 
 ## El modal de voz: transparente, con el formulario vivo detrás
 
@@ -243,8 +289,28 @@ eligió, y solo con las preguntas que esa rama pide.
   voz es-CO para hablar?) y la nota dice por dónde viaja el audio — la misma regla que se aplicó al
   pasar a la API: si el audio sale del equipo, se dice.
 - **Salida**: `speechSynthesis` con la voz del sistema, silenciable. Sin voz adecuada, ella escribe y
-  el modo no promete hablar.
+  el modo no promete hablar. El **ruido al final de su frase lo pone la voz del sistema** que el
+  navegador elige (las viejas chasquean al cerrar): el selector prefiere Colombia, luego
+  Natural/Neural/Online, y cuál suena limpia en un equipo se OYE — `generated/voz-laboratorio.html`
+  (diagnóstico de una vez, fuera de git) pone cada voz del equipo en un botón con la frase y el idioma
+  de la app, y la preferencia se fija con lo que el dueño elija ahí.
 - **Sin micrófono o sin permiso**: el modo voz se apaga y queda el mismo diálogo por texto.
+
+### El turno, en las dos direcciones (dueño, 25/09)
+
+> «and is important tha customer can interrupt to assistant... but assistant can not interrupt to
+> customer»
+
+- **Él la interrumpe**: mientras ella habla, lo que entra por el micrófono se compara con lo que ella
+  acaba de decir (`pareceSuPropiaVoz`: dos de cada tres palabras suyas). Si es su eco —los parlantes—
+  no entra; si **no** suena como ella, es el cliente cortándola: se la calla en el sitio
+  (`callarlaParaEscuchar`, `cancel`) y sus palabras abren turno.
+- **Ella no lo interrumpe**: su frase espera la pausa del cliente. El nivel real del micrófono
+  (`AnalyserNode`) se mide contra el PISO de su propio cuarto (el mínimo oído, con deriva lenta), no
+  contra un número fijo; mientras él hable, la frase espera (tope de 12 s para no quedarse muda), y si
+  entre tanto sale otra frase, la vieja se cae.
+- **La cola del eco es corta**: 400 ms (antes 1500). La cola larga se comía el arranque de la frase
+  siguiente del cliente — eso se sentía como «el micrófono no capta mi voz».
 
 ## Qué NO cambia
 

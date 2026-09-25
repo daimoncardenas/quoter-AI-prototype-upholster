@@ -46,6 +46,44 @@
 .furniture-other label small{display:block;margin-top:5px;font-size:.62rem;font-weight:500;color:var(--muted);line-height:1.45}
 .furniture-other input{width:100%;margin-top:4px;border:1px solid var(--line);background:white;border-radius:2px;padding:14px;color:var(--text);font-size:.8rem;min-height:47px}
 .service-choice.selected .go:after{content:" ✓"}.furniture-card{min-height:126px;background:white;border:1px solid var(--line);border-radius:4px;padding:18px;text-align:left;color:var(--ink);transition:.2s}.furniture-card:hover{border-color:var(--accent);transform:translateY(-2px)}.furniture-card.selected{border:2px solid var(--accent);background:var(--tint-selected-tint);box-shadow:0 10px 25px rgba(var(--rgb-accent),.10)}.furniture-icon{font:600 2.2rem var(--font-heading);display:block;color:var(--accent);height:43px}.furniture-card b,.furniture-card small{display:block}.furniture-card b{font:600 1.1rem var(--font-heading)}.furniture-card small{font-size:.68rem;color:var(--muted);margin-top:4px}.upload-zone{margin-top:18px;border:1px dashed var(--tint-dashed-border);border-radius:4px;min-height:118px;padding:18px;background:var(--tint-upload-zone-bg);display:flex;align-items:center}.upload-zone.dragging{border-color:var(--accent);background:var(--tint-selected-tint)}.upload-copy{width:100%;display:flex;align-items:center;gap:16px}.upload-copy>div{flex:1}.upload-copy b{font-size:.82rem;color:var(--ink)}.upload-copy p{font-size:.68rem;color:var(--muted);margin:5px 0 0}.upload-icon{width:45px;height:45px;border-radius:50%;display:grid;place-items:center;background:var(--tint-icon-circle-bg);color:var(--ink);font-size:1.35rem}.upload-zone{flex-direction:column;align-items:stretch;gap:14px}.photo-strip{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}.photo-strip:empty{display:none}.photo-thumb{position:relative;width:58px;height:54px;border-radius:3px;background-size:cover;background-position:center;border:1px solid var(--line)}.photo-thumb button{position:absolute;top:-6px;right:-6px;width:19px;height:19px;border-radius:50%;border:0;background:var(--ink);color:#fff;font-size:.68rem;line-height:1;display:grid;place-items:center;padding:0}.photo-thumb button:hover{background:#a94848}.photo-count{font-size:.63rem;color:var(--muted);align-self:center}.secondary-button,.back-button,.primary-button{border:0;border-radius:2px;padding:13px 19px;font-weight:700;font-size:.75rem;transition:.2s}.secondary-button{background:white;color:var(--ink);border:1px solid var(--tint-secondary-border)}.secondary-button:hover{border-color:var(--accent)}.primary-button{background:var(--ink);color:#fff;box-shadow:0 8px 18px rgba(var(--rgb-shadow),.15)}.primary-button:hover{background:var(--ink-2);transform:translateY(-1px)}.primary-button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+/* LA COTIZACIÓN ES DE UNA O VARIAS PIEZAS (docs/piezas-en-la-cotizacion.md): la lista del paso 1, una
+   fila por pieza con su desplegable de mueble y su cantidad; la fila en foco es la que editan los pasos
+   de abajo. Dueño, 25/09: la rejilla de tarjetas gastaba media pantalla. */
+.piezas{margin-top:12px;display:flex;flex-direction:column;gap:8px;align-items:flex-start;width:100%}
+.piezas-lista{width:100%;display:flex;flex-direction:column;gap:6px}
+.pieza-fila{width:100%;display:grid;grid-template-columns:22px minmax(0,1.6fr) 120px 190px 68px 68px 68px minmax(146px,auto) 30px;gap:11px;align-items:end}
+.pieza-num{align-self:center;flex:0 0 auto;width:20px;height:20px;border-radius:50%;background:var(--tint-selected-tint);color:var(--ink);font-size:.64rem;font-weight:600;display:flex;align-items:center;justify-content:center}
+.pieza-fila.en-foco .pieza-num{background:var(--accent);color:#fff}
+/* Cada fila declara lo suyo: el MUEBLE y su CANTIDAD, cada uno con su rótulo encima (dueño, 25/09). */
+.pieza-campo{display:flex;flex-direction:column;gap:5px;min-width:0}
+.pieza-rotulo{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
+.pieza-mueble,.pieza-cantidad,.pieza-cobertura{width:100%;font:inherit;font-size:.78rem;padding:10px 12px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink)}
+.pieza-fila.en-foco .pieza-mueble,.pieza-fila.en-foco .pieza-cantidad,.pieza-fila.en-foco .pieza-cobertura{border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--rgb-accent),.08)}
+.pieza-quita{align-self:center;border:0;background:transparent;color:var(--muted);font-size:.85rem;line-height:1;padding:6px;border-radius:3px}
+/* La celda de FOTOS de la fila: las miniaturas de esa pieza y el botón de subir (dueño, 25/09: cada
+   línea lleva su mueble, su cantidad, sus fotos y sus medidas — ancho, alto y largo). */
+.pieza-fotos{min-width:0}
+.pieza-foto-fila{display:flex;align-items:center;gap:6px;min-height:40px}
+.pieza-foto-mini{position:relative;width:38px;height:38px;border-radius:3px;background-size:cover;background-position:center;border:1px solid var(--line);flex:0 0 auto}
+.pieza-foto-mini button{position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;border:0;background:var(--ink);color:#fff;font-size:.6rem;line-height:1;display:grid;place-items:center;padding:0}
+.pieza-foto-mas{flex:0 0 auto;width:38px;height:38px;border:1px dashed var(--tint-dashed-border);background:var(--tint-upload-zone-bg);border-radius:3px;color:var(--ink);font-size:.95rem;line-height:1;padding:0}
+.pieza-foto-mas:hover{border-color:var(--accent)}
+.pieza-foto-cuenta{font-size:.62rem;color:var(--muted);flex:0 0 auto}
+.pieza-medida{width:100%;font:inherit;font-size:.78rem;padding:10px 10px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);text-align:center}
+.pieza-fila.en-foco .pieza-medida{border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--rgb-accent),.08)}
+.pieza-medida::placeholder{color:var(--tint-unit-label);font-size:.7rem}
+.pieza-quita:hover{background:var(--tint-selected-tint);color:var(--ink)}
+.piezas-nota{margin:2px 0 4px;font-size:.68rem;line-height:1.5;color:var(--muted);max-width:760px}
+.piezas #agregarPieza{font-size:.72rem;padding:9px 14px}
+/* Las fichas del paso de medidas: la pieza en foco es la que llenan los campos; las otras dicen si ya
+   están — así las medidas se piden PIEZA POR PIEZA sin que ninguna se quede sin medir. */
+.piezas-chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+.pieza-chip{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;border-radius:20px;padding:7px 14px;font:inherit;font-size:.72rem;color:var(--ink);cursor:pointer}
+.pieza-chip b{width:18px;height:18px;border-radius:50%;background:var(--tint-selected-tint);color:var(--ink);display:grid;place-items:center;font-size:.62rem;font-weight:600}
+.pieza-chip.en-foco{border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--rgb-accent),.08)}
+.pieza-chip.en-foco b{background:var(--accent);color:#fff}
+.pieza-chip .chip-estado{color:var(--muted);font-size:.66rem}
+.pieza-chip.lista .chip-estado{color:var(--accent)}
 .field-error{color:#a64040;font-size:.72rem;margin:7px 0}.measure-guide{display:grid;grid-template-columns:minmax(260px,.9fr) 1.2fr;gap:38px}.measure-visual{background:var(--ink);border-radius:4px;color:#fff;padding:28px}.furniture-drawing{height:210px;margin:25px 16px 40px;position:relative}.drawing-shape{height:100%;display:grid;place-items:center;box-sizing:border-box;padding:0 30px}.drawing-shape svg{width:100%;height:100%;color:rgba(255,255,255,.62)}.drawing-shape svg [fill=solid]{fill:var(--ink-2)}.furniture-drawing>span{position:absolute;font-size:.62rem;color:var(--gold-light);letter-spacing:.06em}.width-line{left:25%;bottom:-28px}.height-line{left:-18px;top:35%;transform:rotate(-90deg)}.depth-line{right:-13px;top:-20px}.measure-visual p{font-size:.68rem;line-height:1.55;color:var(--tint-measure-visual-text)}.measure-fields,.select-grid,.contact-fields{display:grid;grid-template-columns:1fr 1fr;gap:18px}.measure-fields label,.select-grid label,.contact-fields label{font-size:.72rem;font-weight:700;color:var(--ink);position:relative}.field-note{position:static;display:block;margin-top:6px;font-size:.62rem;font-weight:500;color:var(--muted);line-height:1.4}.measure-fields input,.measure-fields select,.select-grid select,.select-grid input,.contact-fields input{width:100%;margin-top:8px;border:1px solid var(--line);background:white;border-radius:2px;padding:14px;color:var(--text);font-size:.8rem;min-height:47px}
 .measure-fields label>span.unit,.select-grid label>span.unit{position:absolute;right:13px;bottom:15px;color:var(--tint-unit-label);font-weight:500}.measure-fields input:invalid:not(:placeholder-shown),.contact-fields input:invalid:not(:placeholder-shown){border-color:#b55}.preference-layout{display:grid;gap:30px}.choice-group h3{font:600 1.25rem var(--font-heading);color:var(--ink);margin:0 0 13px}
 .journey-context{display:flex;align-items:center;gap:10px;margin:0 0 16px;flex-wrap:wrap}
@@ -454,6 +492,10 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
   {{MODE_STYLES}}
   <!-- store.js loads in <head> so Brand.apply() can paint any saved brand overrides (colors, fonts, header variant, title) before first paint; it is a no-op when nothing is overridden. -->
   <script src="store.js"></script>
+  <!-- Los módulos del frontend (src/), empaquetados por tools/generate.mjs: archivos separados en el
+       repo, un solo script aquí. Antes del script de la página para que `window.Tenant`/`window.UI`
+       existan cuando corre. -->
+  <script>{{SRC_BUNDLE}}</script>
   <script>Brand.apply()</script>
   <!-- Paints the assistant presence (on/off, name) before first paint, so a disabled assistant never flashes. -->
   <script>Assistant.apply()</script>
@@ -660,10 +702,18 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
           <div class="step-heading">
             <span class="eyebrow" id="furnitureEyebrow">Empecemos</span>
             <h2>¿Qué mueble quieres renovar?</h2>
-            <p>Selecciona la opción que más se parece. La imagen nos ayudará a confirmar los detalles.</p>
+            <p>Elige el mueble y cuántas piezas son. Si el trabajo es de varias —un juego de sala, un sofá y dos poltronas—, suma una pieza más.</p>
           </div>
-          <div class="furniture-grid" role="radiogroup" aria-label="Tipo de mueble"></div>
-          <input type="hidden" id="furnitureType" value="Sofá">
+        <!-- LA COTIZACIÓN ES DE UNA O VARIAS PIEZAS (docs/piezas-en-la-cotizacion.md): una lista, una fila
+             por pieza, con su desplegable de mueble y su cantidad; la fila EN FOCO es la que llenan los
+             pasos de abajo. El dueño lo pidió así (25/09): «I prefer list and dropdown for each select...
+             because the first part is waste space» — la rejilla de tarjetas gastaba media pantalla. -->
+        <div class="piezas" id="piezasCaja">
+          <div class="piezas-lista" id="piezasLista"></div>
+          <p class="piezas-nota">Las medidas tienen correlación con el área a tapizar: si tapizas todo el mueble, mide el mueble completo; si tapizas una parte, mide esa parte.</p>
+          <button type="button" class="secondary-button" id="agregarPieza">+ Agregar otra pieza</button>
+        </div>
+          <input type="hidden" id="furnitureType" value="">
 
           <!-- «Otro» no dice qué mueble es: se pregunta aquí, con las palabras del cliente, y sin
                respuesta no se avanza (validStep). Solo existe con esa opción elegida. -->
@@ -673,6 +723,12 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
           </div>
           <p class="field-error" id="furnitureOtherError" hidden></p>
 
+          <!-- LA FOTO ES DE LA FILA (dueño, 25/09: «si hay + para agregar foto por fila... para que necesita
+               abajo otro componente de foto»): el input vive escondido y cada fila abre su propio selector;
+               aquí queda solo el aviso de fotos que falten. -->
+          <!-- LA FOTO ES DE LA FILA cuando hay paso de mueble (dueño, 25/09: «si hay + para agregar foto
+               por fila... para que necesita abajo otro componente de foto»): este bloque queda para las
+               líneas que NO eligen mueble, donde la subida se muda a su primer paso (reubicarLaSubida). -->
           <div class="upload-zone" id="uploadZone">
             <input id="furniturePhoto" type="file" accept="image/*" multiple hidden>
             <div class="upload-copy">
@@ -717,18 +773,22 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
             <h2>Cuéntanos el tamaño de tu <span data-furniture-label>sofá</span></h2>
             <p>Mide los puntos más largos. Puedes usar centímetros y corregirlos antes de enviar.</p>
           </div>
+        <!-- CON VARIAS PIEZAS, LAS MEDIDAS SON POR PIEZA (docs/piezas-en-la-cotizacion.md): estas fichas
+             dicen cuál se está midiendo y cuáles ya están; tocar una la pone en foco y los campos de
+             abajo pasan a ser los suyos. -->
+        <div class="piezas-chips" id="medidasPiezas" hidden></div>
           <div class="measure-guide">
             <div class="measure-visual">
               <div class="furniture-drawing"><div class="drawing-shape" id="drawingShape" aria-hidden="true"></div><span class="width-line">A — Ancho</span><span class="height-line">B — Alto</span><span class="depth-line">C — Fondo</span></div>
               <p>Las medidas permiten estimar el consumo. Un asesor confirmará el cálculo final.</p>
             </div>
             <div class="measure-fields">
-              <label>Ancho total <span class="unit">cm</span><input type="number" id="width" min="20" max="1000" placeholder="Ej. 210" required></label>
-              <label>Alto total <span class="unit">cm</span><input type="number" id="height" min="20" max="500" placeholder="Ej. 85" required></label>
-              <label>Profundidad <span class="unit">cm</span><input type="number" id="depth" min="10" max="500" placeholder="Ej. 90" required></label>
-              <label id="quantityField"><span id="quantityLabel">Número de puestos</span> <select id="seats"><option value="1">1 puesto</option><option value="2">2 puestos</option><option value="3" selected>3 puestos</option><option value="4">4 puestos</option><option value="5">5 o más</option></select></label>
+              <label id="widthField">Ancho total <span class="unit">cm</span><input type="number" id="width" min="20" max="1000" placeholder="Ej. 210" required></label>
+              <label id="heightField">Alto total <span class="unit">cm</span><input type="number" id="height" min="20" max="500" placeholder="Ej. 85" required></label>
+              <label id="depthField">Largo total <span class="unit">cm</span><input type="number" id="depth" min="10" max="500" placeholder="Ej. 90" required></label>
+              <label id="quantityField" hidden><span id="quantityLabel">Número de puestos</span> <select id="seats"></select></label>
               <label id="cushionsField">Número de cojines <select id="cushions"></select></label>
-              <label>¿Qué deseas tapizar? <select id="coverage"></select></label>
+              <select id="coverage" hidden></select>
             </div>
           </div>
           <p class="field-error" id="measureError" hidden></p>
@@ -988,6 +1048,168 @@ const state={step:1,furniture:'',furnitureNote:'',photos:[],analyzed:false,fabri
 /* Con lo que nace el cotizador: cambiar de línea devuelve el mueble a este valor (y a la primera
  * tarjeta, que es la que renderFurnitureOptions marca) — el paquete puede no llamarlo «Sofá». */
 const FURNITURE_INICIAL=state.furniture;
+
+/* ── LAS PIEZAS DE LA COTIZACIÓN (docs/piezas-en-la-cotizacion.md) ────────────────────────────────
+ * Una pre-cotización puede ser de VARIAS piezas (un juego de sala: un sofá y dos poltronas). La verdad
+ * es `state.piezas`; la pieza EN FOCO es la que editan el paso del mueble, los controles de las medidas
+ * y la zona de fotos, y `state.furniture` sigue siendo su espejo para todo lo que ya lo leía (el motor,
+ * el sendero, la conversación). Cada pieza lleva su cantidad, sus medidas y sus fotos — mínimo 2 de cada
+ * una (dueño, 25/09: «y minimo 2 fotos de cada uno»). Con UNA sola pieza la lista no se enseña: el paso
+ * se ve como siempre. El precio POR PIEZA (la suma) entra en la etapa siguiente, con su captura. */
+const unaPiezaNueva = (nombre = '') => ({ id: 'p' + Math.random().toString(36).slice(2, 8), furniture: nombre,
+  furnitureNote: '', cantidad: 1,
+  medidas: { width: '', height: '', depth: '', puestos: '', cojines: '', cobertura: 'complete' }, fotos: [] });
+/* Cómo se cuenta una PIEZA en la fila del paso 1. El pack dice la unidad cuando el mueble se cuenta por
+ * piezas (`scaleByQty`: poltrona → poltronas); en los que se cuentan por PUESTOS —el sofá—, esa unidad
+ * habla de otra cosa («Número de puestos»), así que la pieza se cuenta con su propio nombre en plural
+ * («1 sofá», «2 sofás», «2 sofás en L»). Cuando el pack traiga la unidad de la pieza, manda el pack. */
+const enPlural = (nombre) => {
+  const [primera, ...resto] = String(nombre || '').split(' ');
+  const plural = /[aeiouáéíóú]$/i.test(primera) ? primera + 's' : primera + 'es';
+  return [plural, ...resto].join(' ');
+};
+const laUnidadDeLaPieza = (rule, nombre, n) => {
+  if (rule && rule.scaleByQty) return n === 1 ? rule.unit[0] : rule.unit[1];
+  return n === 1 ? String(nombre || 'unidad') : enPlural(nombre);
+};
+/* Qué número espera el MOTOR en `#seats`, según cómo se cuente ese mueble (lo dice el pack): los que se
+ * cuentan por PIEZAS llevan la cantidad de su fila; los que se cuentan por PUESTOS o MÓDULOS —el sofá, el
+ * seccional— llevan ese dato, que se pregunta en el paso de las medidas (su consumo va con el ancho). */
+function laCantidadParaElMotor(p){
+  const rule = (p && p.furniture && furnitureRules[p.furniture]) || null;
+  if (rule && rule.scaleByQty) return String(p.cantidad || 1);
+  return String((p && p.medidas.puestos) || 3);
+}
+if (!state.piezas) { state.piezas = [unaPiezaNueva(state.furniture)]; state.piezaEnFoco = 0; }
+const piezaEnFoco = () => state.piezas[state.piezaEnFoco] || state.piezas[0];
+/* LA LISTA DEL PASO 1: una fila por pieza, con su desplegable de mueble y su cantidad. La fila en foco
+ * (borde del acento) es la que llenan los pasos de abajo. Los desplegables se rehacen enteros cada vez:
+ * así el que elige el cliente es siempre el que manda, sin estados a medias. */
+let repintarPiezasPendiente = false;
+function pintarPiezas(){
+  /* QUIEN ESCRIBE MANDA (dueño, 25/09): si el foco está en una fila —tecleando una medida—, la lista
+   * NO se vuelve a pintar: se anota y se pinta al salir del campo. Antes, cada tecla caía en un campo
+   * recién reemplazado y la cifra se perdía. */
+  const escribiendo = document.activeElement;
+  if (escribiendo && escribiendo.closest && escribiendo.closest('#piezasLista')) { repintarPiezasPendiente = true; return; }
+  const caja = document.getElementById('piezasLista'); if (!caja) return;
+  const catalogo = Store.activeFurniture();
+  const maxQ = Math.max(2, +Store.settings().maxQuantity || 5);
+  caja.innerHTML = state.piezas.map((p, i) => {
+    const rule = furnitureRules[p.furniture] || null;
+    /* La CANTIDAD se ve siempre (la fila declara lo suyo): sin mueble elegido van los números solos,
+     * porque todavía no se sabe si se cuentan sofás, poltronas o puestos. */
+    const cuantos = Array.from({ length: maxQ }, (_, k) => k + 1).map(n =>
+      `<option value="${n}"${Number(p.cantidad) === n ? ' selected' : ''}>${n === maxQ ? n + ' o más' : n}${rule ? ' ' + esc(laUnidadDeLaPieza(rule, p.furniture, n)) : ''}</option>`).join('');
+    const suyas = fotosDeLaPieza(p);
+    const mini = suyas.slice(0, 3).map(() => '').length;   // solo diseño: se ve cuántas van
+    const med = k => esc(String(p.medidas[k] || ''));
+    return `
+    <div class="pieza-fila${i === state.piezaEnFoco ? ' en-foco' : ''}" data-pieza="${i}">
+      <span class="pieza-num" aria-hidden="true">${i + 1}</span>
+      <label class="pieza-campo">
+        <span class="pieza-rotulo">Mueble</span>
+        <select class="pieza-mueble" data-mueble="${i}" aria-label="Mueble de la pieza ${i + 1}">
+          <option value="">Elige el mueble…</option>
+          ${catalogo.map(f => `<option value="${esc(f.name)}"${p.furniture === f.name ? ' selected' : ''}>${esc(f.name)}</option>`).join('')}
+        </select>
+      </label>
+      <label class="pieza-campo pieza-campo-cantidad">
+        <span class="pieza-rotulo">Cantidad</span>
+        <select class="pieza-cantidad" data-cantidad="${i}" aria-label="Cuántas piezas ${i + 1}">${cuantos}</select>
+      </label>
+      <label class="pieza-campo pieza-campo-cobertura">
+        <span class="pieza-rotulo">Tapizar</span>
+        <select class="pieza-cobertura" data-cobertura="${i}" aria-label="Qué se tapiza en la pieza ${i + 1}">
+          <option value="complete"${(p.medidas.cobertura || 'complete') === 'complete' ? ' selected' : ''}>Todo el mueble</option>
+          <option value="seats"${p.medidas.cobertura === 'seats' ? ' selected' : ''}>Solo asiento y respaldo</option>
+          <option value="partial"${p.medidas.cobertura === 'partial' ? ' selected' : ''}>Una parte específica</option>
+        </select>
+      </label>
+      <label class="pieza-campo"><span class="pieza-rotulo">Ancho</span><input type="number" min="20" max="1000" class="pieza-medida" data-medida="width" data-pieza-medida="${i}" inputmode="numeric" placeholder="cm" value="${med('width')}" aria-label="Ancho de la pieza ${i + 1}"></label>
+      <label class="pieza-campo"><span class="pieza-rotulo">Alto</span><input type="number" min="20" max="500" class="pieza-medida" data-medida="height" data-pieza-medida="${i}" inputmode="numeric" placeholder="cm" value="${med('height')}" aria-label="Alto de la pieza ${i + 1}"></label>
+      <label class="pieza-campo"><span class="pieza-rotulo">Largo</span><input type="number" min="10" max="500" class="pieza-medida" data-medida="depth" data-pieza-medida="${i}" inputmode="numeric" placeholder="cm" value="${med('depth')}" aria-label="Largo de la pieza ${i + 1}"></label>
+      <div class="pieza-campo pieza-fotos">
+        <span class="pieza-rotulo">Fotos</span>
+        <div class="pieza-foto-fila">
+          ${suyas.slice(0, 3).map(ph => `<span class="pieza-foto-mini" style="background-image:url(${ph.dataUrl})" role="img" aria-label="Foto de la pieza ${i + 1}"><button type="button" data-quitar-foto="${state.photos.indexOf(ph)}" aria-label="Quitar la foto">×</button></span>`).join('')}
+          <button type="button" class="pieza-foto-mas" data-foto-pieza="${i}" aria-label="Subir fotos de la pieza ${i + 1}">+</button>
+          <span class="pieza-foto-cuenta">${suyas.length}/2</span>
+        </div>
+      </div>
+      ${state.piezas.length > 1 ? `<button type="button" class="pieza-quita" data-quitar="${i}" aria-label="Quitar la pieza ${i + 1}">✕</button>` : '<span></span>'}
+    </div>`;
+  }).join('');
+}
+/* Llevar al DOM lo de la pieza en foco (medidas, cantidad, cojines, cobertura) y dejar el paso 1 en ella:
+ * el mueble elegido en la reja, la «Otro» descrita si la hay, y el rótulo del mueble de las medidas. */
+function enfocarPieza(i){
+  if (!state.piezas[i]) return;
+  state.piezaEnFoco = i;
+  const p = piezaEnFoco();
+  state.furniture = p.furniture; state.furnitureNote = p.furnitureNote || '';
+  ['width', 'height', 'depth'].forEach(campo => { const el = document.getElementById(campo); if (el) el.value = p.medidas[campo] || ''; });
+  const cobertura = document.getElementById('coverage'); if (cobertura) cobertura.value = p.medidas.cobertura || 'complete';
+  renderFurnitureOptions && renderFurnitureOptions();
+  renderQuantityOptions();                       // repone las opciones de la cantidad y su rótulo
+  const puestos = document.getElementById('seats'); if (puestos) puestos.value = laCantidadParaElMotor(p);
+  const cojines = document.getElementById('cushions'); if (cojines && p.medidas.cojines) cojines.value = String(p.medidas.cojines);
+  const otros = document.getElementById('furnitureOther'); if (otros) otros.value = p.furnitureNote || '';
+  const tipo = document.getElementById('furnitureType'); if (tipo) tipo.value = state.furniture || '';
+  syncOtherFurniture && syncOtherFurniture();
+  document.querySelectorAll('[data-furniture-label]').forEach(x => { x.textContent = String(state.furniture || '').toLowerCase(); });
+  pintarPiezas();
+  try { renderPhotos(); } catch (err) { /* sin fotos que pintar */ }
+  try { pintarMedidasPorPieza(); } catch (err) { /* sin fichas que pintar */ }
+  try { updateEstimate(); } catch (err) { /* la estimación se rehace al pasar */ }
+}
+function agregarPieza(){
+  const p = unaPiezaNueva('');
+  p.medidas = { width: '', height: '', depth: '', cojines: '', cobertura: 'complete' };
+  state.piezas.push(p);
+  pintarPiezas();
+  enfocarPieza(state.piezas.length - 1);
+  const fila = document.querySelector('.pieza-fila.en-foco'); if (fila) fila.scrollIntoView({ block: 'nearest' });
+  const desplegable = document.querySelector('.pieza-fila.en-foco .pieza-mueble');
+  if (desplegable) desplegable.focus();          // se sigue con el mueble de la pieza nueva
+  ACI.emit('FURNITURE_SELECTED', { furniture: '', furnitureId: null, pieza: state.piezaEnFoco });
+}
+function quitarPieza(i){
+  if (state.piezas.length <= 1) return;          // la cotización siempre tiene al menos una pieza
+  state.piezas.splice(i, 1);
+  enfocarPieza(Math.max(0, Math.min(state.piezaEnFoco > i ? state.piezaEnFoco - 1 : state.piezaEnFoco, state.piezas.length - 1)));
+}
+/* Lo que el cliente escriba en los controles de la pieza se guarda en ELLA (la pieza en foco). */
+function guardarLoDeLaPieza(){
+  const p = piezaEnFoco(); if (!p) return;
+  ['width', 'height', 'depth'].forEach(campo => { const el = document.getElementById(campo); if (el) p.medidas[campo] = el.value; });
+  const puestos = document.getElementById('seats'); if (puestos && puestos.value) { p.medidas.puestos = puestos.value; p.cantidad = Math.max(1, +puestos.value || 1); }
+  const cojines = document.getElementById('cushions'); if (cojines) p.medidas.cojines = cojines.value;
+  const cobertura = document.getElementById('coverage'); if (cobertura) p.medidas.cobertura = cobertura.value || 'complete';
+  const otros = document.getElementById('furnitureOther'); if (otros) p.furnitureNote = otros.value;
+  /* Los PUESTOS o módulos del mueble —donde el pack los pide— también son de la pieza: en los muebles que
+   * se cuentan por piezas, `#seats` es la cantidad de la fila y no se toca desde aquí. */
+  const regla = (p.furniture && furnitureRules[p.furniture]) || null;
+  const espejo = document.getElementById('seats');
+  if (espejo && regla && !regla.scaleByQty) p.medidas.puestos = espejo.value;
+  pintarPiezas();
+  pintarMedidasPorPieza();           // las fichas del paso de medidas: cuáles están y cuáles faltan
+}
+/* LAS MEDIDAS, PIEZA POR PIEZA: las fichas del paso de medidas. La que está EN FOCO es la que llenan los
+ * campos de abajo; las demás dicen si ya están (✓ medidas listas) o que faltan — así el cliente ve por
+ * dónde va cada pieza sin que se le escape ninguna (dueño, 25/09: medidas y fotos de CADA fila). */
+function pintarMedidasPorPieza(){
+  const caja=document.getElementById('medidasPiezas'); if(!caja) return;
+  const varias=(state.piezas||[]).length>1;
+  caja.hidden=!varias;
+  if(!varias){ caja.innerHTML=''; return; }
+  caja.innerHTML=state.piezas.map((p,i)=>{
+    const completa=!!(String(p.medidas.width||'').trim()&&String(p.medidas.height||'').trim()&&String(p.medidas.depth||'').trim());
+    const suyas=fotosDeLaPieza(p).length;
+    return `<button type="button" class="pieza-chip${i===state.piezaEnFoco?' en-foco':''}${completa?' lista':''}" data-chippieza="${i}" aria-pressed="${i===state.piezaEnFoco}">`+
+      `<b>${i+1}</b> ${esc(p.furniture||'sin elegir')} <span class="chip-estado">${completa?'✓ medidas':'faltan medidas'}${suyas?' · '+suyas+'/2 fotos':''}</span></button>`;
+  }).join('');
+}
 const steps=[...document.querySelectorAll('.wizard-step')];
 const nextButton=document.getElementById('nextButton');
 const backButton=document.getElementById('backButton');
@@ -1132,8 +1354,8 @@ const ACI=(()=>{
   }
 
   const CONTROLS={
-    'furniture.type':()=>document.querySelector('.furniture-card.selected')||document.querySelector('.furniture-card'),
-    'photos':()=>byId('selectPhoto'),
+    'furniture.type':()=>document.querySelector('.piezas-lista .pieza-fila.en-foco .pieza-mueble')||document.querySelector('.pieza-mueble'),
+    'photos':()=>document.querySelector('[data-foto-pieza]'),
     'measurements.width':()=>byId('width'),'measurements.height':()=>byId('height'),'measurements.depth':()=>byId('depth'),
     'measurements.quantity':()=>byId('seats'),'measurements.coverage':()=>byId('coverage'),
     'preferences.pets':petsBox,'preferences.style':()=>byId('style'),'preferences.color':()=>byId('color'),
@@ -1262,15 +1484,13 @@ function renderFurnitureOptions(){
     furnitureRules[f.name]={id:f.id,meters:f.meters,label:f.quantityLabel,unit:f.unit,scaleByQty:!!f.scaleByQty,widthScaled:!!f.widthScaled};
     measureRanges[f.name]=f.ranges;
   });
-  const grid=document.querySelector('.furniture-grid');
-  grid.innerHTML=list.map((f,i)=>`<button type="button" class="furniture-card${state.furniture===f.name?' selected':''}" data-furniture="${esc(f.name)}" role="radio" aria-checked="${state.furniture===f.name}" tabindex="${state.furniture===f.name||(!state.furniture&&i===0)?0:-1}"><span class="furniture-icon">${esc(f.icon||'▰')}</span><b>${esc(f.name)}</b><small>${esc(f.hint||'')}</small></button>`).join('');
-  furnitureCards=[...grid.querySelectorAll('.furniture-card')];
-  furnitureCards.forEach(card=>card.addEventListener('click',()=>selectFurniture(card)));
-  /* NADA viene marcado por defecto (dueño, 25/09: «no you need put without select default»): el que
-   * la parrilla traiga «Sofá» primero no es una respuesta del cliente. Si el estado trae un mueble
-   * que ya no existe en la lista, se limpia; nunca se inventa uno. */
+  furnitureCards=[];
+  /* NADA viene marcado por defecto (dueño, 25/09: «no you need put without select default»): que el
+   * catálogo traiga «Sofá» primero no es una respuesta del cliente. Si el estado trae un mueble que ya
+   * no existe en la lista, se limpia; nunca se inventa uno. */
   if(state.furniture&&!list.some(f=>f.name===state.furniture))state.furniture='';
   document.getElementById('furnitureType').value=state.furniture;
+  pintarPiezas();                                 // la lista del paso 1: una fila por pieza, con su desplegable
   syncOtherFurniture();
 }
 
@@ -1358,6 +1578,10 @@ function renderQuantityOptions(){
   // muebles el campo no aparece: pedir un dato que no se usa confunde, y una
   // nota explicándolo no lo arregla.
   document.getElementById('cushionsField').hidden=!Store.templateUses({id:rule.id},'cushions');
+  /* El número del paso de las medidas solo se pregunta donde es un DATO del mueble —los puestos del sofá,
+   * los módulos del seccional—: en los muebles que se cuentan por PIEZAS, esa cantidad vive en la fila del
+   * paso 1 y aquí no se pregunta dos veces. */
+  document.getElementById('quantityField').hidden=!!rule.scaleByQty;
   renderFurnitureDrawing(rule.id);
 }
 
@@ -1379,53 +1603,157 @@ document.getElementById('furnitureOther').addEventListener('input',e=>{
   if(state.furnitureNote)document.getElementById('furnitureOtherError').hidden=true;
 });
 
-function selectFurniture(card){
-  furnitureCards.forEach(c=>{const on=c===card;c.classList.toggle('selected',on);c.setAttribute('aria-checked',String(on));c.tabIndex=on?0:-1});
-  state.furniture=card.dataset.furniture;
+/* Las piezas: la lista del paso 1 (elegir la pieza en foco) y «Agregar otra pieza». */
+(function prepararLasPiezas(){
+  const caja = document.getElementById('piezasLista'), sumar = document.getElementById('agregarPieza');
+  if (sumar) sumar.addEventListener('click', () => agregarPieza());
+  if (caja) {
+    /* Elegir en un desplegable pone ESA fila en foco: es la pieza que llenan los pasos de abajo. */
+    caja.addEventListener('change', e => {
+      const mueble = e.target.closest('[data-mueble]'), cuantos = e.target.closest('[data-cantidad]');
+      if (mueble) {
+        state.piezaEnFoco = +mueble.dataset.mueble;
+        selectFurniture(mueble.value);
+        if (!mueble.value) ACI.emit('FURNITURE_SELECTED', { furniture: '', furnitureId: null, pieza: state.piezaEnFoco });
+        return;
+      }
+      if (cuantos) {
+        const i = +cuantos.dataset.cantidad; state.piezaEnFoco = i;
+        const p = state.piezas[i]; if (p) p.cantidad = Number(cuantos.value) || 1;
+        /* El motor lee `#seats`: la cifra de la fila baja al espejo —con el sentido de ese mueble— y la
+         * estimación se rehace. */
+        const espejo = document.getElementById('seats');
+        if (espejo) espejo.value = laCantidadParaElMotor(p);
+        pintarPiezas();
+        try { updateEstimate(); } catch (err) { /* la estimación se rehace al pasar */ }
+      }
+    });
+    /* Al salir del campo, lo que quedó pendiente se pinta de una vez. */
+    caja.addEventListener('focusout', e => {
+      if (!e.target.closest('[data-pieza-medida]')) return;
+      setTimeout(() => {
+        const quien = document.activeElement;
+        if (quien && quien.closest && quien.closest('#piezasLista')) return;   // sigue escribiendo en otra casilla
+        if (repintarPiezasPendiente) { repintarPiezasPendiente = false; pintarPiezas(); }
+      }, 0);
+    });
+    caja.addEventListener('click', e => {
+      const quitar = e.target.closest('[data-quitar]'); if (quitar) { quitarPieza(+quitar.dataset.quitar); return; }
+      const fila = e.target.closest('[data-pieza]');
+      if (fila && !e.target.closest('select')) enfocarPieza(+fila.dataset.pieza);
+    });
+  }
+  /* Las fichas del paso de medidas: tocar una pone ESA pieza en foco y los campos pasan a ser los suyos. */
+  const fichas = document.getElementById('medidasPiezas');
+  if (fichas) fichas.addEventListener('click', e => {
+    const b = e.target.closest('[data-chippieza]'); if (b) enfocarPieza(+b.dataset.chippieza);
+  });
+  /* LO DE CADA FILA (dueño, 25/09: mueble, cantidad, fotos y medidas en la misma línea):
+   *   · escribir una medida la guarda en ESA pieza y la baja al espejo que lee el motor;
+   *   · el «+» de la fila abre el selector de fotos para esa pieza;
+   *   · la miniatura se quita con su ✕. */
+  if (caja) {
+    caja.addEventListener('input', e => {
+      const campo = e.target.closest('[data-pieza-medida]'); if (!campo) return;
+      const i = +campo.dataset.piezaMedida, p = state.piezas[i]; if (!p) return;
+      p.medidas[campo.dataset.medida] = campo.value;
+      if (i === state.piezaEnFoco) {
+        const espejo = document.getElementById(campo.dataset.medida);
+        if (espejo) espejo.value = campo.value;
+      }
+      try { pintarMedidasPorPieza(); } catch (err) { /* sin fichas que refrescar */ }
+      try { updateEstimate(); } catch (err) { /* la estimación se rehace al pasar */ }
+    });
+    caja.addEventListener('change', e => {
+      const cob = e.target.closest('[data-cobertura]'); if (!cob) return;
+      const i = +cob.dataset.cobertura, p = state.piezas[i]; if (!p) return;
+      p.medidas.cobertura = cob.value;
+      if (i === state.piezaEnFoco) {
+        const espejo = document.getElementById('coverage'); if (espejo) espejo.value = cob.value;
+      }
+      try { updateEstimate(); } catch (err) { /* la estimación se rehace al pasar */ }
+    });
+    caja.addEventListener('click', e => {
+      const mas = e.target.closest('[data-foto-pieza]');
+      if (mas) {
+        const i = +mas.dataset.fotoPieza;
+        state.piezaEnFoco = i;                    // las fotos que entren son de ESA pieza
+        document.getElementById('furniturePhoto').click();
+        return;
+      }
+      const quitarFoto = e.target.closest('[data-quitar-foto]');
+      if (quitarFoto) {
+        state.photos.splice(+quitarFoto.dataset.quitarFoto, 1);
+        pintarPiezas();
+        ACI.emit('PHOTOS_CHANGED', { count: state.photos.length });
+      }
+    });
+  }
+  /* Lo que se escriba en los controles de la pieza se guarda en ELLA (la que tiene el foco). */
+  ['width','height','depth','cushions','coverage','furnitureOther'].forEach(id => {
+    const el = document.getElementById(id); if (!el) return;
+    el.addEventListener('input', guardarLoDeLaPieza);
+    el.addEventListener('change', guardarLoDeLaPieza);
+  });
+  pintarPiezas();
+})();
+
+/* ELEGIR EL MUEBLE DE LA PIEZA EN FOCO. Antes esto era la rejilla de tarjetas; el dueño lo pidió como
+ * lista con desplegable (25/09: «I prefer list and dropdown for each select... because the first part is
+ * waste space»). Escribe en la pieza, deja el espejo del estado, y repinta lo que depende del mueble
+ * (la cantidad y sus unidades, el campo de «Otro», el sendero). */
+function selectFurniture(nombre){
+  const p = typeof piezaEnFoco === 'function' ? piezaEnFoco() : null;
+  state.furniture = String(nombre || '');
+  if (p) p.furniture = state.furniture;
+  document.getElementById('furnitureType').value=state.furniture;
+  document.querySelectorAll('[data-furniture-label]').forEach(x=>x.textContent=String(state.furniture||'').toLowerCase());
+  renderQuantityOptions();                        // la cantidad y las unidades que ESTE mueble usa
+  /* El motor lee `#seats`: lo que manda es lo de la PIEZA en foco, con el sentido que ese mueble tenga. */
+  const espejoCantidad = document.getElementById('seats');
+  if (espejoCantidad && p) espejoCantidad.value = laCantidadParaElMotor(p);
+  syncOtherFurniture();
+  if (typeof pintarPiezas === 'function') pintarPiezas();
   /* El sendero lo refleja enseguida: el mueble ya no viene por defecto y su tramo espera esta
    * elección (dueño, 25/09). */
   if (typeof pintarElSendero === 'function') pintarElSendero();
-  document.getElementById('furnitureType').value=state.furniture;
-  document.querySelectorAll('[data-furniture-label]').forEach(x=>x.textContent=state.furniture.toLowerCase());
-  renderQuantityOptions();
-  syncOtherFurniture();
   ACI.emit('FURNITURE_SELECTED',{furniture:state.furniture,furnitureId:(furnitureRules[state.furniture]||{}).id||null});
 }
-// A radiogroup has to be navigable with the arrow keys, not just Tab.
-document.querySelector('.furniture-grid').addEventListener('keydown',e=>{
-  const dir={ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1}[e.key];if(!dir)return;
-  const i=furnitureCards.indexOf(document.activeElement);if(i<0)return;
-  e.preventDefault();
-  const next=furnitureCards[(i+dir+furnitureCards.length)%furnitureCards.length];
-  selectFurniture(next);next.focus();
-});
 
 function photoLimits(){
   const cfg=Store.settings();
-  return {min:Math.max(1,+cfg.minPhotos||3),max:Math.max(+cfg.minPhotos||3,+cfg.maxPhotos||7)};
+  /* 2 FOTOS DE CADA PIEZA (dueño, 25/09: «y minimo 2 fotos de cada uno»): el mínimo es el que pide el
+   * número de piezas —nunca menos que el de la configuración— y el máximo crece con ellas, para que la
+   * regla se pueda cumplir. Con una sola pieza todo queda como estaba. */
+  const piezas=Math.max(1,(state.piezas||[]).length);
+  const min=Math.max(+cfg.minPhotos||3,2*piezas);
+  const max=Math.max(min,+cfg.maxPhotos||7);
+  return {min,max};
+}
+
+/* Las fotos de UNA pieza. Todas viven en `state.photos` —la revisión, el registro y el backoffice siguen
+ * leyendo esa lista—, y cada foto dice de qué pieza es (`ph.pieza` = el id de la pieza cuando se subió).
+ * Van como FUNCIONES (no `const` flecha) porque la lista del paso 1 las usa al pintarse, antes de que
+ * este tramo del archivo se lea: con `const` se caía con «Cannot access before initialization». */
+function fotosDeLaPieza(p){ return (state.photos||[]).filter(ph => ph.pieza === p.id); }
+function lasPiezasSinSusFotos(){ return (state.piezas||[]).filter(p => p.furniture && fotosDeLaPieza(p).length < 2); }
+/* Cómo se llama una pieza en un aviso: «la poltrona (pieza 2)». */
+function etiquetaDeLaPieza(p){
+  const i = (state.piezas||[]).indexOf(p) + 1;
+  const nombre = String(p.furniture || 'pieza').toLowerCase();
+  return (state.piezas||[]).length > 1 ? `${nombre} (pieza ${i})` : `tu ${nombre}`;
 }
 
 function renderPhotos(){
   const {min,max}=photoLimits();
-  const strip=document.getElementById('photoStrip');
-  strip.innerHTML=state.photos.map((ph,i)=>
-    `<div class="photo-thumb" style="background-image:url(${ph.dataUrl})" role="img" aria-label="Foto ${i+1}">`+
-    `<button type="button" data-drop="${i}" aria-label="Quitar foto ${i+1}">×</button></div>`).join('')+
-    (state.photos.length?`<span class="photo-count">${state.photos.length} de ${max}</span>`:'');
-  uploadZone.classList.toggle('has-photo',state.photos.length>0);
-  document.getElementById('uploadHint').textContent=
-    state.photos.length>=min?`Puedes agregar hasta ${max} fotos.`
-                            :`Necesitamos entre ${min} y ${max} fotos: de frente, en diagonal y un detalle de la tela.`;
-  document.getElementById('selectPhoto').disabled=state.photos.length>=max;
+  /* Las fotos viven en la FILA de cada pieza (dueño, 25/09): aquí solo se refresca la lista y el aviso
+   * —el carrete y el botón de abajo se fueron con el bloque que sobraba. */
+  if (typeof pintarPiezas === 'function') { try { pintarPiezas(); } catch (err) { /* sin lista que pintar */ } }
+  if (typeof pintarMedidasPorPieza === 'function') { try { pintarMedidasPorPieza(); } catch (err) { /* sin fichas */ } }
   const mini=document.getElementById('summaryPhoto');
-  mini.style.backgroundImage=state.photos.length?`url(${state.photos[0].dataUrl})`:'';
+  if (mini) mini.style.backgroundImage=state.photos.length?`url(${state.photos[0].dataUrl})`:'';
   if(state.photos.length>=min)photoError.hidden=true;
 }
-document.getElementById('photoStrip').addEventListener('click',e=>{
-  const b=e.target.closest('[data-drop]');if(!b)return;
-  state.photos.splice(+b.dataset.drop,1);renderPhotos();
-  ACI.emit('PHOTOS_CHANGED',{count:state.photos.length});
-});
 
 function readImage(file){
   return new Promise(resolve=>{
@@ -1477,8 +1805,9 @@ async function loadPhotos(files){
     photoError.hidden=false;return;
   }
   const nuevas=(await Promise.all(imagenes.slice(0,hueco).map(readImage))).filter(Boolean);
-  /* La nitidez se mide UNA vez, al cargar: la revisión la lee sin volver a tocar la imagen. */
-  for(const ph of nuevas) ph.nitidez=await medirNitidez(ph.dataUrl);
+  /* La nitidez se mide UNA vez, al cargar: la revisión la lee sin volver a tocar la imagen. Y cada foto
+   * queda marcada con la PIEZA que se estaba llenando (dueño, 25/09: «y minimo 2 fotos de cada uno»). */
+  for(const ph of nuevas){ ph.pieza=piezaEnFoco?piezaEnFoco().id:null; ph.nitidez=await medirNitidez(ph.dataUrl); }
   state.photos=state.photos.concat(nuevas);
   if(imagenes.length>hueco){
     photoError.textContent=`Solo agregamos ${hueco} ${hueco===1?'foto':'fotos'}: el máximo es ${max}.`;
@@ -1486,7 +1815,8 @@ async function loadPhotos(files){
   }
   renderPhotos();
   ACI.emit('PHOTOS_CHANGED',{count:state.photos.length});
-}document.getElementById('selectPhoto').addEventListener('click',()=>photoInput.click());
+}/* El botón del bloque (solo en las líneas sin mueble) y el «+» de cada fila abren el mismo selector. */
+document.getElementById('selectPhoto').addEventListener('click',()=>photoInput.click());
 photoInput.addEventListener('change',()=>{loadPhotos(photoInput.files);photoInput.value=''});
 ['dragenter','dragover'].forEach(ev=>uploadZone.addEventListener(ev,e=>{e.preventDefault();uploadZone.classList.add('dragging')}));
 ['dragleave','drop'].forEach(ev=>uploadZone.addEventListener(ev,e=>{e.preventDefault();uploadZone.classList.remove('dragging');if(ev==='drop')loadPhotos(e.dataTransfer.files)}));
@@ -1546,6 +1876,19 @@ function validStep(){
     if(!state.service){
       decirError(serviceError,'Elige qué quieres hacer para continuar.',null);document.getElementById('serviceGrid').scrollIntoView({behavior:'smooth',block:'center'});return false}}
   if(state.step===1){
+    /* CADA FILA NECESITA SU MUEBLE: con varias piezas, la que esté sin elegir tiene su propio aviso y el
+     * foco se va a ella (dueño, 25/09: la cotización es una lista; ninguna fila se queda a medias). */
+    const sinMueble=(state.piezas||[]).find(p=>!p.furniture);
+    if(sinMueble){
+      const i=(state.piezas||[]).indexOf(sinMueble);
+      if(i>=0&&i!==state.piezaEnFoco&&typeof enfocarPieza==='function')enfocarPieza(i);
+      const err=document.getElementById('furnitureOtherError');
+      decirError(err,(state.piezas||[]).length>1?`Elige el mueble de la pieza ${i+1} para continuar.`:'Elige el mueble para continuar.',null);
+      const sel=document.querySelector('.piezas-lista .pieza-fila.en-foco .pieza-mueble');
+      if(sel)sel.focus({preventScroll:true});
+      err.scrollIntoView({behavior:'smooth',block:'center'});
+      return false;
+    }
     if(esMuebleOtro()&&!document.getElementById('furnitureOther').value.trim()){
       const err=document.getElementById('furnitureOtherError');
       decirError(err,'Cuéntanos cuál es el mueble para continuar: «Otro» no dice qué hay que tapizar.','furnitureOther');
@@ -1560,7 +1903,16 @@ function validStep(){
     const {min}=photoLimits();
     if(state.photos.length<min){
       const faltan=min-state.photos.length;
-      decirError(photoError,`Agrega ${faltan} ${faltan===1?'foto más':'fotos más'}: necesitamos al menos ${min}.`,'uploadZone');uploadZone.scrollIntoView({behavior:'smooth',block:'center'});return false}}
+      decirError(photoError,`Agrega ${faltan} ${faltan===1?'foto más':'fotos más'}: necesitamos al menos ${min}.`,'uploadZone');uploadZone.scrollIntoView({behavior:'smooth',block:'center'});return false}
+    /* Y CADA PIEZA con las suyas: mínimo 2 por pieza (dueño, 25/09: «y minimo 2 fotos de cada uno»). El
+     * aviso dice CUÁL falta y lleva el foco a esa pieza, que es la que está llenando el cliente. */
+    const sinFotos=lasPiezasSinSusFotos();
+    if(sinFotos.length){
+      const p=sinFotos[0], suyas=fotosDeLaPieza(p).length, faltan=2-suyas;
+      const i=(state.piezas||[]).indexOf(p);
+      if(i>=0&&i!==state.piezaEnFoco){ try{ enfocarPieza(i); }catch(err){ /* sin pieza que enfocar */ } }
+      decirError(photoError,`A ${etiquetaDeLaPieza(p)} le ${faltan===1?'falta 1 foto':'faltan '+faltan+' fotos'}: cada pieza lleva mínimo 2.`,'uploadZone');
+      uploadZone.scrollIntoView({behavior:'smooth',block:'center'});return false}}
   if(state.step===2){
     if(!damageIds().length){
       decirError(damageError,damageError.textContent,'damageGrid');document.getElementById('damageGrid').scrollIntoView({behavior:'smooth',block:'center'});return false}}
@@ -1616,6 +1968,16 @@ function validStep(){
     if(vacia){const err=document.getElementById('measureError');
       decirError(err,`Me falta el ${NOMBRE_MEDIDA[vacia.id]} del mueble: sin las tres medidas no puedo calcular la tela.`,vacia.id);
       vacia.focus({preventScroll:true});err.scrollIntoView({behavior:'smooth',block:'center'});return false}
+    /* CADA PIEZA CON SUS TRES MEDIDAS: con varias piezas no se pasa dejando una a medias (dueño, 25/09:
+     * «esas medidas dependen de esa cotizacion» — y cada pieza tiene las suyas). El aviso dice cuál falta
+     * y el foco se va a esa pieza, que es la que el cliente tiene que medir. */
+    const sinMedidas=(state.piezas||[]).find(p=>p.furniture&&!(String(p.medidas.width||'').trim()&&String(p.medidas.height||'').trim()&&String(p.medidas.depth||'').trim()));
+    if(sinMedidas){
+      const err=document.getElementById('measureError'), i=(state.piezas||[]).indexOf(sinMedidas);
+      if(i>=0&&i!==state.piezaEnFoco){ enfocarPieza(i); }
+      decirError(err,`Faltan las medidas de ${etiquetaDeLaPieza(sinMedidas)}: ancho, alto y fondo.`,null);
+      document.getElementById('width').focus({preventScroll:true});
+      err.scrollIntoView({behavior:'smooth',block:'center'});return false}
     const imposible=fields.find(x=>!x.checkValidity());
     if(imposible){const err=document.getElementById('measureError');
       decirError(err,`El ${NOMBRE_MEDIDA[imposible.id]} de ${imposible.value} cm no es una medida posible: va de ${imposible.min} a ${imposible.max} cm.`,imposible.id);
@@ -1719,15 +2081,30 @@ const pidePreferencias=()=>!skipsLine().includes('preferences');
 const pideRecomendacion=()=>!skipsLine().includes('recommendation');
 function declaredRows(){
   const rule=furnitureRules[state.furniture];
-  const qty=seatsSelect.options[seatsSelect.selectedIndex].text;
+  /* La etiqueta de la cantidad: con `#seats` vacío (sin mueble elegido no hay opciones) esto no puede
+   * caerse — la pieza en foco manda y, si no hay nada, no hay etiqueta. */
+  const qty=(seatsSelect.options[seatsSelect.selectedIndex]||{}).text||'';
   const w=document.getElementById('width').value,h=document.getElementById('height').value,d=document.getElementById('depth').value;
   const coverage={complete:'Todo el mueble',seats:'Solo asiento y respaldo',partial:'Una parte específica'}[document.getElementById('coverage').value]||'—';
   const needs=[...document.querySelectorAll('#needsGrid input:checked')].map(x=>x.value);
   /* Cada fila existe si el paso que la declara existe para esta línea: la arquitectónica no habla
    * de muebles, medidas ni preferencias, y su resumen no puede inventarlos. */
   const rows=[['Motivo',state.service?state.service.label:'Sin elegir']];
-  if(pideMueble())rows.push(['Mueble',!state.furniture?'Sin elegir':(!rule?state.furniture:(rule.scaleByQty&&seatsSelect.value==='1'?state.furniture:`${state.furniture} · ${qty}`))]);
-  if(pideMedidas()){
+  /* CON VARIAS PIEZAS el resumen va UNA FILA POR PIEZA —mueble, cuántas, sus medidas, qué se tapiza y sus
+   * fotos—, que es exactamente lo que el cliente llenó (docs/piezas-en-la-cotizacion.md). Con una sola se
+   * queda como siempre. */
+  const lasPiezas=(state.piezas||[]).filter(p=>p.furniture);
+  const varias=lasPiezas.length>1;
+  if(pideMueble()&&varias){
+    const COB={complete:'todo el mueble',seats:'solo asiento y respaldo',partial:'una parte específica'};
+    lasPiezas.forEach((p,i)=>{
+      const mm=p.medidas, medidas=(mm.width&&mm.height&&mm.depth)?`${mm.width} × ${mm.height} × ${mm.depth} cm`:'sin medidas';
+      const suyas=fotosDeLaPieza(p).length;
+      rows.push([`Pieza ${i+1}`,`${p.furniture}${Number(p.cantidad)>1?` × ${p.cantidad}`:''} · ${medidas} · ${COB[mm.cobertura||'complete']} · ${suyas} foto${suyas===1?'':'s'}`]);
+    });
+  }
+  if(pideMueble()&&!varias)rows.push(['Mueble',!state.furniture?'Sin elegir':(!rule?state.furniture:(rule.scaleByQty&&seatsSelect.value==='1'?state.furniture:`${state.furniture} · ${qty}`))]);
+  if(pideMedidas()&&!varias){
     rows.push(['Medidas',w&&h&&d?`${w} × ${h} × ${d} cm (ancho × alto × fondo)`:'Sin registrar']);
     rows.push(['Qué se tapiza',coverage]);
   }
@@ -2106,6 +2483,16 @@ function wizardInputs(){
  * la tela elegida; los demás siguen con el rango base del backoffice. Así se
  * migran de a uno y ninguno se queda sin cotizar mientras tanto. */
 function consumo(){
+  /* Con piezas declaradas, el consumo es la SUMA de todas (sus medidas, su cantidad, su cobertura). */
+  const suma=laCuentaPorPieza();
+  if(suma){
+    const p0=(state.piezas||[]).filter(p=>p.furniture)[0];
+    const c0=p0?consumoDeLaPieza(p0,true):null;
+    return {range:[Math.max(1,Math.round(suma.metros[0])),Math.max(2,Math.ceil(suma.metros[1]))],
+            modelo:suma.modelo,tecnico:c0?c0.tecnico:null,rollWidthCm:c0?c0.rollWidthCm:null,
+            piezas:suma.partesPieza.length,
+            cutDirection:c0?c0.cutDirection:'unknown',patternMatch:c0?c0.patternMatch:'confirm'};
+  }
   const rec=Store.furnitureByName(state.furniture);
   const reglas=state.fabric?Store.fabricRules(state.fabric):null;
   const comp=Store.estimateByComponents(rec,wizardInputs(),state.fabric);
@@ -2120,12 +2507,14 @@ function consumo(){
           patternMatch:reglas?reglas.patternMatch:'confirm'};
 }
 function estimate(){return consumo().range}
-function estimateBaseline(){
-  /* Sin mueble elegido no hay estimación: la parrilla arranca sin ninguno marcado (dueño, 25/09:
-   * «no you need put without select default»), y pedir metros a la nada reventaba la página. */
-  const rule=furnitureRules[state.furniture];if(!rule)return [0,0];let min=rule.meters[0],max=rule.meters[1];const width=+document.getElementById('width').value||200;const coverage=document.getElementById('coverage').value;
+function estimateBaselineDe(nombre, inputs){
+  /* Sin mueble elegido no hay estimación: la lista arranca vacía (dueño, 25/09: «no you need put
+   * without select default»), y pedir metros a la nada reventaba la página. */
+  const rule=furnitureRules[nombre];if(!rule)return [0,0];
+  let min=rule.meters[0],max=rule.meters[1];
+  const width=+(inputs&&inputs.width)||200, coverage=(inputs&&inputs.coverage)||'complete';
   if(rule.widthScaled){const factor=Math.max(.75,Math.min(1.4,width/210));min*=factor;max*=factor}
-  if(rule.scaleByQty){const qty=+seatsSelect.value||1;min*=qty;max*=qty}
+  if(rule.scaleByQty){const qty=Math.max(1,+(inputs&&inputs.seats)||1);min*=qty;max*=qty}
   const s=Store.settings();
   const cov=coverage==='seats'?s.coverageSeats:coverage==='partial'?s.coveragePartial:null;
   if(cov){min*=(+cov[0]||100)/100;max*=(+cov[1]||100)/100}
@@ -2133,6 +2522,93 @@ function estimateBaseline(){
   const uplift=(1+(+s.wastePct||0)/100)*(1+(+s.marginPct||0)/100);
   min*=uplift;max*=uplift;
   return [Math.max(1,Math.round(min)),Math.max(2,Math.ceil(max))];
+}
+function estimateBaseline(){return estimateBaselineDe(state.furniture, wizardInputs())}
+
+/* ── LA COTIZACIÓN ES DE VARIAS PIEZAS (docs/piezas-en-la-cotizacion.md) ──────────────────────────
+ * Cada fila del paso del mueble es UNA pieza con lo suyo: su mueble, su cantidad, sus medidas, su
+ * cobertura y sus fotos. El consumo y la mano de obra se calculan POR PIEZA y se suman — una pieza de
+ * más es una pieza que se paga (dueño, 25/09: «un juego de sala... o 2 poltronas... el sistema no esta
+ * para eso y es importante»). */
+function inputsDeLaPieza(p, unaPieza){
+  const rule=furnitureRules[p.furniture]||null;
+  return {width:+p.medidas.width||0, height:+p.medidas.height||0, depth:+p.medidas.depth||0,
+          /* La cantidad de PIEZAS multiplica aparte (abajo): aquí va la de UNA pieza, o los puestos en
+           * los muebles que se cuentan por puestos y no por piezas (el sofá). */
+          seats:(rule&&rule.scaleByQty)?(unaPieza?1:Math.max(1,+p.cantidad||1)):Math.max(1,+(p.medidas.puestos||3)),
+          cushions:+(p.medidas.cojines||0)||0,
+          coverage:p.medidas.cobertura||'complete'};
+}
+/* La mano de obra POR MUEBLE que declara la línea (el mismo reparto que hace el motor: el id del
+ * catálogo, y `otro` cuando no está en la tabla). */
+function baseObraDelMueble(nombre){
+  const id=(Store.furnitureByName(nombre)||{}).id;
+  const tabla=((state.service||{}).labor||{}).porMueble||{};
+  return Math.max(0, +((id!=null&&tabla[id]!==undefined)?tabla[id]:tabla.otro)||0);
+}
+/* La misma cuenta que `consumo()`, para una pieza de esa fila. */
+function consumoDeLaPieza(p, unaPieza){
+  const rec=Store.furnitureByName(p.furniture);
+  const reglas=state.fabric?Store.fabricRules(state.fabric):null;
+  const comp=Store.estimateByComponents(rec, inputsDeLaPieza(p, unaPieza), state.fabric);
+  if(comp)return {range:comp.range,modelo:'componentes',tecnico:comp.tecnico,
+                  rollWidthCm:comp.rollWidthCm,piezas:comp.despiece.length,
+                  cutDirection:comp.cutDirection,patternMatch:comp.patternMatch};
+  return {range:estimateBaselineDe(p.furniture, inputsDeLaPieza(p, unaPieza)),modelo:'heuristica',tecnico:null,
+          rollWidthCm:null,piezas:0,
+          cutDirection:reglas?reglas.cutDirection:'unknown',
+          patternMatch:reglas?reglas.patternMatch:'confirm'};
+}
+/* Lo que aporta UNA fila: el consumo de una pieza × sus piezas, y su mano de obra con la tabla del oficio. */
+function laCuentaDeLaPieza(p){
+  const veces=Math.max(1,+p.cantidad||1);
+  const c=consumoDeLaPieza(p, true);
+  const metros=[Math.max(0,+c.range[0]||0)*veces, Math.max(0,+c.range[1]||0)*veces];
+  const precio=state.fabric?(+state.fabric.price||0):0;
+  const cu=Store.lineQuote(state.service,{
+    furnitureId:(Store.furnitureByName(p.furniture)||{}).id,
+    furnitureName:p.furniture,
+    quantity:veces,
+    materialRange:[metros[0]*precio,metros[1]*precio],
+    meters:metros,
+    insumos:[],damages:[],
+    fabricPerM2:state.fabric&&state.fabric.rollWidthCm?state.fabric.price/(state.fabric.rollWidthCm/100):0,
+    answers:allAnswers(),boq:[]
+  });
+  /* El motor reparte en PARTES («Material», «Mano de obra (…)»): de ahí se leen los dos números que la
+   * suma necesita — la cuenta por pieza no inventa un reparto propio, usa el del oficio. */
+  const deLaParte=re=>((cu.parts||[]).find(x=>re.test(x.label))||{value:[0,0]}).value;
+  const material=deLaParte(/^Material/);
+  /* LA MANO DE OBRA DE LA TABLA ES POR MUEBLE: cada pieza de la fila paga la suya. El motor ya cobró el
+   * tramo por metro con los metros de las N piezas, así que aquí se suman las bases que faltan (N-1). */
+  const base=baseObraDelMueble(p.furniture);
+  const unaVez=veces>1?base*(veces-1):0;
+  const labor=deLaParte(/^Mano de obra/).map(x=>x+unaVez);
+  const total=[cu.total[0]+unaVez,cu.total[1]+unaVez];
+  return {veces,consumo:c,metros,material,labor,total};
+}
+/* La suma de las piezas, más lo que se cobra UNA vez (insumos del taller y daños marcados). */
+function laCuentaPorPieza(){
+  const piezas=(state.piezas||[]).filter(p=>p.furniture);
+  if(!piezas.length)return null;
+  let material=[0,0],labor=[0,0],total=[0,0],metros=[0,0];
+  const partesPieza=[],modelos=[];
+  piezas.forEach(p=>{
+    const c=laCuentaDeLaPieza(p);
+    modelos.push(c.consumo.modelo);
+    material=[material[0]+c.material[0],material[1]+c.material[1]];
+    labor=[labor[0]+c.labor[0],labor[1]+c.labor[1]];
+    total=[total[0]+c.total[0],total[1]+c.total[1]];
+    metros=[metros[0]+c.metros[0],metros[1]+c.metros[1]];
+    partesPieza.push({label:p.furniture+(c.veces>1?' × '+c.veces:''),value:[Math.round(c.total[0]),Math.round(c.total[1])],pieza:p,cuenta:c});
+  });
+  const insumos=insumosMarcados()||[];
+  const insumosSum=insumos.reduce((s,x)=>s+Math.max(0,+x.qty||0)*Math.max(0,+x.cop||0),0);
+  const daños=(Store.damageItems()||[]).filter(d=>damageIds().indexOf(d.id)>=0).reduce((s,d)=>s+Math.max(0,+d.cop||0),0);
+  const extras=Math.round(insumosSum+daños);
+  return {material,labor,metros,partesPieza,insumos,insumosSum,daños,extras,
+          total:[total[0]+extras,total[1]+extras],
+          modelo:modelos.every(m=>m===modelos[0])?modelos[0]:'mixto'};
 }
 /* ---- La recomendación de telas, con la IA local por delante ----
  * El dueño: «the AI should recommend fabric.. according and base on previous information of client».
@@ -2377,6 +2853,16 @@ function linePrice(q){
                  total:[total,total]};
     return {...quote,partTexts:quote.parts.map(p=>({label:p.label,text:rango(p.value)})),totalText:rango(quote.total)};
   }
+  /* LA CUENTA POR PIEZA: cada fila paga lo suyo y el total es la suma (docs/piezas-en-la-cotizacion.md). */
+  const suma=laCuentaPorPieza();
+  if(suma){
+    const quote={kind:'tela',parts:[],pieces:suma.partesPieza,total:suma.total};
+    quote.parts.push({label:'Material',value:suma.material});
+    if(suma.labor[0]||suma.labor[1])quote.parts.push({label:'Mano de obra',value:suma.labor});
+    if(suma.insumosSum>0)quote.parts.push({label:'Insumos',value:[Math.round(suma.insumosSum),Math.round(suma.insumosSum)]});
+    if(suma.daños>0)quote.parts.push({label:'Reparaciones',value:[suma.daños,suma.daños]});
+    return {...quote,partTexts:quote.parts.map(p=>({label:p.label,text:rango(p.value)})),totalText:rango(quote.total)};
+  }
   const base=state.fabric?[q.facMin*state.fabric.price,q.facMax*state.fabric.price]:[0,0];
   const answers=allAnswers();
   const quote=Store.lineQuote(state.service,{
@@ -2573,7 +3059,7 @@ function updateEstimate(){
   }
 }
 function furnitureSummaryLabel(){
-  const rule=furnitureRules[state.furniture];const qtyText=seatsSelect.options[seatsSelect.selectedIndex].text;
+  const rule=furnitureRules[state.furniture];const qtyText=(seatsSelect.options[seatsSelect.selectedIndex]||{}).text||'';
   /* Sin mueble elegido (la parrilla ya no marca ninguno por defecto) no hay etiqueta que armar. */
   if(!rule)return state.furniture||'—';
   // "Poltrona · 1 poltrona" reads badly; a single piece needs no count.
@@ -2600,6 +3086,9 @@ function updateSummary(){
 }
 async function submitQuote(){
   const q=billable(),min=q.min,max=q.max;
+  /* Antes de numerar: se trae la base del servidor, para no repetir el número de una solicitud que ya
+   * existe en el backoffice (dos navegadores numerando a la vez daban dos COT-1043 distintos). */
+  try { if (Store.syncQuotes) await Store.syncQuotes(); } catch (err) { /* sin base */ }
   const id=Store.nextQuoteId();
   const settings=Store.settings();
   const citySelect=document.getElementById('city');
@@ -2638,6 +3127,15 @@ async function submitQuote(){
    * segundo cálculo paralelo. */
   const mostrado=linePrice(q);
   const entradas=estimateInputs(q);
+  /* Las PIEZAS con las que se hizo la cuenta (docs/piezas-en-la-cotizacion.md): con la cotización de
+   * varias, la estimación no se puede auditar con una sola terna — van todas, con su cobertura. */
+  const piezasDeLaCuenta=(state.piezas||[]).filter(p=>p.furniture).map(p=>({
+    furniture:p.furniture,
+    quantity:Math.max(1,+p.cantidad||1),
+    measures:{width:+p.medidas.width||null,height:+p.medidas.height||null,depth:+p.medidas.depth||null},
+    coverage:p.medidas.cobertura||'complete'
+  }));
+  if(piezasDeLaCuenta.length>1)entradas.piezas=piezasDeLaCuenta;
   /* La lista viaja a la solicitud tal como se declaró: cada referencia con sus metros. */
   if(q.lista)entradas.lista=q.lista.map(f=>({fabricId:f.fabricId,declarado:f.declarado,
                                             facturable:f.facturable,price:f.price}));
@@ -2665,8 +3163,23 @@ async function submitQuote(){
               email:document.getElementById('email').value.trim(),
               phone:document.getElementById('phone').value.trim()},
     furniture:state.furniture,
+    /* LA LISTA DE PIEZAS (docs/piezas-en-la-cotizacion.md): la cotización es de una o varias, y cada una
+     * viaja con lo suyo — mueble, cantidad, medidas, cobertura y fotos— y con su valor, que es lo que el
+     * cliente vio. El bloque de arriba (`furniture`/`measures`/`quantity`) queda como resumen de la pieza
+     * en foco, para todo lo que ya lo leía: el registro no se rompe, se completa. */
+    pieces:(state.piezas||[]).filter(p=>p.furniture).map(p=>{
+      const c=laCuentaDeLaPieza(p);
+      return {furniture:p.furniture,note:p.furnitureNote||null,
+              quantity:Math.max(1,+p.cantidad||1),
+              measures:{width:+p.medidas.width||null,height:+p.medidas.height||null,depth:+p.medidas.depth||null},
+              coverage:p.medidas.cobertura||'complete',
+              cushions:+(p.medidas.cojines||0)||null,
+              photos:fotosDeLaPieza(p).length,
+              meters:[Math.round(c.metros[0]*10)/10,Math.round(c.metros[1]*10)/10],
+              value:[Math.round(c.total[0]),Math.round(c.total[1])]};
+    }),
     service:state.service?{id:state.service.id,label:state.service.label,journey:state.service.journey}:null,
-    quantityLabel:(furnitureRules[state.furniture]||{}).scaleByQty&&seatsSelect.value==='1'?'':seatsSelect.options[seatsSelect.selectedIndex].text,
+    quantityLabel:(furnitureRules[state.furniture]||{}).scaleByQty&&seatsSelect.value==='1'?'':((seatsSelect.options[seatsSelect.selectedIndex]||{}).text||''),
     measures:{width:+document.getElementById('width').value||null,
               height:+document.getElementById('height').value||null,
               depth:+document.getElementById('depth').value||null},
@@ -2717,6 +3230,22 @@ async function submitQuote(){
     alert('No pudimos guardar tu solicitud en este navegador ('+err.message+'). Intenta de nuevo.');
     return;
   }
+
+  /* LA SOLICITUD VIAJA A LA BASE CON SUS FOTOS. La copia del navegador lleva solo los ids (las
+   * imágenes pesan y viven en IndexedDB), así que las fotos van aquí, una vez, al enviar: en la base
+   * quedan como archivo con su fila y el backoffice las ve desde CUALQUIER navegador. Sin base delante
+   * esto no hace nada: la solicitud ya quedó guardada arriba. */
+  try{
+    const fotosParaLaBase=(state.photos||[]).map(ph=>({
+      /* `ph.pieza` guarda el ID de la pieza cuando se subió; la base numera las piezas por POSICIÓN
+       * (1..n), así que aquí se traduce: id de la pieza → puesto en la lista. Sin pieza (las líneas que
+       * no usan la lista) va nulo. */
+      pieza:(()=>{const id=ph.pieza;if(id===null||id===undefined||id==='')return null;const i=(state.piezas||[]).findIndex(x=>x.id===id);return i>=0?i:null;})(),
+      dataUrl:ph.dataUrl,width:ph.width,height:ph.height,bytes:ph.bytes
+    }));
+    if(Store.publicarCotizacion&&fotosParaLaBase.length)Store.publicarCotizacion(Object.assign({},quote,{photos:fotosParaLaBase}));
+  }catch(err){/* la base es un extra: si falla, la solicitud ya está guardada */}
+
 
   document.getElementById('wizardActions').hidden=true;syncActionsHeight();
   steps.forEach(s=>s.classList.remove('active'));
@@ -3112,11 +3641,33 @@ const PREGUNTA_VOZ = {
 };
 const PASO_DE = { linea: 0, mueble: 1, fotos: 1, danos: 2, medidas: 9, revision: 13, lista: 20, pedido: 21, atencion: 15, contacto: 15, ruta: 18, proposito: 22, saber: 23 };
 
+/* ── LA MEMORIA PRESENTE ─────────────────────────────────────────────────────────────────────
+ * Dueño, 25/09: «el problema es que no tiene memoria presente» · «si local storage» · «pero cuando
+ * recargue sí debe resetearse». Lo que se va diciendo en esta conversación se guarda en `localStorage`
+ * en cada mensaje —así no se pierde mientras el cliente habla: un re-render de la capa, una llamada
+ * que se cae, el propio turno que se está armando—, y **al cargar la página se borra**: recargar
+ * empieza limpio, que es la regla de la casa (el cliente puede querer otra precotización por otro
+ * motivo). Es la memoria de AHORA, no la del navegador. */
+const laClaveDeLaMemoria = () => { try { return (Store.ns ? Store.ns() : '') + 'memoria-presente'; } catch (err) { return 'memoria-presente'; } };
+function guardarLaMemoriaPresente(){
+  try { localStorage.setItem(laClaveDeLaMemoria(), JSON.stringify({ cuando: Date.now(), mensajes: voz.mensajes || [] })); }
+  catch (err) { /* sin almacén se sigue: la conversación vive en la página */ }
+}
+function leerLaMemoriaPresente(){
+  try { const d = JSON.parse(localStorage.getItem(laClaveDeLaMemoria()) || 'null');
+    return d && Array.isArray(d.mensajes) ? d.mensajes : null; }
+  catch (err) { return null; }
+}
+function olvidarLaMemoriaPresente(){ try { localStorage.removeItem(laClaveDeLaMemoria()); } catch (err) {} }
+/* Se borra AL CARGAR, antes de que nadie diga nada. */
+olvidarLaMemoriaPresente();
+
 function decirEnLaConversacion(texto, quien = 'bot', callar = false){
   const caja = document.getElementById('vozMessages'); if (!caja) return;
   const m = document.createElement('div'); m.className = 'message ' + quien;
   m.textContent = texto; caja.appendChild(m);
   voz.mensajes.push({ quien, texto });
+  guardarLaMemoriaPresente();      // la memoria presente se escribe con cada mensaje
   caja.scrollTop = caja.scrollHeight;
   /* Ella lo dice también en voz alta (si hay voces en el sistema y no la silenciaron). `callar` es
    * para los recibos del sistema («Anotado: …»): se leen en la conversación, no se hablan — hablar
@@ -3156,6 +3707,8 @@ function olvidarElCaso(){
   state.fabric = null;
   state.analyzed = false;
   try { voz.mensajes = []; const log = document.getElementById('vozMessages'); if (log) log.innerHTML = ''; } catch (err) { /* la capa puede no existir */ }
+  /* Y la memoria presente queda en blanco con el caso: lo de una pre-cotización no viaja a la otra. */
+  try { guardarLaMemoriaPresente(); } catch (err) { /* sin almacén se sigue */ }
   try { renderPhotos(); } catch (err) { /* sin fotos que pintar */ }
   try { updateEstimate(); } catch (err) { /* la estimación se rehace al pasar */ }
 }
@@ -3188,6 +3741,20 @@ function elegirTarjeta(selector, texto, etiqueta){
   mejor.carta.click();
   return textoVoz(mejor.carta.querySelector('b')) || etiqueta;
 }
+/* EL MUEBLE, BUSCADO EN EL CATÁLOGO DEL PACK. La lista del paso 1 ya no tiene tarjetas (dueño, 25/09:
+ * «I prefer list and dropdown»), así que la conversación elige por los NOMBRES del catálogo, con la misma
+ * raíz de cuatro letras: «un cabecero» encuentra «Cabecero». Devuelve el nombre elegido —ya escrito en la
+ * pieza en foco— o null si ninguno se parece. */
+function elegirMuebleDelCatalogo(texto){
+  const palabras = s => normalizar(s).split(/[^a-z0-9]+/).filter(w => w.length >= 4).map(w => w.slice(0, 4));
+  const dichas = palabras(texto);
+  if (!dichas.length) return null;
+  const puntos = n => palabras(n).filter(w => dichas.includes(w)).length;
+  const mejor = Object.keys(furnitureRules).map(n => ({ n, p: puntos(n) })).sort((a, b) => b.p - a.p)[0];
+  if (!mejor || !mejor.p) return null;
+  selectFurniture(mejor.n);
+  return mejor.n;
+}
 /* Los selects de ciudad: se elige por el texto de sus opciones, con la misma raíz de cuatro letras
  * (la opción dice «Bogotá · Principal» y el cliente dice «estoy en Bogotá»: gana la ciudad que
  * aparece en sus palabras). */
@@ -3202,10 +3769,14 @@ function elegirCiudad(id, texto){
   const mejor = opciones.map(o => ({ o, puntos: puntuar(o) })).sort((a, b) => b.puntos - a.puntos)[0];
   if (!mejor || !mejor.puntos) {
     /* Una ciudad que no está en la lista no se pierde ni se cambia por la de arriba: entra por «Otra
-     * ciudad…» con su nombre escrito — el campo que ya existe para eso. Solo con un nombre propio
-     * (mayúscula inicial en lo que dijo): «no sé» no inventa una ciudad. */
+     * ciudad…» con su nombre escrito — el campo que ya existe para eso. Pero SOLO si la frase la
+     * presenta como ciudad (detrás de una pista: «en», «para», «vivo en», «la ciudad es»…): con la
+     * regla vieja bastaba UNA palabra con mayúscula, y «Claro que sí Dame un momento y ya subo las
+     * fotos» escribía «Claro» como ciudad del cliente — y «Aunque» en la del servicio— sin que el
+     * cliente hubiera nombrado ninguna ciudad (medido, 25/09; el recibo lo delataba: «Anotado: Claro.»). */
     const otras = opciones.filter(o => /otra/i.test(textoDe(o)))[0];
-    const palabra = (String(texto).match(/\b[A-ZÁÉÍÓÚÑ][a-záéíóúñü]{2,}/) || [])[0];
+    const pista = String(texto).match(/\b(?:en|para|desde|hacia|es|ciudad(?: de)?|vivo en|vive en|estoy en|está en|atiende en|atienden en)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñü]{2,})/);
+    const palabra = pista && pista[1];
     if (otras && palabra) {
       sel.value = otras.value; sel.dispatchEvent(new Event('change', { bubbles: true }));
       const caja = document.getElementById(id === 'customerCity' ? 'customerCityOther' : 'serviceCityOther');
@@ -3272,12 +3843,14 @@ async function aplicarLoDicho(id, texto){
       return dicho ? { ok: true, dicho } : { ok: false, motivo: 'no reconocí esa respuesta', paso: 23 };
     }
     case 'mueble': {
-      let dicho = elegirTarjeta('.furniture-card', texto);
-      /* «Otro» solo si DE VERDAD no hay tarjeta: si el valor propuesto es «Otro» pero las palabras
-       * del cliente nombran una del catálogo («es un cabecero»), la tarjeta manda (dueño, 25/09:
-       * «Cabecero» terminó como «Otro» con la descripción). */
+      /* La lista del paso 1 tiene un desplegable por pieza: el mueble se elige en el CATÁLOGO del pack
+       * (ya no hay tarjetas: dueño, 25/09) y queda elegido el de la pieza en foco. */
+      let dicho = elegirMuebleDelCatalogo(texto);
+      /* «Otro» solo si DE VERDAD no hay mueble del catálogo: si el valor propuesto es «Otro» pero las
+       * palabras del cliente nombran uno del catálogo («es un cabecero»), el catálogo manda (dueño,
+       * 25/09: «Cabecero» terminó como «Otro» con la descripción). */
       if (dicho && normalizar(dicho) === 'otro' && voz.ultimoDicho) {
-        const porVoz = elegirTarjeta('.furniture-card', voz.ultimoDicho);
+        const porVoz = elegirMuebleDelCatalogo(voz.ultimoDicho);
         if (porVoz && normalizar(porVoz) !== 'otro') { voz.muebleDicho = true; return { ok: true, dicho: porVoz }; }
       }
       if (!dicho) return { ok: false, motivo: 'ese mueble no está en el catálogo', paso: 1 };
@@ -3651,7 +4224,7 @@ function losValoresLegalesDe(id){
     case 'ruta': return rotulos('#routeGrid .service-choice');
     case 'proposito': return rotulos('#purposeGrid .service-choice');
     case 'saber': return rotulos('#saberGrid .service-choice');
-    case 'mueble': return rotulos('[data-furniture]');
+    case 'mueble': return Object.keys(furnitureRules);
     case 'danos': return rotulos('#damageGrid .service-choice, #damageGrid button, #damageGrid label');
     case 'lista': return telasActivas().map(f => `${f.name} · ${f.colorName}`)
       .concat(['la cantidad en metros —o en rollos si la tela se vende por rollo—']);
@@ -3671,7 +4244,7 @@ function promptDeLaConversacion(mundo){
     'Ahora estás llenando la pre-cotización conversando, en voz alta con el cliente: hablas corto (una o dos frases), natural, como una persona del taller — no como un formulario.',
     'REGLA DE ORO: TODO se hace AQUÍ, en esta conversación. JAMÁS mandes al cliente al formulario ni le digas que toque opciones, pasos, ni zonas del cotizador: los pasos detrás son un espejo, y lo que él te declare aquí aparece allá solo. Si te falta la línea de servicio, OFRÉCELE TÚ las opciones aquí mismo (por ejemplo: «¿quieres retapizarlo, cambiarle la tela, o un mantenimiento?») y anótala con el id cuando responda — si dice el nombre, ya sabes cuál es. Si te dice que no entiende, explícale con un ejemplo cotidiano, aquí, sin señalarle ningún paso.',
     'EL MUEBLE YA VIENE ELEGIDO en la parrilla del formulario (Sofá, por defecto): NO le preguntes al cliente qué mueble es ni se lo pidas — sería un hueco falso (dueño, 25/09: «sofa always is default.. but don ask about the furniture»). Solo si él dice que es otro mueble, anótalo («mueble» con el id del catálogo; «muebleOtro» con su descripción si de verdad no está).',
-    'PREGUNTA SOLO POR EL PRIMERO de esa lista de abajo, y por nada más: ni el mueble, ni la ciudad, ni datos de otros campos que aún estén pendientes. El ORDEN del contrato manda, aunque el paso del formulario que se vea atrás muestre otra cosa (dueño, 25/09: «dont ask according the step»). NUNCA cierres un turno sin preguntar por ese primero.',
+    'PREGUNTA SOLO POR EL PRIMERO de esa lista de abajo, y por nada más: ni el mueble, ni la ciudad, ni datos de otros campos que aún estén pendientes. El ORDEN del contrato manda, aunque el paso del formulario que se vea atrás muestre otra cosa (dueño, 25/09: «dont ask according the step»). NUNCA cierres un turno sin preguntar por ese primero — SALVO cuando el cliente pida tiempo («dame un momento», «ya te digo», «espérame»), agradezca o charle: en esos turnos contéstale eso, corto y con calma, y NO le repitas la pregunta; ya se la harás cuando vuelva (dueño, 25/09: «assistant should interact… not robot»).',
     'LAS LÍNEAS DE SERVICIO DE ESTE CLIENTE son las de su plan (las de abajo). Si pide algo que ENCAJA en una de ellas, esa es su línea: NUNCA le digas que eso no se hace aquí si la lista la tiene. Entiende por SIGNIFICADO, no por el nombre: si describe lo que la línea HACE, esa es la línea (comprar telas, una tela, cuántos metros → la línea de tela; cambiar la tela, forrar, tapizar → la de tapizado; fabricar, hacerlo a la medida → la de a medida; limpieza, proteger, reparar → mantenimiento). Anótala con el id.\n'
       + (lasLineasDelCliente().map(l => '- ' + l.rotulo + (l.id ? ' («' + l.id + '»)' : '') + (l.detalle ? ': ' + l.detalle : '')).join('\n') || '- (ninguna a la vista)'),
     'Lo único que te falta de la pre-cotización:',
@@ -3693,7 +4266,7 @@ function promptDeLaConversacion(mundo){
     'FOTOS: se suben en la ZONA DE FOTOS que está en este mismo recuadro, debajo de vuestra conversación (no en otro paso, no por el chat): cuando falten, pídeselas ahí y dile que puede subirlas en esa zona. En el estado ves cuántas lleva.',
     'AQUÍ SÍ PUEDES (el cotizador ya lo calculó, tú lo dices, nunca lo inventas): la RECOMENDACIÓN de tela — la que el cotizador marcó como la mejor para su mueble, con su razón — y lo que la REVISIÓN de las fotos vio (dilo tal cual, incluso si no se ve el mueble). NUNCA digas que «la tela te la dirá el asesor» ni que la recomendación toca esperarla: si el cotizador ya la calculó, la dices aquí. El asesor confirma el precio final, eso sí.',
     'Contesta SOLO con este JSON: {"decir": "lo que le dices ahora, en tus palabras", "valores": {"<campo>": <valor>}}.',
-    'En "valores" va únicamente lo que el cliente ACABA de decir, con el valor ya normalizado (ids del catálogo, números, ciudades). Si no dijo nada nuevo, "valores" va vacío. Si el cliente solo charla, en "decir" le contestas y le vuelves a lo que falta, con otras palabras.'
+    'En "valores" va únicamente lo que el cliente ACABA de decir, con el valor ya normalizado (ids del catálogo, números, ciudades). Si no dijo nada nuevo, "valores" va vacío. Si en UNA frase dice DOS datos, van los DOS («el sofá es de mi mamá, vivo en Manizales» → mueble y atención): lo que dice de paso NO se pierde —medido, 25/09: el modelo contestó «anoto Manizales» y no lo mandó, y la ciudad nunca entró—. Si el cliente solo charla, en "decir" le contestas y le vuelves a lo que falta, con otras palabras.'
   ].join('\n');
 }
 /* EL CIERRE, también en la conversación: cuando el contrato está completo NO se manda a nadie al
@@ -3849,13 +4422,21 @@ async function aplicarValorDelContrato(id, valor){
     }
     case 'danos': return aplicarLoDicho('danos', (Array.isArray(valor) ? valor : [valor]).join(', '));
     case 'atencion': {
-      const cliente = valor.cliente || valor.customerCity || valor.ciudad; const servicio = valor.servicio || valor.serviceCity;
+      /* El modelo puede mandar las DOS ciudades en un objeto (`{cliente, servicio}`) o UNA sola como
+       * texto («Manizales»): las dos formas valen — con el texto plano se perdía la ciudad que él
+       * acababa de entender (medido, 25/09: el seguimiento lo cazó: mandó {"atencion":"Manizales"} y
+       * «Entró al formulario: Sofá»… y la ciudad, nada). Una ciudad sola llena la del cliente y la del
+       * servicio, que es lo que hace el propio parser cuando alguien dice «estoy en X». */
+      const v = (valor && typeof valor === 'object') ? valor : { cliente: valor, servicio: valor };
+      const cliente = v.cliente || v.customerCity || v.ciudad; const servicio = v.servicio || v.serviceCity || v.ciudadServicio;
       if (!cliente && !servicio) return { ok: false, motivo: 'sin ciudades' };
       return aplicarLoDicho('atencion', `estoy en ${cliente || servicio} y el servicio es en ${servicio || cliente}`);
     }
     case 'contacto': {
-      const v = valor || {};
-      const dicho = [v.nombre, v.correo, v.celular].filter(Boolean).join(' ');
+      /* Lo mismo con el contacto: objeto (`{nombre, correo, celular}`) o la frase tal cual la dijo el
+       * cliente, que el parser del contrato entiende. */
+      const v = (valor && typeof valor === 'object') ? valor : null;
+      const dicho = v ? [v.nombre, v.correo, v.celular].filter(Boolean).join(' ') : String(valor == null ? '' : valor).trim();
       if (!dicho) return { ok: false, motivo: 'sin datos de contacto' };
       return aplicarLoDicho('contacto', dicho);
     }
@@ -3892,6 +4473,59 @@ async function aplicarValorDelContrato(id, valor){
   }
 }
 
+/* ── Lo que el cliente dice SIN decir un dato ────────────────────────────────────────────────
+ * El dueño, 25/09: la conversación le contestaba «Anotado: Claro.» o «Anotado: Aunque · Aunque» —sus
+ * palabras de charla convertidas en datos— y le volvía a pedir lo mismo en el mismo aliento cuando
+ * él pedía tiempo («Sí sí sí pero dame unos segundos» → la misma pregunta otra vez). Un asistente
+ * contesta eso como una persona: sin anotarlo y sin empujar la pregunta. */
+const CORTESIA = /^[\s¡¿]*(hola|buenas( tardes| noches)?|buenos d[ií]as|gracias|muchas gracias|mil gracias|con gusto|de nada|por favor|un gusto)[\s.,!¡¿?]*$/i;
+const ASENTIMIENTO = /^[\s¡¿]*(ok|okay|vale|listo|ya|dale|de una|sigamos|sigue|contin[úu]a|contin[úu]e|vamos|hag[áa]moslo|s[íi]|claro|claro que s[íi]|perfecto|bueno|de acuerdo|entendido|aj[áa]|aunque|eh|emm|mmm|jaja)[\s.,!¡¿?]*$/i;
+/* Ni la cortesía ni el asentimiento son datos: «gracias», «claro», «ok» no llenan un campo. */
+const esCharlaSuelta = t => CORTESIA.test(String(t || '').trim()) || ASENTIMIENTO.test(String(t || '').trim());
+const PIDE_UN_MOMENTO = /(un momento|un rato|unos (minutos|segundos|momentos)|dame (un|unos)|deme (un|unos)|d[ée]jame|dejame|esp[ée]rame|espere|aguanta|permiso|paciencia|con calma|sin af[áa]n|tomar las medidas|todav[íi]a no|a[úu]n no|ahorita|al rato|m[áa]s tarde|en un momento|ya te (digo|cuento|doy|subo|mando)|dame tiempo|t[óo]mate)/i;
+/* Las frases de la cortesía: cortas y VARIADAS — la misma dos veces seguidas se lee a robot. */
+const LAS_CALMAS = ['Con calma, aquí estoy.', 'Sin afán: cuando la tengas me dices.', 'Tómate tu tiempo, yo te espero.', 'Claro que sí, con calma.'];
+const LOS_ACUSES = ['Con gusto.', 'De nada — cuando quieras seguimos.', 'Listo, gracias a ti.', 'Con mucho gusto.'];
+function decirAlgoHumano(frases){
+  const opciones = frases.filter(f => f !== voz.ultimaCortesia);
+  const frase = opciones[Math.floor(Math.random() * opciones.length)] || frases[0];
+  voz.ultimaCortesia = frase;
+  decirEnLaConversacion(frase);
+}
+/* El recibo dice lo anotado UNA vez: antes salía «Retapizado de muebles · Retapizado de muebles ·
+ * rama Retapizado de muebles» — la misma cosa tres veces, y con la etiqueta de la rama, que no es un
+ * dato (dueño, 25/09: «rigid for information and step… assistant should interact… not robot»). */
+function elReciboDeLoAnotado(aplicados){
+  /* La clave para comparar dos veces lo mismo conserva los números y las palabras cortas: «90 × 90 ×
+   * 90 cm» no tiene ninguna palabra de más de dos letras, y con el filtro de palabras se caía el
+   * recibo entero (medido: la prueba del recibo de las medidas en `conversacion-api.spec.mjs`). */
+  const claveDe = t => String(t == null ? '' : t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9ñ\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  const trozos = [];
+  for (const bruto of [].concat(aplicados || [])) {
+    for (const parte of String(bruto == null ? '' : bruto).split('·')) {
+      const limpio = parte.replace(/^\s*rama\s+/i, '').trim();
+      const clave = claveDe(limpio);
+      if (!clave || trozos.some(t => t.clave === clave)) continue;
+      trozos.push({ clave, limpio });
+    }
+  }
+  return trozos.map(t => t.limpio).join(' · ');
+}
+
+/* LA MEMORIA PRESENTE: en cada turno viaja la conversación VIVA —lo que él dijo y lo que ella
+ * contestó—, no solo el turno de ahora. El modelo no recuerda por sí solo entre llamadas: si no le
+ * va, no lo sabe (dueño, 25/09: «el problema es que no tiene memoria presente»). Va recortada: las
+ * últimas vueltas, cada mensaje a una línea, para que quepa sin ahogar el turno. */
+function laConversacionHastaAhora(max = 12){
+  /* La fuente es la memoria guardada cuando tiene tanto o más que la de la página: si la capa se
+   * rehizo a medias, la conversación no se pierde (es el punto de la memoria presente). */
+  const guardada = leerLaMemoriaPresente();
+  const fuente = (guardada && guardada.length >= (voz.mensajes || []).length) ? guardada : (voz.mensajes || []);
+  return fuente.slice(-max)
+    .map(m => (m.quien === 'user' ? 'CLIENTE: ' : 'TÚ: ') + String(m.texto || '').replace(/\s+/g, ' ').slice(0, 220))
+    .join('\n');
+}
 /* Un turno a la vez (como el chat): la conversación no puede estar a media respuesta cuando el
  * cliente vuelve a hablar — y quien la prueba desde afuera puede esperar a que termine. */
 async function responderEnLaConversacion(texto){
@@ -3926,43 +4560,48 @@ async function elTurnoDeLaConversacion(dicho){
     try {
       const mundo = mundoDelContrato();
       if (!voz.sesion) voz.sesion = await sesionDelProveedor(promptDeLaConversacion(mundo), { temperatura: 0.5 });
-      const crudo = await voz.sesion.pedir({ texto: `ESTADO DEL FORMULARIO (lo que el cliente ya declaró)\n${estadoDelCotizador(ACI.context())}\n\nLO QUE FALTA AHORA:\n${loQueFaltaTexto(mundo)}\n\nEl cliente dice: «${dicho}»` });
+      const crudo = await voz.sesion.pedir({ texto: `ESTADO DEL FORMULARIO (lo que el cliente ya declaró)\n${estadoDelCotizador(ACI.context())}\n\nLO QUE FALTA AHORA:\n${loQueFaltaTexto(mundo)}\n\nLO QUE YA SE DIJERON EN ESTA CONVERSACIÓN, EN ORDEN (lo último es lo que él acaba de decir: no le vuelvas a preguntar lo que ya está aquí, y no repitas tu propia frase):\n${laConversacionHastaAhora()}\n\nEl cliente dice: «${dicho}»` });
       const turno = leerElTurnoDelModelo(crudo);
       if (turno) {
         const aplicados = [];
-        /* PRIMERO el parser del contrato para el campo que se está preguntando: entiende por raíz de
-         * palabra («comprar telas» → «Suministro de tela», «tapizar» → «Retapizado») y no depende de
-         * que el modelo acierte el sinónimo (el dueño: «the AI should understand synonyms»). Si el
-         * parser no lo reconoce, mandan los valores del modelo. */
+        /* La charla y la calma NO llenan campos: «gracias», «claro», «dame un momento» no son datos
+         * (dueño, 25/09: le contestaba «Anotado: Claro.»). */
+        const charla = esCharlaSuelta(dicho);
+        const cortesia = CORTESIA.test(dicho.trim());
+        const pideTiempo = PIDE_UN_MOMENTO.test(dicho);
         const pendiente = voz.campo;
-        /* El parser del contrato prueba TODOS los campos del recorrido que faltan, en su orden — y
-         * manda SOBRE lo que proponga el modelo: entiende tu frase natural («de largo 90 de alto y 90
-         * de ancho») y escribe por los controles. Antes, si el modelo proponía un valor con forma
-         * equivocada, se saltaba el parser y no se guardaba NADA mientras la conversación decía
-         * «anoto…» (dueño, 25/09: «porque esto no está guardando los datos que le voy dando»). El
-         * primero que entienda el texto, manda. */
-        const porLlenar = [pendiente].concat(Contrato.faltantes(mundo).map(c => c.id))
-          /* Las fotos, la estimación y el precio no se dictan (los pone el cliente subiendo fotos o
-           * el motor): sus casos no deben comerse un texto que era de otro campo. */
-          .filter(id => id && ['fotos', 'estimacion', 'precio'].indexOf(id) < 0)
-          .filter((v, i, a) => a.indexOf(v) === i);
-        for (const campo of porLlenar) {
-          const mio = await aplicarLoDicho(campo, dicho).catch(() => ({ ok: false }));
-          if (mio && mio.ok) { aplicados.push(mio.dicho || campo); break; }
-        }
-        for (const [id, valor] of Object.entries(turno.valores)) {
-          if (aplicados.length && id === pendiente) continue;
-          const r = await aplicarValorDelContrato(id, valor).catch(() => ({ ok: false }));
-          if (r && r.ok) aplicados.push(r.dicho || id);
+        /* El parser del contrato solo mira el campo que se está preguntando (abajo): entiende por raíz de
+         * palabra («210 de ancho») y no depende de que el modelo acierte la forma. Lo demás lo llena el
+         * MODELO, cuyos `valores` entran por los mismos controles y con la misma validación. */
+        if (!charla) {
+          /* DE DOS ESCRITORES A UNO (dueño, 25/09: «eso con función que escriba es muy riesgoso… con
+           * razón había visto varios inputs rellenados raros»). La mano ya NO adivina sobre todos los
+           * campos de la frase: solo mira el campo que se está preguntando, donde la forma del cliente
+           * importa («de ancho 210, de largo 90»). Todo lo demás lo llena el MODELO con sus `valores`
+           * —que entran por los mismos controles y con la misma validación—. El adivinador que metía
+           * «Claro» en la ciudad era esta vuelta. */
+          if (pendiente) {
+            const mio = await aplicarLoDicho(pendiente, dicho).catch(() => ({ ok: false }));
+            if (mio && mio.ok) aplicados.push(mio.dicho || pendiente);
+          }
+          for (const [id, valor] of Object.entries(turno.valores)) {
+            if (aplicados.length && id === pendiente) continue;
+            const r = await aplicarValorDelContrato(id, valor).catch(() => ({ ok: false }));
+            if (r && r.ok) aplicados.push(r.dicho || id);
+          }
         }
         /* La confirmación la da el SISTEMA, no el modelo: el modelo habla en el mismo turno en que
          * propone y no puede ver si entró —decía «te dejo 5 metros» con la lista vacía—. Aquí se
          * dice lo que de verdad quedó anotado (y si no entró nada, no se dice nada). Va SIN VOZ: es
          * un recibo para leer, y hablar de más deja sordo al micrófono. */
-        /* El recibo dice lo anotado, sin la etiqueta de la rama (no es un dato: «Retapizado de
-         * muebles · rama Retapizado de muebles» se leía mal). */
-        if (aplicados.length) decirEnLaConversacion('Anotado: ' + aplicados
-          .map(x => String(x).replace(/(\s*·\s*rama [^·]+)+\s*$/i, '').trim()).filter(Boolean).join(' · ') + '.', 'bot', true);
+        /* El ÚLTIMO TURNO queda a la vista para quien mire desde fuera (el seguimiento de Playwright,
+         * el que revisa un fallo): qué dijo el cliente, qué decidió el modelo y qué entró de verdad. */
+        voz.ultimoTurno = { cuando: Date.now(), dicho, decir: turno.decir, valores: turno.valores || {},
+          aplicados: aplicados.slice(), respaldo: false };
+        /* El recibo dice lo anotado UNA vez y sin la etiqueta de la rama (no es un dato: «Retapizado
+         * de muebles · Retapizado de muebles · rama Retapizado de muebles» se lee a robot). */
+        { const recibo = elReciboDeLoAnotado(aplicados);
+          if (recibo) decirEnLaConversacion('Anotado: ' + recibo + '.', 'bot', true); }
         await new Promise(r => setTimeout(r, 220));
         /* El cerco juzga también la conversación (el modelo nunca tiene la última palabra): una
          * cifra fuera de la estimación y del catálogo, una promesa o una frase que no habla del
@@ -3975,10 +4614,15 @@ async function elTurnoDeLaConversacion(dicho){
          * si no, cuando el modelo habla bonito los insumos nunca se estimaban (medido, 25/09). */
         estimarInsumosSiToca();
         if (juicio.limpia) { decirEnLaConversacion(turno.decir); pintarProgresoDeLaConversacion(); }
+        /* Ni la cortesía ni la calma se contestan con la misma pregunta en el mismo aliento: si pidió
+         * tiempo o agradece, se le contesta como persona y NO se le pregunta (dueño, 25/09). */
+        else if (pideTiempo) decirAlgoHumano(LAS_CALMAS);
+        else if (cortesia) decirAlgoHumano(LOS_ACUSES);
         else preguntarLoQueFalta();
-        /* Si el modelo cierra el turno sin preguntar nada, el sistema pregunta por el pendiente: el
-         * cliente nunca se queda sin saber qué falta (dueño, 25/09: «dont ask according the step»). */
-        if (juicio.limpia && !/[¿?]/.test(String(turno.decir || ''))) preguntarLoQueFalta();
+        /* Si el modelo cierra el turno sin preguntar nada, el sistema pregunta por el pendiente —salvo
+         * que el cliente esté pidiendo tiempo o agradeciendo—: el cliente nunca se queda sin saber qué
+         * falta (dueño, 25/09: «dont ask according the step»). */
+        if (juicio.limpia && !/[¿?]/.test(String(turno.decir || '')) && !pideTiempo && !cortesia) preguntarLoQueFalta();
         const pendienteAhora = Contrato.faltantes(mundoDelContrato())[0];
         voz.campo = pendienteAhora ? pendienteAhora.id : null;
         /* El wizard se pone en el paso del nuevo pendiente — caminando, como en el respaldo. */
@@ -3991,19 +4635,39 @@ async function elTurnoDeLaConversacion(dicho){
    * la frase, se prueba con los DEMÁS campos que faltan, en el orden del recorrido — el cliente
    * contesta lo que le da la gana y el contrato lo ubica. El primero que entienda, manda. */
   const campo = voz.campo;
-  if (!campo) { preguntarLoQueFalta(); return; }
+  /* La charla y la calma tampoco son datos aquí: si no hay un campo pendiente y el cliente está
+   * charlando o pidiendo tiempo, se le contesta como persona (dueño, 25/09). */
+  const charla = esCharlaSuelta(dicho);
+  const cortesia = CORTESIA.test(dicho.trim());
+  const pideTiempo = PIDE_UN_MOMENTO.test(dicho);
+  if (!campo) {
+    if (pideTiempo || cortesia) { decirAlgoHumano(pideTiempo ? LAS_CALMAS : LOS_ACUSES); return; }
+    preguntarLoQueFalta(); return;
+  }
   const porLlenar = [campo].concat(Contrato.faltantes(mundoDelContrato()).map(c => c.id))
     .filter(id => id && ['fotos', 'estimacion', 'precio'].indexOf(id) < 0)
     .filter((v, i, a) => a.indexOf(v) === i);
   let resultado = { ok: false, motivo: 'no te entendí' };
   let usado = campo;
-  for (const c of porLlenar) {
+  if (!charla) for (const c of porLlenar) {
     let r = { ok: false, motivo: 'no te entendí' };
     try { r = await aplicarLoDicho(c, dicho); } catch (err) { console.warn('[contrato] respuesta no aplicada', err); }
     if (r && r.ok) { resultado = r; usado = c; break; }
     if (resultado.motivo === 'no te entendí' && r && r.motivo) resultado = r;
   }
   if (!resultado.ok) {
+    /* No es un tropiezo: el cliente pidió tiempo o está charlando. Se le contesta como persona —sin
+     * anotar nada y sin repetirle la pregunta en el mismo aliento— y, si fue un «listo»/«dale», se
+     * sigue con lo que falta. */
+    if (pideTiempo || cortesia || charla) {
+      if (pideTiempo) decirAlgoHumano(LAS_CALMAS);
+      else if (cortesia) decirAlgoHumano(LOS_ACUSES);
+      pintarProgresoDeLaConversacion();
+      /* El asentimiento («ok», «listo») SÍ avanza: se vuelve a preguntar por lo que falta. La cortesía
+       * y la calma, no (dueño, 25/09: «assistant should interact… not robot»). */
+      if (!pideTiempo && !cortesia) preguntarLoQueFalta();
+      return;
+    }
     /* Un tropiezo NUNCA deja la misma frase: se dice qué pasó y se vuelve a preguntar distinto
      * (si el campo tiene paso, además se deja el paso a la vista para llenarlo a mano). */
     decirEnLaConversacion(resultado.motivo + '. Dímelo con otras palabras y lo anoto por aquí — no tienes que ir a ningún paso.');
@@ -4019,7 +4683,11 @@ async function elTurnoDeLaConversacion(dicho){
    * análisis haya entrado y se queda preguntando lo mismo. */
   if (usado === 'revision') { for (let i = 0; i < 30 && !state.analyzed; i++) await new Promise(r => setTimeout(r, 150)); }
   else await new Promise(r => setTimeout(r, 220));
-  decirEnLaConversacion(resultado.dicho ? 'Listo: ' + resultado.dicho + '.' : 'Listo.');
+  { const recibo = elReciboDeLoAnotado(resultado.dicho);
+    decirEnLaConversacion(recibo ? 'Listo: ' + recibo + '.' : 'Listo.'); }
+  /* El seguimiento (quien mire desde fuera) también ve los turnos del respaldo. */
+  voz.ultimoTurno = { cuando: Date.now(), dicho, decir: null, valores: null,
+    aplicados: resultado.ok ? [resultado.dicho || usado] : [], respaldo: true };
   if (resultado.recordar) decirEnLaConversacion('Y no olvides marcar la autorización del paso de contacto: eso solo lo puedes hacer tú.');
   pintarProgresoDeLaConversacion();
   /* El formulario se mueve detrás: la vista se va al paso de lo que falta ahora — caminando. */
@@ -4076,6 +4744,8 @@ function cerrarLaConversacion(){
   if (Array.isArray(voz.cola)) voz.cola = [];
   if (typeof apagarElMicrofono === 'function') apagarElMicrofono();
   if ('speechSynthesis' in window) speechSynthesis.cancel();
+  /* La capa se va entera: tampoco queda ella «hablando» (el cancel no siempre avisa). */
+  vozAudio.hablando = false; vozAudio.vozHasta = Date.now();
   ACI.emit('CONVERSATION_CLOSED', {});
 }
 
@@ -4143,7 +4813,10 @@ function cerrarLaConversacion(){
  * la pone el sistema, no se puede medir, así que no se finge una onda). El reconocimiento puede ser
  * del equipo o del navegador, y eso se dice en la nota antes de que el cliente hable. */
 const vozAudio = { escuchando: false, hablando: false, silenciada: false,
-  stream: null, contexto: null, analizador: null, bucle: null, reconocedor: null };
+  stream: null, contexto: null, analizador: null, bucle: null, reconocedor: null,
+  /* Lo que el micrófono necesita para no sordo ni atropellado: el nivel real que acaba de oír, cuándo
+   * terminó ella de hablar (la cola del eco, corta), y las últimas frases SUYAS para reconocer su eco. */
+  nivel: 0, vozHasta: 0, dichas: [], turnoDeVoz: 0, piso: 0.002 };
 
 function pintarLaOnda(valores){
   const onda = document.getElementById('vozOnda'); if (!onda) return;
@@ -4164,6 +4837,10 @@ function animarLaOnda(){
     let suma = 0;
     for (const v of datos) { const d = (v - 128) / 128; suma += d * d; }
     const rms = Math.sqrt(suma / datos.length);
+    /* El nivel queda guardado, y con él el PISO del cuarto: es lo que deja que ella NO interrumpa al
+     * cliente sin depender de un número fijo (abajo, `elClienteEstaHablando`). */
+    vozAudio.nivel = rms;
+    vozAudio.piso = rms < vozAudio.piso ? rms : vozAudio.piso * 1.0002 + 0.00001;
     pintarLaOnda(ondaDeNivel(Math.min(1, rms * 4.5)));
     vozAudio.bucle = requestAnimationFrame(paso);
   };
@@ -4215,15 +4892,24 @@ async function encenderElMicrofono(){
     /* La señal de que la reconoce: el campo lo dice mientras escucha (y vuelve al suyo al parar). */
     r.onstart = () => { const i = document.getElementById('vozInput'); if (i && vozAudio.escuchando) i.placeholder = 'Te escucho… habla tranquilo'; };
     r.onresult = ev => {
-      /* MIENTRAS ELLA HABLA, la casa suena: lo que entra por el micrófono es SU voz por los parlantes
-       * — no es el cliente. Se descarta entero: ni al campo ni a la conversación. COMO ESTABA (el
-       * dueño, 24/09: «el sonido esta tarde sí estaba bien»). */
-      if (vozAudio.hablando || (Date.now() - (vozAudio.vozDesde || 0)) < 1500) return;
       let final = '', parcial = '';
       for (let i = ev.resultIndex; i < ev.results.length; i++) {
         const t = ev.results[i][0].transcript;
         if (ev.results[i].isFinal) final += t; else parcial += t;
       }
+      /* SU ECO NO ES EL CLIENTE, PERO SU INTERRUPCIÓN SÍ (dueño, 25/09: «the customer can interrupt to
+       * assistant... but assistant can not interrupt to customer»). Mientras ella habla, lo que entra
+       * por el micrófono puede ser SU voz por los parlantes —eso se descarta, ni al campo ni a la
+       * conversación— o el cliente cortándola —eso se atiende, y primero se la calla—. Antes se tiraba
+       * TODO mientras hablaba: el cliente no podía cortarla, y la cola del eco (1500 ms) se comía el
+       * arranque de su frase siguiente («el micrófono no capta mi voz»). */
+      if (vozAudio.hablando) {
+        if (pareceSuPropiaVoz(final || parcial)) return;    // su eco, no el cliente
+        if (!final.trim()) return;                          // un parcial suyo no escribe en el campo
+        callarlaParaEscuchar();                             // el cliente la interrumpe: se calla
+      }
+      /* La cola del eco, corta: apenas termina de hablar, el micrófono todavía oye su última sílaba. */
+      else if (Date.now() - (vozAudio.vozHasta || 0) < 400) return;
       const input = document.getElementById('vozInput');
       if (parcial) input.value = parcial;
       if (final.trim()) {
@@ -4320,28 +5006,82 @@ function laVozDelAsistente(){
 /* Aviso de que ELLA habla, para quien quiera acompañarla (la capa 3D hace su gesto): un evento
  * del DOM, que no depende del bus y cualquiera puede escuchar. */
 function avisarQueHabla(hablando){ try { window.dispatchEvent(new CustomEvent('assistant:hablando', { detail: { hablando: !!hablando } })); } catch (e) {} }
+/* Las palabras de una frase, en minúsculas y sin acentos ni puntuación: con eso se compara lo dictado
+ * con lo que ella acaba de decir. */
+function lasPalabrasDe(texto){
+  return String(texto || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9ñ\s]/g, ' ').split(/\s+/).filter(p => p.length > 2);
+}
+/* ¿Lo dictado es lo que ELLA acaba de decir por los parlantes? (dos de cada tres palabras suyas: su
+ * eco no es el cliente — y lo que no suena como ella SÍ lo es, aunque esté hablando). */
+function pareceSuPropiaVoz(dicho){
+  const suyas = lasPalabrasDe(vozAudio.dichas);
+  const oidas = lasPalabrasDe(dicho);
+  if (!suyas.length || oidas.length < 2) return false;
+  return oidas.filter(p => suyas.indexOf(p) >= 0).length / oidas.length >= 0.6;
+}
+/* ¿El cliente está hablando AHORA? Lo dice el nivel REAL del micrófono, muestreado de una: el bucle de
+ * la onda se detiene con la pestaña en segundo plano, y esta pregunta no puede depender de eso. Se mide
+ * contra el PISO de su propio cuarto, no contra un número fijo: hablar es sonar bastante más alto que
+ * el silencio de ahí. */
+function elClienteEstaHablando(){
+  if (!vozAudio.escuchando || !vozAudio.analizador) return false;
+  const datos = new Uint8Array(vozAudio.analizador.fftSize);
+  vozAudio.analizador.getByteTimeDomainData(datos);
+  let suma = 0;
+  for (const v of datos) { const d = (v - 128) / 128; suma += d * d; }
+  const rms = Math.sqrt(suma / datos.length);
+  vozAudio.nivel = rms;
+  vozAudio.piso = rms < vozAudio.piso ? rms : vozAudio.piso * 1.0002 + 0.00001;
+  return rms > Math.max(0.035, vozAudio.piso * 3);
+}
+/* Se calla para escuchar: la interrupción del cliente corta su frase en el sitio (no se encola). */
+function callarlaParaEscuchar(){
+  try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (err) {}
+  vozAudio.hablando = false; vozAudio.vozHasta = Date.now();
+  avisarQueHabla(false);
+  const onda = document.getElementById('vozOnda');
+  if (onda && vozAudio.escuchando) { onda.dataset.estado = 'escuchando'; pintarLaOnda([]); }
+}
 /* Su voz, como estaba (el dueño: «eso estaba bien»): cada línea se dice al momento, cancelando lo que
  * hubiera sonando. La versión con fila (encolar y decir una tras otra) hacía que hablara más rato
- * seguido y el micrófono quedaba sordo mientras tanto — se revirtió. */
+ * seguido y el micrófono quedaba sordo mientras tanto — se revirtió. LO NUEVO (dueño, 25/09): mientras
+ * el cliente está hablando la frase ESPERA su pausa — ella no interrumpe; a ella sí se la interrumpe
+ * (arriba). El tope de 12 s es para no quedarse muda si él habla de corrido. */
 function hablarConSuVoz(texto){
   if (vozAudio.silenciada || !('speechSynthesis' in window)) return false;
   const limpio = String(texto || '').replace(/[«»]/g, '').slice(0, 300);
   if (!limpio) return false;
-  speechSynthesis.cancel();
-  const dicho = new SpeechSynthesisUtterance(limpio);
-  /* COMO ESTABA (el dueño, 24/09: «esta tarde estaba… ni ruidoso»): idioma es-CO fijo, la voz a
-   * cargo del sistema. El cambio de idioma a `voz.lang` se probó y se revirtió. */
-  dicho.lang = 'es-CO';
-  const voz = laVozDelAsistente();
-  /* Una voz que el motor no acepte (lista vieja) no puede tumbar su frase: se queda la de por
-   * defecto del sistema. */
-  if (voz) { try { dicho.voice = voz; } catch (err) { /* la voz de por defecto */ } }
-  let pulso = 0;
-  dicho.onstart = () => { avisarQueHabla(true); vozAudio.hablando = true; vozAudio.vozDesde = Date.now(); document.getElementById('vozOnda').dataset.estado = 'hablando'; };
-  dicho.onboundary = () => { pulso++; pintarLaOnda(ondaDeNivel(0.35 + (pulso % 3) * 0.25)); };
-  dicho.onend = dicho.onerror = () => { avisarQueHabla(false); vozAudio.hablando = false;
-    if (!vozAudio.escuchando) { document.getElementById('vozOnda').dataset.estado = 'callada'; pintarLaOnda([]); } };
-  speechSynthesis.speak(dicho);
+  const decirAhora = () => {
+    speechSynthesis.cancel();
+    const dicho = new SpeechSynthesisUtterance(limpio);
+    /* COMO ESTABA (el dueño, 24/09: «esta tarde estaba… ni ruidoso»): idioma es-CO fijo, la voz a
+     * cargo del sistema. El cambio de idioma a `voz.lang` se probó y se revirtió. */
+    dicho.lang = 'es-CO';
+    const elegida = laVozDelAsistente();
+    /* Una voz que el motor no acepte (lista vieja) no puede tumbar su frase: se queda la de por
+     * defecto del sistema. */
+    if (elegida) { try { dicho.voice = elegida; } catch (err) { /* la voz de por defecto */ } }
+    let pulso = 0;
+    dicho.onstart = () => { avisarQueHabla(true); vozAudio.hablando = true; vozAudio.vozDesde = Date.now();
+      /* Lo que acaba de decir queda a mano: con eso se reconoce su eco en el micrófono. */
+      vozAudio.dichas = (vozAudio.dichas || []).concat(limpio).slice(-2);
+      document.getElementById('vozOnda').dataset.estado = 'hablando'; };
+    dicho.onboundary = () => { pulso++; pintarLaOnda(ondaDeNivel(0.35 + (pulso % 3) * 0.25)); };
+    dicho.onend = dicho.onerror = () => { avisarQueHabla(false); vozAudio.hablando = false; vozAudio.vozHasta = Date.now();
+      if (!vozAudio.escuchando) { document.getElementById('vozOnda').dataset.estado = 'callada'; pintarLaOnda([]); } };
+    speechSynthesis.speak(dicho);
+  };
+  /* Si entre tanto salió otra frase, esta se cae: no se dice lo viejo. */
+  const miTurno = ++vozAudio.turnoDeVoz;
+  const dice = () => { if (miTurno === vozAudio.turnoDeVoz) decirAhora(); };
+  if (!elClienteEstaHablando()) { dice(); return true; }
+  const desde = Date.now();
+  const espera = () => {
+    if (!elClienteEstaHablando() || Date.now() - desde > 12000) { dice(); return; }
+    setTimeout(espera, 120);
+  };
+  setTimeout(espera, 120);
   return true;
 }
 
@@ -4604,9 +5344,12 @@ function pasoAnfitrionDeLaSubida(){
 function reubicarLaSubida(){
   const anfitrion=pasoAnfitrionDeLaSubida();
   if(!anfitrion){uploadZone.hidden=true;photoError.hidden=true;return}
-  uploadZone.hidden=false;
-  if(uploadZone.parentElement!==anfitrion){anfitrion.appendChild(uploadZone);anfitrion.appendChild(photoError)}
   const enMueble=(anfitrion.dataset.brain||'')==='FURNITURE';
+  /* CON PASO DE MUEBLE, LAS FOTOS VAN EN LA FILA de cada pieza: el bloque de subida no se enseña (el
+   * dueño lo dijo al ver el diseño: «si hay + para agregar foto por fila... para que necesita abajo otro
+   * componente»). SIN paso de mueble no hay fila que las reciba: el bloque se muda a su primer paso y se ve. */
+  uploadZone.hidden=enMueble;
+  if(uploadZone.parentElement!==anfitrion){anfitrion.appendChild(uploadZone);anfitrion.appendChild(photoError)}
   /* La copia de la línea (catálogo, `photoTitle` / `photoInstructions`) manda; esto es el respaldo. */
   const copia=Store.lineCopy(state.service)||{};
   const titulo=document.getElementById('uploadTitle'),pista=document.getElementById('uploadHint');
@@ -4704,6 +5447,14 @@ function applyOptionalSteps(){
   /* El título del paso de las preferencias habla del MUEBLE solo cuando la rama lo pregunta: en las
    * ramas donde el mueble no existe (reventa) el título habla de la tela — el paso quedó con el
    * mismo texto en todas las ramas y el dueño lo vio en la reventa (24/09). */
+  /* LAS MEDIDAS DE LA FILA MANDAN DONDE HAY FILA: en las líneas con paso de mueble, el ancho/alto/largo
+   * se escriben en la fila de la pieza (el paso de medidas ya no los pregunta dos veces); en las líneas
+   * sin mueble —tapicería arquitectónica, mantenimiento— la fila no existe y el paso los pregunta. */
+  (()=>{
+    const pasoMueble=steps.find(s=>(s.dataset.brain||'')==='FURNITURE');
+    const enLaFila=!!pasoMueble&&!skippedSteps.has(+pasoMueble.dataset.step)&&!!document.querySelector('.piezas-lista');
+    ['widthField','heightField','depthField'].forEach(id=>{const el=document.getElementById(id);if(el)el.hidden=enLaFila});
+  })();
   const tituloPref=document.querySelector('.wizard-step[data-step="12"] h2');
   if(tituloPref)tituloPref.textContent=skippedSteps.has(1)?'¿Cómo se usará la tela?':'¿Cómo se usará el mueble?';
   /* La VITRINA de telas del paso de la lista: la ofrece el camino que NO respondió ya la pregunta de
@@ -4711,7 +5462,12 @@ function applyOptionalSteps(){
    * y «quiero sugerencias», que trae su propio paso de recomendación con la acción del asistente). */
   const filaSugerir=document.getElementById('listaSugerirFila');
   if(filaSugerir){
-    const s=saberActual(),sin=!!(s&&s.vitrina===false);
+    /* Y tampoco cuando no hay tela que sugerir: «completar pedido anterior» ya trae su referencia y su
+     * cantidad (dueño, 25/09: «delete the button... "que lia sugiera telas"... for "completar pedido"...
+     * doesnt make sense»). Se decide por la RUTA del catálogo, no por el rótulo escrito a mano. */
+    const r=rutaActual()||{};
+    const esCompletarPedido=String(r.id||'')==='pedido'||/completar\s+pedido/i.test(String(r.label||''));
+    const s=saberActual(),sin=!!(s&&s.vitrina===false)||esCompletarPedido;
     filaSugerir.hidden=sin;
     if(sin){const p=document.getElementById('listaVitrina'),b=document.getElementById('listaSugerir');
       if(p)p.hidden=true;if(b)b.setAttribute('aria-expanded','false');}
@@ -5412,6 +6168,10 @@ if(escenaDeLaAsistente)new MutationObserver((_,vigia)=>{
   vigia.disconnect();
   requestAnimationFrame(()=>requestAnimationFrame(()=>dispatchEvent(new Event('resize'))));
 }).observe(escenaDeLaAsistente,{attributes:true,attributeFilter:['class']});
+
+/* LA BASE COMPARTIDA DEL SERVIDOR (si está): se traen las solicitudes que haya para que el número de
+ * esta nueva (COT-####) no choque con las del backoffice. Sin servidor, todo sigue igual. */
+try { if (window.Store && Store.syncQuotes) Store.syncQuotes(); } catch (err) { /* sin base */ }
   </script>
 {{ASSISTANT_SCRIPT}}
 </body>
