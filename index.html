@@ -1243,7 +1243,9 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
  *   3. applies an approved action through the same controls and events a
  *      customer's own click or edit uses (execute()). No extra power.
  * See CLAUDE.md "Assistant context & actions (simulated)". */
-const TENANT={{CLIENT_SLUG_JSON}};
+/* `TENANT` lo declara el paquete de src/tenant (config.generated.js, que escribe el generador):
+ * declararlo también aquí lo choca —los `const` de nivel superior viven en el mismo ámbito global—
+ * y la página entera deja de correr. Se borró la declaración vieja el 25/09 (el corte 4 la destapó). */
 const ACI=(()=>{
   const byId=id=>document.getElementById(id);
   const stepId=n=>(AssistantBrain.STEPS.find(s=>s.n===n)||{}).id||null;
@@ -1477,23 +1479,7 @@ const seatsSelect=document.getElementById('seats');
 
 // The quantity options must name what is being counted, or the summary reads
 // "Cabecero · 3 puestos".
-function renderFurnitureOptions(){
-  const list=Store.activeFurniture();
-  furnitureRules={};measureRanges={};
-  list.forEach(f=>{
-    furnitureRules[f.name]={id:f.id,meters:f.meters,label:f.quantityLabel,unit:f.unit,scaleByQty:!!f.scaleByQty,widthScaled:!!f.widthScaled};
-    measureRanges[f.name]=f.ranges;
-  });
-  furnitureCards=[];
-  /* NADA viene marcado por defecto (dueño, 25/09: «no you need put without select default»): que el
-   * catálogo traiga «Sofá» primero no es una respuesta del cliente. Si el estado trae un mueble que ya
-   * no existe en la lista, se limpia; nunca se inventa uno. */
-  if(state.furniture&&!list.some(f=>f.name===state.furniture))state.furniture='';
-  document.getElementById('furnitureType').value=state.furniture;
-  pintarPiezas();                                 // la lista del paso 1: una fila por pieza, con su desplegable
-  syncOtherFurniture();
-}
-
+function renderFurnitureOptions(){const v=window.Wizard&&Wizard.mueble;if(v)return v.pintar()}
 function renderPreferenceOptions(){
   const cfg=Store.settings();
   document.querySelector('#needsGrid').innerHTML=(cfg.needs||[]).map(nd=>
@@ -6041,82 +6027,13 @@ function elegidoEnLaCompra(){
   applyOptionalSteps();updateEstimate();pintarElSendero();
   if(!pasosVisibles().includes(state.step))showStep(pasosVisibles()[0]);
 }
-function renderPurposeOptions(){
-  pintarPreguntaDeLaCompra('purposeGrid',propositosRuta(),state.proposito,p=>{
-    state.proposito=p.id;aplicarSaberPorDefecto();elegidoEnLaCompra();
-    ACI.emit('ROUTE_SELECTED',{routeId:state.ruta||'',purposeId:p.id,label:p.label});
-  });
-}
-function renderSaberOptions(){
-  pintarPreguntaDeLaCompra('saberGrid',saberesDelProposito(),(saberActual()||{}).id,s=>{
-    state.saber=s.id;elegidoEnLaCompra();
-    ACI.emit('ROUTE_SELECTED',{routeId:state.ruta||'',purposeId:state.proposito||'',saberId:s.id,label:s.label});
-  });
-}
-
-function renderServiceOptions(){
-  if(!hasServiceStep)return;
-  const grid=document.getElementById('serviceGrid');grid.innerHTML='';
-  /* Una línea que OTRA usa como camino no pinta tarjeta propia: «reparación y restauración» se
-   * elige dentro de mantenimiento (catálogo: `rutas` con `line`), así el paso muestra UNA tarjeta
-   * donde antes había dos y el mismo oficio no se cobra por dos puertas. */
-  const ofrecidas=serviceOptions.filter(s=>!serviceOptions.some(o=>(o.rutas||[]).some(r=>r.line===s.id)));
-  /* Una lista de opciones, no una grilla: con 4 o con 7 líneas el paso se lee de un vistazo y
-   * ocupa el panel. La nota de arriba dice cuántas incluye el plan vigente — así el salto entre
-   * planes se ve en la pantalla. */
-  const note=document.getElementById('servicePlanNote');
-  if(note)note.textContent=`Tu plan ${Store.planLabel(Store.settings().plan)} incluye ${ofrecidas.length} líneas de servicio.`;
-  /* Una columna hasta tres líneas; de cuatro en adelante, dos: así la grilla llena el panel sin
-   * dejar huecos ni obligar a desplazarse. `--rows` topa el alto de las tarjetas por filas: con
-   * dos líneas no quedan tarjetas de 250 px con una sola frase dentro (medido). */
-  const cols = ofrecidas.length <= 3 ? 1 : 2;
-  grid.style.setProperty('--cols', String(cols));
-  grid.style.setProperty('--rows', String(Math.ceil(ofrecidas.length / cols)));
-  ofrecidas.forEach((s,i)=>{
-    const on=state.service&&state.service.id===s.id;
-    const card=document.createElement('button');card.type='button';card.setAttribute('role','radio');
-    card.className='service-choice'+(on?' selected':'');card.setAttribute('aria-checked',on?'true':'false');
-    const body=document.createElement('span');
-    const title=document.createElement('b');title.textContent=s.label;body.appendChild(title);
-    if(s.hint){const hint=document.createElement('small');hint.textContent=s.hint;body.appendChild(hint);}
-    card.appendChild(body);
-    const go=document.createElement('span');go.className='go';go.textContent=on?'Elegida':'Elegir';card.appendChild(go);
-    card.addEventListener('click',()=>{
-      /* Solo hay algo que borrar si YA había una línea elegida: en la primera elección (página
-       * recién abierta) no se toca nada — no hay declaración que pueda viajar. */
-      const cambiaDeLinea=!!state.service&&state.service.id!==s.id;
-      /* Cambiar de línea EMPIEZA DE CERO: lo declarado era de la línea anterior. */
-      if(cambiaDeLinea)olvidarElCaso();
-      state.service=s;state.damages=[];
-      /* La ruta de la línea nueva y sus dos preguntas por defecto: volver a pulsar la misma línea no
-       * cambia nada (no hay ruta vieja que borrar). */
-      state.ruta=null;state.proposito=null;state.saber=null;aplicarRutaPorDefecto();aplicarPropositoPorDefecto();
-      /* Cambiar de línea EMPIEZA DE CERO (ver resetProjectForLine). Volver a pulsar la línea ya
-       * elegida no borra nada: no hay cambio. */
-      if(cambiaDeLinea)resetProjectForLine();
-      applyLineCopy();renderServiceOptions();serviceError.hidden=true;nextButton.disabled=false;
-      const ceja=document.getElementById('furnitureEyebrow');if(ceja)ceja.textContent=s.label;
-      const motivo=document.getElementById('journeyContextLabel');if(motivo)motivo.textContent=s.label;
-      /* La línea decide qué pasos existen (reparación pregunta por los daños): se recalcula aquí y
-       * los daños de la línea anterior no viajan a la nueva. La estimación se rehace en el acto:
-       * la línea cambia lo que se suma, y el bloque de precio ya no puede quedar con el número
-       * anterior hasta que alguien entre y salga del paso. */
-      applyOptionalSteps();updateEstimate();
-      /* Si el cliente cambiaba la línea desde un paso que la nueva no tiene (p. ej. desde «Tu
-       * mueble» a una línea que no pregunta mueble), ese paso se queda en pantalla pidiendo algo
-       * que ya no existe y «Continuar» no avanza. Se vuelve al principio del recorrido nuevo. */
-      if(!pasosVisibles().includes(state.step))showStep(pasosVisibles()[0]);
-      ACI.emit('SERVICE_SELECTED',{serviceId:s.id,label:s.label,journey:s.journey});
-    });
-    grid.appendChild(card);
-  });
-  /* El paso del mueble puede haber cambiado su ceja (líneas sin escogedor: ver aplicarElEscogedor),
-   * así que el elemento se busca de nuevo y se tolera que no esté. */
-  const ceja=document.getElementById('furnitureEyebrow');
-  if(ceja)ceja.textContent=state.service?state.service.label:'Empecemos';
-}
-
+/* ── LAS TRES PREGUNTAS DE LA COMPRA viven en src/wizard/compra.js (corte 4). Aquí quedan las
+ * puertas: la página pide pintar y el módulo dibuja. ─────────────────────────────────────────── */
+function renderPurposeOptions(){const v=window.Wizard&&Wizard.compra;if(v)return v.pintarProposito()}
+function renderSaberOptions(){const v=window.Wizard&&Wizard.compra;if(v)return v.pintarSaber()}
+function renderServiceOptions(){const v=window.Wizard&&Wizard.compra;if(v)return v.pintarLinea()}
 function renderAllOptions(){applyOptionalSteps();renderServiceOptions();renderFurnitureOptions();renderPreferenceOptions();renderCities();renderQuantityOptions()}
+
 document.getElementById('journeyContextChange').addEventListener('click',()=>{if(hasServiceStep)showStep(0)});
 // The banner wraps on narrow screens and reflows once the web fonts land, so
 // its height is observed rather than measured once; the layout offsets read it
@@ -6140,6 +6057,26 @@ if(window.ResizeObserver) new ResizeObserver(syncActionsHeight).observe(document
 addEventListener('resize',syncActionsHeight);
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(syncActionsHeight);
 syncActionsHeight();
+/* EL PUENTE DEL TALLER: lo que los módulos de src/wizard/ necesitan ver del cotizador —el estado, el
+ * motor de pasos, el catálogo y sus avisos— mientras el núcleo siga aquí adentro (el corte 6 lo
+ * desarma). `state` va por REFERENCIA: el módulo lee y escribe el mismo objeto que la página. */
+window.CotizadorPuente={
+  Store, ACI,
+  estado:state,
+  serviceOptions:()=>serviceOptions, hasServiceStep:()=>hasServiceStep,
+  serviceError:()=>serviceError, nextButton:()=>nextButton,
+  pintarPreguntaDeLaCompra, propositosRuta, saberesDelProposito, saberActual,
+  aplicarSaberPorDefecto, elegidoEnLaCompra, aplicarRutaPorDefecto, aplicarPropositoPorDefecto,
+  applyOptionalSteps, applyLineCopy, olvidarElCaso, resetProjectForLine, updateEstimate,
+  pasosVisibles, showStep,
+  /* La lista de reglas del mueble la usan la validación y el motor: la pone el módulo del paso. */
+  pintarPiezas, syncOtherFurniture,
+  ponerReglasDelMueble:(reglas,rangos)=>{furnitureRules=reglas;measureRanges=rangos;furnitureCards=[];}
+};
+
+/* PRIMERO se enganchan los módulos de src/ y DESPUÉS se pinta: una vista que se pinta antes de estar
+ * conectada deja su paso vacío (la lección del backoffice, que costó una tabla en blanco). */
+if(window.Wizard&&Wizard.compra)Wizard.compra.conectar(window.CotizadorPuente);
 renderAllOptions();
 /* La lista de compra: la fila nueva se pide a mano, y el pedido anterior se busca cuando el cliente
  * lo pide (o con Enter). Ninguna de las dos cosas avanza sola. */

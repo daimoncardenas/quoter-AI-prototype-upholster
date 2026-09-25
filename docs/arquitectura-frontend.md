@@ -128,3 +128,32 @@ sin errores.
 `Cardyram Digital · Cardyram · Lía · cdy.v1. · cotizaciones@cardyram.example`; el tema se lee en vivo
 (`--accent #0d7d84`, `--ink #001d42`, `Inter`); la barra se ve igual; `page errors: none`; y
 `tests/styles.spec.mjs` → **ALL PASS**.
+
+## Corte 4 — lo que va quedando (25/09)
+
+Primera pieza mudada: **`src/wizard/compra.js`** — las tres preguntas de la compra («¿qué necesitas?»,
+«¿para qué?», «¿qué sabes del daño?»), que son una sola pantalla y comparten el pintor de la grilla.
+Con `src/wizard/casa.js` (el puente del taller, hermano del del backoffice) y `src/wizard/index.js`
+(`window.Wizard`). La página conserva las puertas `renderServiceOptions/renderPurposeOptions/
+renderSaberOptions/renderAllOptions`.
+
+Verificado con el E2E de una línea: **28 s de reloj** (presupuesto 60), cierra una solicitud nueva
+(COT-1046), el backoffice la ve (10 cotizaciones) y abre su detalle con la tabla de piezas. Cero errores
+de página.
+
+Falta el resto de los pasos: mueble (y la copia que cambia por línea), medidas por pieza, fotos,
+telas/recomendación, revisión, contacto y el motor de validación — y después los cortes 5 (asistente) y
+6 (núcleo: estado y eventos, al final y a propósito).
+
+### Lecciones de este corte (para no repetirlas)
+
+- **Las vistas se enganchan ANTES de pintar.** El arranque pinta una vez; una vista que se pinta antes de
+  conectarse deja su tabla (o su paso) en blanco. En el backoffice quedó un solo `conectarLasVistas()`.
+- **Al mudar un bloque hay que barrer las referencias que quedan en la página.** `closePhoto` seguía
+  llamándose desde tres sitios del cierre global; ahora la página pregunta al módulo.
+- **El puente se llena al FINAL del script de la página**, no donde estaba el estado: expone nombres
+  (`ACI`) que se declaran más abajo y el objeto los tocaría en su zona muerta temporal.
+- **El chequeo de choques del empaquetador ve `src/`, no la página.** `TENANT` estaba declarada en el
+  paquete y otra vez en `index.html`: los `const` de nivel superior comparten ámbito entre scripts y la
+  página deja de correr («Identifier 'TENANT' has already been declared»). Se borró la vieja.
+  **Pendiente**: extender ese chequeo a los scripts de las páginas.
