@@ -228,6 +228,30 @@
   .chat-fab{display:none}
   .journey .chat-panel{position:static;z-index:auto;width:auto;height:auto;flex:1 1 auto;min-height:0;margin:0 0 14px;border-radius:6px;box-shadow:0 16px 40px rgba(0,0,0,.28);transform:none;opacity:1;pointer-events:auto;display:none;max-height:var(--chat-band,none)}
   .journey .chat-panel.open{display:flex}
+  /* La conversación de Lía, en la MISMA banda que el chat viejo (dueño, 25/09: «nooo en el mismo
+     lugar donde está el otro»): en escritorio reemplaza la lista de progreso; al cerrarla, el
+     progreso vuelve. En celular la barra se neutraliza y ella flota, como el otro. */
+  .journey .voz-modal{position:static;z-index:auto;display:block;width:100%;margin:0 0 14px;padding:0;flex:1 1 auto;min-height:0;max-height:var(--chat-band,none)}
+  /* En la barra el cajón de mensajes es el único que cede: así la zona de fotos y el formulario
+   * quedan siempre a la vista. */
+  .journey .voz-messages{min-height:0}
+  /* Apretado fino en la barra: con los rellenos gordos, la ventana de mensajes no alcanzaba ni para
+   * ver las palabras del cliente junto a la pregunta de ella (dueño, 25/09). */
+  .journey.chatting .voz-card header{padding:10px 14px}
+  .journey.chatting .voz-messages{padding:10px 12px;gap:8px}
+  .journey.chatting .voz-onda{padding:0 14px;height:20px}
+  .journey.chatting .voz-nota{margin:2px 14px 4px}
+  .journey.chatting .voz-fotos{padding:0 12px 4px}
+  .journey.chatting .voz-fotos .voz-foto-zona{padding:7px 12px;gap:9px}
+  .journey.chatting .voz-form{padding:8px 12px}
+  /* Y el botón de conversar sobra mientras la conversación está abierta: su franja es de los
+     mensajes (dueño, 25/09: «the user cant see… their own words»). */
+  .journey.chatting .journey-foot{display:none}
+  .journey .voz-card{width:auto;height:100%;border-radius:6px;box-shadow:0 16px 40px rgba(0,0,0,.28)}
+  .journey .voz-messages{mask-image:linear-gradient(to bottom,#000 calc(100% - 18px),transparent)}
+  /* Con la conversación abierta, el aviso flotante de ella (la burbuja) no tiene qué decir: se
+     calla, si no queda una tarjeta encima de la otra. */
+  .journey.chatting .assistant-bubble{display:none}
   .journey.chatting .journey-intro,.journey.chatting .step-list{display:none}
   /* El texto cede ante ella: el panel nunca le pasa por encima de la cabeza. */
   .journey .chat-panel .messages{mask-image:linear-gradient(to bottom,#000 calc(100% - 18px),transparent)}
@@ -273,32 +297,49 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
 .voz-fab span{font-size:.9rem;line-height:1}
 .voz-fab{border:1px solid var(--tint-quick-question-border);background:white;color:var(--ink);border-radius:40px;padding:9px 11px;font-size:.64rem;box-shadow:0 10px 30px rgba(var(--rgb-shadow),.16);display:flex;gap:7px;align-items:center}
 .voz-fab span{font-weight:700}
-.voz-modal{position:fixed;inset:0;z-index:6;display:grid;place-items:center;padding:20px;background:rgba(var(--rgb-shadow),.10);backdrop-filter:blur(3px) saturate(1.05);-webkit-backdrop-filter:blur(3px) saturate(1.05)}
+/* La conversación de Lía vive DONDE VIVE EL CHAT ORIGINAL (dueño, 25/09: «we need the modal in the
+ * same part where exist the chat original»): anclada abajo a la derecha, como `.chat-panel`. Y SIN
+ * velo ni desenfoque: el wizard moviéndose solo detrás es lo que impresiona — un velo lo escondía. */
+.voz-modal{position:fixed;right:24px;bottom:calc(22px + var(--banner-h,0px));z-index:7;display:block;padding:0}
+/* Con la conversación abierta el cotizador SE VE pero NO SE EDITA (dueño, 25/09: «the wizard can be
+ * seen but not edit while the chat conversation is working»): el cliente habla, el formulario se
+ * llena solo. Los pasos y el llenado por código siguen vivos; el ratón no. */
+.app-shell.conversando .workspace{pointer-events:none}
 /* El velo cubre el FORMULARIO: el asistente queda por encima — su personaje (la capa 3D del
  * sidebar, `#assistantStage`) y su panel. El z-index del personaje lo pone la propia capa
  * (assistant-presence.js) cuando coloca; aquí se respeta esa jerarquía, no se pisa. */
 .chat-panel,#chatPanel,.assistant-stage,#assistantStage{z-index:7}
 .voz-modal[hidden]{display:none}
-.voz-card{width:min(560px,calc(100vw - 32px));max-height:min(80vh,720px);display:flex;flex-direction:column;border-radius:8px;overflow:hidden;background:rgba(255,255,255,.66);backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);border:1px solid rgba(255,255,255,.6);box-shadow:0 30px 90px rgba(var(--rgb-shadow-deep),.28)}
-.voz-card header{background:rgba(255,255,255,.72);border-bottom:1px solid var(--line);padding:14px 16px;display:flex;justify-content:space-between;align-items:center}
+.voz-card{width:min(365px,calc(100vw - 30px));height:min(490px,calc(100vh - 140px));display:flex;flex-direction:column;border-radius:5px;overflow:hidden;color:var(--ink);background:#fff;border:1px solid var(--line);box-shadow:0 25px 80px rgba(var(--rgb-shadow-deep),.3)}
+.voz-card header{background:#fff;border-bottom:1px solid var(--line);padding:14px 16px;display:flex;justify-content:space-between;align-items:center}
 .voz-card header>div{display:flex;gap:10px;align-items:center}
 .voz-card header p{margin:0}
 .voz-card header b,.voz-card header small{display:block}
 .voz-card header b{font-size:.74rem}
 .voz-card header small{font-size:.58rem;color:var(--muted);margin-top:3px}
 .voz-card header button{border:0;background:transparent;font-size:1.5rem;line-height:1;color:var(--ink)}
-.voz-messages{flex:1;min-height:180px;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.voz-messages{flex:1 1 auto;min-height:120px;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+/* Lo demás NO se encoge: en la barra hay poco alto y con todo apretado la zona de fotos quedaba
+ * cortada y las palabras del cliente se perdían en un cajón diminuto (dueño, 25/09: «the user cant
+ * see the upload photos and their own words when is written»). El único elástico es la lista. */
+.voz-onda,.voz-nota,.voz-fotos,.voz-fotos .voz-foto-zona,.voz-contacto,.voz-permiso,.voz-form{flex:0 0 auto}
 .voz-messages .message{max-width:88%}
 .voz-fotos{padding:0 16px 6px}
 .voz-fotos .voz-foto-zona{display:flex;gap:12px;align-items:center;border:1px dashed var(--line);border-radius:6px;padding:10px 14px;background:rgba(255,255,255,.5);cursor:pointer;outline-offset:2px}
 .voz-fotos .voz-foto-zona p{margin:0}
-.voz-fotos .voz-foto-zona b{display:block;font-size:.68rem}
+.voz-fotos .voz-foto-zona b{display:block;font-size:.68rem;color:var(--ink)}
 .voz-fotos .voz-foto-zona small{font-size:.58rem;color:var(--muted)}
 .voz-fotos .voz-foto-zona>span{font-size:1.2rem;color:var(--accent)}
 .voz-fotos[hidden]{display:none}
+/* Cuando lo que falta son LAS FOTOS, el componente lo dice: su caja se enciende (dueño, 25/09:
+ * «component of photo should be seen»). Es una señal del mismo idioma que las del formulario. */
+.voz-fotos.pidiendo .voz-foto-zona{border-color:var(--accent);background:rgba(var(--rgb-accent),.06);box-shadow:0 0 0 4px rgba(var(--rgb-accent),.07)}
+.voz-fotos.pidiendo .voz-foto-zona b{color:var(--ink)}
 .voz-form{display:flex;gap:8px;align-items:center;border-top:1px solid var(--line);padding:10px 14px;background:rgba(255,255,255,.6)}
-.voz-form input{flex:1;border:1px solid var(--line);border-radius:4px;padding:9px 10px;font-size:.72rem;font-family:inherit;background:white}
-.voz-form button{width:36px;height:36px;border:0;border-radius:50%;background:var(--ink);color:white;font-size:.9rem}
+.voz-form input{flex:1 1 auto;min-width:0;border:1px solid var(--line);border-radius:4px;padding:9px 10px;font-size:.72rem;font-family:inherit;background:white}
+/* Los botones no se encogen nunca: con el texto largo del campo, el de enviar quedaba cortado
+ * contra el borde de la tarjeta (dueño, 25/09: «this button blue… is cut»). */
+.voz-form button{flex:0 0 auto;width:36px;height:36px;border:0;border-radius:50%;background:var(--ink);color:white;font-size:.9rem}
 .voz-form .voz-mic{background:white;color:var(--ink);border:1px solid var(--line)}
 .voz-form .voz-mic:disabled{opacity:.45;cursor:not-allowed}
 .voz-form .voz-mic[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:white;box-shadow:0 0 0 4px rgba(var(--rgb-accent),.18)}
@@ -311,7 +352,7 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
 .voz-nota{margin:4px 16px 8px;font-size:.56rem;color:var(--muted);line-height:1.4}
 .voz-nota[hidden]{display:none}
 html[data-assistant="off"] .voz-fab,html[data-assistant="off"] .voz-modal{display:none!important}
-@media(max-width:650px){.voz-fab{left:auto;right:14px;bottom:calc(128px + var(--banner-h,0px))}.voz-card{max-height:86vh}}
+@media(max-width:650px){.voz-fab{left:auto;right:14px;bottom:calc(128px + var(--banner-h,0px))}.voz-modal{right:15px;bottom:calc(80px + var(--banner-h,0px));left:auto;top:auto}.voz-card{height:min(560px,calc(100vh - 200px))}}
 @media(min-width:651px){
   html,body{height:100%;overflow:hidden}
   body{padding-bottom:0}
@@ -480,9 +521,11 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
       <!-- El aviso de ella: flota justo encima de su cabeza (--notice-bottom lo calcula la
            capa 3D desde el hueso de la cabeza), sobre la barra, sin tapar el cotizador. -->
       <div class="assistant-bubble" id="assistantBubble" role="status" aria-live="polite" hidden><p class="bubble-text"></p><p class="bubble-foot"><b class="bubble-who" data-assistant-name>{{ASSISTANT_DEFAULT_NAME}}</b><button type="button" class="bubble-action" data-open-chat>Ver en el chat</button></p><button type="button" class="bubble-close" aria-label="Cerrar mensaje">×</button></div>
-      <!-- La conversación que llena el contrato (docs/contrato-conversacional.md): una capa
-           TRANSPARENTE sobre el formulario, que se ve moverse detrás mientras ella pregunta.
-           El estado es uno solo: lo que aquí se declara es lo que el formulario ya dibuja. -->
+      <!-- La conversación que llena el contrato (docs/contrato-conversacional.md) vive AQUÍ, en la
+           MISMA banda que el chat viejo (dueño, 25/09: «nooo en el mismo lugar donde está el otro»):
+           en escritorio reemplaza la lista de progreso (.journey.chatting) —el wizard se ve moverse
+           detrás, que es lo impresionante— y en celular flota, como el otro. El estado es uno solo:
+           lo que aquí se declara es lo que el formulario ya dibuja. -->
       <div class="voz-modal" id="vozModal" role="dialog" aria-modal="false" aria-label="Conversación para llenar tu cotización" hidden>
         <div class="voz-card">
           <header>
@@ -941,7 +984,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 {{CONTRATO_SCRIPT}}
 {{ASSISTANT_FENCE_SCRIPT}}
   <script>
-const state={step:1,furniture:'Sofá',furnitureNote:'',photos:[],analyzed:false,fabric:null,fabricTouched:false,service:null,damages:[],ruta:null,proposito:null,saber:null};
+const state={step:1,furniture:'',furnitureNote:'',photos:[],analyzed:false,fabric:null,fabricTouched:false,service:null,damages:[],ruta:null,proposito:null,saber:null};
 /* Con lo que nace el cotizador: cambiar de línea devuelve el mueble a este valor (y a la primera
  * tarjeta, que es la que renderFurnitureOptions marca) — el paquete puede no llamarlo «Sofá». */
 const FURNITURE_INICIAL=state.furniture;
@@ -1220,10 +1263,13 @@ function renderFurnitureOptions(){
     measureRanges[f.name]=f.ranges;
   });
   const grid=document.querySelector('.furniture-grid');
-  grid.innerHTML=list.map((f,i)=>`<button type="button" class="furniture-card${i===0?' selected':''}" data-furniture="${esc(f.name)}" role="radio" aria-checked="${i===0}" tabindex="${i===0?0:-1}"><span class="furniture-icon">${esc(f.icon||'▰')}</span><b>${esc(f.name)}</b><small>${esc(f.hint||'')}</small></button>`).join('');
+  grid.innerHTML=list.map((f,i)=>`<button type="button" class="furniture-card${state.furniture===f.name?' selected':''}" data-furniture="${esc(f.name)}" role="radio" aria-checked="${state.furniture===f.name}" tabindex="${state.furniture===f.name||(!state.furniture&&i===0)?0:-1}"><span class="furniture-icon">${esc(f.icon||'▰')}</span><b>${esc(f.name)}</b><small>${esc(f.hint||'')}</small></button>`).join('');
   furnitureCards=[...grid.querySelectorAll('.furniture-card')];
   furnitureCards.forEach(card=>card.addEventListener('click',()=>selectFurniture(card)));
-  if(!list.some(f=>f.name===state.furniture))state.furniture=list.length?list[0].name:'';
+  /* NADA viene marcado por defecto (dueño, 25/09: «no you need put without select default»): el que
+   * la parrilla traiga «Sofá» primero no es una respuesta del cliente. Si el estado trae un mueble
+   * que ya no existe en la lista, se limpia; nunca se inventa uno. */
+  if(state.furniture&&!list.some(f=>f.name===state.furniture))state.furniture='';
   document.getElementById('furnitureType').value=state.furniture;
   syncOtherFurniture();
 }
@@ -1336,6 +1382,9 @@ document.getElementById('furnitureOther').addEventListener('input',e=>{
 function selectFurniture(card){
   furnitureCards.forEach(c=>{const on=c===card;c.classList.toggle('selected',on);c.setAttribute('aria-checked',String(on));c.tabIndex=on?0:-1});
   state.furniture=card.dataset.furniture;
+  /* El sendero lo refleja enseguida: el mueble ya no viene por defecto y su tramo espera esta
+   * elección (dueño, 25/09). */
+  if (typeof pintarElSendero === 'function') pintarElSendero();
   document.getElementById('furnitureType').value=state.furniture;
   document.querySelectorAll('[data-furniture-label]').forEach(x=>x.textContent=state.furniture.toLowerCase());
   renderQuantityOptions();
@@ -1677,7 +1726,7 @@ function declaredRows(){
   /* Cada fila existe si el paso que la declara existe para esta línea: la arquitectónica no habla
    * de muebles, medidas ni preferencias, y su resumen no puede inventarlos. */
   const rows=[['Motivo',state.service?state.service.label:'Sin elegir']];
-  if(pideMueble())rows.push(['Mueble',rule.scaleByQty&&seatsSelect.value==='1'?state.furniture:`${state.furniture} · ${qty}`]);
+  if(pideMueble())rows.push(['Mueble',!state.furniture?'Sin elegir':(!rule?state.furniture:(rule.scaleByQty&&seatsSelect.value==='1'?state.furniture:`${state.furniture} · ${qty}`))]);
   if(pideMedidas()){
     rows.push(['Medidas',w&&h&&d?`${w} × ${h} × ${d} cm (ancho × alto × fondo)`:'Sin registrar']);
     rows.push(['Qué se tapiza',coverage]);
@@ -2072,7 +2121,9 @@ function consumo(){
 }
 function estimate(){return consumo().range}
 function estimateBaseline(){
-  const rule=furnitureRules[state.furniture];let min=rule.meters[0],max=rule.meters[1];const width=+document.getElementById('width').value||200;const coverage=document.getElementById('coverage').value;
+  /* Sin mueble elegido no hay estimación: la parrilla arranca sin ninguno marcado (dueño, 25/09:
+   * «no you need put without select default»), y pedir metros a la nada reventaba la página. */
+  const rule=furnitureRules[state.furniture];if(!rule)return [0,0];let min=rule.meters[0],max=rule.meters[1];const width=+document.getElementById('width').value||200;const coverage=document.getElementById('coverage').value;
   if(rule.widthScaled){const factor=Math.max(.75,Math.min(1.4,width/210));min*=factor;max*=factor}
   if(rule.scaleByQty){const qty=+seatsSelect.value||1;min*=qty;max*=qty}
   const s=Store.settings();
@@ -2523,6 +2574,8 @@ function updateEstimate(){
 }
 function furnitureSummaryLabel(){
   const rule=furnitureRules[state.furniture];const qtyText=seatsSelect.options[seatsSelect.selectedIndex].text;
+  /* Sin mueble elegido (la parrilla ya no marca ninguno por defecto) no hay etiqueta que armar. */
+  if(!rule)return state.furniture||'—';
   // "Poltrona · 1 poltrona" reads badly; a single piece needs no count.
   if(rule.scaleByQty&&seatsSelect.value==='1')return state.furniture;
   return `${state.furniture} · ${qtyText}`;
@@ -2613,7 +2666,7 @@ async function submitQuote(){
               phone:document.getElementById('phone').value.trim()},
     furniture:state.furniture,
     service:state.service?{id:state.service.id,label:state.service.label,journey:state.service.journey}:null,
-    quantityLabel:furnitureRules[state.furniture].scaleByQty&&seatsSelect.value==='1'?'':seatsSelect.options[seatsSelect.selectedIndex].text,
+    quantityLabel:(furnitureRules[state.furniture]||{}).scaleByQty&&seatsSelect.value==='1'?'':seatsSelect.options[seatsSelect.selectedIndex].text,
     measures:{width:+document.getElementById('width').value||null,
               height:+document.getElementById('height').value||null,
               depth:+document.getElementById('depth').value||null},
@@ -2699,6 +2752,8 @@ const journeyShell=document.querySelector('.journey');
 /* La conversación ocupa la barra (y el progreso se guarda) en escritorio; en el
  * celular el panel flota y esto no cambia nada visual. */
 function openChat(){
+  /* El chat viejo cede ante la conversación nueva: si Lía está abierta, se cierra al abrir este. */
+  if (typeof cerrarLaConversacion === 'function') { const m = document.getElementById('vozModal'); if (m && !m.hidden) cerrarLaConversacion(); }
   chatPanel.classList.add('open');chatPanel.setAttribute('aria-hidden','false');
   if(journeyShell){journeyShell.classList.add('chatting');journeyShell.setAttribute('aria-label','Conversación con '+(Store.assistant().name||'el asistente'))}
   unreadMark(true);document.getElementById('chatInput').focus();greetWithContext();
@@ -2997,7 +3052,7 @@ function mundoDelContrato(){
     /* El flujo del wizard (qué pasos tiene a la vista ESTA rama): el contrato lo lee para saber qué
      * campos mandan — los pasos no se esconden con `hidden`, viajan con `skippedSteps`. */
     flujo: typeof pasosVisibles === 'function' ? pasosVisibles() : [],
-    mueble: { nombre: state.furniture, descripcion: (caja('furnitureOther') || {}).value || '' },
+    mueble: { nombre: state.furniture, descripcion: (caja('furnitureOther') || {}).value || '', elegido: !!voz.muebleDicho },
     ruta: ruta ? Object.assign({}, ruta, { rutasConLista: RUTAS_CON_LISTA }) : null,
     rutas: rutasLine(), propositos: propositosRuta(), saberes: saberesDelProposito(),
     fotos: { cargadas: state.photos.length, min: min.min },
@@ -3036,11 +3091,17 @@ function mundoDelContrato(){
 /* Lo que ella pregunta. La frase es suya (y con la API la dirá con sus palabras); el HECHO —qué
  * falta y qué valores son legales— es del contrato. */
 const PREGUNTA_VOZ = {
-  linea: '¿Qué necesitas hacer? ' + (Store.services() || []).map(s => s.label).join(', ') + '.',
+  /* La lista de líneas sale de la MISMA rejilla del paso 0 (las que su plan habilita), no del
+   * catálogo entero: la pregunta listaba «Reparación y restauración» en planes que no la traen
+   * (visto en la captura del 25/09) — con respaldo a las habilitadas si la rejilla aún no pintó. */
+  linea: () => '¿Qué necesitas hacer? ' + ((lasLineasDelCliente().map(l => l.rotulo).join(', '))
+    || (Store.services() || []).filter(s => s.enabled).map(s => s.label).join(', ')) + '.',
   ruta: () => '¿Quieres una compra nueva o completar un pedido anterior?',
   proposito: () => '¿Para qué necesitas la tela? ' + propositosRuta().map(p => p.label).join(', ') + '.',
   saber: () => '¿Qué conoces ya? ' + saberesDelProposito().map(s => s.label).join(', ') + '.',
-  mueble: () => '¿Qué mueble vamos a cotizar? ' + Store.activeFurniture().map(f => f.name).join(', ') + '.',
+  /* La pregunta la hace con las palabras del FORMULARIO (dueño, 25/09: «assistant should ask "que
+   * mueble quieres renovar"»): aunque «Sofá» venga por defecto, el cliente lo confirma o lo cambia. */
+  mueble: () => '¿Qué mueble quieres renovar? ' + Store.activeFurniture().map(f => f.name).join(', ') + ', o cuéntame cuál.',
   fotos: (f) => `Porfa sube al menos ${f.restantes} ${f.restantes === 1 ? 'foto' : 'fotos'} para conocer mejor tu mueble.`,
   danos: () => '¿Qué hay que revisar? ' + [...document.querySelectorAll('#damageGrid input')].map(i => i.dataset.label || i.value).join(', ') + ', o «que lo revisen».',
   medidas: (f) => `¿Cuánto mide tu ${String(state.furniture || 'mueble').toLowerCase()}? Dime ancho, alto y fondo en centímetros.`,
@@ -3211,12 +3272,20 @@ async function aplicarLoDicho(id, texto){
       return dicho ? { ok: true, dicho } : { ok: false, motivo: 'no reconocí esa respuesta', paso: 23 };
     }
     case 'mueble': {
-      const dicho = elegirTarjeta('.furniture-card', texto);
+      let dicho = elegirTarjeta('.furniture-card', texto);
+      /* «Otro» solo si DE VERDAD no hay tarjeta: si el valor propuesto es «Otro» pero las palabras
+       * del cliente nombran una del catálogo («es un cabecero»), la tarjeta manda (dueño, 25/09:
+       * «Cabecero» terminó como «Otro» con la descripción). */
+      if (dicho && normalizar(dicho) === 'otro' && voz.ultimoDicho) {
+        const porVoz = elegirTarjeta('.furniture-card', voz.ultimoDicho);
+        if (porVoz && normalizar(porVoz) !== 'otro') { voz.muebleDicho = true; return { ok: true, dicho: porVoz }; }
+      }
       if (!dicho) return { ok: false, motivo: 'ese mueble no está en el catálogo', paso: 1 };
       if (normalizar(dicho) === 'otro') {
         const desc = String(texto).replace(/otro/i, '').replace(/[,.]/g, ' ').trim();
         if (desc) { const campo = document.getElementById('furnitureOther'); if (campo) { campo.value = desc; campo.dispatchEvent(new Event('input', { bubbles: true })); } }
       }
+      voz.muebleDicho = true;
       return { ok: true, dicho };
     }
     case 'fotos':
@@ -3459,6 +3528,62 @@ function estimarInsumosSiToca(){
     }
   } catch (err) { /* sin mano a la vista, el campo seguirá faltando para el taller */ }
 }
+/* EL WIZARD CAMINA CON LA CONVERSACIÓN (dueño, 25/09: «assistant can click and "continuar"»):
+ * cuando lo que falta vive en otro paso, ella pulsa «Continuar» —el botón de verdad, con su
+ * validación— y el formulario avanza a la vista, paso a paso; si el cotizador la frena (a ese paso
+ * aún le falta algo suyo), se salta directo como antes, para que el control exista y se pueda
+ * pintar. Nunca camina HACIA el último paso (ahí «Continuar» se vuelve «Enviar pre-cotización» y el
+ * envío es del cierre). */
+function caminarElWizard(destino){
+  const v = typeof pasosVisibles === 'function' ? pasosVisibles() : [];
+  if (!v.length || v.indexOf(Number(destino)) < 0) return false;
+  for (let i = 0; i < 12; i++) {
+    if (state.step === Number(destino)) return true;
+    const actual = v.indexOf(state.step);
+    if (actual < 0 || actual >= v.length - 1) return false;
+    /* No se pisa el último paso con un clic (es el envío), salvo que el destino sea él mismo. */
+    if (v.length - 1 === actual + 1 && Number(v[actual + 1]) === 15 && Number(destino) !== 15) return false;
+    const antes = state.step;
+    try { nextButton.click(); } catch (e) { return false; }
+    if (state.step === antes) return false;
+  }
+  return state.step === Number(destino);
+}
+/* El paso del wizard que ALBERGA un control (las fotos viven en el paso 1, «Tu mueble»): se lee del
+ * DOM, no de una tabla. Devuelve null si no puede saberse. */
+function elPasoQueAlberga(idControl){
+  try {
+    const el = document.getElementById(idControl); if (!el) return null;
+    const paso = el.closest('.wizard-step'); if (!paso) return null;
+    const n = paso.dataset ? (paso.dataset.step != null ? paso.dataset.step : paso.dataset.stepIndex) : null;
+    return n == null || n === '' ? null : Number(n);
+  } catch (e) { return null; }
+}
+/* Avanza la vista al paso de lo que falta AHORA: pulsando «Continuar» (`caminarElWizard`) o saltando
+ * si el cotizador la frena. Se llama en los DOS caminos —el simulado y el del modelo—: con el modelo
+ * el wizard se quedaba quieto en el paso 0 porque este avance vivía solo en la pregunta del respaldo
+ * (dueño, 25/09: «dont click continue… look»). */
+function seguirAlPasoQueToca(){
+  try {
+    const faltan = Contrato.faltantes(mundoDelContrato());
+    const f = faltan[0]; if (!f) return;
+    let destino = f.paso != null ? Number(f.paso) : (f.foco ? elPasoQueAlberga(f.foco) : null);
+    if (destino == null) {
+      const conPaso = faltan.filter(x => x.paso != null);
+      destino = conPaso.length ? Number(conPaso[0].paso) : null;
+    }
+    if (destino == null || state.step === destino) return;
+    /* LA TELA NO MUEVE EL WIZARD (dueño, 25/09: «while is stop in this page… dont click the button
+     * "continue"»): la página que se queda a la vista es la que el cliente venía viendo —la
+     * revisión— y la elección entra por la conversación. La rejilla de telas se pinta igual, para
+     * que elegir aquí marque la tarjeta de allá. */
+    if (destino === 14) {
+      try { if (typeof renderFabrics === 'function' && !document.querySelectorAll('#fabricGrid .fabric-card').length) renderFabrics(); } catch (e) {}
+      return;
+    }
+    if (typeof caminarElWizard !== 'function' || !caminarElWizard(destino)) showStep(destino);
+  } catch (e) {}
+}
 function preguntarLoQueFalta(){
   /* Con la ventana cerrada no se pregunta ni se habla: el cierre corta la capa entera. */
   if (!voz.abierta) return;
@@ -3479,6 +3604,10 @@ function preguntarLoQueFalta(){
     return false;
   }
   voz.campo = f.id;
+  /* Cuando lo que falta son las fotos, el componente de fotos se enciende: su caja pasa a la señal
+   * de «esto es lo que falta ahora» (dueño, 25/09: «component of photo should be seen»). */
+  { const z = document.getElementById('vozFotos');
+    if (z) z.classList.toggle('pidiendo', f.id === 'fotos'); }
   /* El formulario de contacto se muestra SOLO cuando es lo que falta (y viene con lo ya escrito). */
   { const caja = document.getElementById('vozContacto');
     if (caja) {
@@ -3488,11 +3617,11 @@ function preguntarLoQueFalta(){
         if (de && a && !de.value) de.value = a.value || '';
       }
     } }
-  if (f.paso != null && typeof showStep === 'function' && state.step !== Number(f.paso)) showStep(Number(f.paso));
+  /* Un solo movedor: el wizard va al paso de lo que falta —caminando— y la tela no lo mueve. */
+  seguirAlPasoQueToca();
   decirEnLaConversacion(preguntaDelRespaldo(f));
   return true;
 }
-
 /* ---- El turno con el modelo, cuando lo hay: entiende y reformula (no lee un guion) ------------
  * El CONTRATO decide qué falta y qué valores son legales; el modelo decide cómo decirlo, entiende
  * lo que el cliente contestó (aunque conteste otra cosa) y vuelve a lo que falta. Lo que proponga
@@ -3541,6 +3670,8 @@ function promptDeLaConversacion(mundo){
     promptDeLaCasa(),
     'Ahora estás llenando la pre-cotización conversando, en voz alta con el cliente: hablas corto (una o dos frases), natural, como una persona del taller — no como un formulario.',
     'REGLA DE ORO: TODO se hace AQUÍ, en esta conversación. JAMÁS mandes al cliente al formulario ni le digas que toque opciones, pasos, ni zonas del cotizador: los pasos detrás son un espejo, y lo que él te declare aquí aparece allá solo. Si te falta la línea de servicio, OFRÉCELE TÚ las opciones aquí mismo (por ejemplo: «¿quieres retapizarlo, cambiarle la tela, o un mantenimiento?») y anótala con el id cuando responda — si dice el nombre, ya sabes cuál es. Si te dice que no entiende, explícale con un ejemplo cotidiano, aquí, sin señalarle ningún paso.',
+    'EL MUEBLE YA VIENE ELEGIDO en la parrilla del formulario (Sofá, por defecto): NO le preguntes al cliente qué mueble es ni se lo pidas — sería un hueco falso (dueño, 25/09: «sofa always is default.. but don ask about the furniture»). Solo si él dice que es otro mueble, anótalo («mueble» con el id del catálogo; «muebleOtro» con su descripción si de verdad no está).',
+    'PREGUNTA SOLO POR EL PRIMERO de esa lista de abajo, y por nada más: ni el mueble, ni la ciudad, ni datos de otros campos que aún estén pendientes. El ORDEN del contrato manda, aunque el paso del formulario que se vea atrás muestre otra cosa (dueño, 25/09: «dont ask according the step»). NUNCA cierres un turno sin preguntar por ese primero.',
     'LAS LÍNEAS DE SERVICIO DE ESTE CLIENTE son las de su plan (las de abajo). Si pide algo que ENCAJA en una de ellas, esa es su línea: NUNCA le digas que eso no se hace aquí si la lista la tiene. Entiende por SIGNIFICADO, no por el nombre: si describe lo que la línea HACE, esa es la línea (comprar telas, una tela, cuántos metros → la línea de tela; cambiar la tela, forrar, tapizar → la de tapizado; fabricar, hacerlo a la medida → la de a medida; limpieza, proteger, reparar → mantenimiento). Anótala con el id.\n'
       + (lasLineasDelCliente().map(l => '- ' + l.rotulo + (l.id ? ' («' + l.id + '»)' : '') + (l.detalle ? ': ' + l.detalle : '')).join('\n') || '- (ninguna a la vista)'),
     'Lo único que te falta de la pre-cotización:',
@@ -3743,7 +3874,17 @@ async function aplicarValorDelContrato(id, valor){
     }
     case 'muebleOtro': {
       const campo = document.getElementById('furnitureOther'); if (!campo) return { ok: false, motivo: 'sin campo' };
-      const limpio = String(valor || '').trim(); if (!limpio) return { ok: false, motivo: 'vacío' };
+      let limpio = String(valor || '').trim(); if (!limpio) return { ok: false, motivo: 'vacío' };
+      /* Muletillas y antecedentes fuera: «Perdón - Perdón - Cabecero» no es una descripción. */
+      for (let i = 0; i < 4; i++) {
+        const antes = limpio;
+        limpio = limpio.replace(/^(perd[oó]n(es)?|disculpa|perdona|ay|mmm+|bueno|listo|es un|es una|creo que|mejor|ser[ií]a)\b[\s,.:;¡!¿?—–-]*/gi, '').trim();
+        if (limpio === antes) break;
+      }
+      if (!limpio) return { ok: false, motivo: 'vacío' };
+      /* Si el mueble nombra una tarjeta del catálogo, es ESA tarjeta — no una descripción de «Otro». */
+      const deCatalogo = elegirTarjeta('.furniture-card', limpio);
+      if (deCatalogo && normalizar(deCatalogo) !== 'otro') { voz.muebleDicho = true; return { ok: true, dicho: deCatalogo }; }
       escribirCampo('furnitureOther', limpio); return { ok: true, dicho: limpio };
     }
     case 'revision': return aplicarLoDicho('revision', 'revisa');
@@ -3771,6 +3912,7 @@ async function elTurnoDeLaConversacion(dicho){
   /* El turno SIEMPRE procesa (lo que el cliente dijo entra al caso aunque cierre al medio); lo que
    * queda cortado con la ventana cerrada es hablar: `decirEnLaConversacion` y `preguntarLoQueFalta`
    * tienen su propia puerta (dueño, 25/09: «despite the modal had been closed Lia continue speak»). */
+  voz.ultimoDicho = String(dicho || '');
   decirEnLaConversacion(dicho, 'user');
   /* «Otra cosa» es otro caso: si el cliente pide empezar de cero, se olvida lo anterior ANTES de
    * responder — y ella lo confirma y vuelve a abrir. Frases completas, no palabras sueltas: «otra»
@@ -3834,11 +3976,13 @@ async function elTurnoDeLaConversacion(dicho){
         estimarInsumosSiToca();
         if (juicio.limpia) { decirEnLaConversacion(turno.decir); pintarProgresoDeLaConversacion(); }
         else preguntarLoQueFalta();
+        /* Si el modelo cierra el turno sin preguntar nada, el sistema pregunta por el pendiente: el
+         * cliente nunca se queda sin saber qué falta (dueño, 25/09: «dont ask according the step»). */
+        if (juicio.limpia && !/[¿?]/.test(String(turno.decir || ''))) preguntarLoQueFalta();
         const pendienteAhora = Contrato.faltantes(mundoDelContrato())[0];
         voz.campo = pendienteAhora ? pendienteAhora.id : null;
-        /* El wizard se pone en el paso del nuevo pendiente (ver `preguntarLoQueFalta`). */
-        if (pendienteAhora && pendienteAhora.paso != null && typeof showStep === 'function'
-          && state.step !== Number(pendienteAhora.paso)) showStep(Number(pendienteAhora.paso));
+        /* El wizard se pone en el paso del nuevo pendiente — caminando, como en el respaldo. */
+        seguirAlPasoQueToca();
         return;
       }
     } catch (err) { console.warn('[conversación] el modelo no contestó; responde el respaldo', err); }
@@ -3878,21 +4022,39 @@ async function elTurnoDeLaConversacion(dicho){
   decirEnLaConversacion(resultado.dicho ? 'Listo: ' + resultado.dicho + '.' : 'Listo.');
   if (resultado.recordar) decirEnLaConversacion('Y no olvides marcar la autorización del paso de contacto: eso solo lo puedes hacer tú.');
   pintarProgresoDeLaConversacion();
-  /* El formulario se mueve detrás: si el paso del campo que se acaba de declarar ya no es el que
-   * está a la vista, se lleva la vista a lo que falta ahora — el cliente ve el formulario llenarse. */
-  const siguiente = Contrato.faltantes(mundoDelContrato())[0];
-  if (siguiente && siguiente.paso != null && siguiente.paso !== state.step && PASO_DE[usado] === state.step) showStep(siguiente.paso);
+  /* El formulario se mueve detrás: la vista se va al paso de lo que falta ahora — caminando. */
+  seguirAlPasoQueToca();
   preguntarLoQueFalta();
   if (!revisado) decirEnLaConversacion('Con eso ya puedo calcular tu pre-cotización: la tienes en el último paso.');
 }
 
 function abrirLaConversacion(){
   const modal = document.getElementById('vozModal'); if (!modal) return;
+  /* Una sola conversación a la vez: al abrir Lía, el chat viejo se cierra (dueño, 25/09: «only
+   * one is transparent and another…»: no dos chats compitiendo). */
+  if (typeof closeChat === 'function') closeChat();
+  /* Y el progreso cede su banda: en escritorio, con ella abierta, se ve el formulario trabajando
+   * (el wizard se mueve solo detrás, que es lo impresionante). */
+  try { if (typeof journeyShell !== 'undefined' && journeyShell) journeyShell.classList.add('chatting'); } catch (e) {}
+  /* Y el cotizador se ve pero no se edita mientras ella trabaja (dueño, 25/09). */
+  try { const concha = document.querySelector('.app-shell'); if (concha) concha.classList.add('conversando'); } catch (e) {}
   voz.abierta = true; modal.hidden = false;
   if (!voz.mensajes.length) {
     /* Saluda COMO PERSONA, no con guion: se presenta, dice a qué se dedica y le pide el caso.
+     * Y saluda DISTINTO cada vez (dueño, 25/09: «that phrase can be random»): cuatro bienvenidas
+     * del mismo tono, al azar, sin repetir dos veces seguidas — el guion fijo se lee a robot.
      * La pregunta por lo que falta la hace el turno siguiente (el modelo), ya con lo que él diga. */
-    decirEnLaConversacion(`Mucho gusto, soy ${asistenteCfg().enabled ? asistenteCfg().name : 'tu asistente'}. Estoy para servirte: prestamos servicios para muebles — cuéntame tu caso y así sé cómo dirigirte.`);
+    const nombre = asistenteCfg().enabled ? asistenteCfg().name : 'tu asistente';
+    const bienvenidas = [
+      `Mucho gusto, soy ${nombre}. Estoy para servirte: prestamos servicios para muebles — cuéntame tu caso y así sé cómo dirigirte.`,
+      `Hola, soy ${nombre}. Cuéntame tu caso — qué mueble tienes y qué quieres hacerle — y yo te voy dirigiendo.`,
+      `Soy ${nombre}, un gusto atenderte. Dime qué necesitas para tu mueble y lo vamos armando juntos.`,
+      `Con gusto, soy ${nombre}. Cuéntame qué mueble quieres trabajar y te acompaño paso a paso.`,
+    ];
+    let cual = Math.floor(Math.random() * bienvenidas.length);
+    if (cual === voz.ultimaBienvenida) cual = (cual + 1) % bienvenidas.length;
+    voz.ultimaBienvenida = cual;
+    decirEnLaConversacion(bienvenidas[cual]);
     if (proveedorIA() !== 'api') preguntarLoQueFalta();
   } else { preguntarLoQueFalta(); }
   const input = document.getElementById('vozInput'); if (input) input.focus({ preventScroll: true });
@@ -3903,6 +4065,8 @@ function abrirLaConversacion(){
 function cerrarLaConversacion(){
   const modal = document.getElementById('vozModal'); if (modal) modal.hidden = true;
   voz.abierta = false;
+  try { if (typeof journeyShell !== 'undefined' && journeyShell) journeyShell.classList.remove('chatting'); } catch (e) {}
+  try { const concha = document.querySelector('.app-shell'); if (concha) concha.classList.remove('conversando'); } catch (e) {}
   /* Cerrar apaga el micrófono, calla la voz y corta el turno que venía: la capa se va entera. Sin
    * esto, el turno en camino (la respuesta del modelo o un aviso) llegaba DESPUÉS del cierre y ella
    * seguía hablando con la ventana cerrada (dueño, 25/09: «despite the model had been closed Lia
@@ -3944,6 +4108,10 @@ function cerrarLaConversacion(){
       a.dispatchEvent(new Event('change', { bubbles: true }));
     });
   }
+  /* Si el cliente toca una tarjeta de mueble en el formulario, el mueble queda dicho: la pregunta
+   * «¿Qué mueble quieres renovar?» no se le repite (dueño, 25/09). */
+  { const reja = document.querySelector('.furniture-grid');
+    if (reja) reja.addEventListener('click', () => { voz.muebleDicho = true; }, true); }
   /* El micrófono: enciende y apaga (el navegador pide su permiso la primera vez). */
   document.getElementById('vozMic').addEventListener('click', async e => {
     const boton = e.currentTarget;
@@ -3959,6 +4127,13 @@ function cerrarLaConversacion(){
     boton.textContent = vozAudio.silenciada ? '🔇' : '🔊';
     if (vozAudio.silenciada && 'speechSynthesis' in window) speechSynthesis.cancel();
   });
+  /* En un navegador sin reconocimiento (Firefox, por ejemplo), el botón del micrófono lo dice desde
+   * el principio: mide el nivel de tu voz, pero no te dicta — abajo se escribe (dueño, 25/09: la voz
+   * no se comporta igual en todos los navegadores; la app lo asume en vez de disimularlo). */
+  if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
+    const b = document.getElementById('vozMic');
+    if (b) { b.title = 'En este navegador no puedo oírte: escribe abajo'; b.setAttribute('aria-label', b.title); }
+  }
 })();
 
 /* ── La voz: el micrófono, su voz, y el componente que se mueve con el sonido ────────────
@@ -4003,7 +4178,8 @@ function laNotaDeLaVoz(){
   const Soporte = window.SpeechRecognition || window.webkitSpeechRecognition;
   let texto = 'El movimiento sigue el nivel real de tu micrófono, y lo mide este equipo.';
   if (!Soporte) texto += ' Este navegador no sabe reconocer voz: escríbeme con el teclado.';
-  else if ('processLocally' in Soporte.prototype) texto += ' El reconocimiento se pide en el equipo.';
+  /* Honestidad sobre el motor: el reconocimiento NO local (se dejó de pedir el 25/09: captaba
+   * peor) lo hace el servicio del navegador y su audio puede salir hacia allá — se dice. */
   else texto += ' El reconocimiento de voz lo hace el navegador: puede enviar el audio a su servicio (el texto es lo único que entra a tu cotización).';
   el.textContent = texto; el.hidden = false;
 }

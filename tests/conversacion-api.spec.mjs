@@ -63,6 +63,12 @@ const ultimoDicho = () => p.innerText('#vozMessages .message:last-child');
 console.log('\nEL MODELO HABLA EN SUS PALABRAS (no lee el guion)');
 await p.click('#vozFab');
 await p.waitForTimeout(400);
+/* El clic de «Continuar» se espía: en el camino REAL el wizard tiene que caminar solo
+ * (dueño, 25/09: «dont click continue… look» — con el modelo se quedaba quieto en el paso 0). */
+await p.evaluate(() => {
+  const b = document.getElementById('nextButton'); const orig = b.click.bind(b);
+  window.__continuars = 0; b.click = () => { window.__continuars++; orig(); };
+});
 turnos = [
   '{"decir": "¡Qué bueno! Un sofá retapizado queda como nuevo. ¿De qué mueble hablamos exactamente?", "valores": {"linea": "retapizado"}}',
   '{"decir": "Perfecto, una poltrona. Cuéntame de tus fotos cuando quieras.", "valores": {"mueble": "Poltrona"}}'
@@ -72,6 +78,8 @@ check('la respuesta del modelo es la que se muestra, no una del guion',
   /queda como nuevo/.test(await p.innerText('#vozMessages')), true);
 check('y lo que propuso entró al formulario (la línea)',
   await p.evaluate(() => state.service && state.service.id), 'retapizado');
+check('y el wizard ya siguió al paso que viene, sin que nadie pulse «Continuar»',
+  await p.evaluate(() => [window.__continuars >= 1, state.step]), [true, 1]);
 await responder('mejor es una poltrona, se me olvidaba');
 check('y en el turno siguiente el mueble propuesto llega al estado',
   await p.evaluate(() => state.furniture), 'Poltrona');
@@ -100,6 +108,34 @@ check('y el recibo del sistema dice lo anotado de verdad',
 check('y los insumos del taller se estiman solos: no se le preguntan al cliente',
   await p.evaluate(() => ({ estimados: insumosMarcados().length > 0,
     preguntado: /insumos del taller/i.test(document.getElementById('vozMessages').innerText) })), { estimados: true, preguntado: false });
+
+console.log('\nY «OTRO» DEL MODELO NO LE GANA A LA TARJETA QUE DICEN LAS PALABRAS (dueño, 25/09)');
+/* «Cabecero» —que es una tarjeta del catálogo— terminó como «Otro» con la descripción «Perdón -
+ * Perdón - Cabecero» porque el modelo propuso ese valor. Las palabras del cliente mandan. */
+turnos = ['{"decir": "Listo, lo dejo como cabecero.", "valores": {"mueble": "Otro", "muebleOtro": "Perdón - Perdón - Cabecero"}}'];
+await responder('perdón, perdón, es un cabecero');
+await p.waitForTimeout(400);
+check('el mueble queda en la TARJETA que nombran las palabras del cliente (no en «Otro»)',
+  await p.evaluate(() => [state.furniture, (document.getElementById('furnitureOther') || {}).value]), ['Cabecero', '']);
+
+console.log('\nY SI EL MODELO NO PREGUNTA, EL SISTEMA PREGUNTA POR EL PENDIENTE (dueño, 25/09)');
+/* El encabezado dice «fotos es lo que falta» y el modelo salió con la ciudad: la pregunta del
+ * pendiente tiene que oírse igual. Aquí el modelo cierra sin preguntar y el sistema la dice. */
+turnos = ['{"decir": "Listo, vamos bien.", "valores": {}}'];
+const antesDelTurno = await p.evaluate(() => document.getElementById('vozMessages').children.length);
+await responder('ok');
+await p.waitForTimeout(500);
+check('un turno del modelo sin pregunta se cierra con la pregunta del pendiente',
+  await p.evaluate((n) => {
+    const cola = [...document.getElementById('vozMessages').children].slice(n).map(m => m.textContent);
+    const pendiente = Contrato.faltantes(mundoDelContrato())[0];
+    /* Dos mensajes después del corte: la línea del modelo (que no pregunta) y la del sistema con el
+     * pendiente. La de las fotos no lleva «¿»: se comprueba el TEMA, no el signo. */
+    return {
+      aparte: cola.length > 1,
+      hablaDelPendiente: pendiente && pendiente.id === 'fotos' ? /foto/i.test(cola.join(' ')) : cola.length > 1,
+    };
+  }, antesDelTurno), { aparte: true, hablaDelPendiente: true });
 
 console.log('\nEL MODELO RECIBE LO QUE FALTA Y LA ORDEN DE NO REPETIRSE');
 const ultimoPedido = pedidos[pedidos.length - 1] || '';

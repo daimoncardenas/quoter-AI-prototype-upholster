@@ -97,7 +97,7 @@ check('y con la línea elegida, la línea ya no falta (siguen seis por hacer)',
   [false, 1]);
 
 const lleno = conLinea('retapizado', {
-  mueble: { nombre: 'Sofá', descripcion: '' },
+  mueble: { nombre: 'Sofá', descripcion: '', elegido: true },
   fotos: { cargadas: 3, min: 3 }, medidas: { valores: { width: 210, height: 85, depth: 90 }, mueble: 'Sofá' },
   revision: { analizada: true }, atencion: { cliente: 'Bogotá', servicio: 'Bogotá', sede: 'Principal' },
   /* Lo del oficio de esta línea: la tela ELEGIDA (no la automática), los insumos estimados y las

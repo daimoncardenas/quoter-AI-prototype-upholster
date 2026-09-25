@@ -189,10 +189,14 @@ check('y en el recorrido completo el sendero sigue sumando: el camino, el propó
  * no adelanta lo que no se ha preguntado. */
 check('y lo que todavía no se pregunta no aparece (el mueble va después de lo que sabe)',
   await page.evaluate(() => [state.furniture, pasosVisibles().indexOf(state.step) < pasosVisibles().length - 1]),
-  ['Sofá', true]);
+  ['', true]);
 
-/* Al avanzar al mueble, el tramo aparece: lo elegido se suma en orden. */
+/* Al avanzar al mueble, el tramo aparece: lo elegido se suma en orden. El mueble se ELIGE —ya no
+ * viene marcado por defecto (dueño, 25/09: «no you need put without select default»)— y sin elegir
+ * no hay tramo que sumar. */
 await avanzar();
+await page.waitForTimeout(150);
+await page.click('.furniture-card');
 await page.waitForTimeout(150);
 check('al llegar al mueble, su tramo se suma al sendero',
   (await elSendero()).tramos.slice(3), [await page.evaluate(() => state.furniture)]);

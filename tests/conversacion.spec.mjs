@@ -45,41 +45,93 @@ const responder = async (texto) => { await p.fill('#vozInput', texto); await p.p
 const ultimoDicho = () => p.innerText('#vozMessages .message:last-child');
 const todaLaConversacion = () => p.innerText('#vozMessages');
 
-console.log('\nLA CAPA: TRANSPARENTE, CON EL FORMULARIO DETRÁS');
+console.log('\nLA CAPA: SIN VELO, CON EL FORMULARIO DETRÁS A LA VISTA (dueño, 25/09: «we need the modal in the same part where exist the chat original… si el usuario puede ver cómo el wizard se mueve solo, es impresionante»)');
 await p.click('#vozFab');
 await p.waitForTimeout(300);
 const capa = await p.evaluate(() => {
   const modal = document.getElementById('vozModal'), card = modal.querySelector('.voz-card');
-  const est = getComputedStyle(card);
-  return { visible: !modal.hidden, card: est.backdropFilter, fondo: est.backgroundColor,
-    wizardDetras: !!document.querySelector('.wizard-step.active') };
+  const est = getComputedStyle(card), estModal = getComputedStyle(modal);
+  const caja = card.getBoundingClientRect();
+  return { visible: !modal.hidden, wizardDetras: !!document.querySelector('.wizard-step.active'),
+    blur: est.backdropFilter, fondo: est.backgroundColor, velo: estModal.backgroundColor,
+    derecha: Math.round(window.innerWidth - caja.right), abajo: Math.round(window.innerHeight - caja.bottom),
+    ancho: Math.round(caja.width) };
 });
-check('la conversación abre sobre el formulario, que sigue a la vista',
-  [capa.visible, capa.wizardDetras, /blur/.test(capa.card), /rgba\(255, 255, 255, 0\./.test(capa.fondo)],
-  [true, true, true, true]);
+check('la conversación abre sobre el formulario, que sigue a la vista — sin velo ni desenfoque',
+  [capa.visible, capa.wizardDetras, /none/.test(capa.blur), /rgba\(0, 0, 0, 0\)/.test(capa.velo)], [true, true, true, true]);
+check('y la tarjeta es sólida (el texto no compite con lo de atrás)',
+  /rgb\(255, 255, 255\)/.test(capa.fondo), true);
+check('y vive donde vive el chat original: dentro de la barra, y el progreso le cede su banda',
+  await p.evaluate(() => ({
+    chatting: document.querySelector('.journey').classList.contains('chatting'),
+    progreso: getComputedStyle(document.querySelector('.journey .step-list')).display,
+    enLaBarra: (() => { const m = document.getElementById('vozModal').getBoundingClientRect(),
+      j = document.querySelector('.journey').getBoundingClientRect();
+      return m.left >= j.left - 2 && m.right <= j.right + 2; })(),
+  })), { chatting: true, progreso: 'none', enLaBarra: true });
+/* Mientras ella trabaja, el cotizador se VE pero no se edita (dueño, 25/09), y el botón de enviar
+ * del modal cabe entero — el texto largo del campo ya no lo empuja fuera de la tarjeta. */
+check('y el cotizador queda a la vista pero sin ratón (se llena solo)',
+  await p.evaluate(() => getComputedStyle(document.querySelector('.workspace')).pointerEvents), 'none');
+check('y el botón de enviar del modal cabe entero en su fila',
+  await p.evaluate(() => {
+    const b = document.querySelector('.voz-form button[aria-label="Enviar"]').getBoundingClientRect();
+    const c = document.querySelector('.voz-card').getBoundingClientRect();
+    return b.width > 20 && b.right <= c.right + 1;
+  }), true);
 
 console.log('\nPRIMERA PREGUNTA: LA LÍNEA (con las de su plan)');
 const primera = await ultimoDicho();
-const lineas = await p.evaluate(() => (Store.services() || []).map(s => s.label));
+/* La verdad es la rejilla del paso 0 — las líneas que el plan de ESTE cliente habilita y que el
+ * cliente ve: el flag `enabled` del store trae una de más (visto el 25/09 con «Reparación»). */
+const lineas = await p.evaluate(() => lasLineasDelCliente().map(l => l.rotulo));
 check('pregunta por la línea y dice las opciones', lineas.every(l => primera.includes(l)), true);
 
 console.log('\nLO DICHO ENTRA AL FORMULARIO (estado uno solo)');
+/* EL WIZARD CAMINA SOLO (dueño, 25/09: «assistant can click and "continuar"» y «dont push
+ * continue… should continue with the next step»): ella pulsa el botón de verdad y el formulario
+ * avanza a la vista. Se espía el clic desde antes de la primera respuesta. */
+await p.evaluate(() => {
+  const b = document.getElementById('nextButton'); const orig = b.click.bind(b);
+  window.__continuars = 0; b.click = () => { window.__continuars++; orig(); };
+});
 await responder('quiero retapizar el sofá de mi casa');
 const trasLinea = await p.evaluate(() => ({ servicio: state.service && state.service.id, paso: state.step,
   progreso: document.getElementById('vozProgreso').textContent }));
 check('la línea queda elegida en el estado del formulario', /retapizado/.test(String(trasLinea.servicio)), true);
 check('y el progreso lo dice sobre lo que esa línea pide', /de 11/.test(trasLinea.progreso), true);
+/* Con la línea elegida, lo que falta son las fotos (sin paso): el wizard no se queda esperando —
+ * sigue al siguiente paso que existe, pulsando Continuar él mismo. */
+check('y el wizard ya siguió al paso que viene, sin que nadie pulse «Continuar»',
+  await p.evaluate(() => [window.__continuars >= 1, state.step]), [true, 1]);
 
 console.log('\nLAS FOTOS, POR EL COMPONENTE DE LA CONVERSACIÓN');
 check('el componente está a la vista desde el principio (no espera a que falten)',
   await p.evaluate(() => !document.getElementById('vozFotos').hidden), true);
 check('mientras faltan, ella las pide',
   await p.evaluate(() => ({ dicho: /fotos|foto/.test(document.getElementById('vozMessages').innerText) })), { dicho: true });
+/* Con las fotos como lo que falta, el componente lo dice encendiendo su caja (dueño, 25/09:
+ * «component of photo should be seen»). */
+check('y con las fotos pendientes, el componente se enciende (pidiendo)',
+  await p.evaluate(() => document.getElementById('vozFotos').classList.contains('pidiendo')), true);
 await p.setInputFiles('#vozFotoInput', FOTOS);
 await p.waitForTimeout(2200);
 check('las fotos entran al MISMO estado del formulario',
   await p.evaluate(() => state.photos.length), 3);
 check('y la cuenta del modal lo muestra', /3 de 3/.test(await p.innerText('#vozFotoCuenta')), true);
+check('y subidas, el componente deja de pedir',
+  await p.evaluate(() => document.getElementById('vozFotos').classList.contains('pidiendo')), false);
+
+console.log('\nLA PREGUNTA DEL MUEBLE — «SOFÁ» VIENE POR DEFECTO, PERO SE PREGUNTA');
+/* El formulario trae Sofá elegido, pero eso es un default, no una respuesta: ella pregunta con las
+ * palabras del formulario (dueño, 25/09: «assistant should ask "que mueble quieres renovar"»). */
+check('ella pregunta con las palabras del formulario, aunque el formulario arranque sin mueble marcado',
+  await p.evaluate(() => ({ dicho: /¿Qué mueble quieres renovar\?/.test(document.getElementById('vozMessages').innerText),
+    pendiente: (Contrato.faltantes(mundoDelContrato())[0] || {}).id })), { dicho: true, pendiente: 'mueble' });
+await responder('es un sofá de tres puestos');
+check('y decirlo lo deja elegido de verdad (y el pendiente se va)',
+  await p.evaluate(() => ({ dicho: !!voz.muebleDicho,
+    falta: Contrato.faltantes(mundoDelContrato()).some(f => f.id === 'mueble') })), { dicho: true, falta: false });
 
 console.log('\nLAS MEDIDAS: LO IMPOSIBLE NO ENTRA, LO POSIBLE SÍ');
 await p.fill('#vozInput', 'ancho 2000 alto 85 fondo 90'); await p.press('#vozInput', 'Enter');
@@ -93,6 +145,14 @@ await responder('ancho 210 alto 85 fondo 90');
 check('y tres medidas buenas entran juntas, cada una en su campo',
   await p.evaluate(() => ['width', 'height', 'depth'].map(i => document.getElementById(i).value)), ['210', '85', '90']);
 check('y en el orden del mueble, como el cliente las dijo', /210 × 85 × 90/.test(await p.innerText('#vozMessages')), true);
+/* El wizard quedó parado donde vive lo que falta AHORA, y llegó ahí pulsando Continuar (no por un
+ * salto): si el cotizador no la deja caminar —un paso intermedio suyo sin llenar—, salta, y el
+ * registro lo muestra. */
+const paseo = await p.evaluate(() => ({ clics: window.__continuars, paso: state.step,
+  falta: (Contrato.faltantes(mundoDelContrato())[0] || {}).paso }));
+console.log('   caminó: ' + JSON.stringify(paseo));
+check('y con el paso completo, el wizard caminó solo pulsando «Continuar» hasta el paso de lo que falta',
+  [paseo.clics >= 1, paseo.falta == null ? true : paseo.paso === Number(paseo.falta)], [true, true]);
 
 /* Las medidas de a POCO (dueño, 24/09: «de largo tiene 150 de alto 90…» / «de 90 también»): con UNA
  * sola medida faltante, un número suelto cae en esa — y la frase no exige las tres de una. */
@@ -125,6 +185,11 @@ check('ella pide la tela y la rejilla del cotizador está viva (los nombres los 
     return { campo: voz.campo, hayTelas: nombres.length > 0, nombra: /tela/i.test(dicho) };
   }), { campo: 'tela', hayTelas: true, nombra: true });
 const telas = await p.evaluate(() => [...document.querySelectorAll('#fabricGrid .fabric-card b')].map(x => x.textContent.trim()));
+/* La tela no mueve el wizard (dueño, 25/09: «while is stop in this page… dont click the button
+ * "continue"»): la página a la vista se queda donde estaba, y la rejilla de telas igual se pinta. */
+check('y la tela no movió el wizard de su página — la rejilla se pintó igual',
+  await p.evaluate(() => ({ paso: state.step, tarjetas: document.querySelectorAll('#fabricGrid .fabric-card').length })),
+  { paso: 13, tarjetas: 5 });
 await responder(telas[0]);
 check('decir una tela la marca en el propio cotizador (la tarjeta del formulario)',
   await p.evaluate(() => {

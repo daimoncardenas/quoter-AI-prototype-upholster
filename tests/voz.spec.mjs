@@ -74,6 +74,31 @@ await p.waitForTimeout(500);
 await p.click('#vozFab');
 await p.waitForTimeout(300);
 
+console.log('\nLA BIENVENIDA CAMBIA (dueño, 25/09: «that phrase can be random»)');
+/* Cuatro saludos del mismo tono, al azar, sin repetir dos veces seguidas: el guion fijo se lee a
+ * robot. Se abre tres veces más y ninguno de los saludos debe repetir al anterior. */
+const saludos = await p.evaluate(async () => {
+  const leer = () => {
+    const c = [...document.getElementById('vozMessages').children].filter(x => x.classList.contains('bot'))[0];
+    return c ? c.textContent : '';
+  };
+  const arranca = leer();
+  const siguen = [];
+  for (let i = 0; i < 3; i++) {
+    voz.mensajes.length = 0;
+    document.getElementById('vozMessages').innerHTML = '';
+    abrirLaConversacion();
+    await new Promise(r => setTimeout(r, 80));
+    siguen.push(leer());
+  }
+  return { arranca, siguen, nombre: [arranca, ...siguen].every(t => t.includes(asistenteCfg().name)), largos: [arranca, ...siguen].every(t => t.length > 30) };
+});
+check('cada apertura saluda distinto (y nunca dos veces seguidas)',
+  [saludos.arranca !== saludos.siguen[0], saludos.siguen[0] !== saludos.siguen[1], saludos.siguen[1] !== saludos.siguen[2]],
+  [true, true, true]);
+check('y cada saludo llama a la asistente por su nombre y dice algo, no una línea vacía',
+  [saludos.nombre, saludos.largos], [true, true]);
+
 console.log('\nEL MICRÓFONO: SE PIDE AL ABRIR, Y EL NIVEL REAL MUEVE LAS BARRAS');
 /* El dueño lo pidió así: al abrir la conversación el micrófono se pide DE UNA. */
 const alAbrir = await p.evaluate(() => ({ estado: document.getElementById('vozOnda').dataset.estado,
@@ -173,6 +198,8 @@ await p.click('#vozMic'); await p.waitForTimeout(600);
 await p.click('#vozCerrar'); await p.waitForTimeout(300);
 check('cerrar cierra el micrófono y la onda', await p.evaluate(() => ({ encendido: vozAudio.escuchando, modal: document.getElementById('vozModal').hidden })),
   { encendido: false, modal: true });
+check('y al cerrar, el cotizador vuelve a dejarse editar',
+  await p.evaluate(() => getComputedStyle(document.querySelector('.workspace')).pointerEvents), 'auto');
 /* Y CERRADA, LA LÍA NO VUELVE A HABLAR: el turno que venía en camino llegaba después del cierre y
  * seguía sonando con la ventana cerrada (dueño, 25/09). */
 check('cerrada la ventana, nada vuelve a hablar (ni el turno que venía en camino)',

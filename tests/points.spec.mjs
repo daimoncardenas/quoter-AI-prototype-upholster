@@ -7,7 +7,7 @@
  * pasaba con sellerId en quotes. */
 import { chromium } from 'playwright';
 import { client, PHOTOS_DB, userEmail, emailFor } from './client.mjs';
-import { openAdmin, openWizard, elegirSede, elegirAtencion } from './helpers.mjs';
+import { openAdmin, openWizard, elegirSede, elegirAtencion, continuar } from './helpers.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 const png = ['1','2','3'].map(n => new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
 
@@ -29,11 +29,11 @@ async function fresh(file) {
 async function wizardTo(step, opts = {}) {
   await page.setInputFiles('#furniturePhoto', png);
   await page.waitForFunction(() => state.photos.length >= 3);
-  if (step >= 2) await page.click('#nextButton');
-  if (step >= 3) { await page.fill('#width','210'); await page.fill('#height','85'); await page.fill('#depth','90'); await page.click('#nextButton'); }
-  if (step >= 4) { if (opts.city) await elegirSede(page, opts.city); await page.click('#nextButton'); }
-  if (step >= 5) { await page.click('#analyzeButton'); await page.waitForFunction(() => state.analyzed); await page.click('#nextButton'); }
-  if (step >= 6) await page.click('#nextButton');
+  if (step >= 2) await continuar(page);
+  if (step >= 3) { await page.fill('#width','210'); await page.fill('#height','85'); await page.fill('#depth','90'); await continuar(page); }
+  if (step >= 4) { if (opts.city) await elegirSede(page, opts.city); await continuar(page); }
+  if (step >= 5) { await page.click('#analyzeButton'); await page.waitForFunction(() => state.analyzed); await continuar(page); }
+  if (step >= 6) await continuar(page);
 }
 /* Envía una cotización completa eligiendo el punto dado (por value o por
  * label), sin tocar el store previo — así una escena puede montarse sobre lo
@@ -42,9 +42,9 @@ async function submitQuote(cityOption) {
   await openWizard(page, D);
   await wizardTo(5, { city: cityOption });
   await page.click('#fabricGrid .fabric-card:nth-child(1)');
-  await page.click('#nextButton');
+  await continuar(page);
   await page.waitForFunction(()=>state.step===16);   // el paso de la estimación
-  await page.click('#nextButton');
+  await continuar(page);
   await page.waitForFunction(()=>state.step===15);   // cierre: contacto y resumen
   await page.fill('#fullName','Cliente Prueba');
   await page.fill('#email','prueba@example.com');
@@ -53,7 +53,7 @@ async function submitQuote(cityOption) {
    * atención la respeta y sólo rellena lo que falte. */
   await elegirAtencion(page, { city: cityOption });
   await page.check('#consent');
-  await page.click('#nextButton');
+  await continuar(page);
   await page.waitForSelector('#successState:not([hidden])');
   return (await page.textContent('#requestNumber')).trim();
 }

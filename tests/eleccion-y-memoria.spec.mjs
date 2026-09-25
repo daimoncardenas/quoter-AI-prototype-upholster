@@ -160,6 +160,7 @@ check('una foto chica sigue avisando por resolución (lo de antes no se perdió)
     state.photos = [{ dataUrl: '', width: 300, height: 200, nitidez: 0 }];
     return runReview().map(c => c.detail).some(t => /baja resolución/.test(t));
   }), true);
+if (errs.length) console.log('  errores:\n    ' + errs.join('\n    '));
 check('sin errores en la página', errs.length, 0);
 
 await browser.close();

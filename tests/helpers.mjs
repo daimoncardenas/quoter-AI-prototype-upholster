@@ -13,12 +13,20 @@ import { ADMIN_EMAIL, DEMO_PASSWORD } from './client.mjs';
 export async function elegirElRecorridoCompleto(page) {
   if (!await page.isVisible('.wizard-step[data-step="18"].active')) return false;
   await page.click('#routeGrid .service-choice:has-text("Nueva compra")');
-  await page.click('#nextButton');
+  await continuar(page);
   await page.click('#purposeGrid .service-choice:has-text("Mi mueble o proyecto personal")');
-  await page.click('#nextButton');
+  await continuar(page);
   await page.click('#saberGrid .service-choice:has-text("No tengo claro ninguna de las dos")');
-  await page.click('#nextButton');
+  await continuar(page);
   return true;
+}
+
+/* «Continuar» como lo haría una persona: el mueble ya no viene marcado por defecto (dueño, 25/09:
+ * «no you need put without select default»), así que si su paso está a la vista y nadie eligió, se
+ * elige la primera tarjeta antes de avanzar — o el paso no deja pasar. */
+export async function continuar(page) {
+  if (await page.isVisible('.wizard-step.active .furniture-card')) await page.click('.wizard-step.active .furniture-card');
+  await page.click('#nextButton');
 }
 
 export async function openWizard(page, D) {
@@ -27,6 +35,9 @@ export async function openWizard(page, D) {
     await page.click('#serviceGrid .service-choice');
     await page.click('#nextButton');
   }
+  /* El mueble ya no viene marcado por defecto (dueño, 25/09: «no you need put without select
+   * default»): se elige como lo haría una persona, o el paso no deja avanzar. */
+  if (await page.isVisible('.furniture-card')) await page.click('.furniture-card');
   await elegirElRecorridoCompleto(page);
 }
 

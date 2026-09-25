@@ -115,7 +115,10 @@
      * declarado, y la frase de ese caso es la del formulario. */
     { id: 'mueble', paso: 1, bloque: 'pieza', etiqueta: 'Mueble',
       aplica: (m) => pideMueble(m),
-      falta: (m) => !(m.mueble && m.mueble.nombre)
+      /* El mueble cuenta como falta hasta que el cliente lo DIGA (o toque su tarjeta): «Sofá» viene
+       * por defecto, pero preguntarlo es parte del recorrido (dueño, 25/09: «assistant should ask
+       * "que mueble quieres renovar"»). El mundo trae `elegido`. */
+      falta: (m) => !(m.mueble && m.mueble.nombre) || !(m.mueble || {}).elegido
         || ((m.mueble || {}).nombre === 'Otro' && !String((m.mueble || {}).descripcion || '').trim()),
       mensaje: (m) => ((m.mueble || {}).nombre === 'Otro'
         ? 'Cuéntanos cuál es el mueble para continuar: «Otro» no dice qué hay que tapizar.'

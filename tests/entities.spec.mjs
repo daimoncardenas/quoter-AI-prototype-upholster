@@ -92,6 +92,8 @@ check('los estilos cambian', await page.$$eval('#style option',e=>e.map(o=>o.tex
 check('el multiplicador de cobertura cambia el cálculo', await page.evaluate(()=>{
   const c=document.getElementById('coverage');
   document.getElementById('width').value='210';
+  /* El mueble ya no viene por defecto: este cálculo necesita uno (el que sea — es el mismo rango). */
+  state.furniture = state.furniture || 'Sofá';
   c.value='complete'; const full=estimate();
   c.value='seats';    const seats=estimate();
   return Math.abs(seats[0]/full[0]-0.50)<0.06;                 // configurado en 50%

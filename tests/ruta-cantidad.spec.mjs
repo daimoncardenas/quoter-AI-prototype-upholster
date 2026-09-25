@@ -6,7 +6,7 @@
  * calcula, no de lo que el cliente ya sabe. */
 import { chromium } from 'playwright';
 import { PHOTOS_DB } from './client.mjs';
-import { openAdmin, elegirAtencion } from './helpers.mjs';
+import { openAdmin, elegirAtencion, continuar } from './helpers.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 
 let fails = 0;
@@ -17,7 +17,8 @@ const check = (name, got, want) => {
 };
 const browser = await chromium.launch();
 const page = await browser.newPage();
-const errs = []; page.on('pageerror', e => errs.push(String(e)));
+const errs = []; page.on('pageerror', e => { errs.push(String(e)); console.log('  PAGEERROR:', String(e).split('\n')[0]); });
+page.on('console', m => { if (m.type() === 'error') console.log('  CONSOLA:', String(m.text()).slice(0, 200)); });
 
 /* Sin atajos: aquí se elige la línea y la ruta a mano, que es justo lo que se prueba. */
 const fresh = async () => {
@@ -27,7 +28,7 @@ const fresh = async () => {
 };
 const avanzar = async () => {
   const antes = await page.evaluate(() => state.step);
-  await page.click('#nextButton');
+  await continuar(page);
   await page.waitForFunction(x => state.step !== x, antes).catch(() => {});
   await page.waitForTimeout(120);
 };

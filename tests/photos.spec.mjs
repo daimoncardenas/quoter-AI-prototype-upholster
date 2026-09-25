@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 import { PHOTOS_DB } from './client.mjs';
-import { openAdmin, openWizard, elegirAtencion } from './helpers.mjs';
+import { openAdmin, openWizard, elegirAtencion, continuar } from './helpers.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 const F = n => new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname;
 const TRES = ['1','2','3'].map(F);
@@ -30,16 +30,16 @@ console.log('\nEL MÍNIMO SON 3 FOTOS');
 await fresh();
 check('arranca sin fotos', await page.evaluate(()=>state.photos.length), 0);
 await subir([F('1')]);
-await page.click('#nextButton');
+await continuar(page);
 check('con 1 no deja avanzar', await page.evaluate(()=>state.step), 1);
 check('y dice cuántas faltan', await page.textContent('#photoError'), 'Agrega 2 fotos más: necesitamos al menos 3.');
 await subir([F('2')]);
-await page.click('#nextButton');
+await continuar(page);
 check('con 2 tampoco', await page.evaluate(()=>state.step), 1);
 check('el mensaje se ajusta', await page.textContent('#photoError'), 'Agrega 1 foto más: necesitamos al menos 3.');
 await subir([F('3')]);
 check('el error se limpia al llegar al mínimo', await page.isVisible('#photoError'), false);
-await page.click('#nextButton');
+await continuar(page);
 check('con 3 avanza', await page.evaluate(()=>state.step), 9);
 
 console.log('\nEL MÁXIMO SON 7');
@@ -64,9 +64,9 @@ check('el contador acompaña', await page.textContent('.photo-count'), '6 de 7')
 console.log('\nEL PASO 4 REPORTA EL CONJUNTO');
 await fresh();
 await subir(TRES);
-await page.click('#nextButton');
+await continuar(page);
 await page.fill('#width','210');await page.fill('#height','85');await page.fill('#depth','90');
-await page.click('#nextButton'); await page.click('#nextButton');
+await continuar(page); await continuar(page);
 check('el resumen cuenta las fotos',
   (await page.textContent('#aiSummary')).includes('3 adjuntas'), true);
 await page.click('#analyzeButton'); await page.waitForFunction(()=>state.analyzed);
@@ -77,9 +77,9 @@ check('y confirma la resolución', await page.evaluate(()=>runReview()[0].ok), t
 console.log('\nUNA DE BAJA RESOLUCIÓN ENTRE VARIAS');
 await fresh();
 await subir([F('1'), F('2'), CHICA]);
-await page.click('#nextButton');
+await continuar(page);
 await page.fill('#width','210');await page.fill('#height','85');await page.fill('#depth','90');
-await page.click('#nextButton'); await page.click('#nextButton');
+await continuar(page); await continuar(page);
 await page.click('#analyzeButton'); await page.waitForFunction(()=>state.analyzed);
 check('la señala sin descartar el resto', await page.evaluate(()=>{
   const c=runReview()[0];
@@ -88,18 +88,18 @@ check('la señala sin descartar el resto', await page.evaluate(()=>{
 console.log('\nTODAS LLEGAN AL BACKOFFICE');
 await fresh();
 await subir(TRES);
-await page.click('#nextButton');
+await continuar(page);
 await page.fill('#width','210');await page.fill('#height','85');await page.fill('#depth','90');
-await page.click('#nextButton'); await page.click('#nextButton');
+await continuar(page); await continuar(page);
 await page.click('#analyzeButton'); await page.waitForFunction(()=>state.analyzed);
-await page.click('#nextButton'); await page.click('#nextButton');
+await continuar(page); await continuar(page);
 await page.waitForFunction(()=>state.step===16);   // el paso de la estimación
-await page.click('#nextButton');
+await continuar(page);
 await page.waitForFunction(()=>state.step===15);   // cierre: contacto y resumen
 await page.fill('#fullName','Natalia Peña');await page.fill('#email','n@example.com');
 await elegirAtencion(page);
 await page.fill('#phone','3001234567');await page.check('#consent');
-await page.click('#nextButton');
+await continuar(page);
 await page.waitForSelector('#successState:not([hidden])');
 const id = await page.textContent('#requestNumber');
 check('la cotización guarda 3 ids de foto',
@@ -159,7 +159,7 @@ await page.click('#quoteModal [data-close]');
 await fresh();
 await page.evaluate(()=>Store.saveSettings({minPhotos:2,maxPhotos:4}));
 await subir([F('1'), F('2')]);
-await page.click('#nextButton');
+await continuar(page);
 check('con el mínimo en 2, dos alcanzan', await page.evaluate(()=>state.step), 9);
 await page.click('#backButton');
 await subir(['3','1'].map(F));

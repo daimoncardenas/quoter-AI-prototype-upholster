@@ -3,7 +3,7 @@
  * with no minimum, and that people confuse constantly. */
 import { chromium } from 'playwright';
 import { PHOTOS_DB } from './client.mjs';
-import { openAdmin, openWizard, elegirAtencion } from './helpers.mjs';
+import { openAdmin, openWizard, elegirAtencion, continuar } from './helpers.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 const png = ['1','2','3'].map(n => new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
 
@@ -25,11 +25,11 @@ async function fresh(file) {
 async function wizardTo(step) {
   await page.setInputFiles('#furniturePhoto', png);
   await page.waitForFunction(() => state.photos.length >= 3);
-  if (step >= 2) await page.click('#nextButton');
-  if (step >= 3) { await page.fill('#width','210'); await page.fill('#height','85'); await page.fill('#depth','90'); await page.click('#nextButton'); }
-  if (step >= 4) await page.click('#nextButton');
-  if (step >= 5) { await page.click('#analyzeButton'); await page.waitForFunction(() => state.analyzed); await page.click('#nextButton'); }
-  if (step >= 6) await page.click('#nextButton');
+  if (step >= 2) await continuar(page);
+  if (step >= 3) { await page.fill('#width','210'); await page.fill('#height','85'); await page.fill('#depth','90'); await continuar(page); }
+  if (step >= 4) await continuar(page);
+  if (step >= 5) { await page.click('#analyzeButton'); await page.waitForFunction(() => state.analyzed); await continuar(page); }
+  if (step >= 6) await continuar(page);
 }
 // [consumo, compra, facturable, sobrante] for one fabric at one consumption.
 const q = (fabricId, meters) => page.evaluate(([id, m]) => {
@@ -160,9 +160,9 @@ check('a range whose ends collapse is printed once, not twice (the fabric exact,
   ['25', true]);
 await page.click('.fabric-card:has-text("Lino Verona")');
 
-await page.click('#nextButton');
+await continuar(page);
 await page.waitForFunction(()=>state.step===16);   // el paso de la estimación
-await page.click('#nextButton');
+await continuar(page);
 await page.waitForFunction(()=>state.step===15);   // el cierre: donde vive el resumen
 check('el resumen del cierre muestra los dos números, para no confundirlos',
   [await page.textContent('#summaryConsumo'), await page.textContent('#summaryMeters')],
@@ -174,7 +174,7 @@ await page.fill('#email', 'natalia@ejemplo.com');
 await page.fill('#phone', '3001234567');
 await elegirAtencion(page);
 await page.check('#consent');
-await page.click('#nextButton');
+await continuar(page);
 await page.waitForSelector('#successState:not([hidden])');
 const quoteId = (await page.textContent('#requestNumber')).trim();
 check('the solicitud carries the whole breakdown',

@@ -6,7 +6,7 @@
  * confirma un asesor. */
 import { chromium } from 'playwright';
 import { PHOTOS_DB } from './client.mjs';
-import { elegirAtencion } from './helpers.mjs';
+import { elegirAtencion, continuar } from './helpers.mjs';
 const D = 'file://' + process.cwd() + '/generated/';
 
 let fails = 0;
@@ -17,7 +17,8 @@ const check = (name, got, want) => {
 };
 const browser = await chromium.launch();
 const page = await browser.newPage();
-const errs = []; page.on('pageerror', e => errs.push(String(e)));
+const errs = []; page.on('pageerror', e => { errs.push(String(e)); console.log('  PAGEERROR:', String(e).split('\n')[0]); });
+page.on('console', m => { if (m.type() === 'error') console.log('  CONSOLA:', String(m.text()).slice(0, 200)); });
 
 const fresh = async () => {
   await page.goto(D + 'index.html');
@@ -26,7 +27,7 @@ const fresh = async () => {
 };
 const avanzar = async () => {
   const antes = await page.evaluate(() => state.step);
-  await page.click('#nextButton');
+  await continuar(page);
   await page.waitForFunction(x => state.step !== x, antes).catch(() => {});
   await page.waitForTimeout(120);
 };
@@ -48,7 +49,7 @@ await avanzar();
 check('el paso del pedido no avanza en blanco',
   await (async () => {
     const antes = await page.evaluate(() => state.step);
-    await page.click('#nextButton');
+    await continuar(page);
     await page.waitForTimeout(150);
     return await page.evaluate(x => [state.step === x, document.getElementById('pedidoBusca').value,
                                      document.getElementById('pedidoError').textContent],
