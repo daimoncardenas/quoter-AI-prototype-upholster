@@ -1869,13 +1869,6 @@
   }
   var BRAND_NAME_MAX = 60;
   var BRAND_HEADER_VARIANTS = ['normal', 'inverted'];
-  /* Same names tools/generate.mjs emits in each page's :root (see
-   * CORE_VAR_ALIASES there): three core keys are spelled differently per page. */
-  var BRAND_VAR_ALIASES = {
-    inkSecondary: ['--ink-2', '--ink2'],
-    goldLight: ['--gold-light', '--gold2'],
-    success: ['--success', '--green']
-  };
   var PLAN_ORDER = ['Essential', 'Professional', 'Business'];
   var BRAND_GATED = { fonts: 'Professional', headerVariant: 'Professional' };
   /* Approved Google Fonts. `weights` only lists weights each family really
@@ -1903,7 +1896,6 @@
     return planAtLeast(plan, need);
   }
 
-  function kebab(s) { return String(s).replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase(); }
 
   function firstFamily(stack) { return String(stack || '').split(',')[0].trim().replace(/^["']|["']$/g, ''); }
 
@@ -2301,144 +2293,7 @@
     can: function (user, section) { return Auth.sections(user).indexOf(section) >= 0; }
   };
 
-  /* ---------------------------------------------------------------- Brand --
-   *
-   * Paints Store.brand() onto the current page. Called synchronously from
-   * each page's <head>, right after this file, so CSS variables, the fonts
-   * <link>, the enabled color-mode <style> and document.title are already
-   * right before first paint. Logos and [data-brand-name] text live in the
-   * body, which is not parsed yet at that point: they are swapped on
-   * DOMContentLoaded, and while an override would change them the page keeps
-   * them visibility:hidden (data-brand-pending) so the pack's default never
-   * flashes first.
-   *
-   * With no effective override this is a no-op: nothing is touched and the
-   * page is exactly what tools/generate.mjs rendered. Once something was
-   * applied, a later call with no overrides (reset) restores the defaults by
-   * removing the inline properties again. */
-  var Brand = {
-    _active: false,
-    _base: null,
-    _domHooked: false,
-
-    apply: function (brand) {
-      var doc = global.document;
-      if (!doc) return false;
-      var b = brand || Store.brand();
-      var o = b.overridden;
-      var active = o.companyName || o.colors || o.logos || o.fonts || o.headerVariant;
-      if (!active && !Brand._active) return false;
-      Brand._active = !!active;
-      var root = doc.documentElement;
-      if (!Brand._base) {
-        Brand._base = { title: doc.title, watermark: global.getComputedStyle(root).getPropertyValue('--print-watermark').trim() };
-      }
-      applyBrandColors(b, root);
-      applyBrandFonts(b, doc, root);
-      each(doc.querySelectorAll('style[data-color-mode]'), function (s) {
-        var media = s.getAttribute('data-color-mode') === b.headerVariant ? 'all' : 'not all';
-        if (s.getAttribute('media') !== media) s.setAttribute('media', media);
-      });
-      doc.title = o.companyName ? swapBrandName(Brand._base.title, b.companyName) : Brand._base.title;
-
-      if (doc.readyState === 'loading') {
-        if (o.companyName || o.logos || o.headerVariant) {
-          if (!doc.getElementById('brandPendingStyle')) {
-            var st = doc.createElement('style');
-            st.id = 'brandPendingStyle';
-            st.textContent = 'html[data-brand-pending] [data-brand-logo],html[data-brand-pending] [data-brand-name]{visibility:hidden}';
-            (doc.head || root).appendChild(st);
-          }
-          root.setAttribute('data-brand-pending', '');
-        }
-        if (!Brand._domHooked) {
-          Brand._domHooked = true;
-          doc.addEventListener('DOMContentLoaded', function () {
-            /* El finally no es decorativo: data-brand-pending esconde el logo y
-             * el nombre para que no parpadee el valor del pack. Si applyBrandDom
-             * fallara, sin esto quedarían ocultos para siempre. */
-            try { applyBrandDom(Store.brand()); }
-            finally { root.removeAttribute('data-brand-pending'); }
-          });
-        }
-      } else {
-        applyBrandDom(b);
-      }
-      return true;
-    }
-  };
-
   function each(list, fn) { Array.prototype.forEach.call(list || [], fn); }
-
-  function brandVarEntries(colors) {
-    var out = [];
-    Object.keys(colors).forEach(function (k) {
-      if (k === 'tints' || k === 'rgb') return;
-      (BRAND_VAR_ALIASES[k] || ['--' + kebab(k)]).forEach(function (n) { out.push([n, colors[k]]); });
-    });
-    out.push(['--rgb-accent', hexToRgb(colors.accent).join(',')]);
-    Object.keys(colors.tints || {}).forEach(function (k) { out.push(['--tint-' + kebab(k), colors.tints[k]]); });
-    Object.keys(colors.rgb || {}).forEach(function (k) { out.push(['--rgb-' + kebab(k), colors.rgb[k]]); });
-    return out;
-  }
-
-  function applyBrandColors(b, root) {
-    var on = b.overridden.colors;
-    brandVarEntries(on ? b.colors : BRAND_DEFAULTS.colors).forEach(function (e) {
-      if (on) root.style.setProperty(e[0], e[1]); else root.style.removeProperty(e[0]);
-    });
-    /* The watermark is an SVG data URI (var() cannot reach inside it): its
-     * only color is the %23rrggbb fill, rebuilt from the default value. */
-    if (on && Brand._base.watermark) {
-      root.style.setProperty('--print-watermark', Brand._base.watermark.replace(/%23[0-9a-fA-F]{3,6}/, '%23' + normHex(b.colors.inkSecondary).slice(1)));
-    } else {
-      root.style.removeProperty('--print-watermark');
-    }
-  }
-
-  function applyBrandFonts(b, doc, root) {
-    var link = doc.querySelector('link[data-brand-fonts]');
-    if (link && link.getAttribute('href') !== b.fonts.href) link.setAttribute('href', b.fonts.href);
-    if (b.overridden.fonts) {
-      root.style.setProperty('--font-body', b.fonts.body);
-      root.style.setProperty('--font-heading', '"' + b.fonts.headingName + '",' + b.fonts.headingFallback);
-    } else {
-      root.style.removeProperty('--font-body');
-      root.style.removeProperty('--font-heading');
-    }
-  }
-
-  function applyBrandDom(b) {
-    var doc = global.document;
-    var slot = b.headerVariant === 'inverted' ? 'onLight' : 'onDark';
-    each(doc.querySelectorAll('img[data-brand-logo]'), function (img) {
-      if (!img.hasAttribute('data-brand-alt')) img.setAttribute('data-brand-alt', img.getAttribute('alt') || '');
-      var src = b.logos[slot] || b.logos.onDark || b.logos.onLight;
-      if (src && img.getAttribute('src') !== src) img.setAttribute('src', src);
-      if (img.getAttribute('data-brand-logo') !== slot) img.setAttribute('data-brand-logo', slot);
-      var base = img.getAttribute('data-brand-alt');
-      var alt = b.overridden.companyName ? swapBrandName(base, b.companyName) : base;
-      if (img.getAttribute('alt') !== alt) img.setAttribute('alt', alt);
-    });
-    each(doc.querySelectorAll('[data-brand-name]'), function (el) {
-      if (!el.hasAttribute('data-brand-base')) el.setAttribute('data-brand-base', el.textContent);
-      var t = b.overridden.companyName ? b.companyName : el.getAttribute('data-brand-base');
-      if (el.textContent !== t) el.textContent = t;
-    });
-    each(doc.querySelectorAll('[data-brand-label]'), function (el) {
-      if (!el.hasAttribute('data-brand-label-base')) el.setAttribute('data-brand-label-base', el.getAttribute('aria-label') || '');
-      var base = el.getAttribute('data-brand-label-base');
-      el.setAttribute('aria-label', b.overridden.companyName ? swapBrandName(base, b.companyName) : base);
-    });
-  }
-
-  /* Replaces the pack's name inside a generated string (title, alt text,
-   * aria-label): displayName first, then shortName ("Asistente Macizo"). */
-  function swapBrandName(str, name) {
-    var s = String(str || '');
-    var from = [BRAND_DEFAULTS.companyName, BRAND_DEFAULTS.shortName].filter(function (n) { return n && s.indexOf(n) >= 0; })[0];
-    return from ? s.split(from).join(name) : s;
-  }
 
   /* ------------------------------------------------------------ Assistant --
    *
@@ -2471,7 +2326,7 @@
   /* Another tab saving (or resetting) the brand, the plan or the assistant repaints this one. */
   if (global.addEventListener) {
     global.addEventListener('storage', function (e) {
-      if (e.key === null || e.key === NS + BRAND_KEY || e.key === NS + 'settings') Brand.apply();
+      if (e.key === null || e.key === NS + BRAND_KEY || e.key === NS + 'settings') global.Brand && global.Brand.apply();
       // The plan lives in settings: a downgrade/upgrade changes what the presence shows.
       if (e.key === null || e.key === NS + ASSISTANT_KEY || e.key === NS + 'settings') Assistant.apply();
     });
@@ -2480,6 +2335,5 @@
   global.Auth = Auth;
   global.Store = Store;
   global.Photos = Photos;
-  global.Brand = Brand;
   global.Assistant = Assistant;
 })(window);

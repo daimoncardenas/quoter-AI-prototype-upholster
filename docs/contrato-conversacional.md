@@ -27,7 +27,7 @@ quiera; el contrato no. Nadie calcula ni envía nada hasta que el contrato está
 Tres reglas, las mismas que ya sostienen al asistente:
 
 1. **El modelo no decide datos.** Propone valores para campos de una lista cerrada (el mismo contrato
-   de acciones que ya usa `assistant-brain.js`): un campo, un tipo, valores permitidos del catálogo.
+   de acciones que ya usa `src/assistant/brain.js`): un campo, un tipo, valores permitidos del catálogo.
    Un valor que no está en el catálogo no entra; una cifra calculada no entra nunca.
 2. **El validador es determinista.** `faltantes(contrato)` es el espejo de `validStep()`
    (`index.html:1311`): las mismas reglas —mueble elegido, mínimo de fotos, medidas dentro del rango

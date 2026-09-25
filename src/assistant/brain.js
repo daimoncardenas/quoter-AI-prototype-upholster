@@ -1,12 +1,11 @@
 /* Assistant brain — SIMULATED. No AI, no network: deterministic rules over the
  * quotation context, standing in for the LLM that lives in the product repo.
  *
- * Not a template: tools/generate.mjs inlines this file into index.html as a
- * classic <script> (before the wizard's own script). It is also plain enough to
- * load from Node (tests/assistant-brain.spec.mjs requires it), so everything
- * here is pure: context and env in, messages and ACTIONS out. It never touches
- * the DOM and never executes anything — the page's adapter (window.ACI in
- * index.html) does, and only what validateActions() accepts.
+ * Vive en src/assistant/brain.js (corte 5) y viaja en el paquete de src/ como un script clásico más
+ * —antes lo incrustaba tools/generate.mjs—. Sigue siendo lo bastante llano para cargarse desde Node
+ * (tests/assistant-brain.spec.mjs lo requiere), así que todo aquí es puro: contexto y entorno entran,
+ * mensajes y ACCIONES salen. No toca el DOM ni ejecuta nada — el adaptador de la página (window.ACI
+ * en index.html) lo hace, y solo lo que validateActions() acepta.
  *
  * Permission levels:
  *   observe  — read the context the wizard publishes (no confirmation)

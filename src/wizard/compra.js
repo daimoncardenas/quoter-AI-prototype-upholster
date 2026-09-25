@@ -17,6 +17,8 @@ export function pintarLaCompra() { const v = laCompra; return v ? v.pintarTodo()
 export function pintarLaLinea() { const v = laCompra; return v ? v.pintarLinea() : false; }
 export function pintarElProposito() { const v = laCompra; return v ? v.pintarProposito() : false; }
 export function pintarElSaber() { const v = laCompra; return v ? v.pintarSaber() : false; }
+/* Y el paso de la RUTA —el «¿para qué?» del mantenimiento—, que también es de la compra. */
+export function pintarLaRuta() { const v = laCompra; return v ? v.pintarRuta() : false; }
 export function conectarLaCompra(elTallerDeLaPagina) {
   guardarElTaller(elTallerDeLaPagina);
   const C = elTaller();
@@ -31,6 +33,47 @@ export function conectarLaCompra(elTallerDeLaPagina) {
     C.pintarPreguntaDeLaCompra('saberGrid',C.saberesDelProposito(),(C.saberActual()||{}).id,s=>{
       C.estado.saber=s.id;C.elegidoEnLaCompra();
       C.ACI.emit('ROUTE_SELECTED',{routeId:C.estado.ruta||'',purposeId:C.estado.proposito||'',saberId:s.id,label:s.label});
+    });
+  }
+
+  /* El PASO DE LA RUTA («¿para qué?» del mantenimiento): un camino puede MANDAR A OTRA LÍNEA
+   * (catálogo: `line`) — la reparación no se re-cotiza dentro de mantenimiento —, y su elección
+   * rehace la estimación y el sendero en el acto. */
+  function renderRouteOptions() {
+    const E = C.estado;
+    const grid=document.getElementById('routeGrid');if(!grid)return;
+    const rutas=C.rutasLine(),punto=document.getElementById('routeEyebrow');
+    if(punto)punto.textContent=E.service?E.service.label:'Empecemos';
+    grid.style.setProperty('--cols','1');
+    grid.style.setProperty('--rows',String(rutas.length));
+    grid.innerHTML='';
+    rutas.forEach(r=>{
+      const on=E.ruta===r.id;
+      const card=document.createElement('button');card.type='button';card.setAttribute('role','radio');
+      card.className='service-choice'+(on?' selected':'');card.setAttribute('aria-checked',on?'true':'false');
+      const body=document.createElement('span');
+      const title=document.createElement('b');title.textContent=r.label;body.appendChild(title);
+      if(r.hint){const hint=document.createElement('small');hint.textContent=r.hint;body.appendChild(hint)}
+      card.appendChild(body);
+      const go=document.createElement('span');go.className='go';go.textContent=on?'Elegida':'Elegir';card.appendChild(go);
+      card.addEventListener('click',()=>{
+        /* Un camino puede MANDAR A OTRA LÍNEA (catálogo: `line`): la reparación no se re-cotiza dentro
+         * de mantenimiento — corre su propia línea, con su tela, sus daños y su mano de obra. */
+        if(r.line){
+          const destino=[...C.serviceOptions(),...(C.Store.services()||[])].find(x=>x.id===r.line);
+          if(destino&&(!E.service||E.service.id!==destino.id)){
+            E.service=destino;E.damages=[];
+            E.ruta=null;E.proposito=null;E.saber=null;
+            C.resetProjectForLine();C.applyLineCopy();renderServiceOptions();C.aplicarRutaPorDefecto();
+          }
+        } else {
+          E.ruta=r.id;E.proposito=null;E.saber=null;C.aplicarPropositoPorDefecto();
+        }
+        renderRouteOptions();C.applyOptionalSteps();C.updateEstimate();C.pintarElSendero();
+        if(!C.pasosVisibles().includes(E.step))C.showStep(C.pasosVisibles()[0]);
+        C.ACI.emit('ROUTE_SELECTED',{routeId:r.id,label:r.label});
+      });
+      grid.appendChild(card);
     });
   }
   
@@ -96,12 +139,15 @@ export function conectarLaCompra(elTallerDeLaPagina) {
     if(ceja)ceja.textContent=C.estado.service?C.estado.service.label:'Empecemos';
   }
 
-  /* La línea decide el recorrido; estas cuatro puertas son lo que la página llama. */
+  /* La línea decide el recorrido; estas CUATRO puertas son lo que la página llama: la línea, «¿para
+   * qué?» (el paso de la ruta, con sus caminos que pueden mandar a otra línea), «¿para qué?» del
+   * daño (propósito) y «¿qué sabes?». */
   laCompra = {
     pintarTodo: renderAllOptions,
     pintarLinea: renderServiceOptions,
     pintarProposito: renderPurposeOptions,
-    pintarSaber: renderSaberOptions
+    pintarSaber: renderSaberOptions,
+    pintarRuta: renderRouteOptions
   };
   return true;
 }

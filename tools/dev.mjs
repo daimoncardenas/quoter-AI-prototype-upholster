@@ -151,11 +151,14 @@ function scheduleRender(reason) {
 
 // Watch the directory, not the files: editors save by rename, which would
 // silently detach a watcher bound to the original file.
-const ROOT_FILES = new Set(['index.html', 'admin.html', 'store.js', 'assistant-presence.js', '.env']);
+const ROOT_FILES = new Set(['index.html', 'admin.html', 'store.js', '.env']);
 watch('.', (event, filename) => {
   if (filename && ROOT_FILES.has(String(filename))) scheduleRender(filename);
 });
 watch('clients', { recursive: true }, (event, filename) => scheduleRender(`clients/${filename ?? ''}`));
+/* src/ es donde vive el frontend desde los cortes: sin este ojo, guardar un módulo no regeneraba ni
+ * recargaba — la promesa del pie («save a change and the browser reloads») quedaba a medias. */
+watch('src', { recursive: true }, (event, filename) => scheduleRender(`src/${filename ?? ''}`));
 
 // Proxies and some browsers drop idle event streams; a comment line keeps it open.
 setInterval(() => { for (const res of listeners) res.write(': ping\n\n'); }, 30000).unref();
@@ -182,7 +185,7 @@ server.listen(PORT, HOST, () => {
   Quoter:     http://localhost:${PORT}/
   Backoffice: http://localhost:${PORT}/admin.html
 
-  Watching index.html, admin.html, store.js, assistant-presence.js, clients/ and .env.
+  Watching index.html, admin.html, store.js, src/, clients/ and .env.
   Save a change and the browser reloads. Ctrl+C to stop.`);
   console.log(claveDeDeepSeek()
     ? `  IA: API de DeepSeek configurada (${MODELO}) — el asistente conversa, mira la foto y recomienda con ella.`

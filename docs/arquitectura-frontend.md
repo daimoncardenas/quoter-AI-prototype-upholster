@@ -65,12 +65,12 @@ src/
 | # | Corte | Qué sale de dónde | Estado |
 | --- | --- | --- | --- |
 | 1 | `src/tenant/` (config + theme) | La marca como dato; el generador emite `config.generated.js` y copia `src/**` al build | **Hecho** (25/09) |
-| 2 | `src/ui/` | modal, toasts, componentes chicos del backoffice | Pendiente |
+| 2 | `src/ui/` | modal, toasts, componentes chicos del backoffice | **Hecho** (25/09: `modal.js` y `toast.js` con sus puertas — `window.UI`) |
 | 3 | `src/backoffice/` | una vista por archivo (puntos, vendedores, telas, ajustes, servicios, resumen, cotizaciones) | **Cerrado** (25/09: las siete vistas mudadas y probadas con gestos reales) |
-| 4 | `src/wizard/` | un módulo por paso; el wizard carga `src/tenant/` y `src/ui/` | Pendiente |
-| 5 | `src/assistant/` | brain, presence, voice | Pendiente |
-| 6 | `src/app/` (state + events) | el núcleo; se borra el puente `window` | Pendiente |
-| 7 | `src/tenant/branding.js` | el motor de marca (`Brand`) con su baile de pre-paint | Pendiente (va con el 6) |
+| 4 | `src/wizard/` | un módulo por paso; el wizard carga `src/tenant/` y `src/ui/` | **Cerrado** (25/09: compra, mueble, piezas, fotos, telas, revisión, contacto, validación y la ruta mudados) |
+| 5 | `src/assistant/` | brain, presence, voice | **Cerrado** (25/09: los tres en `src/assistant/` y en el paquete de `src/`; la presencia se arranca con `Asistente.presencia.empezar()`) |
+| 6 | `src/app/` (state + events) | el núcleo; se borra el puente `window` | **Cerrado** (25/09: `state.js` + `events.js` —el bus— y la puerta `window.App`; el puente del taller sigue como handoff hasta mudar las ayudas del wizard) |
+| 7 | `src/tenant/branding.js` | el motor de marca (`Brand`) con su baile de pre-paint | **Hecho** (25/09, con el corte 6: `Brand` vive en el paquete; store.js queda sin él) |
 
 ## Corte 3 — lo que va quedando (25/09)
 
@@ -131,19 +131,66 @@ sin errores.
 
 ## Corte 4 — lo que va quedando (25/09)
 
-Primera pieza mudada: **`src/wizard/compra.js`** — las tres preguntas de la compra («¿qué necesitas?»,
-«¿para qué?», «¿qué sabes del daño?»), que son una sola pantalla y comparten el pintor de la grilla.
-Con `src/wizard/casa.js` (el puente del taller, hermano del del backoffice) y `src/wizard/index.js`
-(`window.Wizard`). La página conserva las puertas `renderServiceOptions/renderPurposeOptions/
-renderSaberOptions/renderAllOptions`.
+Piezas mudadas, en orden:
 
-Verificado con el E2E de una línea: **28 s de reloj** (presupuesto 60), cierra una solicitud nueva
-(COT-1046), el backoffice la ve (10 cotizaciones) y abre su detalle con la tabla de piezas. Cero errores
-de página.
+1. **`src/wizard/compra.js`** — las tres preguntas de la compra («¿qué necesitas?», «¿para qué?», «¿qué
+   sabes del daño?»), que son una sola pantalla y comparten el pintor de la grilla. Con
+   `src/wizard/casa.js` (el puente del taller, hermano del del backoffice) y `src/wizard/index.js`
+   (`window.Wizard`). La página conserva las puertas `renderServiceOptions/renderPurposeOptions/
+   renderSaberOptions/renderAllOptions`. Verificado con el E2E de una línea: 28 s de reloj (presupuesto
+   60), COT-1046, 10 cotizaciones en el backoffice y su detalle con la tabla de piezas. Cero errores de
+   página.
+2. **`src/wizard/mueble.js`** — el paso del mueble: el desplegable y las REGLAS que usan el motor y la
+   validación (`ponerReglasDelMueble`).
+3. **`src/wizard/piezas.js`** — la lista del paso 1 (una fila por pieza con mueble, cantidad, tapices,
+   medidas y fotos), la pieza en foco que llenan los pasos de abajo, las fichas del paso de medidas y
+   las fotos/etiqueta de cada pieza. La página conserva once puertas (`piezaEnFoco`, `pintarPiezas`,
+   `pintarMedidasPorPieza`, `enfocarPieza`…).
+4. **`src/wizard/fotos.js`** — la tubería de la subida: leer el archivo con sus dimensiones reales,
+   medir la nitidez UNA vez al cargar, marcar cada foto con su PIEZA y refrescar la fila; con sus
+   oídos (el botón del bloque, el «+» de cada fila y el arrastre). La tubería es UNA: el bloque del
+   paso, la fila y el componente de fotos de la conversación la comparten por las puertas
+   `photoLimits/renderPhotos/loadPhotos`. El UMBRAL de la nitidez (`NITIDEZ_MINIMA`) se quedó en la
+   página: quien lo lee es la revisión, hasta su corte.
+5. **`src/wizard/telas.js`** — la parrilla de la recomendación (mejor coincidencia, el porqué, el
+   sobre-presupuesto y la cantidad por tela del camino de varias) y la espera del asistente que las
+   ordena. La página conserva las puertas `renderFabrics/recomendarConIA/telasEnEspera`, más
+   `olvidarLaRecomendacion()` (el reinicio de línea ya no toca los `let` del módulo). **`ordenDeLaIA`,
+   `recomendandoIA` y `TOPE_RECOMENDACION_MS` viven a nivel del módulo**: las specs del área los
+   escriben por `evaluate` y en una closure dejarían de existir.
+6. **`src/wizard/revision.js`** — las filas declaradas, el resumen del paso («Esto es lo que vamos a
+   revisar»), las medidas raras, el repaso (`runReview`) y la revisión de la FOTO —la mirada del
+   modelo, con su espera en `#visionNote`, la sonda de un píxel y los eventos `LOOK_*`— más el botón
+   «Revisar mi información». La página conserva las puertas `renderReviewSummary/runReview/
+   declaredRows`; `mirandoFoto` vive a nivel del módulo (validStep y las specs lo leen por `evaluate`).
+7. **`src/wizard/contacto.js`** — la atención declarada (ciudad del cliente, la del servicio y la SEDE
+   por id, con sus «Otra ciudad…») y la tarjeta del resumen del último paso (mueble, medidas, tela o
+   lista, consumo, metros, daños y precio). La página conserva las puertas
+   `atencionDeclarada/renderCities/updateSummary`.
+8. **`src/wizard/validacion.js`** — el motor de validación: qué le falta a cada paso y por qué
+   «Continuar» no avanza, con una frase por tropiezo (nada de burbujas del navegador), el foco puesto
+   y el cinturón de la mirada (`estasMirando()`, prestada por `revision.js`). La página conserva la
+   puerta `validStep` («Continuar» la llama; las specs, por `evaluate`).
+9. **El paso de la ruta** — `renderRouteOptions` («¿para qué?» del mantenimiento) se fue con sus
+   hermanas a `src/wizard/compra.js`: un camino puede MANDAR A OTRA LÍNEA (la reparación no se
+   re-cotiza dentro de mantenimiento) y su elección rehace la estimación y el sendero. La página
+   conserva la puerta `renderRouteOptions`.
 
-Falta el resto de los pasos: mueble (y la copia que cambia por línea), medidas por pieza, fotos,
-telas/recomendación, revisión, contacto y el motor de validación — y después los cortes 5 (asistente) y
-6 (núcleo: estado y eventos, al final y a propósito).
+**Verificado** con el E2E de una línea (25/09, por pieza): `npm run generate` limpio (25 módulos, sin
+choques), retapizado cierra **COT-1050…COT-1057 con DOS piezas** — 035 s de reloj la corrida más
+rápida de la tanda, 063 la más lenta (la latencia de la API del asistente, no el corte; presupuesto
+60)—, el backoffice abre el detalle con su tabla de piezas y cero errores de página. Y por `file://`:
+la revisión pinta su resumen y corre su repaso; el contacto pinta los desplegables de ciudades y
+«Otra ciudad…» declara su texto; el motor de validación bloquea el paso sin línea, bloquea los daños
+sin marcar (con el aviso del `damageError`, que era un id-global), y el paso de la ruta pinta sus
+caminos («Nueva compra» / «Completar pedido anterior» para suministro y mantenimiento) y elegir uno
+lo deja escrito y en pantalla; `validStep()`, `runReview()`, `declaredRows()`,
+`renderReviewSummary()` y `updateSummary()` se llaman por `evaluate`, y los `let` de los módulos
+(`ordenDeLaIA`, `recomendandoIA`, `TOPE_RECOMENDACION_MS`, `mirandoFoto`) se leen y se escriben — el
+trato de las specs.
+
+**Corte 4 CERRADO (25/09).** Lo que sigue: el corte 5 (asistente: `brain.js`, `presence.js`,
+`voice.js`) y el corte 6 (núcleo: estado y eventos, al final y a propósito).
 
 ### Lecciones de este corte (para no repetirlas)
 
@@ -153,7 +200,124 @@ telas/recomendación, revisión, contacto y el motor de validación — y despu�
   llamándose desde tres sitios del cierre global; ahora la página pregunta al módulo.
 - **El puente se llena al FINAL del script de la página**, no donde estaba el estado: expone nombres
   (`ACI`) que se declaran más abajo y el objeto los tocaría en su zona muerta temporal.
+- **Los `let` del puente viajan como función.** `furnitureRules` es un `let` que el módulo del mueble
+  reasigna; el puente lo expone `reglasDelMueble:()=>furnitureRules`. Copiado por valor, el módulo
+  leería las reglas viejas desde el primer cambio de mueble.
+- **Inventario del puente ANTES de cortar.** Al mudar un bloque, `grep` los nombres que usa: los que
+  viven en la página (`esc`, `renderFurnitureOptions`, `renderQuantityOptions`, `selectFurniture`,
+  `renderPhotos`…) son entradas del puente, y cada una que falte revienta en el primer gesto — no en el
+  build, que solo ve choques y sintaxis.
+- **El IIFE que enganchaba sus oídos al leer el archivo se va con el bloque**: los listeners de la
+  lista y de las fichas ahora corren en `conectarLasPiezas()`, antes del primer pintado, como las
+  demás vistas.
+- **Un corte se lleva DEFINICIONES que la página sigue leyendo.** `NITIDEZ_MINIMA` viajó con el bloque
+  de las fotos y `runReview` —que se queda hasta su corte— la leía: la primera corrida del E2E lo cazó
+  («NITIDEZ_MINIMA is not defined» — el E2E imprime `errores de página`, no falla por ellos). El
+  umbral volvió a la página, junto a su comentario. Al cortar, `grep` de los nombres del bloque
+  BUSCANDO su definición (`const|let|function`), no solo sus menciones.
+- **Los `let` que las specs escriben no pueden ir en la closure.** `ordenDeLaIA`, `recomendandoIA` y
+  `TOPE_RECOMENDACION_MS` se quedan A NIVEL DEL MÓDULO (los scripts clásicos comparten el ámbito
+  global léxico): dentro de `conectar…()` la spec que baja el tope a 300 ms dejaría de verlos. Y los
+  nombres de las puertas no se repiten entre página y módulo: una `function` repetida se pisa en
+  silencio (el chequeo del build solo mira choques DENTRO de `src/`). Lo mismo con `mirandoFoto`, que
+  `validStep` y `review.spec` leen por `evaluate` (la validación lo pide prestado con `estasMirando()`).
+- **El navegador nombra los id: `damageError` no era una constante.** `validStep` lo usaba suelto y ni
+  en `index.html` ni en `src/` había definición: era el id-global del navegador. Al mudarlo, el puente
+  lo resuelve UNA vez (`damageError:document.getElementById('damageError')`) — un módulo no se apoya
+  en el id-global implícito. Antes de cortar: un nombre sin `const|let|function` es un id-global.
+- **Un bloque puede venir en TRES tramos con una isla compartida en medio.** La mirada y el repaso
+  tenían entre ellos los `const` del asistente (`asistenteCfg/asistenteNombre/etiquetaIA`), que son
+  de todos: se corta por anclas parciales y la isla se queda en la página; las anclas de arranque y
+  de cierre se afirman UNA por UNA (el blanco que no está donde uno cree es la falla más común).
 - **El chequeo de choques del empaquetador ve `src/`, no la página.** `TENANT` estaba declarada en el
   paquete y otra vez en `index.html`: los `const` de nivel superior comparten ámbito entre scripts y la
   página deja de correr («Identifier 'TENANT' has already been declared»). Se borró la vieja.
   **Pendiente**: extender ese chequeo a los scripts de las páginas.
+
+## Corte 5 — el asistente (25/09) · **CERRADO**
+
+El asistente entero vive en `src/assistant/` y viaja en el paquete de `src/` (un solo script):
+
+1. **`src/assistant/voice.js`** — el micrófono, su eco (¿lo dictado son SUS palabras?), su voz
+   (`speechSynthesis`, Colombia primero) y el silencio; con los oídos del botón del micrófono y el del
+   sonido. `vozAudio` vive a nivel del MÓDULO (voz.spec lo lee y lo escribe por `evaluate`, como
+   `mirandoFoto`). La página conserva las puertas `encenderElMicrofono/apagarElMicrofono/hablarConSuVoz`.
+2. **`src/assistant/brain.js`** — el cerebro simulado, que era `assistant-brain.js` de la raíz
+   incrustado por el generador: ahora viaja en el paquete y sigue cargándose desde Node
+   (`tests/assistant-brain.spec.mjs` y `evaluacion-retapizado.spec.mjs` lo requieren por su ruta nueva).
+3. **`src/assistant/presence.js`** — la cara (Lía/Tomás, el sillón, Rapier), la barra y los pulsos de
+   voz; era `assistant-presence.js` de la raíz, un `<script type="module">` aparte de 2.140 líneas.
+   Ahora es `empezarLaPresencia()` —async: espera el `load`, como el módulo— y la página la arranca al
+   final con `Asistente.presencia.empezar()`.
+
+**Verificado**: `npm run generate` limpio (29 módulos, sin choques); retapizado cierra **COT-1058…
+COT-1060** (025 s la última; presupuesto 60) con cero errores de página; `tests/voz.spec.mjs` →
+**ALL PASS**; y por `file://` la presencia COLOCA (three.js y Rapier desde el CDN,
+`data-look-src="talking"`, `data-phys="rapier"`, la zona `assistantHit` viva). Captura:
+`generated/muestra-25-09-presencia.png`.
+
+### Lecciones de este corte (para no repetirlas)
+
+- **El empaquetador no conocía `export async function`.** La presencia se envuelve en una `async`
+  (por su `await ready`) y el `export` quedaba sin pelar: «Unexpected token 'export'» en el paquete.
+  `tools/bundle.mjs` ahora pela `export (async)? const/let/var/function/class` y el chequeo de choques
+  cuenta el nombre igual.
+- **Envolver un módulo en una función no es gratis: su `await` de nivel superior deja de ser legal.**
+  `assistant-presence.js` esperaba el `load` con un `await ready;` suelto (válido en un módulo ES). El
+  envoltorio va `async` y la página lo arranca sin esperar, con un `.catch` que avisa en consola.
+- **`tools/dev.mjs` no vigilaba `src/`.** El pie prometía «save a change and the browser reloads», pero
+  guardar un módulo no regeneraba nada: ahora `src/` está en el ojo del dev server.
+- **Hallazgo (no de este corte): `tests/assistant.spec.mjs` está rojo desde `fd97222`.** El dueño
+  reemplazó el CTA del sidebar («Pregúntale a Lía» → «Conversar con Lía») y el spec quedó anclado a
+  `.chat-fab` / `.help-card [data-open-chat]` (líneas 90/91/245/514): revienta en su primer `wizard()`
+  con «Cannot read properties of null». Queda como está: el dueño decide si se actualiza o se retira a
+  favor de las specs de la conversación.
+
+## Corte 6 — el núcleo (25/09) · **CERRADO**
+
+Lo último, a propósito: el estado y el bus, que sostienen todo lo demás.
+
+1. **`src/app/state.js`** — el estado del cotizador (`state`) y su mueble inicial (`FURNITURE_INICIAL`).
+   El paquete comparte ámbito con la página: `state.step` se sigue leyendo por su nombre en la página,
+   en los módulos y en las specs.
+2. **`src/app/events.js`** — el bus del asistente (ACI): los eventos `aci:event`, `context()`, `env()`,
+   `execute()` y `isTyping()`. Se arma con `conectarElBus(puente)` —lo llama el arranque—, queda en
+   `window.ACI` y en el puente (`C.ACI`); la página lo lee por su nombre (`ACI.emit(...)`).
+3. **`src/tenant/branding.js`** — el motor de marca (`Brand.apply`, con su baile de pre-paint) salió de
+   `store.js` (que quedó 146 líneas más flaco) y viaja en el paquete; los valores por defecto salen de
+   `Store.brandDefaults()` y las reglas de color chicas se espejan con store.js (nota en el archivo).
+4. La puerta nueva es **`window.App`** (`App.eventos.conectar`), y el arranque va ordenado: PRIMERO el
+   bus, DESPUÉS los módulos de src/ y al final se pinta.
+
+**Verificado**: `npm run generate` limpio (33 módulos, sin choques); el sondeo por `file://` ve el
+estado, el bus publicando de verdad (`ACI.emit('PRUEBA')` → evento), el contexto armado (`SERVICE · …`)
+y la marca (`Brand.apply()` no-op sin overrides), sin errores de página; retapizado cierra
+**COT-1061/COT-1062** (028–059 s, presupuesto 60); `styles.spec` → ALL PASS (el motor de marca en su
+sitio), `voz.spec` → ALL PASS y `conversacion-api.spec` → ALL PASS (ver el hallazgo abajo).
+
+**Lo que falta para «borrar el puente» del todo**: `window.CotizadorPuente` sigue siendo el handoff
+página↔módulos. Lo que todavía vive en la página y los módulos leen por él son las ayudas del wizard
+(`showStep`, `aplicar*`, `updateEstimate`…) y los datos sueltos (reglas, presupuesto, atención…).
+Borrar el puente = mudar esas ayudas a `src/wizard/` y dejar la página como cáscara: la conversación,
+el envío y los oídos.
+
+### Lecciones de este corte
+
+- **El puente no puede llevar un objeto que todavía no existe.** El bus necesita el puente para armarse
+  y el puente necesita el bus: se resuelve CONECTANDO el bus con el puente y dejándolo en él
+  (`elPuente.ACI = ACI`) antes de que los módulos se conecten — el arranque ordena: bus → módulos →
+  pintar.
+- **Al mudar código compartido, la lista de quién usa qué decide el corte.** `each` se quedó en
+  store.js porque lo usa `Assistant`; `kebab` y `BRAND_VAR_ALIASES` se fueron con Brand porque solo él
+  los usaba; y `normHex`/`hexToRgb`/`rgbToHex` quedaron ESPEJADOS (los usa `Store`): si cambia la
+  regla, cambian los tres (generate.mjs, store.js, branding.js).
+- **Hallazgo y arreglo (`muebleOtro`)**: la reconciliación «las palabras del cliente mandan» seguía
+  llamando a `elegirTarjeta('.furniture-card')` — la rejilla que el corte 4 reemplazó por los
+  desplegables de la fila. `conversacion-api.spec` lo cazó (la tarjeta perdía y «Perdón - Cabecero»
+  entraba al campo); ahora usa `elegirMuebleDelCatalogo`, como el caso «mueble». → ALL PASS.
+- **Dos specs quedan rojos, de ANTES de este corte** (los dos describen pantallas viejas):**
+  - `tests/wizard.spec.mjs` — su `reach()` llena `#width` en el paso de medidas que el corte 4 retiró
+    (las medidas viven en la fila): «element is not visible»; su recorrido entero es del flujo viejo.
+  - `tests/assistant.spec.mjs` — anclado al CTA «Pregúntale a Lía» que `fd97222` reemplazó por
+    «Conversar con Lía» (`.chat-fab`, `.help-card [data-open-chat]`); revienta en su primer `wizard()`.
+  Los dos esperan decisión del dueño: actualizarlos o retirarlos en favor de las specs nuevas.

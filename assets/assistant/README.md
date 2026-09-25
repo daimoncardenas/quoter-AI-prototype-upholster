@@ -82,6 +82,6 @@ surgery, not a one-liner):
    keyframe time.
 3. Re-run `npm run build:assistant`, then the suite.
 
-Until then `assistant-presence.js` measures the leg lengths off the rest pose
+Until then `src/assistant/presence.js` measures the leg lengths off the rest pose
 (knee → foot) to solve the seated IK, and the suite asserts the thigh really rotates
 (`data-knee` at hip height) — never that the feet reach the floor.

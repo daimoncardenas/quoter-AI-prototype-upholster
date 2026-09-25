@@ -257,7 +257,7 @@ without matching Mediterránea's fixtures — under a different `CLIENT`.
   them, that both "Restablecer estilos por defecto" and "Restablecer datos de demo"
   restore the pack's look, that the nav reads "Configuraciones de cotizador", and
   that a seller can neither see nor reach the section.
-- `assistant-brain.spec.mjs` — the simulated brain (`assistant-brain.js`) as a pure
+- `assistant-brain.spec.mjs` — the simulated brain (`src/assistant/brain.js`) as a pure
   Node unit suite: the closed catalogue (six steps; only measurements and
   preferences are writable; price, metres, quote status, seller and the customer's
   identity never are), that validation rejects unknown action types, unknown or

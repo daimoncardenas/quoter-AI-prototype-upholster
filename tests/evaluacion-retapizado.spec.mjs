@@ -16,7 +16,7 @@ import { chromium } from 'playwright';
 import { elegirAtencion, elegirMueble } from './helpers.mjs';
 import { createRequire } from 'node:module';
 import { PHOTOS_DB } from './client.mjs';
-const brain = createRequire(import.meta.url)('../assistant-brain.js');
+const brain = createRequire(import.meta.url)('../src/assistant/brain.js');
 const D = 'file://' + process.cwd() + '/generated/';
 const png = ['1','2','3'].map(n=>new URL(`./fixture-sofa-${n}.png`, import.meta.url).pathname);
 let fails = 0;

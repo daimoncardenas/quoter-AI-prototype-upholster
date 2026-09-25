@@ -177,7 +177,7 @@ cuando existe es un **paso propio**, no un bloque dentro de otro.
   con el mueble: se pregunta, se responde y se pasa.
 - La cotización guarda `service` (línea + journey); el backoffice filtra, busca y muestra por
   línea, y "Configuraciones de cotizador" lista las líneas del paquete con el plan de cada una.
-- En el asistente simulado la línea es el paso `SERVICE` (`assistant-brain.js` → `STEPS`), y su
+- En el asistente simulado la línea es el paso `SERVICE` (`src/assistant/brain.js` → `STEPS`), y su
   copy nombra los pasos por **nombre**, nunca por número: con siete pasos, "paso 3" dejaría de
   ser Preferencias.
 

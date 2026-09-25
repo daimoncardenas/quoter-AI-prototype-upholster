@@ -1,6 +1,6 @@
 /* "Presencia del asistente": the backoffice section that configures the 3D
  * assistant the cotizador shows (store.js Store.assistant / saveAssistant /
- * Assistant.apply, assistant-presence.js). Proves the loop without depending on
+ * Assistant.apply, src/assistant/presence.js). Proves the loop without depending on
  * pixels or on WebGL being available: the section is admin-only, what the admin
  * saves is exactly what the cotizador paints (name in the chat header and in the
  * character's and "Preguntar"'s accessible names, on/off), turning it off removes

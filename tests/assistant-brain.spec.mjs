@@ -1,4 +1,4 @@
-/* Unit suite for assistant-brain.js — the SIMULATED brain (no AI, no network)
+/* Unit suite for src/assistant/brain.js — the SIMULATED brain (no AI, no network)
  * behind the wizard's chat: canned answers plus a closed list of typed actions
  * that the ACI adapter in index.html validates again and applies.
  *
@@ -16,7 +16,7 @@
  * context, and that customer text can only SELECT among them — never add an action. */
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const brain = require('../assistant-brain.js');
+const brain = require('../src/assistant/brain.js');
 
 let fails = 0;
 const check = (n, got, want) => {

@@ -143,12 +143,8 @@ function assistantModelTags() {
   }).join('\n');
 }
 
-// The simulated assistant brain: a classic script, inlined before the wizard's own.
-function assistantBrainTag() {
-  const js = readFileSync('assistant-brain.js', 'utf8');
-  if (/<\/script/i.test(js)) throw new Error('assistant-brain.js must not contain "</script" (would break the page\'s HTML)');
-  return `<script>\n${js}\n</script>`;
-}
+/* El cerebro del asistente vive en src/assistant/brain.js y viaja en el paquete de src/ (corte 5);
+ * antes se incrustaba aquí. */
 
 /* El cerco del asistente: el mismo patrón que el cerebro (script clásico, incrustado antes del wizard). */
 function assistantFenceTag() {
@@ -166,11 +162,8 @@ function contratoTag() {
   return `<script>\n${js}\n</script>`;
 }
 
-function assistantScriptTag() {
-  const js = readFileSync('assistant-presence.js', 'utf8');
-  if (/<\/script/i.test(js)) throw new Error('assistant-presence.js must not contain "</script" (would break the page\'s HTML)');
-  return `<script type="module">\n${js}\n</script>`;
-}
+/* La presencia del asistente vive en src/assistant/presence.js y viaja en el paquete de src/ (corte 5);
+ * la página la arranca con `Asistente.presencia.empezar()` al final. */
 
 /* Visible brand copy that contains the company name gets that name wrapped
  * in <span data-brand-name>, so Brand.apply() can swap in the name saved in
@@ -227,8 +220,6 @@ export function generate(clientEnvValue = resolveClient(), outDir = 'generated')
      * swaps in the one saved in the backoffice. */
     ASSISTANT_DEFAULT_NAME: escHtml(client.assistant.name),
     ASSISTANT_MODELS: assistantModelTags(),
-    ASSISTANT_SCRIPT: assistantScriptTag(),
-    ASSISTANT_BRAIN_SCRIPT: assistantBrainTag(),
     CONTRATO_SCRIPT: contratoTag(),
     ASSISTANT_FENCE_SCRIPT: assistantFenceTag(),
     NOT_OFFICIAL_INDEX: client.copy.notOfficialIndex,

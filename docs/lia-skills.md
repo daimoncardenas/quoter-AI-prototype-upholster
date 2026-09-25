@@ -3,7 +3,7 @@
 **Estado: no implementado, a propósito.** Este documento fija el contrato de lo que sería la capa de
 conocimiento de Lía por línea de servicio, y por qué no se escribe todavía. El prototipo no tiene
 ningún mecanismo que cargue o ejecute estos archivos: Lía sigue siendo simulada
-(`assistant-brain.js` es su contrato, y las respuestas del chat lo dicen). Crear hoy dieciséis
+(`src/assistant/brain.js` es su contrato, y las respuestas del chat lo dicen). Crear hoy dieciséis
 `SKILL.md` que nada consume produce deuda, no arquitectura — se decide cuando haya quien los lea.
 
 ## Lo que existiría (cuando se decida)
@@ -35,7 +35,7 @@ vez de recopiarlos.
 ## Reglas de frontera (no negociables cuando se implemente)
 
 1. **Una sola verdad operativa.** Preguntas, saltos, precios y copia del cliente: el catálogo
-   (`shared/service-lines.json`). Capacidades y restricciones del chat: `assistant-brain.js`
+   (`shared/service-lines.json`). Capacidades y restricciones del chat: `src/assistant/brain.js`
    (`ACTION_TYPES`, `NEVER_SETTABLE`). Los skills referencian, no redefinen.
 2. **Nada inventado.** Lo que no esté validado se marca «por confirmar» (como `docs/journeys.md` §8).
    La regla 10 del repo aplica igual: un precio es del dueño o está citado.

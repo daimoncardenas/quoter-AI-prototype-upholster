@@ -17,7 +17,9 @@ import { dirname, resolve, relative } from 'node:path';
  * un paquete externo (si algún día lo hay) no se toca: se avisa para que se resuelva a mano. */
 const IMPORT_RELATIVO = /^\s*import\s+[^;]*?from\s+['"](\.[^'"]+)['"]\s*;?\s*(\/\/.*)?$/gm;
 const EXPORT_DE_LISTA = /^\s*export\s*\{[^}]*\}\s*;?\s*(\/\/.*)?$/gm;
-const EXPORT_DIRECTO = /^(\s*)export\s+(const|let|var|function|class)\b/gm;
+/* El `export` puede venir con `async` (una función de arranque asíncrona, como la presencia del
+ * asistente): se pela igual que las demás. */
+const EXPORT_DIRECTO = /^(\s*)export\s+((?:async\s+)?(?:const|let|var|function|class))\b/gm;
 
 function archivosDe(dir) {
   const salida = [];
@@ -71,7 +73,7 @@ export function empaquetar(srcDir = 'src', extras = {}) {
   const declarado = new Map();
   for (const absoluta of orden) {
     const codigo = limpiar(porRuta.get(absoluta));
-    const nombres = [...codigo.matchAll(/^(?:const|let|var|function|class)\s+([A-Za-z_$][\w$]*)/gm)].map(m => m[1]);
+    const nombres = [...codigo.matchAll(/^(?:async\s+)?(?:const|let|var|function|class)\s+([A-Za-z_$][\w$]*)/gm)].map(m => m[1]);
     for (const nombre of nombres) {
       const previo = declarado.get(nombre);
       if (previo) {
