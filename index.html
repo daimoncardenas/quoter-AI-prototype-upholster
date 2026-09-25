@@ -1961,7 +1961,10 @@ async function submitQuote(){
     }:null,
     price:state.fabric?[q.facMin*state.fabric.price,q.facMax*state.fabric.price]:null,
     estimate,
-    seller,sellerId:asignado?asignado.id:'',status:'Nueva',photoIds
+    seller,sellerId:asignado?asignado.id:'',status:'Nueva',photoIds,
+    /* De dónde salió la solicitud (regla 5 de docs/base-de-datos.md): la corrida automática se marca
+     * sola (window.__E2E__, que pone el E2E) y lo demás es un cliente usando el cotizador. */
+    ...(window.__E2E__?{source:'e2e'}:{})
   };
   try{Store.put('quotes',quote)}
   catch(err){

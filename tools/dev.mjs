@@ -96,8 +96,9 @@ async function handle(req, res) {
     return;
   }
 
-  /* LA BASE COMPARTIDA (SQLite): las pre-cotizaciones viven aquí, no en cada navegador. */
-  if (laBase(req, res, url)) return;
+  /* LA BASE COMPARTIDA: las pre-cotizaciones viven aquí, no en cada navegador. El motor lo elige
+   * tools/api.mjs (SQLite en casa; Mongo Atlas cuando hay MONGODB_URI en .env). */
+  if (await laBase(req, res, url)) return;
 
   let pathname;
   try {

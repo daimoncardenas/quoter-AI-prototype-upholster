@@ -134,3 +134,49 @@ a otras colecciones.
 9. **Nada de secretos en el código**: la cadena de Atlas va en `.env` (como la llave de DeepSeek).
 10. **El pack es dato**: marca, textos, catálogo y precios se leen de documentos; un cliente nuevo es
     `tenant` + `brand` + documentos, sin tocar código.
+
+## El motor del prototipo (implementado)
+
+El prototipo ya tiene los dos motores detrás de las MISMAS rutas (`tools/api.mjs`); cuál corre lo decide
+`MONGODB_URI` — la misma degradación que la llave de DeepSeek: sin llave, la página usa lo suyo; sin
+Atlas, el prototipo usa su base de casa.
+
+| Dónde | Motor | Fotos | Cuándo |
+| --- | --- | --- | --- |
+| Casa | `tools/api-sqlite.mjs` → `data/quoter.db` (tablas, columnas) | archivos en `data/photos/…` | siempre que NO haya `MONGODB_URI` |
+| Atlas | `tools/api-mongo.mjs` → colección `quotes` EMBEBIDA | GridFS (`fotos/<ns>/<COT-####>/NN.ext`) | cuando hay `MONGODB_URI` (en .env o en el entorno) |
+| Netlify Functions | las mismas rutas en `netlify/functions/api.mjs` y `ia.mjs` | GridFS | desplegado: allá Atlas es obligatorio (no hay disco) |
+
+Lo que ambos motores comparten (por eso el traspaso es un export, no una reescritura):
+
+- **Las mismas rutas y el mismo JSON**: `GET/PUT/DELETE /api/quotes`, `POST /api/reset` y
+  `GET /api/photos/<ns>/<COT-####>/<archivo>`. El navegador no cambia una línea entre motores.
+- **`data` es el cajón de lo que el modelo todavía no nombra**, el mismo en los dos: lo que la página
+  manda y no tiene columna/campo propio (el desglose de la tela, la lista, los insumos, las entradas de
+  la estimación…) vuelve tal cual al leer. Cuando un dato se vuelve importante, se le da su lugar y se
+  rellena desde ahí (regla 6).
+- **El `_id` de una cotización es su `COT-####`** (regla 8). Mientras un sitio despliegue un solo cliente
+  (un namespace) no hay choque posible; el día que un cluster sirva a varios clientes con el mismo
+  número, el `_id` pasa a compuesto (`<tenantId>:<COT-####>`) — anotado aquí para que nadie lo descubra
+  a golpes.
+- **`source` ya se escribe** (regla 5): las seeds viajan con `"source": "seed"` en `shared/demo-seed.json`,
+  la corrida automática con `"e2e"` (la página lo marca con `window.__E2E__`, que pone el E2E), y lo demás
+  es `cotizador`.
+- **Los nombres desnormalizados se quedan** (`sellerName`, `servicePointName`, `fabricName`): el listado
+  del backoffice se lee de un golpe, sin `$lookup`; las referencias (`sellerId`, `servicePointId`,
+  `fabricId`) siguen ahí para cuando haga falta la verdad vigente.
+
+Dos cosas que el motor de Atlas todavía NO resuelve (a propósito; nada se inventa):
+
+- **`pieces[].furnitureId` va en `null`**: la página manda la ETIQUETA del mueble; el id del catálogo lo
+  pondrá quien lo tenga (el cotizador o el resolutor del catálogo). La etiqueta sí viaja
+  (`furnitureLabel`).
+- **La foto en Atlas vive en el GridFS** y su ruta en el documento es `api/photos/…` (en casa es
+  `data/photos/…`): mismo lector, distinto almacén. Un objeto de storage (S3/R2) queda como lo próximo
+  si las fotos crecen.
+
+Colecciones que el modelo ya nombra y el prototipo todavía no escribe: `tenants`, `brands`, `users`,
+`servicePoints`, `fabrics`, `furniture`, `settings` (hoy viven en los packs) y las dos que vienen con el
+asistente: `conversations` y `knowledge`. Se conectan cuando toque — la forma ya está aquí.
+
+El paso a paso del despliegue (Atlas + Netlify): `docs/despliegue-netlify.md`.

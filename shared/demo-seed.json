@@ -265,6 +265,7 @@
   ],
   "quotes": [
     {
+      "source": "seed",
       "id": "COT-1042",
       "date": "2026-09-04",
       "customer": {
@@ -283,6 +284,7 @@
       "photoIds": []
     },
     {
+      "source": "seed",
       "id": "COT-1041",
       "date": "2026-09-04",
       "customer": {
@@ -301,6 +303,7 @@
       "photoIds": []
     },
     {
+      "source": "seed",
       "id": "COT-1040",
       "date": "2026-09-03",
       "customer": {
@@ -319,6 +322,7 @@
       "photoIds": []
     },
     {
+      "source": "seed",
       "id": "COT-1039",
       "date": "2026-09-03",
       "customer": {
@@ -337,6 +341,7 @@
       "photoIds": []
     },
     {
+      "source": "seed",
       "id": "COT-1038",
       "date": "2026-09-02",
       "customer": {
@@ -368,6 +373,7 @@
       ]
     },
     {
+      "source": "seed",
       "id": "COT-1037",
       "date": "2026-09-01",
       "customer": {

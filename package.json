@@ -4,6 +4,7 @@
   "description": "Prototypes for the upholster-prototype-quoter fabric quoting flow. The prototypes themselves have no dependencies — these are only for the tests.",
   "scripts": {
     "generate": "node tools/generate.mjs",
+    "base:prueba": "node tools/mongo-prueba.mjs",
     "dev": "node tools/dev.mjs",
     "pretest": "node tools/generate.mjs",
     "test": "node tests/wizard.spec.mjs && node tests/photos.spec.mjs && node tests/wiring.spec.mjs && node tests/review.spec.mjs && node tests/entities.spec.mjs && node tests/recommend.spec.mjs && node tests/auth.spec.mjs && node tests/billing.spec.mjs && node tests/plan-medida.spec.mjs && node tests/components.spec.mjs && node tests/points.spec.mjs && node tests/styles.spec.mjs && node tests/contrato.spec.mjs && node tests/conversacion.spec.mjs && node tests/conversacion-api.spec.mjs && node tests/voz.spec.mjs && node tests/telas-en-la-lista.spec.mjs && node tests/eleccion-y-memoria.spec.mjs && node tests/assistant-brain.spec.mjs && node tests/assistant.spec.mjs && node tests/assistant-ia-local.spec.mjs && node tests/assistant-api.spec.mjs && node tests/presupuesto.spec.mjs && node tests/atencion.spec.mjs && node tests/ruta-cantidad.spec.mjs && node tests/ruta-caminos.spec.mjs && node tests/ruta-pedido.spec.mjs && node tests/retapizado-trabajo.spec.mjs && node tests/backoffice-mano-de-obra.spec.mjs && node tests/planes-precios.spec.mjs && node tests/sealed.spec.mjs",
@@ -44,5 +45,8 @@
   },
   "devDependencies": {
     "playwright": "^1.62.1"
+  },
+  "dependencies": {
+    "mongodb": "^7.6.0"
   }
 }

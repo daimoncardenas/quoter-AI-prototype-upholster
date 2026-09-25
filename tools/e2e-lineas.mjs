@@ -23,6 +23,9 @@ const errores = [];
 async function correrLinea({ motivo, nombre, piezas }) {
   const t0 = Date.now();
   const ctx = await navegador.newContext({ viewport: { width: 1500, height: 950 } });
+  /* La corrida se marca a sí misma: la solicitud que nazca aquí viaja con `source: "e2e"` (regla 5 de
+   * docs/base-de-datos.md) y en el backoffice no se confunde con un cliente real. */
+  await ctx.addInitScript(() => { window.__E2E__ = true; });
   const p = await ctx.newPage();
   p.on('pageerror', e => errores.push(`${nombre}: ${String(e.message).slice(0, 90)}`));
 

@@ -1,0 +1,30 @@
+# El prototipo desplegado en Netlify.
+#
+# La página se genera en el build (`npm run generate`, con CLIENT y los packs del repo) y se publica
+# `generated/`. El backend son dos Netlify Functions (`netlify/functions/`) que atienden las mismas
+# rutas que el servidor de desarrollo:
+#
+#   /api/*    → netlify/functions/api.mjs   la base (cotizaciones, seeds, fotos) sobre Mongo Atlas
+#   /__ia/*   → netlify/functions/ia.mjs    la puerta a DeepSeek (la llave vive en el entorno)
+#
+# Variables de entorno del sitio (Site configuration → Environment variables), NUNCA en el repo:
+#   CLIENT            qué pack se genera (p. ej. CARDYRAM)
+#   MONGODB_URI       la cadena de Atlas — sin ella la función de la base contesta 503
+#   MONGODB_DB        el nombre de la base (por defecto «aci»)
+#   DEEPSEEK_API_KEY  la llave de la IA (opcional: sin ella la página usa lo suyo)
+#   NPM_FLAGS         «--omit=dev» para no instalar Playwright en el build (es de las pruebas)
+#
+# Paso a paso: docs/despliegue-netlify.md
+[build]
+  command = "npm run generate"
+  publish = "generated"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  node_bundler = "esbuild"
+  # El motor de Mongo lee los packs para saber a qué negocio pertenece un namespace: los necesita dentro
+  # del paquete de la función.
+  included_files = ["clients/**"]
