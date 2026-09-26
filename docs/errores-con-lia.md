@@ -66,7 +66,7 @@ cliente: sin él, la app vuelve a hablar de «la IA local del equipo» — nunca
 | Nota del chat con modelo | «Asistente con IA local (modelo de Chrome, en este equipo)…» | «Lía responde con el modelo local del navegador (no es una persona): lo que escribas no sale de este equipo.» |
 
 Fuera de alcance por su palabra: el backoffice («don't touch for the moment») y el nombre del
-producto (ACI · Asesor Comercial Inteligente, que es la marca del producto, no una etiqueta de IA).
+producto (ACI · Asistente Comercial Inteligente, que es la marca del producto, no una etiqueta de IA).
 
 ## 3. Lo que queda para después (él lo pidió «one by one»)
 

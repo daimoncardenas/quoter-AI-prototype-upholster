@@ -65,6 +65,19 @@ async function elMotor() {
   return motor;
 }
 
+/* LA IP DE QUIEN VISITA (dueño, 26/09: «detectarlo por la ip… y saludarlo apenas llegue por el
+ * nombre»): el despliegue la trae en `x-nf-client-connection-ip` o `x-forwarded-for`; el servidor de
+ * casa la tiene en el socket. Se usa SOLO para reconocer a quien ya cotizó — se guarda pegada a su
+ * cotización y esta puerta la devuelve con su nombre. Nunca se registra en otra parte. */
+const laIpDeLaVisita = (req) => {
+  try {
+    const h = (req && req.headers) || {};
+    const dicho = String(h['x-nf-client-connection-ip'] || h['x-forwarded-for'] || '').split(',')[0].trim();
+    if (dicho) return dicho;
+    return String((req.socket && req.socket.remoteAddress) || '').replace(/^::ffff:/, '');
+  } catch (err) { return ''; }
+};
+
 /* El cuerpo del PUT puede traer las fotos en base64 (~33 % más grande que el archivo): 24 MiB deja
  * aire para una tanda de fotos sin volverse un agujero de memoria. Una petición sin fin se corta. */
 const LIMITE_CUERPO = 24 * 1024 * 1024;
@@ -89,7 +102,7 @@ function responder(res, code, obj) {
 /* Devuelve true si atendió la petición (el servidor sigue con sus archivos si no). */
 export async function laBase(req, res, url) {
   const ruta = url.pathname;
-  const esDeLaBase = ruta.startsWith('/api/quotes') || ruta === '/api/reset' || ruta.startsWith('/api/photos/');
+  const esDeLaBase = ruta.startsWith('/api/quotes') || ruta === '/api/reset' || ruta.startsWith('/api/photos/') || ruta === '/api/visitante';
   if (!esDeLaBase) return false;
 
   const ns = url.searchParams.get('ns') || '';
@@ -111,8 +124,42 @@ export async function laBase(req, res, url) {
       const dato = JSON.parse(await leerCuerpo(req) || '{}');
       const quien = String(dato.ns || ns || '');
       const filas = Array.isArray(dato.quotes) ? dato.quotes : (dato.quote ? [dato.quote] : []);
+      /* La cotización se queda con la IP y el navegador de quien la envió: señales secundarias de la
+       * misma visita (la llave que decide es `visitorId`, que pega el navegador). */
+      const ip = laIpDeLaVisita(req);
+      const ua = String((req.headers && req.headers['user-agent']) || '').slice(0, 300);
+      /* En el objeto de la página van en camelCase («lo demás» lo guarda el motor en snake, regla de
+       * la casa): al leerlos vuelven como `visitanteIp` y `visitanteUa`. */
+      filas.forEach(f => { if (f && typeof f === 'object') { if (ip) f.visitanteIp = ip; if (ua) f.visitanteUa = ua; } });
       const guardadas = await el.guardar(quien, filas);
       responder(res, 200, { guardadas, ns: quien, motor: el.nombre });
+      return true;
+    }
+
+    /* ¿ME CONOCES? Devuelve el nombre dueño de esa llave de navegador (`visitorId`) — así lo saluda
+     * la presencia a la vuelta, sin sesión ni cuenta. La IP acompaña como señal secundaria (viaja en
+     * `conocidoAqui`) y NO decide el nombre: una casa u oficina comparte IP. */
+    if (req.method === 'GET' && ruta === '/api/visitante') {
+      const buscan = new URL(req.url, 'http://local').searchParams;
+      const quieren = buscan.get('ns') || ns || '';
+      const llave = buscan.get('visitorId') || '';
+      const dato = await el.listar(quieren);
+      /* Solo las cotizaciones que envió el cotizador reconocen a alguien: las seeds y las pruebas
+       * (regla 5, cada una declara su `source`) son datos de demo y no saludan a nadie. */
+      const suya = llave ? (dato.quotes || [])
+        .filter(q => q && (q.visitorId || q.visitanteId) === llave && (!q.source || q.source === 'cotizador'))
+        .pop() || null : null;
+      /* La memoria que necesita el saludo: cuántas cotizaciones tiene este navegador, y de qué es la
+       * última y en qué estado quedó — así la burbuja puede decir qué dejaron pendiente (dueño, 26/09). */
+      const mias = llave ? (dato.quotes || [])
+        .filter(q => q && (q.visitorId || q.visitanteId) === llave && (!q.source || q.source === 'cotizador')) : [];
+      const nombre = suya ? String((suya.customer && suya.customer.name) || suya.name || '').trim() : '';
+      const pieza = suya && Array.isArray(suya.pieces) && suya.pieces[0] ? suya.pieces[0] : null;
+      const mueble = suya ? String((pieza && (pieza.furniture || pieza.furnitureLabel)) || suya.furniture || '').trim() : '';
+      const ultima = suya ? { id: suya.id || '', fecha: suya.date || null, servicio: (suya.service && suya.service.label) || '', mueble, estado: String(suya.status || '').trim() } : null;
+      const ip = laIpDeLaVisita(req);
+      const conocidoAqui = !nombre && ip ? (dato.quotes || []).some(q => q && (q.visitanteIp || q.visitante_ip) === ip) : false;
+      responder(res, 200, { nombre, cuantas: mias.length, ultima, conocidoAqui, ns: quieren, motor: el.nombre });
       return true;
     }
 

@@ -105,7 +105,7 @@ export function conectarLaRevision(elPuenteDeLaPagina) {
     } else if (chicas.length) {
       const menor = chicas.reduce((a, b) => (a.width * a.height <= b.width * b.height ? a : b));
       checks.push({ ok: false, title: `${n} fotografía${n === 1 ? '' : 's'} recibida${n === 1 ? '' : 's'}`,
-        detail: `${chicas.length} ${chicas.length === 1 ? 'es de baja resolución' : 'son de baja resolución'} (la menor mide ${menor.width}×${menor.height} px). Un asesor podría pedirte otras.` });
+        detail: `${chicas.length} ${chicas.length === 1 ? 'es de baja resolución' : 'son de baja resolución'} (la menor mide ${menor.width}×${menor.height} px). Un asistente podría pedirte otras.` });
     } else {
       const menor = E.photos.reduce((a, b) => (a.width * a.height <= b.width * b.height ? a : b));
       checks.push({ ok: true, title: `${n} fotografía${n === 1 ? '' : 's'} recibida${n === 1 ? '' : 's'}`,
@@ -113,11 +113,11 @@ export function conectarLaRevision(elPuenteDeLaPagina) {
     }
 
     /* 1b. La NITIDEZ: medida sobre los píxeles al cargar (`medirNitidez`), no la palabra del modelo.
-     *     No bloquea —el asesor mira la foto igual—, pero se dice, y una foto repetida se agradece. */
+     *     No bloquea —el asistente mira la foto igual—, pero se dice, y una foto repetida se agradece. */
     const borrosas = E.photos.filter(ph => typeof ph.nitidez === 'number' && ph.nitidez < C.NITIDEZ_MINIMA);
     if (borrosas.length) {
       checks.push({ ok: false, title: `${borrosas.length} foto${borrosas.length === 1 ? '' : 's'} fuera de foco`,
-        detail: `Se ve poco detalle${borrosas.length === 1 ? '' : ' en ellas'}: vuelve a ${borrosas.length === 1 ? 'tomarla' : 'tomarlas'} con más luz y el teléfono quieto. El asesor las mira igual.` });
+        detail: `Se ve poco detalle${borrosas.length === 1 ? '' : ' en ellas'}: vuelve a ${borrosas.length === 1 ? 'tomarla' : 'tomarlas'} con más luz y el teléfono quieto. El asistente las mira igual.` });
     }
 
     // 2. the measurements — real arithmetic against plausible ranges, solo si la línea las pide:
@@ -153,16 +153,16 @@ export function conectarLaRevision(elPuenteDeLaPagina) {
   const filaPensando = () => `<div><span class="mirada-gira"></span><p><b>Mirando tus fotos ${C.etiquetaIA()}</b>` +
     `<small>${C.esc(C.asistenteNombre())} está analizando tus fotografías.</small>` +
     `<span class="mirada-espera" role="status" aria-label="${C.esc(C.asistenteNombre())} está analizando tus fotografías."></span></p></div>`;
-  const MIRADA_NO_MOSTRABLE = () => `${C.asistenteNombre()} miró la fotografía, pero su respuesta no se puede mostrar aquí. Un asesor la revisa y te dice si sirve.`;
+  const MIRADA_NO_MOSTRABLE = () => `${C.asistenteNombre()} miró la fotografía, pero su respuesta no se puede mostrar aquí. Un asistente la revisa y te dice si sirve.`;
   /* Cuando el equipo no puede mirar —o el modelo se cae— la fila lo dice: el cliente tiene que ver qué
    * pasó con su foto. Dos frases distintas porque son dos cosas distintas: una capacidad que este
    * equipo no tiene, y un intento que se cayó — y con la API hablan de la API, no del navegador. */
   const MIRADA_SIN_OJOS = () => C.proveedorIA() === 'api'
-    ? 'La API del modelo no aceptó la fotografía, así que no la pude mirar. Un asesor la revisa y te dice si sirve.'
-    : 'En este equipo no puedo mirar la fotografía: al modelo local le falta la variante de imagen. Un asesor la revisa y te dice si sirve.';
+    ? 'La API del modelo no aceptó la fotografía, así que no la pude mirar. Un asistente la revisa y te dice si sirve.'
+    : 'En este equipo no puedo mirar la fotografía: al modelo local le falta la variante de imagen. Un asistente la revisa y te dice si sirve.';
   const MIRADA_FALLO = () => C.proveedorIA() === 'api'
-    ? 'No pude mirar la fotografía con la API del modelo. Un asesor la mira y te dice si sirve.'
-    : 'No pude mirar la fotografía con el modelo local de este equipo. Un asesor la mira y te dice si sirve.';
+    ? 'No pude mirar la fotografía con la API del modelo. Un asistente la mira y te dice si sirve.'
+    : 'No pude mirar la fotografía con el modelo local de este equipo. Un asistente la mira y te dice si sirve.';
   /* Lo mínimo que se ven los puntos, aunque el equipo conteste al instante: la misma razón del chat
    * (`ESPERA_MINIMA_MS`) — una señal que parpadea no se lee como que el cotizador hizo algo. */
   const esperarLoMinimo = async desde => { const falta = C.ESPERA_MINIMA_MS - (Date.now() - desde);
@@ -360,7 +360,7 @@ export function conectarLaRevision(elPuenteDeLaPagina) {
       const caveats = checks.filter(c => !c.ok).length;
       document.getElementById('analysisTitle').textContent = caveats ? 'Revisión lista, con observaciones' : 'Revisión lista';
       document.getElementById('analysisText').textContent = caveats
-        ? 'Puedes continuar: un asesor confirmará los puntos señalados.'
+        ? 'Puedes continuar: un asistente confirmará los puntos señalados.'
         : 'Podemos calcular tu estimación preliminar.';
       const box = document.getElementById('analysisChecks');
       box.innerHTML = checks.map(c => `<div class="${c.ok ? '' : 'warn'}"><span>${c.ok ? '✓' : '!'}</span><p><b>${C.esc(c.title)}</b><small>${C.esc(c.detail)}</small></p></div>`).join('');

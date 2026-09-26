@@ -1974,12 +1974,11 @@ export async function empezarLaPresencia() {
 
   /* --------------------------------------------------------------- welcome -- */
 
-  function welcome() {
-    const cfg = Store.assistant();
+  /* La burbuja se muestra igual para la primera vez y para el que vuelve: lo único que cambia es lo
+   * que dice. */
+  function mostrarBurbuja(armarElTexto) {
     const p = bubble.querySelector('.bubble-text');
-    // Built with text nodes: the name and company come from the backoffice.
-    p.replaceChildren('¡Hola! Te damos la bienvenida a ', Object.assign(document.createElement('b'), { textContent: Store.brand().companyName }),
-      '. Soy ', Object.assign(document.createElement('b'), { textContent: cfg.name }), ', si necesitas algo, aquí estaré para ayudarte.');
+    armarElTexto(p);
     bubble.hidden = false;
     requestAnimationFrame(() => bubble.classList.add('show'));
     /* El progreso se guarda mientras la tarjeta está, igual que con un aviso: si no, sus pasos
@@ -1990,6 +1989,23 @@ export async function empezarLaPresencia() {
     Store.markAssistantWelcomed();
     clearTimeout(bubbleTimer);
     bubbleTimer = setTimeout(hideBubble, WELCOME_MS);
+  }
+
+  function welcome() {
+    const cfg = Store.assistant();
+    // Built with text nodes: the name and company come from the backoffice.
+    mostrarBurbuja(p => p.replaceChildren('¡Hola! Te damos la bienvenida a ', Object.assign(document.createElement('b'), { textContent: Store.brand().companyName }),
+      '. Soy ', Object.assign(document.createElement('b'), { textContent: cfg.name }), ', si necesitas algo, aquí estaré para ayudarte.'));
+  }
+
+  /* QUIEN YA COTIZÓ VUELVE A SU NOMBRE (dueño, 26/09: «cuando un conocido entra por segunda vez y ya
+   * había cotizado... saludarlo apenas llegue por el nombre»): el cliente conocido llega y ella lo
+   * saluda con MEMORIA —cuántas cotizaciones tiene, cuál quedó pendiente—, no con una fórmula. La
+   * frase la arma quien llama (la escalera de saludos vive en el arranque); aquí solo se muestra. */
+  function welcomeDeVuelta(frase) {
+    const dicha = String(frase || '').trim();
+    if (!dicha) { welcome(); return; }
+    mostrarBurbuja(p => p.replaceChildren(dicha));
   }
 
   function hideBubble() {
@@ -2066,7 +2082,51 @@ export async function empezarLaPresencia() {
     applyChairFabric(contextFabric());
     if (reducedMotion) renderOnce();
     else if (!running) { running = true; requestAnimationFrame(tick); }
-    if (!Store.assistantWelcomed()) setTimeout(() => { if (!broken && layout) welcome(); }, 600);
+    /* QUIEN VUELVE SE RECUERDA (dueño, 26/09): la llave es SU navegador (`visitorId`); el servidor
+     * sabe cuántas cotizaciones tiene y cuál quedó pendiente, y con eso ella lo saluda — no con una
+     * fórmula. Sin servidor queda la ficha del navegador, y sin ficha la cortesía de siempre. La IP
+     * NO decide el nombre: una casa u oficina comparte IP y saludaría a quien no es (dueño, 26/09). */
+    const saludarCon = (frase) => setTimeout(() => { if (!broken && layout) welcomeDeVuelta(frase); }, 600);
+    const conTiempo = (p, ms) => Promise.race([p, new Promise(res => setTimeout(() => res(null), ms))]);
+    /* La escalera (dueño, 26/09): varias → «ya hemos trabajado algunas» · enviada y en revisión
+     * («Nueva») → «quedó enviada; la estamos revisando» · ya cerrada → «ya quedó lista». Y NUNCA se le
+     * dice «pendiente» a lo que él ya envió: el pendiente es nuestro, no suyo (dueño, 26/09: «yo sí
+     * terminé la cotización y la envié»). */
+    const escaleraDeSaludos = (d) => {
+      const n = d && d.nombre ? String(d.nombre) : '';
+      if (!n) return '';
+      const u = d.ultima || null;
+      if (Number(d.cuantas) > 1) return `Hola, ${n}. Veo que ya hemos trabajado algunas cotizaciones juntos. ¿Qué necesitas hoy?`;
+      if (u && /nueva|pendiente/i.test(u.estado || '')) {
+        return u.mueble
+          ? `Hola, ${n}. Tu cotización del ${u.mueble} quedó enviada; la estamos revisando. ¿Vienes por otra?`
+          : `Hola, ${n}. Tu cotización quedó enviada; la estamos revisando. ¿Vienes por otra?`;
+      }
+      if (u && u.mueble) return `Hola, ${n}. Tu cotización del ${u.mueble} ya quedó lista. ¿Vienes por otra?`;
+      /* La puerta de «revisar la anterior» todavía no existe: la frase no la promete (dueño, 26/09). */
+      return `Hola, ${n}. Qué gusto verte de nuevo. ¿Vienes por otra cotización?`;
+    };
+    let ficha = null;
+    try { ficha = (Store.visitanteFicha && Store.visitanteFicha()) || null; } catch (err) { ficha = null; }
+    const deLaFicha = ficha && ficha.firstName ? `Hola otra vez, ${String(ficha.firstName).trim()}. ¿Retomamos tu cotización o empezamos una nueva?` : '';
+    const pedirleAlServidor = fetch('/api/visitante?ns=' + encodeURIComponent(Store.ns ? Store.ns() : '') + '&visitorId=' + encodeURIComponent(Store.visitanteId ? Store.visitanteId() : ''))
+      .then(r => (r.ok ? r.json() : null));
+    /* UNA SOLA FRASE PARA TODA LA CAPA (dueño, 26/09: «this message should be the same that when the
+     * user click in "cuentaselo a Lia"... message the open conversation»): la frase que dice la
+     * burbuja al llegar es la misma con la que abre el chat. Se decide una vez, se publica en
+     * `window` (el chat vive en la página y la presencia en su módulo) y quien llegue tarde la espera. */
+    window.laEsperaDelSaludo = conTiempo(pedirleAlServidor, 1200)
+      .then(d => {
+        const frase = escaleraDeSaludos(d);
+        if (frase) { try { Store.marcarVisitante({ firstName: d.nombre }); } catch (err) {} return frase; }
+        return deLaFicha || '';
+      })
+      .catch(() => deLaFicha || '');
+    window.laEsperaDelSaludo.then(frase => {
+      window.saludoDeQuienVuelve = String(frase || '');
+      if (frase) { saludarCon(frase); return; }
+      if (!Store.assistantWelcomed()) setTimeout(() => { if (!broken && layout) welcome(); }, 900);
+    });
     /* El estado de la lectura se publica desde el arranque: «off» es una respuesta (no hay
      * documento en las manos), no un atributo que falte — la suite lo distingue. */
     stage.dataset.reading = 'off'; stage.dataset.thinking = 'off';

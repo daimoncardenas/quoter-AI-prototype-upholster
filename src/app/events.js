@@ -240,7 +240,12 @@ export function conectarElBus(elPuenteDeLaPagina) {
            * nombre de fila: dos filas comparten el mismo control y el que lee tiene que saber cuál es. */
           : (fila
             ? `pieza.${[...fila.parentNode.children].indexOf(fila)}.ctl${[...fila.querySelectorAll('input,select,textarea')].indexOf(el)}`
-            : (el.id || d.field || d.row || d.name || 'campo'));
+            /* Un control sin id ni data-* se nombra por su GRUPO y su valor: los seis campos de la
+             * pantalla de preferencias salían todos como «campo», así que el pendiente no se podía
+             * apuntar y la conversación no lo podía pedir (medido con la suite del flujo completo,
+             * 25/09). Con el grupo y el valor, cada uno es único. */
+            : (el.id || d.field || d.row || d.name || el.getAttribute('name')
+               || (el.closest && el.closest('[id]') ? el.closest('[id]').id + ':' + String(el.value || '') : 'campo')));
         campos.push({ id: instrumento, pregunta: etiquetaDe(el),
           tipo: el.tagName === 'SELECT' ? 'lista' : (el.type || 'texto'), requerido: !!el.required,
           /* Los LÍMITES de cada control, leídos de la página: son las restricciones que el cliente

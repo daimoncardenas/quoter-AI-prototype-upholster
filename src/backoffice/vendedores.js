@@ -68,7 +68,7 @@ export function conectarVendedores(laCasaDeLaPagina) {
     if (!x) return;
     x.active = !x.active;
     try { C.Store.put('sellers', x); } catch (err) { return C.toast(err.message); }
-    /* Pausar a un asesor tiene que cerrarle la cuenta también, o el interruptor miente. */
+    /* Pausar a un asistente tiene que cerrarle la cuenta también, o el interruptor miente. */
     C.Auth.setSellerActive(x.id, x.active);
     C.renderAll();
     C.toast(x.active ? 'Vendedor activado · recupera el acceso' : 'Vendedor pausado · pierde el acceso');
@@ -104,7 +104,7 @@ export function conectarVendedores(laCasaDeLaPagina) {
       });
     } catch (err) { return C.toast(err.message); }
     if (esNuevo) {
-      /* Un asesor nuevo necesita por dónde entrar: la cuenta se crea con él. */
+      /* Un asistente nuevo necesita por dónde entrar: la cuenta se crea con él. */
       C.Auth.ensureUserForSeller(seller).catch(err => console.warn('[auth]', err));
       C.renderAll(); e.target.reset(); C.closeModals();
       return C.toast(`Vendedor agregado · contraseña ${C.Auth.DEMO_PASSWORD}`);

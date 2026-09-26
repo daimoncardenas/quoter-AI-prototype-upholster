@@ -116,6 +116,30 @@ const GUIONES = {
     ],
     alFinal: { piezasMin: 1 }
   },
+  salto: {
+    que: 'el cliente de varios muebles y la ciudad colada (la sesión del 25/09, la quinta)',
+    turnos: [
+      'pásame así necesito retapizar unos muebles',
+      'sí son varios',
+      'primeros son favor',
+      'es un sofá',
+      'de largo 190 de ancho 120 y de alto 90',
+      'Ya te lo dije',
+      'solo tela',
+      'no no tiene nada',
+      'segundo mueble es una poltrona',
+      'mide 50 cm 50 cm y 50 cm respectivamente',
+      'sí solo la tela',
+      'o no no tiene nada',
+      'no son esos dos',
+      'en Bogotá',
+      'Claro que sí mi nombre es diamon Cárdenas mi correo es demo cardenas@gmail.com y mi celular Es 311 557 53 52',
+      'sí',
+      'ya subí las fotos',
+      'ya subí tres fotos'
+    ],
+    alFinal: { piezasMin: 2 }
+  },
   /* El cliente ROBOT: no hay guion — las respuestas las calcula él en cada turno, mirando el primer
    * pendiente del paso. Recorre el cotizador entero para probar que ella SIGUE cada paso con sus
    * campos (dueño, 25/09). */

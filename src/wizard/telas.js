@@ -143,7 +143,7 @@ export function conectarLasTelas(elPuenteDeLaPagina) {
     const varias = C.esVariasTelas();
     grid.innerHTML = '';
     if (!ranked.length) {
-      grid.innerHTML = '<p class="field-error">No hay telas disponibles en este momento. Un asesor te contactará con opciones.</p>';
+      grid.innerHTML = '<p class="field-error">No hay telas disponibles en este momento. Un asistente te contactará con opciones.</p>';
       E.fabric = null; C.updateEstimate(); return;
     }
     // Keep the current pick only if it still exists and is still active.

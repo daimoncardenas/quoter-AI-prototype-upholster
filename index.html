@@ -337,7 +337,7 @@ html:not([data-assistant="off"]) [data-assistant-off-copy]{display:none}
 .voz-fab span{font-weight:700}
 /* EL ESCUDO DEL COTIZADOR (dueño, 25/09): el wizard se ve -y se mueve solo- pero no se toca; el
  * cliente creía que podía escribir o hacer clic aquí, y no. Con un BLUR SUAVE (dueño, 25/09: «with a
- * little blur... so the user understands "no toco porque el asesor está manejando el wizard"»): el
+ * little blur... so the user understands "no toco porque el asistente está manejando el wizard"»): el
  * recorrido se sigue viendo detrás, pero el ojo entiende que esa zona no es suya ahora. La pastilla
  * dice dónde sí se escribe. Va con la clase `conversando` del armazón (la misma que ya apaga el
  * puntero): la pone abrir la conversación y la quita cerrarla. */
@@ -520,7 +520,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
   <header class="site-header">
     <a class="brand" href="#"><img data-brand-logo="{{LOGO_SLOT}}" src="{{LOGO_SRC}}" alt="{{LOGO_ALT}}" width="1024" height="620"></a>
     <div class="header-copy">
-      <span class="eyebrow aci-name"><abbr title="Asesor Comercial Inteligente">ACI</abbr><span class="aci-long"> · Asesor Comercial Inteligente</span></span>
+      <span class="eyebrow aci-name"><abbr title="Asistente Comercial Inteligente">ACI</abbr><span class="aci-long"> · Asistente Comercial Inteligente</span></span>
       <span class="secure"><span aria-hidden="true">◇</span> Tus datos están protegidos</span>
     </div>
   </header>
@@ -618,7 +618,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
           <!-- La autorización se da AQUÍ: cuando el cierre llega, esta fila aparece y su botón
                marca la casilla del formulario. Es del cliente, y por eso la toca él. -->
           <div class="voz-permiso" id="vozPermiso" style="display:flex;gap:10px;align-items:center;justify-content:space-between;margin:10px 0 0;font-size:.72rem" hidden>
-            <p style="margin:0">¿Autorizas que un asesor te contacte con estos datos?</p>
+            <p style="margin:0">¿Autorizas que un asistente te contacte con estos datos?</p>
             <button type="button" class="secondary-button" id="vozPermisoSi">Sí, autorizo</button>
           </div>
           <form class="voz-form" id="vozForm">
@@ -633,8 +633,8 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
              pidió así: «replace pregúntale a lía… and instead put the button better»). Los mensajes
              siguen alcanzables por el propio personaje (su zona `assistant-hit`). -->
         <div class="help-card">
-          <div class="asistente-cta" role="group" aria-label="Asesoría con {{ASSISTANT_DEFAULT_NAME}}">
-            <button type="button" class="voz-fab" id="vozFab" data-assistant-label="Asesoría con {name}" aria-label="Asesoría con {{ASSISTANT_DEFAULT_NAME}}"><span>💬</span> Asesoría con <span data-assistant-name>{{ASSISTANT_DEFAULT_NAME}}</span></button>
+          <div class="asistente-cta" role="group" aria-label="Cuéntaselo a {{ASSISTANT_DEFAULT_NAME}}">
+            <button type="button" class="voz-fab" id="vozFab" data-assistant-label="Cuéntaselo a {name}" aria-label="Cuéntaselo a {{ASSISTANT_DEFAULT_NAME}}"><span>💬</span> Cuéntaselo a <span data-assistant-name>{{ASSISTANT_DEFAULT_NAME}}</span></button>
           </div>
         </div>
       </div>
@@ -802,7 +802,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
           <div class="measure-guide">
             <div class="measure-visual">
               <div class="furniture-drawing"><div class="drawing-shape" id="drawingShape" aria-hidden="true"></div><span class="width-line">A — Ancho</span><span class="height-line">B — Alto</span><span class="depth-line">C — Fondo</span></div>
-              <p>Las medidas permiten estimar el consumo. Un asesor confirmará el cálculo final.</p>
+              <p>Las medidas permiten estimar el consumo. Un asistente confirmará el cálculo final.</p>
             </div>
             <div class="measure-fields">
               <label id="widthField">Ancho total <span class="unit">cm</span><input type="number" id="width" min="20" max="1000" placeholder="Ej. 210" required></label>
@@ -842,7 +842,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
               <p class="mano-note">Aproximadas: el taller las ajusta al revisar el mueble.</p>
             </aside>
           </div>
-          <p class="modal-hint">Los precios los pone el taller en su lista; un asesor confirma lo que se cambia al revisar el mueble.</p>
+          <p class="modal-hint">Los precios los pone el taller en su lista; un asistente confirma lo que se cambia al revisar el mueble.</p>
           <p class="modal-hint insumo-aviso" id="insumoAviso" hidden></p>
           <!-- El tropiezo de ESTE paso tiene su línea, como los demás (dueño, 25/09: «block this
                continue is dont have number.. at least 0»). -->
@@ -896,7 +896,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
             </div>
           </div>
           <p class="field-error" id="analysisError" hidden>Revisa tu información para continuar.</p>
-          <div class="notice"><span>i</span><p id="reviewNotice">Esta revisión comprueba que la fotografía sea legible y que las medidas sean plausibles. Cuando la mirada con IA está disponible, además describe lo que ve en la foto —en una fila <span data-assistant-copy>a nombre de <span data-assistant-name>{{ASSISTANT_DEFAULT_NAME}}</span></span><span data-assistant-off-copy>marcada «IA»</span>—: no mide ni identifica el mueble con certeza; eso lo confirma un asesor junto con la cotización definitiva.</p></div>
+          <div class="notice"><span>i</span><p id="reviewNotice">Esta revisión comprueba que la fotografía sea legible y que las medidas sean plausibles. Cuando la mirada con IA está disponible, además describe lo que ve en la foto —en una fila <span data-assistant-copy>a nombre de <span data-assistant-name>{{ASSISTANT_DEFAULT_NAME}}</span></span><span data-assistant-off-copy>marcada «IA»</span>—: no mide ni identifica el mueble con certeza; eso lo confirma un asistente junto con la cotización definitiva.</p></div>
         </section>
 
         <section class="wizard-step" data-step="14" data-brain="RECOMMENDATION">
@@ -915,7 +915,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
           <p class="quote-note" id="quoteNote" hidden></p>
         </section>
 
-        <!-- Completar pedido: se busca la solicitud anterior en este navegador (o la busca un asesor
+        <!-- Completar pedido: se busca la solicitud anterior en este navegador (o la busca un asistente
              en el sistema) y su referencia se trae a la lista para escribir el faltante. Va ANTES de
              la lista porque es lo que se pregunta primero en esa ruta (el orden del flujo es el
              orden del documento). -->
@@ -929,9 +929,9 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
             <label>Número o referencia<input type="text" id="pedidoBusca" maxlength="40" placeholder="Ej. COT-1042"></label>
           </div>
           <button type="button" class="secondary-button" id="pedidoBuscar">Buscar el pedido</button>
-          <p class="field-error" id="pedidoError" hidden>No encontramos esa solicitud en este navegador. Un asesor la busca en el sistema y te dice qué lote hay.</p>
+          <p class="field-error" id="pedidoError" hidden>No encontramos esa solicitud en este navegador. Un asistente la busca en el sistema y te dice qué lote hay.</p>
           <div class="notice" id="pedidoHallado" hidden><span>i</span><p id="pedidoHalladoTexto"></p></div>
-          <p class="modal-hint">El lote y la continuidad del color los confirma un asesor: si no está el mismo lote, te propone la alternativa.</p>
+          <p class="modal-hint">El lote y la continuidad del color los confirma un asistente: si no está el mismo lote, te propone la alternativa.</p>
         </section>
 
         <!-- La lista de compra: la MISMA para una tela o para veinte («compra con referencia y
@@ -941,7 +941,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
           <div class="step-heading">
             <span class="eyebrow">Tu compra</span>
             <h2>¿Qué referencias y cuántas?</h2>
-            <p>Una fila por referencia; si es una sola tela, llena una fila. Los mínimos, los incrementos y el rollo completo se aplican solos, y un asesor confirma disponibilidad y lote antes de cortar.</p>
+            <p>Una fila por referencia; si es una sola tela, llena una fila. Los mínimos, los incrementos y el rollo completo se aplican solos, y un asistente confirma disponibilidad y lote antes de cortar.</p>
           </div>
           <div class="boq-rows" id="listRows" data-rows></div>
           <button type="button" class="secondary-button boq-add" id="listAdd">+ Agregar referencia</button>
@@ -969,7 +969,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
           <div class="step-heading">
             <span class="eyebrow gold" id="estimateArtifact">Pre-cotización</span>
             <h2 id="estimateTitle">Estimación del motivo</h2>
-            <p id="estimateIntro">Esto es lo que costaría hoy, con lo que nos contaste. Un asesor lo confirma antes de cotizar en firme.</p>
+            <p id="estimateIntro">Esto es lo que costaría hoy, con lo que nos contaste. Un asistente lo confirma antes de cotizar en firme.</p>
           </div>
           <div class="estimate-layout">
             <div class="price-block">
@@ -988,23 +988,23 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
             <h3>Pendiente de confirmación</h3>
             <ul id="estimatePendingConfirm"></ul>
           </div>
-          <div class="notice"><span>i</span><p id="estimateNotice">Es una estimación: un asesor confirma los detalles antes de cotizar en firme.</p></div>
+          <div class="notice"><span>i</span><p id="estimateNotice">Es una estimación: un asistente confirma los detalles antes de cotizar en firme.</p></div>
         </section>
 
         <section class="wizard-step" data-step="15" data-brain="CONTACT">
           <div class="step-heading">
             <span class="eyebrow">Último paso</span>
             <h2>¿A dónde enviamos tu pre-cotización?</h2>
-            <p>Un asesor revisará la información y podrá comunicarse contigo para confirmar los detalles.</p>
+            <p>Un asistente revisará la información y podrá comunicarse contigo para confirmar los detalles.</p>
           </div>
           <div class="final-layout">
             <div class="contact-fields">
               <!-- Cómo llega la tela: se pregunta en las líneas que declaran rutas (el suministro).
-                   La sede sigue existiendo para el que recoge, y el envío lo confirma un asesor. -->
+                   La sede sigue existiendo para el que recoge, y el envío lo confirma un asistente. -->
               <label id="entregaField" hidden>¿Cómo quieres recibir la tela?<select id="entrega">
                 <option value="sede">Recoger en una sede</option>
                 <option value="envio">Envío a una dirección</option>
-                <option value="asesor">Coordinar con un asesor</option>
+                <option value="asesor">Coordinar con un asistente</option>
               </select></label>
               <div class="atencion-field" id="atencionField">
                 <label>¿En qué ciudad te encuentras?<select id="customerCity"></select></label>
@@ -1489,21 +1489,20 @@ function enfocarLaFilaQueElClienteNombra(texto){
   } catch (e) {}
 }
 function elInstrumentoDeLaMedida(campo, texto){
-  const medidaEn = fila => (fila ? fila.querySelector(`[data-medida="${campo}"]`) : null);
+  const medidaEn = (fila) => (fila ? fila.querySelector(`[data-medida="${campo}"]`) : null);
   if (texto) enfocarLaFilaQueElClienteNombra(texto);
   const nombrada = texto ? laFilaQueElClienteNombra(texto) : null;
   if (nombrada) { const el = medidaEn(nombrada); if (el) return el; }
+  /* LA FILA EN FOCO MANDA cuando él no nombra ninguna —«y largo 50» es de la poltrona que se está
+   * trabajando, no del sofá de arriba— y si no hay foco, la primera que tenga ese campo. NUNCA se
+   * derrama a OTRA fila: el número era de esta pieza (medido: el 50 quedó en las dos).
+   * Ojo con LEER: esta función también sirve para leer —`wizardInputs` saca de aquí las medidas— así
+   * que devuelve el campo aunque esté lleno; el que escribe decide, y escribir dos veces lo mismo en la
+   * misma fila no hace daño. Devolver `null` con la fila llena dejaba al estimador de insumos leyendo
+   * ceros: el wizard se bloqueaba en el paso del taller (medido con la suite que camina, 25/09). */
   const filas = [...document.querySelectorAll('.piezas-lista .pieza-fila')];
-  const vacioEn = (f) => { const el = medidaEn(f); return el && !String(el.value).trim() ? el : null; };
   const enFoco = document.querySelector('.piezas-lista .pieza-fila.en-foco');
-  /* LA FILA EN FOCO MANDA cuando él no nombra ninguna: «y largo 50» —dicho de la poltrona que se está
-   * trabajando— no puede caer en la fila del sofá de arriba. Y si la del foco YA tiene ese dato, no se
-   * derrama a otra fila: el número era de esta pieza; escribir en otra exige NOMBRARLA, y eso salió
-   * arriba. (Medido con la sesión del cliente que repite, 25/09: el 50 quedó en las dos filas.) */
-  const enElFoco = vacioEn(enFoco);
-  if (enElFoco) return enElFoco;
-  if (medidaEn(enFoco)) return null;
-  return filas.filter(f => f !== enFoco).map(vacioEn).find(Boolean) || document.getElementById(campo);
+  return medidaEn(enFoco) || filas.map(medidaEn).find(Boolean) || document.getElementById(campo);
 }
 function wizardInputs(){
   const leer = c => { const el = elInstrumentoDeLaMedida(c); return el ? +el.value || 0 : 0; };
@@ -1900,7 +1899,7 @@ function updateEstimate(){
           :`Tu presupuesto: <b>${money(b.amount)} ${b.unitLabel}</b>, <b>${money(techo)}</b> para ${cant.texto}. Esta estimación (<b>${esc(p.totalText)}</b>) queda por encima: hay margen para ajustar.`);
     }else{
       contraste.hidden=false;
-      contraste.innerHTML='Tu presupuesto: <b>sin tope declarado</b>. Cuando lo tengas, contrástalo con la estimación y un asesor ajusta telas y alcance.';
+      contraste.innerHTML='Tu presupuesto: <b>sin tope declarado</b>. Cuando lo tengas, contrástalo con la estimación y un asistente ajusta telas y alcance.';
     }
   }
 }
@@ -2025,7 +2024,7 @@ async function submitQuote(){
     meters:[min,max],
     /* La lista de la compra con cantidad declarada (una tela o varias, y el faltante de un pedido):
      * cada referencia con SU regla comercial y su valor, congelados con la solicitud. La
-     * disponibilidad y el lote no se congelan porque nadie los declaró: los confirma un asesor. */
+     * disponibilidad y el lote no se congelan porque nadie los declaró: los confirma un asistente. */
     lista:q.lista?q.lista.map(f=>({fabricId:f.fabricId,fabricName:f.sinTela?'':`${f.name} · ${f.colorName}`,
       valor:f.valor,unidad:f.unidad,rollos:f.rollos,rollLengthM:f.rollLengthM,
       declarado:f.declarado,facturable:f.facturable,compra:f.compra,sobrante:f.sobrante,
@@ -2101,8 +2100,12 @@ async function submitQuote(){
   document.getElementById('successArtifact').textContent=(Store.lineCopy(state.service)||{}).artifactLabel||'';
   document.getElementById('requestNumber').textContent=id;
   document.getElementById('successMessage').textContent=(Store.lineCopy(state.service)||{}).confirmationMessage||settings.confirmationMessage;
-  document.getElementById('successSeller').textContent=seller?`Tu asesor asignado es ${seller}.`:'';
+  document.getElementById('successSeller').textContent=seller?`Tu asistente asignado es ${seller}.`:'';
   state.submitted=true;
+  /* Quien ya cotizó vuelve a su nombre (dueño, 26/09): la ficha del visitante —su llave de navegador
+   * y su nombre— se guarda al enviar; la cotización viaja con esa misma llave (la pega `Store`), así
+   * que el servidor puede reconocerlo a la vuelta sin sesiones ni cuentas. */
+  try { const n = (document.getElementById('fullName') || {}).value || ''; if (n.trim()) Store.marcarVisitante({ firstName: n.trim(), lastQuoteId: id }); } catch (e) {}
   ACI.emit('QUOTE_SUBMITTED',{quoteId:id});
   document.querySelector('.mobile-progress').style.display='none';
   document.querySelector('.step-list').style.opacity='.35';
@@ -2301,7 +2304,7 @@ function promptDeLaCasa(){
     'En cada mensaje recibes las TRES MEMORIAS del turno —1 · contexto (quién eres y para quién trabajas), 2 · la página (dónde estás ahora: el paso visible y sus campos leídos del formulario), 3 · el cliente (lo que él ya dijo y está anotado)—. Son lo único que sabes del caso y valen más que cualquier cosa dicha antes en la conversación: si un dato no está ahí, no lo sabes.',
     'Si el cliente pregunta qué tiene seleccionado, qué eligió o por dónde va, contéstale con el paso, la línea y el mueble que diga ese estado.',
     'Repite los datos del estado con sus MISMAS palabras: si el mueble dice «Otro», di «Otro» — nunca lo cambies por un mueble que te parezca probable.',
-    'El documento se llama precotización: es preliminar y un asesor lo cierra.',
+    'El documento se llama precotización: es preliminar y un asistente lo cierra.',
     'REGLAS QUE NO PUEDES ROMPER: no inventes precios ni cifras distintas de la estimación; no prometas transporte, recogida, plazos de entrega, garantías ni descuentos; no digas que el relleno o la espuma están incluidos o valorados; no digas que cambiaste precios, metros o el estado de la solicitud; no hables de otros clientes ni de pedidos que no sean este.',
   ].join('\n');
 }
@@ -2334,7 +2337,7 @@ function estadoDelCotizador(c){
   const contexto = [
     `Eres ${cfg.name || 'la asistente'}, la asistente de ${empresa || 'este negocio'}: atiendes por chat a un cliente que está llenando su precotización.`,
     `Lo que este negocio cotiza (las líneas de su plan, las mismas que él ve): ${lasLineasDelCliente().map(l => l.rotulo).join(' · ') || '—'}.`,
-    'El documento es una PRECOTIZACIÓN: es preliminar y lo cierra un asesor.'
+    'El documento es una PRECOTIZACIÓN: es preliminar y lo cierra un asistente.'
   ];
 
   /* ── 2 · LA PÁGINA (dónde está ahora) ────────────────────────────────────────────────────────── */
@@ -2351,7 +2354,12 @@ function estadoDelCotizador(c){
       const estado = f.tipo === 'fotos' ? `${f.valor || 0} foto(s)` : f.lleno ? `«${f.valor}»` : 'sin llenar';
       return `${f.pregunta} (${estado})`;
     });
-    pagina.push(`Lo que el cliente TIENE EN PANTALLA en este paso —«${pantalla.titulo}», leído del propio formulario—: ${enPantalla.join(' · ')}.`);
+    /* El paso del taller no es una pregunta para el cliente (dueño, 24/09: «dont show "insumos" to
+     * client»): si es el que está a la vista, se dice eso y nada más — si no, el modelo lee su título
+     * («¿Qué se le cambia por dentro?») y se lo pregunta al cliente (medido, 25/09). */
+    const esDelTaller = !!document.querySelector('.wizard-step.active#insumoStep, .wizard-step[data-brain="INSUMOS"].active');
+    if (esDelTaller) pagina.push('El paso que se ve es el del TALLER (insumos): al cliente no se le pregunta — lo estima la mano del taller y se sigue.');
+    else pagina.push(`Lo que el cliente TIENE EN PANTALLA en este paso —«${pantalla.titulo}», leído del propio formulario—: ${enPantalla.join(' · ')}.`);
     if (pantalla.faltan.length) pagina.push(`De esta pantalla sigue sin llenar: ${pantalla.faltan.join(' · ')}. Pídelo tú, uno por uno y con tus palabras: ningún campo visible puede cerrar el paso en blanco.`);
     /* …y lo que está ESCRITO pero el cotizador no acepta: el paso no avanza hasta corregirlo, así que
      * es lo primero que se pide (dueño, 25/09: «lia is in disorder… dont respect the step by step»). */
@@ -2397,7 +2405,7 @@ function estadoDelCotizador(c){
   if (c.budget && c.budget.declared) cliente.push(`Presupuesto que declaró${c.budget.unitLabel ? ' (' + c.budget.unitLabel + ')' : ''}: ${c.budget.amount != null ? money(c.budget.amount) : '—'}.`);
   if (c.fabric) cliente.push(`Tela elegida: ${c.fabric.name}${c.fabric.colorName ? ' (' + c.fabric.colorName + ')' : ''}${c.fabric.auto ? ', sugerida por el cotizador' : ''}.`);
   cliente.push(`Estimación vigente: ${est.priceLabel || 'todavía sin calcular'}${(est.parts || []).length ? ' · se compone de ' + est.parts.map(p => p.label + ' ' + (p.text || '')).join(' + ') : ''}.`);
-  if ((est.pending || []).length) cliente.push(`Queda pendiente de confirmar por un asesor: ${est.pending.map(p => p.label || p).join(', ')}.`);
+  if ((est.pending || []).length) cliente.push(`Queda pendiente de confirmar por un asistente: ${est.pending.map(p => p.label || p).join(', ')}.`);
   /* Lo que declaró y no vive en ningún campo: si no está aquí, se pierde. */
   for (const d of (voz.declarado || [])) cliente.push(`El cliente DECLARÓ que ${d.que} («${d.dicho}») y la tabla tiene ${(state.piezas || []).length || 1} pieza: van una por una — pídele la siguiente, sin volver a preguntar por las que ya están.`);
   return [
@@ -2521,7 +2529,11 @@ function mundoDelContrato(){
      * estilo/color y presupuesto): sin ellos aquí, la conversación no los ve — y los pedía el
      * código del formulario, no el contrato (dueño, 24/09: «no has hecho lo de los insumos»,
      * «no me dejaste escoger el color»). */
-    fabric: pideRecomendacion() && state.fabric
+    /* La tela elegida, SIEMPRE que exista: el contrato decide si este recorrido la pide (`aplica`) y
+     * si falta (`falta` → `touched`). Antes iba puerta por `pideRecomendacion()` y en las líneas que
+     * no marcan esa bandera —retapizado— la tela salía `false` para siempre: el cotizador la pedía sin
+     * fin aunque el cliente ya la hubiera elegido (medido con la suite del flujo completo, 25/09). */
+    fabric: state.fabric
       ? { id: state.fabric.id, name: state.fabric.name, colorName: state.fabric.colorName, auto: !state.fabricTouched, touched: !!state.fabricTouched }
       : null,
     supplies: insumosMarcados(),
@@ -2595,7 +2607,7 @@ function decirEnLaConversacion(texto, quien = 'bot', callar = false){
     /* Se mira una VENTANA de sus últimas burbujas, no solo la última: entre dos avisos iguales suele
      * ir una frase del modelo, y así se repetían sin que el guardia lo viera (medido con el cliente
      * robot, 25/09: «Ojo: dime la referencia…» siete veces). */
-    const ultimas = [...caja.querySelectorAll('.message.bot')].slice(-4).map(m => normalizarFrase(m.textContent));
+    const ultimas = [...caja.querySelectorAll('.message.bot')].slice(-8).map(m => normalizarFrase(m.textContent));
     if (ultimas.includes(normalizarFrase(texto))) {
       const otra = unaManeraDistintaDe(texto);
       /* Un recibo igual no informa nada: no se dice. Pero una frase que no tiene otra manera SE DICE
@@ -2917,12 +2929,31 @@ async function aplicarLoDicho(id, texto){
        * cantidad en metros o rollos. Sin referencia no se escribe nada — una fila sin tela no es una
        * fila declarada. */
       const fab = telasActivas().filter(f => {
-        const n = normalizar(f.name);
-        return n && (t.includes(n) || n.split(/\s+/).some(w => w.length >= 4 && t.split(/\s+/).includes(w)));
+        /* Se reconoce por el nombre, por el COLOR y por «nombre · color»: el cliente dice «terracota»
+         * (el color) y antes eso no casaba con ninguna tela (medido, 25/09: la fila quedaba vacía y el
+         * paso de telas no cerraba). */
+        const n = normalizar(f.name), c = normalizar(f.colorName), palabras = t.split(/\s+/);
+        return (n && (t.includes(n) || n.split(/\s+/).some(w => w.length >= 4 && palabras.includes(w))))
+          || (c && c.length >= 4 && t.includes(c))
+          || (n && c && t.includes(n + ' ' + c));
       })[0] || null;
       if (!fab) return { ok: false, motivo: 'dime la referencia del catálogo y te digo sus metros' };
       const dicho = numeroDicho(t);
-      if (!(dicho.valor > 0)) return { ok: false, motivo: 'dime la cantidad —en metros, o en rollos si es de rollo completo' };
+      /* LA CANTIDAD LA SABE EL TALLER (dueño, 25/09: «no mentiras no ustedes son los que saben del
+       * metraje»): cuando el cliente nombra la tela y no da metros —o dice que eso lo sabemos
+       * nosotros—, se calculan con sus medidas (el cotizador ya tiene el consumo). Antes la fila
+       * quedaba sin cantidad, el paso de telas no cerraba y ella repetía «Elige la tela…» hasta el
+       * final de la conversación. */
+      if (!(dicho.valor > 0)) {
+        const c = (() => { try { return consumo(); } catch (e) { return null; } })();
+        const calculados = c && c.range ? Math.max(1, Math.round(Number(c.range[1]) || 0)) : 0;
+        if (calculados > 0) {
+          const r = await aplicarFilaDeLaLista({ fabricId: fab.id, cantidad: calculados, unidad: 'm' });
+          if (r && r.ok) r.dicho = (r.dicho ? r.dicho + ' — ' : '') + `los ${calculados} m los saqué de tus medidas`;
+          return r;
+        }
+        return { ok: false, motivo: 'dime la cantidad —en metros, o en rollos si es de rollo completo' };
+      }
       return aplicarFilaDeLaLista({ fabricId: fab.id, cantidad: dicho.valor, unidad: /rollo/.test(dicho.unidad) ? 'rollos' : 'm' });
     }
     case 'pedido': {
@@ -3022,7 +3053,7 @@ async function aplicarLoDicho(id, texto){
     case 'autorizacion': {
       /* La firma es del cliente: solo entra si él lo dijo, y en respuesta a la pregunta. */
       if (!/\b(s[ií]|claro|de acuerdo|autorizo|autorizaci[oó]n|pueden contactarme|est[áa] bien)\b/i.test(texto))
-        return { ok: false, motivo: 'para la autorización necesito tu «sí»: ¿autorizas que un asesor te contacte?', paso: null };
+        return { ok: false, motivo: 'para la autorización necesito tu «sí»: ¿autorizas que un asistente te contacte?', paso: null };
       const c = document.getElementById('consent');
       if (!c) return { ok: false, motivo: 'no encuentro la casilla de autorización en el formulario', paso: null };
       c.checked = true; c.dispatchEvent(new Event('change', { bubbles: true }));
@@ -3151,11 +3182,17 @@ function preguntaDelRespaldo(f){
  * de `preguntarLoQueFalta` nunca corría (medido en la suite del camino con modelo, 25/09). */
 function estimarInsumosSiToca(){
   try {
-    const medidasListas = ['width', 'height', 'depth']
-      .map(id => Number((document.getElementById(id) || {}).value) || 0).every(v => v > 0);
+    /* LAS MEDIDAS SE LEEN DE LA FILA VIVA, no de los campos retirados: con piezas a la vista, `#width`
+     * está en blanco para siempre, la mano nunca estimaba los insumos y el wizard se quedaba clavado en
+     * el paso del taller —«¿Qué se le cambia por dentro?», sin pendiente y sin avanzar— (medido con la
+     * suite que camina, 25/09; es el «en un punto se bloquea» del dueño). */
+    const filas = [...document.querySelectorAll('.piezas-lista .pieza-fila')];
+    const hayMedidas = filas.length
+      ? filas.some(f => ['width', 'height', 'depth'].every(m => Number((f.querySelector(`[data-medida="${m}"]`) || {}).value) > 0))
+      : ['width', 'height', 'depth'].every(id => Number((document.getElementById(id) || {}).value) > 0);
     const hayQueEstimar = typeof insumosDeLaLinea === 'function' && insumosDeLaLinea().length
       && typeof insumosMarcados === 'function' && !insumosMarcados().length;
-    if (hayQueEstimar && medidasListas) {
+    if (hayQueEstimar && hayMedidas) {
       /* Las filas del paso se pintan AL ENTRAR al paso, y la mano sin filas no estima nada
        * («Todavía no puedo estimarlas…»): aquí se pintan y después se pulsa. */
       if (typeof pintarInsumos === 'function') pintarInsumos();
@@ -3392,8 +3429,15 @@ function elCampoDeLaPantalla(){
   const p = (() => { try { return ACI.losCamposDelPaso(); } catch (e) { return null; } })();
   if (!p || !(p.campos || []).length) return null;
   const vacio = p.campos.find(c => !c.lleno && c.id !== 'insumos' && c.id !== 'fotos');
-  /* Las medidas por pieza llegan como `pieza.<n>.<medida>` y contestan al campo «medidas». */
-  const comoCampo = (c) => CAMPO_DEL_INSTRUMENTO[c.id] || (/^pieza\./.test(c.id) ? 'medidas' : null);
+  /* Las medidas por pieza llegan como `pieza.<n>.<medida>` y contestan al campo «medidas»; el MUEBLE de
+   * la fila (`pieza.0.ctl0`) es su propio campo, no una medida (medido con la suite que camina, 25/09:
+   * el pendiente del mueble salía como «medidas» y la conversación pedía centímetros para un mueble que
+   * todavía no estaba elegido). */
+  const comoCampo = (c) => {
+    if (/\.ctl0$/.test(c.id)) return 'mueble';
+    if (/^needsGrid/.test(c.id)) return 'preferencias';
+    return CAMPO_DEL_INSTRUMENTO[c.id] || (/^pieza\./.test(c.id) ? 'medidas' : null);
+  };
   if (vacio) return { id: vacio.id, pregunta: vacio.pregunta, tipo: vacio.tipo, campo: comoCampo(vacio), paso: p.paso };
   /* NADA VACÍO NO ES NADA PENDIENTE: si un campo quedó con un valor que el cotizador NO acepta —el
    * ancho de 100 cm de un sofá—, el «Continuar» no pasa y ESE es el pendiente. Antes se devolvía null y
@@ -3401,6 +3445,13 @@ function elCampoDeLaPantalla(){
    * «lia is in disorder.....dont respect the step by step»). */
   const enFalta = p.campos.find(c => c.lleno && c.aviso && c.id !== 'insumos');
   if (enFalta) return { id: enFalta.id, pregunta: enFalta.pregunta, tipo: enFalta.tipo, campo: comoCampo(enFalta), paso: p.paso, aviso: enFalta.aviso };
+  /* LAS FOTOS SÍ SON UN PENDIENTE: cuando el resto del paso está lleno y no llegan al mínimo, el paso
+   * NO cierra. Antes quedaban fuera de esta cuenta y ella se quedaba «sin pendiente» en el paso 1: se
+   * iba a preguntar la ciudad, el contacto y los daños —saltándose todos los pasos— con el wizard
+   * parado ahí (dueño, 25/09: «no respeta los pasos», «se salta cosas»). */
+  const fotos = p.campos.find(c => c.id === 'fotos');
+  if (fotos && Number(fotos.valor || 0) < elMinimoDeFotos())
+    return { id: 'fotos', pregunta: 'las fotos', tipo: 'fotos', campo: 'fotos', paso: p.paso };
   return null;
 }
 /* El control de la pantalla que contesta un instrumento (`pieza.2.width`, `metros`, `width`…), o null.
@@ -3412,6 +3463,14 @@ function elControlDeLaPantalla(instrumento){
     if (porPieza) {
       const fila = document.querySelectorAll('.piezas-lista .pieza-fila')[+porPieza[1]];
       return fila ? fila.querySelector(`[data-medida="${porPieza[2]}"]`) : null;
+    }
+    /* Un campo de GRUPO (`needsGrid:Mascotas`): el control es el del grupo que lleva ese valor — una
+     * casilla de «Mascotas» dentro de su rejilla (medido con la suite del flujo completo, 25/09). */
+    const grupo = /^([\w-]+):(.+)$/.exec(instrumento);
+    if (grupo) {
+      const caja = document.getElementById(grupo[1]) || (paso && paso.querySelector('#' + grupo[1]));
+      const dentro = caja && [...caja.querySelectorAll('input,select,textarea')].find(i => String(i.value) === grupo[2]);
+      if (dentro) return dentro;
     }
     return document.getElementById(instrumento)
       || (paso && paso.querySelector(`[data-field="${instrumento}"], [data-row="${instrumento}"]`)) || null;
@@ -3500,24 +3559,17 @@ function promptDeLaConversacion(mundo){
     'SON VARIOS MUEBLES cuando lo dice: no lo pierdas ni lo cierres con el primero. Cada mueble es una PIEZA del cotizador (el paso «Tu mueble» las suma, y él las va nombrando de a una): pídele la siguiente —«¿y el otro mueble?»— y no vuelvas a preguntar por las que ya están anotadas.',
     'LAS LÍNEAS DE SERVICIO DE ESTE CLIENTE son las de su plan (las de abajo). Si pide algo que ENCAJA en una de ellas, esa es su línea: NUNCA le digas que eso no se hace aquí si la lista la tiene. Entiende por SIGNIFICADO, no por el nombre: si describe lo que la línea HACE, esa es la línea (comprar telas, una tela, cuántos metros → la línea de tela; cambiar la tela, forrar, tapizar → la de tapizado; fabricar, hacerlo a la medida → la de a medida; limpieza, proteger, reparar → mantenimiento). Anótala con el id.\n'
       + (lasLineasDelCliente().map(l => '- ' + l.rotulo + (l.id ? ' («' + l.id + '»)' : '') + (l.detalle ? ': ' + l.detalle : '')).join('\n') || '- (ninguna a la vista)'),
-    'Lo único que te falta de la pre-cotización:',
-    faltan || '- nada, ya está todo',
     'Lo que puedes llenar tú: linea (el id o el rótulo), ruta, proposito, saber, rama (el ID DEL CONTRATO de la rama — abajo están todas con su cadena: en cuanto sepas cuál es el caso, anótala aquí y sigue con los campos de ESE contrato), mueble (del catálogo), muebleOtro (la descripción si el mueble es «Otro»), medidas (ancho/alto/fondo en cm), danos, atencion (ciudades), contacto (nombre, correo, celular), lista (las referencias con su cantidad —metros, o rollos si la tela se vende por rollo—; una fila por referencia), pedido (el número de la solicitud anterior, ej. COT-1042).',
     'LAS RAMAS Y SU CONTRATO (la lista completa de este negocio: elige la que corresponda a lo que el cliente pide —por el sentido, no por el nombre— y anótala en `rama` con su id; el contrato de esa rama manda qué campos faltan y qué acciones corren):\n' +
       elIndiceDeContratos().map(c => `- ${c.cadena.join(' → ')} → contrato ${c.id}`).join('\n'),
     'EL CATÁLOGO DE TELAS de este cliente (el precio es POR METRO —dato del catálogo, puedes nombrarlo y compararlo; nunca es el precio final de la solicitud):\n'
       + (telasActivas().map(f => `- ${f.name} · ${f.colorName} — colección ${f.collection || '—'}${f.novedad ? ' (última colección)' : ''} — ${money(f.price)}/m${(f.tags || []).length ? ' — ' + f.tags.join(', ') : ''}`).join('\n') || '- (sin telas activas)'),
     'LAS ÚLTIMAS COLECCIONES son las telas marcadas «última colección»: si el cliente las pide, ofrécele esas por su nombre (la vitrina del paso de la lista las enseña de primeras). Puedes citar el precio de catálogo por metro y los metros que el cotizador calcule; NUNCA inventes totales, descuentos ni cifras que no estén en el catálogo ni en la estimación vigente.',
-    'EL CONTRATO: por cada campo que falta, los valores que el cotizador ACEPTA (leídos de las mismas listas que ve el cliente — lo que no esté aquí, no entra; el cotizador lo rechaza y tú lo vuelves a preguntar):\n'
-      + (Contrato.faltantes(mundo).map(f => {
-        const valores = losValoresLegalesDe(f.id);
-        return '- ' + f.id + ' — ' + f.etiqueta + ': ' + (valores.length ? valores.join(' · ') : 'valor libre, con las palabras del cliente');
-      }).join('\n') || '- (nada: el contrato está completo)'),
     'En cada turno te llega lo que el cliente dijo y el estado del formulario. Si te pregunta algo, contéstalo (con las reglas de arriba) y después sigue con lo que falta. NUNCA repitas una pregunta con las mismas palabras: si ya la hiciste, hazla distinta; si el cliente no entendió, explícala con un ejemplo.',
     'EL ESTADO ES LA VERDAD —y lo que no esté ahí, no está. No afirmes que el cotizador anotó, cambió ni «ajustó» nada (ni ciudades, ni telas, ni metros) si no lo ves en el estado: si algo no aparece, di que lo anotas y sigue; para decir que algo quedó, míralo ahí primero. Nunca digas «en el cotizador quedó como…»: tú no ves sus controles. Y ojo con los nombres: «Lino Verona» es una TELA (nombre · color), no una ciudad — las ciudades son las de la línea «Atención» del estado, y no se mezclan.',
     'La AUTORIZACIÓN se da AQUÍ MISMO, hablando: cuando llegue el momento él dice «sí, autorizo» — o toca el botón «Sí, autorizo» que le aparece en ese momento justo debajo de la conversación. NUNCA le digas que busque una casilla ni que marque nada «al final del recuadro»: no hay casilla a la vista; la del formulario la marcas tú cuando él autoriza por aquí.',
     'FOTOS: se suben en la ZONA DE FOTOS que está en este mismo recuadro, debajo de vuestra conversación (no en otro paso, no por el chat): cuando falten, pídeselas ahí y dile que puede subirlas en esa zona. En el estado ves cuántas lleva.',
-    'AQUÍ SÍ PUEDES (el cotizador ya lo calculó, tú lo dices, nunca lo inventas): la RECOMENDACIÓN de tela — la que el cotizador marcó como la mejor para su mueble, con su razón — y lo que la REVISIÓN de las fotos vio (dilo tal cual, incluso si no se ve el mueble). NUNCA digas que «la tela te la dirá el asesor» ni que la recomendación toca esperarla: si el cotizador ya la calculó, la dices aquí. El asesor confirma el precio final, eso sí.',
+    'AQUÍ SÍ PUEDES (el cotizador ya lo calculó, tú lo dices, nunca lo inventas): la RECOMENDACIÓN de tela — la que el cotizador marcó como la mejor para su mueble, con su razón — y lo que la REVISIÓN de las fotos vio (dilo tal cual, incluso si no se ve el mueble). NUNCA digas que «la tela te la dirá el asistente» ni que la recomendación toca esperarla: si el cotizador ya la calculó, la dices aquí. El asistente confirma el precio final, eso sí.',
     'Contesta SOLO con este JSON: {"decir": "lo que le dices ahora, en tus palabras", "valores": {"<campo>": <valor>}}.',
     'En "valores" va únicamente lo que el cliente ACABA de decir, con el valor ya normalizado (ids del catálogo, números, ciudades). Si no dijo nada nuevo, "valores" va vacío. Si en UNA frase dice DOS datos, van los DOS («el sofá es de mi mamá, vivo en Manizales» → mueble y atención): lo que dice de paso NO se pierde —medido, 25/09: el modelo contestó «anoto Manizales» y no lo mandó, y la ciudad nunca entró—. Si el cliente solo charla, en "decir" le contestas y le vuelves a lo que falta, con otras palabras.'
   ].join('\n');
@@ -3554,7 +3606,7 @@ function elCierreDeLaConversacion(){
       if (voz.abierta && c.checked) {
         if (fila) fila.hidden = true;
         if (voz.campo === 'autorizacion') {
-          decirEnLaConversacion('Queda marcada tu autorización. Con eso ya un asesor puede contactarte.');
+          decirEnLaConversacion('Queda marcada tu autorización. Con eso ya un asistente puede contactarte.');
           /* Su toque también empuja el cierre: si ya no falta nada, sigue con el número y el envío. */
           preguntarLoQueFalta();
         }
@@ -3596,7 +3648,7 @@ function elCierreDeLaConversacion(){
     if (!voz.autorizacionPedida) {
       voz.autorizacionPedida = true;
       voz.campo = 'autorizacion';
-      return decirEnLaConversacion('Ya con eso te armo la pre-cotización. ¿Autorizas que un asesor te contacte con estos datos? Toca «Sí, autorizo» aquí abajo, o dímelo y la marco yo.');
+      return decirEnLaConversacion('Ya con eso te armo la pre-cotización. ¿Autorizas que un asistente te contacte con estos datos? Toca «Sí, autorizo» aquí abajo, o dímelo y la marco yo.');
     }
     voz.campo = 'autorizacion';
     return;
@@ -3608,8 +3660,8 @@ function elCierreDeLaConversacion(){
     voz.envioPedido = true;
     voz.campo = 'envio';
     decirEnLaConversacion((precio && !/por confirmar|—/.test(precio)
-      ? `La pre-cotización va en ${metros} metros de tela y ${precio} — ese número lo calcula el cotizador, no yo, y un asesor lo confirma contigo. Te la dejo creada ya mismo.`
-      : 'Ya está todo lo que necesito: te dejo la pre-cotización creada con lo que declaraste y un asesor la revisa.'));
+      ? `La pre-cotización va en ${metros} metros de tela y ${precio} — ese número lo calcula el cotizador, no yo, y un asistente lo confirma contigo. Te la dejo creada ya mismo.`
+      : 'Ya está todo lo que necesito: te dejo la pre-cotización creada con lo que declaraste y un asistente la revisa.'));
     /* SE CREA SOLA al completarse el contrato (dueño, 25/09: «dont create quote… cuando se termine,
      * cree la cotización»): se guarda igual que si el cliente tocara «Enviar pre-cotización» — el
      * cliente no tiene que buscar un botón que nadie le señaló. */
@@ -3651,6 +3703,11 @@ async function aplicarFilaDeLaLista(datos){
   if (!fila) { agregarFilaDeLaLista(fab.id); fila = caja.querySelector('.boq-row:last-child'); }
   if (!fila) return { ok: false, motivo: 'no pude agregar la fila' };
   const sel = fila.querySelector('.list-fabric'); if (sel) { sel.value = String(fab.id); sel.dispatchEvent(new Event('change', { bubbles: true })); }
+  /* LA TELA ELEGIDA ES LA TELA DEL PROYECTO (el contrato la pide por su campo `tela`): sin esto, la
+   * fila quedaba escrita y el cotizador seguía pidiendo la tela para siempre — la conversación daba
+   * vueltas con «Elige la tela…» (medido con la suite del flujo completo, 25/09). Para la línea de
+   * tela ya lo hacía `sincronizarTelaDeLaFila`; aquí vale para todas. */
+  state.fabric = fab; state.fabricTouched = true;
   const escribir = porRollo && !enRollos ? cantidad / (rules.rollLengthM || 1) : cantidad;
   const el = fila.querySelector('.list-metros');
   if (el) { el.value = String(Math.round(escribir * 100) / 100); el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }
@@ -3882,7 +3939,7 @@ async function elTurnoDeLaConversacion(dicho){
     try {
       const mundo = mundoDelContrato();
       if (!voz.sesion) voz.sesion = await sesionDelProveedor(promptDeLaConversacion(mundo), { temperatura: 0.5 });
-      const crudo = await voz.sesion.pedir({ texto: `ESTADO DEL FORMULARIO (lo que el cliente ya declaró)\n${estadoDelCotizador(ACI.context())}\n\nLO QUE FALTA AHORA:\n${loQueFaltaTexto(mundo)}\n\nLO QUE YA SE DIJERON EN ESTA CONVERSACIÓN, EN ORDEN (lo último es lo que él acaba de decir: no le vuelvas a preguntar lo que ya está aquí, y no repitas tu propia frase):\n${laConversacionHastaAhora()}\n\nEl cliente dice: «${dicho}»` });
+      const crudo = await voz.sesion.pedir({ texto: `ESTADO DEL FORMULARIO (lo que el cliente ya declaró)\n${estadoDelCotizador(ACI.context())}\n\nLO QUE YA SE DIJERON EN ESTA CONVERSACIÓN, EN ORDEN (lo último es lo que él acaba de decir: no le vuelvas a preguntar lo que ya está aquí, y no repitas tu propia frase):\n${laConversacionHastaAhora()}\n\nEl cliente dice: «${dicho}»` });
       const turno = leerElTurnoDelModelo(crudo);
       if (turno) {
         const aplicados = [];
@@ -3891,7 +3948,13 @@ async function elTurnoDeLaConversacion(dicho){
         const charla = esCharlaSuelta(dicho);
         const cortesia = CORTESIA.test(dicho.trim());
         const pideTiempo = PIDE_UN_MOMENTO.test(dicho);
-        const pendiente = voz.campo;
+        /* EL PENDIENTE SE LEE AHORA, DE LA PANTALLA — no de lo último que quedó guardado (dueño, 25/09:
+         * «el wizard no se mueve... en un punto se bloquea... que lia no sigue lo que lleva cada
+         * pantalla»). Un `voz.campo` viejo —el contrato decía «fotos» mientras el paso pedía el
+         * mueble— hacía que sus frases y los escritores apuntaran al campo equivocado: el paso 1 no
+         * cerraba nunca. Si no hay nada a la vista, sí manda lo guardado. */
+        const enVista = elCampoDeLaPantalla();
+        const pendiente = enVista ? (enVista.campo || enVista.id) : voz.campo;
         let noLoAcepto = null;   /* el motivo del cotizador, para decirlo DESPUÉS de su frase */
         /* Una confirmación con DATOS también entra (medido en la sesión del 25/09, la cuarta: «Sí fue
          * lo que trae», «sí estimadas» —el cliente confirmando lo que ella leyó— caían en «charla» y
@@ -4022,6 +4085,7 @@ async function elTurnoDeLaConversacion(dicho){
           const temas = [['fotos', /\bfotos?\b/i], ['atencion', /\b(ciudad|entrega|direcci[oó]n)\b/i],
             ['contacto', /\b(correo|celular|whatsapp|tel[eé]fono|nombre completo)\b/i], ['tela', /\btelas?\b/i],
             ['presupuesto', /\bpresupuesto\b/i], ['insumos', /\b(espuma|resortes|guata|insumos)\b/i],
+            ['revision', /\b(revisa|reviso|revisar|chequear|chequea|valida|verifica)\b/i],
             ['medidas', /\b(ancho|alto|largo|fondo|medidas?|cent[ií]metros)\b/i]];
           const m = temas.filter(([, re]) => re.test(t)); return m.length ? m[0][0] : null;
         };
@@ -4031,9 +4095,23 @@ async function elTurnoDeLaConversacion(dicho){
           const tema = temaDeLaFrase(turno.decir);
           return !!tema && tema !== suyoAhora;
         })();
+        /* NI SU RECIBO NI SU RÓTULO (dueño, 25/09): el modelo copia el «Anotado:» del sistema y jura que
+         * anotó cosas que no entraron («dice «Anotado: …» y en el formulario no cambió nada»), y a veces
+         * contesta con un rótulo suelto —«Cantidad»—. Eso no es suyo: se le quita la frase de recibo, y
+         * un rótulo suelto se cambia por la pregunta del paso. */
+        const sinReciboAjeno = (t) => {
+          const limpio = String(t || '').replace(/\bAnotad[oé]\s*:?\s*[^.!?]*[.!?]?/gi, '').replace(/\s+/g, ' ').trim();
+          return limpio || '';
+        };
+        const ES_CORTES = /^(hola|buenas|perfecto|listo|gracias|claro|sí|si|bien|entendido|exacto|vale|de acuerdo|con gusto|de nada|genial|ok)[.!]?$/i;
         const suFrase = seAdelanta
           ? conAvisoDelPendiente(pendienteDeLaPantalla)   /* la del paso que toca, con su «Ojo» si hay */
-          : turno.decir;
+          : (() => {
+              const suyo = sinReciboAjeno(turno.decir);
+              const esRotuloSuelto = suyo && suyo.split(/\s+/).length <= 2 && !/[?¿]/.test(suyo) && !ES_CORTES.test(suyo);
+              if (esRotuloSuelto) return pendienteDeLaPantalla ? conAvisoDelPendiente(pendienteDeLaPantalla) : turno.decir;
+              return suyo || turno.decir;
+            })();
         if (juicio.limpia) { decirEnLaConversacion(suFrase); pintarProgresoDeLaConversacion(); }
         /* Ni la cortesía ni la calma se contestan con la misma pregunta en el mismo aliento: si pidió
          * tiempo o agradece, se le contesta como persona y NO se le pregunta (dueño, 25/09). */
@@ -4155,11 +4233,24 @@ function abrirLaConversacion(){
       `Soy ${nombre}, un gusto atenderte. Dime qué necesitas para tu mueble y lo vamos armando juntos.`,
       `Con gusto, soy ${nombre}. Cuéntame qué mueble quieres trabajar y te acompaño paso a paso.`,
     ];
-    let cual = Math.floor(Math.random() * bienvenidas.length);
-    if (cual === voz.ultimaBienvenida) cual = (cual + 1) % bienvenidas.length;
-    voz.ultimaBienvenida = cual;
-    decirEnLaConversacion(bienvenidas[cual]);
-    if (proveedorIA() !== 'api') preguntarLoQueFalta();
+    const saludarDeSiempre = () => {
+      let cual = Math.floor(Math.random() * bienvenidas.length);
+      if (cual === voz.ultimaBienvenida) cual = (cual + 1) % bienvenidas.length;
+      voz.ultimaBienvenida = cual;
+      decirEnLaConversacion(bienvenidas[cual]);
+    };
+    /* LA MISMA FRASE DEL LLEGAR (dueño, 26/09: «this message should be the same that when the user
+     * click in "cuentaselo a Lia"... message the open conversation»): si la burbuja ya lo saludó con
+     * memoria —o su frase viene en camino (la memoria del servidor tarda hasta 1,2 s)—, el chat abre
+     * con ESA frase; sin memoria, las bienvenidas de siempre. */
+    const abrirCon = (deVuelta) => {
+      if (deVuelta) decirEnLaConversacion(deVuelta); else saludarDeSiempre();
+      if (proveedorIA() !== 'api') preguntarLoQueFalta();
+    };
+    const yaDecidido = (typeof window !== 'undefined' && typeof window.saludoDeQuienVuelve === 'string') ? window.saludoDeQuienVuelve : null;
+    if (yaDecidido !== null) abrirCon(yaDecidido);
+    else if (typeof window !== 'undefined' && window.laEsperaDelSaludo) window.laEsperaDelSaludo.then(f => abrirCon(String(f || '')));
+    else abrirCon('');
   } else { preguntarLoQueFalta(); }
   const input = document.getElementById('vozInput'); if (input) input.focus({ preventScroll: true });
   /* Al abrir, el micrófono se pide de una: la conversación empieza hablando si él quiere. */
@@ -4995,7 +5086,7 @@ function valorDeLaLista(){
 }
 /* Lo que se ve en el paso de la estimación cuando el recorrido es una lista: una línea por
  * referencia con SUS metros facturables y su valor, y el total. La disponibilidad y el lote no se
- * fingen — sin el dato, la salida honesta es la del asesor. */
+ * fingen — sin el dato, la salida honesta es la del asistente. */
 function pintarLaLista(){
   const filas=valorDeLaLista();
   const conTela=filas.filter(f=>!f.sinTela);
@@ -5021,7 +5112,7 @@ function pintarLaLista(){
         (f.sinTela?' — el precio espera a la tela que elijas'
           :f.sinCalcular?' — los metros salen de tu mueble y sus medidas'
           :` → ${fmtM(f.facturable)} m a ${esc(money(f.price))} / m`)+`</li>`).join('')+
-      '<li>Un asesor confirma disponibilidad y lote antes de cortar.</li>'+
+      '<li>Un asistente confirma disponibilidad y lote antes de cortar.</li>'+
       filas.filter(f=>f.razones.length).map(f=>f.razones.map(r=>`<li>${esc(f.name)}: ${esc(r)}</li>`).join('')).join('')
     : '<li>Sin referencias todavía: agrega una para ver tu estimación.</li>';
   const aviso=document.getElementById('quoteNote');if(aviso)aviso.hidden=true;
@@ -5039,7 +5130,7 @@ function declaradoEnPalabras(f){
     : (f.declarado!==f.facturable?`declaraste ${fmtM(f.declarado)} m`:`${fmtM(f.declarado)} m`);
 }
 /* La búsqueda del pedido anterior (paso 21): por número de solicitud o por referencia, en lo que
- * este navegador tiene guardado. Lo que no aparezca lo busca un asesor en el sistema. */
+ * este navegador tiene guardado. Lo que no aparezca lo busca un asistente en el sistema. */
 function buscarPedido(){
   const caja=document.getElementById('pedidoHallado'),texto=document.getElementById('pedidoHalladoTexto');
   const err=document.getElementById('pedidoError');
@@ -5055,7 +5146,7 @@ function buscarPedido(){
   }else{
     pedidoBase=null;
     if(caja)caja.hidden=true;
-    if(err){err.textContent='No encontramos esa solicitud en este navegador. Un asesor la busca en el sistema y te dice qué lote hay.';err.hidden=false}
+    if(err){err.textContent='No encontramos esa solicitud en este navegador. Un asistente la busca en el sistema y te dice qué lote hay.';err.hidden=false}
   }
   return !!hallada;
 }

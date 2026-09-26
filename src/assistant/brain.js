@@ -193,11 +193,11 @@
     const furniture = String((ctx && ctx.selectedFurniture) || 'mueble').toLowerCase();
     const reply = (message, proposedActions) => ({ message, proposedActions: proposedActions || [] });
 
-    if (ctx && ctx.submitted) return reply('Tu solicitud ya fue enviada. Un asesor te contactará para confirmar los detalles.');
+    if (ctx && ctx.submitted) return reply('Tu solicitud ya fue enviada. Un asistente te contactará para confirmar los detalles.');
 
     // Asking the assistant to move money is refused outright, whatever the wording.
     if (/(precio|valor|costo|descuento|metros)/.test(t) && /(baj|rebaj|cambi|pon|deja|quita|gratis|cero|descuent|modific)/.test(t)) {
-      return reply('No puedo cambiar el precio ni los metros: el sistema los calcula con tus medidas y la tela que elijas, y un asesor confirma el valor final.');
+      return reply('No puedo cambiar el precio ni los metros: el sistema los calcula con tus medidas y la tela que elijas, y un asistente confirma el valor final.');
     }
 
     const measures = extractMeasurements(t);
@@ -225,7 +225,7 @@
       const range = ctx && ctx.estimate && ctx.estimate.priceLabel;
       return reply('No es definitivo: es una estimación orientativa de la línea que elegiste (tela' +
         ', mano de obra y, si marcaste daños, reparaciones).' +
-        (range ? ` Hoy tu estimación es ${range}.` : '') + ' Un asesor confirma cantidad, disponibilidad y precio antes de tu compra.');
+        (range ? ` Hoy tu estimación es ${range}.` : '') + ' Un asistente confirma cantidad, disponibilidad y precio antes de tu compra.');
     }
 
     if (/(medid|medir|mido|mide)/.test(t)) {
@@ -246,11 +246,11 @@
         return reply(`Necesitamos al menos ${photos.min} fotos: de frente, en diagonal y un detalle de la tela. Te faltan ${missing}.`,
           [{ type: 'FOCUS_FIELD', field: 'photos' }]);
       }
-      return reply(`Tienes ${photos.count} ${photos.count === 1 ? 'foto' : 'fotos'}. Con buena luz y de frente, un asesor puede confirmar mejor los detalles.`);
+      return reply(`Tienes ${photos.count} ${photos.count === 1 ? 'foto' : 'fotos'}. Con buena luz y de frente, un asistente puede confirmar mejor los detalles.`);
     }
 
     const where = stepOf(step);
-    return reply(`Estás en «${where.name}». Puedo orientarte sobre medidas, uso con mascotas, cuidado y selección de telas. El inventario y el precio final los confirma un asesor.`);
+    return reply(`Estás en «${where.name}». Puedo orientarte sobre medidas, uso con mascotas, cuidado y selección de telas. El inventario y el precio final los confirma un asistente.`);
   }
 
   /* The context made visible: what she can see, said out loud. Called once when the

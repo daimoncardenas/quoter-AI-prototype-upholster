@@ -247,6 +247,9 @@
 
   function baseEnviar(rows) {
     try {
+      /* Cada cotización viaja con la llave del navegador (`visitorId`): es lo que después reconoce a
+       * quien vuelve. La IP y el navegador van como señales secundarias, del lado del servidor. */
+      if (Array.isArray(rows)) rows.forEach(function (r) { if (r && typeof r === 'object' && !r.visitorId) r.visitorId = visitorIdDeEsteNavegador(); });
       fetch('/api/quotes', {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ns: NS, quotes: rows })
@@ -338,6 +341,24 @@
   }
 
   /* ----------------------------------------------------------------- store -- */
+
+  /* QUIEN YA COTIZÓ VUELVE A SU NOMBRE (dueño, 26/09: «cuando un conocido entra por segunda vez y ya
+   * había cotizado... saludarlo apenas llegue por el nombre»). En una página pública no hay sesión:
+   * la llave es un identificador del NAVEGADOR (`visitorId`, un `v_…` que se genera una vez y no se
+   * borra). El servidor guarda ese id con la cotización —y la IP y el navegador solo como señales
+   * secundarias—: a la vuelta se lo reconoce por la llave, NO por la IP (una casa o una oficina
+   * comparten IP, y saludar por ella saluda a quien no es). Si el almacén falla o el cliente borra su
+   * navegador, para ACI es alguien nuevo: aceptable para este producto. */
+  function visitorIdDeEsteNavegador() {
+    try {
+      var id = localStorage.getItem(NS + VISITANTE_ID_KEY) || '';
+      if (!id) {
+        id = 'v_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+        localStorage.setItem(NS + VISITANTE_ID_KEY, id);
+      }
+      return id;
+    } catch (err) { return ''; }
+  }
 
   var Store = {
     syncQuotes: function () { return syncQuotes(); },
@@ -1222,6 +1243,27 @@
       try { localStorage.setItem(NS + ASSISTANT_WELCOMED_KEY, '1'); } catch (err) { /* ignore */ }
     },
 
+    /* QUIEN YA COTIZÓ VUELVE A SU NOMBRE: la ficha del visitante (`{visitorId, firstName, …}`) vive
+     * en su navegador y es la llave para reconocerlo; el servidor la ata a sus cotizaciones. */
+    visitanteId: function () { return visitorIdDeEsteNavegador(); },
+    visitanteFicha: function () {
+      try {
+        const f = JSON.parse(localStorage.getItem(NS + VISITANTE_KEY) || 'null');
+        return f && typeof f === 'object' ? f : null;
+      } catch (err) { return null; }
+    },
+    marcarVisitante: function (ficha) {
+      try {
+        const juntos = Object.assign({}, this.visitanteFicha() || {}, ficha || {});
+        const n = String(juntos.firstName || '').trim().slice(0, 80);
+        if (n) juntos.firstName = n;
+        juntos.visitorId = juntos.visitorId || visitorIdDeEsteNavegador();
+        juntos.cuando = Date.now();
+        localStorage.setItem(NS + VISITANTE_KEY, JSON.stringify(juntos));
+        return juntos;
+      } catch (err) { return null; }
+    },
+
     /* The single palette-derivation rule, exposed for the backoffice preview
      * (see derivePalette below for how and why). */
     derivePalette: function (ink, accent) { return derivePalette(BRAND_DEFAULTS.colors, ink, accent); },
@@ -1856,6 +1898,10 @@
   var PRESETS = {{PRESETS_JSON}};
   var ASSISTANT_KEY = 'assistant';
   var ASSISTANT_WELCOMED_KEY = 'assistantWelcomed';
+  /* Quien ya cotizó vuelve a su nombre (dueño, 26/09): la marca guarda el nombre del cliente que
+   * envió la cotización, y con ella la presencia lo saluda al llegar. */
+  var VISITANTE_KEY = 'visitante';
+  var VISITANTE_ID_KEY = 'visitante-id';
   var ASSISTANT_NAME_MAX = 40;
   // Configuring the presence (on/off, character, name, suit) starts at this plan.
   var ASSISTANT_GATED_PLAN = 'Professional';

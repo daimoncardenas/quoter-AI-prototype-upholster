@@ -98,9 +98,9 @@ export function conectarLaValidacion(elPuenteDeLaPagina) {
         :'Agrega al menos una referencia con su cantidad para calcular tu estimación.';
       C.decirError(err,err.textContent,'listRows');
       err.scrollIntoView({behavior:'smooth',block:'center'});return false}
-    /* El pedido anterior no avanza sin decir CUÁL: sin número ni referencia el asesor no tiene qué
+    /* El pedido anterior no avanza sin decir CUÁL: sin número ni referencia el asistente no tiene qué
      * buscar y el faltante queda sin base. No se exige que aparezca aquí —el que no está en este
-     * navegador lo busca un asesor— pero sí que se diga cuál es. */
+     * navegador lo busca un asistente— pero sí que se diga cuál es. */
     if(E.step===21){
       const busca=document.getElementById('pedidoBusca');
       const dicho=String((busca&&busca.value)||'').trim();
@@ -200,9 +200,9 @@ export function conectarLaValidacion(elPuenteDeLaPagina) {
           nombre:'Necesito tu nombre para enviarte la pre-cotización.',
           correoSin:'Necesito tu correo: ahí te llega la copia de tu pre-cotización.',
           correoMal:'Ese correo no tiene forma de correo: revísalo y te mando la copia.',
-          celularSin:'Me falta tu celular: un asesor te escribe por ahí.',
+          celularSin:'Me falta tu celular: un asistente te escribe por ahí.',
           celularMal:'Ese celular no tiene pinta de celular: escríbelo como 300 123 4567.',
-          autorizacion:'Marca la autorización: sin ella no puedo usar tus datos ni que un asesor te contacte.',
+          autorizacion:'Marca la autorización: sin ella no puedo usar tus datos ni que un asistente te contacte.',
         }[qué];
         const campoEl={nombre:nombre,correoSin:correo,correoMal:correo,celularSin:celular,celularMal:celular,autorizacion:autoriza}[qué];
         C.decirError(err,dicho,campoEl);
