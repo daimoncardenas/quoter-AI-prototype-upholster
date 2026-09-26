@@ -321,3 +321,42 @@ el envío y los oídos.
   - `tests/assistant.spec.mjs` — anclado al CTA «Pregúntale a Lía» que `fd97222` reemplazó por
     «Conversar con Lía» (`.chat-fab`, `.help-card [data-open-chat]`); revienta en su primer `wizard()`.
   Los dos esperan decisión del dueño: actualizarlos o retirarlos en favor de las specs nuevas.
+
+## La base y el despliegue (25/09) · **CERRADA**
+
+La base dejó de ser solo la de casa: hay DOS motores detrás de las mismas rutas (`tools/api.mjs` elige por
+`MONGODB_URI` — SQLite sin ella, Mongo Atlas con ella) y las Netlify Functions quedaron listas
+(`netlify/functions/`, `netlify.toml`). La forma del documento, lo compartido por los dos motores y lo que
+todavía no resuelven viven en `docs/base-de-datos.md` (sección «El motor del prototipo»); el paso a paso
+del despliegue, en `docs/despliegue-netlify.md`. Quedan pendientes la cadena de Atlas (va a `.env`, jamás
+al repo) y el sitio en Netlify.
+
+## El paquete: demo y producción son DOS salidas (decisión aparcada, 25/09)
+
+La crítica (ChatGPT, vía el dueño): el empaquetador propio es apropiado para el demo, pero producción no
+necesita la restricción de `file://` — «npm run demo → tu empaquetador» y «npm run production →
+esbuild/Vite» deberían coexistir, y reglas como «nada de alias» y «nombres de nivel superior sin repetir»
+son artefactos del aplanado, no requisitos de ACI. **De acuerdo en el principio**, y aquí queda escrito
+para no volver a litigarlo:
+
+- **`src/` ya es ESM de verdad** (44 `import`, 90 `export`; `tools/bundle.mjs` resuelve los imports
+  relativos, los ordena y los aplana). Cambiar de empaquetador NO es reescribir 33 módulos.
+- **Lo que obliga al aplanado no son los módulos: son las páginas.** `index.html` todavía lleva 3.551
+  líneas de script inline (6 bloques) y `admin.html` 1.321 (3 bloques), y hay 17 llamadas en `src/` que
+  entran a ese ámbito (`C.updateEstimate()`, `showStep`, `aplicar…`). Las reglas del paquete son
+  consecuencia de ese ámbito compartido. Y las dos razones de la casa siguen en pie: `file://` bloquea
+  los módulos ES, y la primera pintura llama en el `<head>`.
+- **El precio, en orden**: (1) terminar «borrar el puente» — mudar las ayudas que quedan en la página
+  (`showStep`, `aplicar*`, `updateEstimate`…) a `src/wizard/` y convertir el script de cada página en una
+  ENTRADA de verdad (imports, sin ámbito compartido); (2) repuntar las specs que leen nombres de nivel
+  superior por `evaluate` (`mirandoFoto`, `vozAudio`, `state`) a las puertas que ya existen (`App`,
+  `Wizard.*`, `Asistente.*`); (3) entonces `npm run production` = esbuild/Vite sobre `src/` + dos
+  entradas: una tarde, un archivo de configuración. El chequeo de choques deja de ser guardián y pasa a
+  ser lint (o se retira).
+- **Qué NO se hace ahora**: meter el segundo pipeline en el prototipo sin consumidor. El demo no lo
+  necesita, y el producto no hereda este repo: `quoter-AI-product` elige su bundler desde el día uno —
+  lo que cruza de aquí es `docs/base-de-datos.md` y los cortes de `src/`, no el empaquetador.
+- **Mientras tanto**: se sigue escribiendo `src/` como ESM de verdad (es lo que abarata el cambio), y
+  queda pendiente el hueco ya inventariado arriba: el chequeo de choques mira `src/`, no los scripts de
+  las páginas (el caso `TENANT`). Con el aplanado cargando peso, ese guardián es la red — y es justo lo
+  que tiene que aguantar hasta que el puente se borre.

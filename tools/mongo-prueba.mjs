@@ -101,6 +101,21 @@ async function correr() {
     revisar('la foto llega byte a byte', Buffer.compare(bajada.buffer, original) === 0, `${original.length} bytes esperados`);
   }
 
+  /* 3.b La convención del dueño (25/09): en el CÓDIGO camelCase, en la BASE snake_case. Se mira el
+   * documento crudo, no lo que devuelve el motor. */
+  const { MongoClient } = await import('mongodb');
+  const cliente = new MongoClient(uri, { serverSelectionTimeoutMS: 8000 });
+  await cliente.connect();
+  const crudo = await cliente.db(mongoDb()).collection('quotes').findOne({ _id: ID });
+  await cliente.close();
+  revisar('en la base las claves son snake_case',
+    crudo && 'tenant_id' in crudo && 'service_point_id' in crudo && !('tenantId' in crudo) && !('servicePointId' in crudo));
+  revisar('piezas y fotos también',
+    crudo && crudo.pieces && 'furniture_label' in crudo.pieces[0] && 'photos_count' in crudo.pieces[0]
+    && crudo.photos && 'piece_idx' in crudo.photos[0]);
+  revisar('el cajón data también (quantity_label, no quantityLabel)',
+    crudo && crudo.data && 'quantity_label' in crudo.data && !('quantityLabel' in crudo.data));
+
   /* 4. Borrar: el negocio de prueba queda como estaba. */
   const borradas = await motor.borrar(NS, ID);
   const despues = await motor.listar(NS);
@@ -120,8 +135,10 @@ async function correr() {
 correr()
   .then(codigo => process.exit(codigo))
   .catch(err => {
+    /* La cadena de conexión no se imprime NUNCA: si el error del driver la trae pegada, se tapa. */
+    const limpio = String(err.message).replace(/mongodb(\+srv)?:\/\/\S+/gi, '[cadena oculta]');
     console.log('');
-    console.log('FALLA: ' + err.message);
+    console.log('FALLA: ' + limpio);
     console.log('(La cadena de conexión no se imprime nunca; revisa que el usuario, la clave y los permisos de red del cluster sean los correctos.)');
     process.exit(1);
   });

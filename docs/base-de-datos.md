@@ -143,9 +143,9 @@ Atlas, el prototipo usa su base de casa.
 
 | Dónde | Motor | Fotos | Cuándo |
 | --- | --- | --- | --- |
-| Casa | `tools/api-sqlite.mjs` → `data/quoter.db` (tablas, columnas) | archivos en `data/photos/…` | siempre que NO haya `MONGODB_URI` |
-| Atlas | `tools/api-mongo.mjs` → colección `quotes` EMBEBIDA | GridFS (`fotos/<ns>/<COT-####>/NN.ext`) | cuando hay `MONGODB_URI` (en .env o en el entorno) |
-| Netlify Functions | las mismas rutas en `netlify/functions/api.mjs` y `ia.mjs` | GridFS | desplegado: allá Atlas es obligatorio (no hay disco) |
+| Casa | `tools/api-sqlite.mjs` → `data/quoter.db` (tablas, columnas) | R2 si está configurado; si no, archivos en `data/photos/…` | siempre que NO haya `MONGODB_URI` |
+| Atlas | `tools/api-mongo.mjs` → colección `quotes` EMBEBIDA | R2 si está configurado; si no, el GridFS (`fotos/<ns>/<COT-####>/NN.ext`) | cuando hay `MONGODB_URI` (en .env o en el entorno) |
+| Netlify Functions | las mismas rutas en `netlify/functions/api.mjs` y `ia.mjs` | R2 | desplegado: allá Atlas es obligatorio (no hay disco) |
 
 Lo que ambos motores comparten (por eso el traspaso es un export, no una reescritura):
 
@@ -171,9 +171,15 @@ Dos cosas que el motor de Atlas todavía NO resuelve (a propósito; nada se inve
 - **`pieces[].furnitureId` va en `null`**: la página manda la ETIQUETA del mueble; el id del catálogo lo
   pondrá quien lo tenga (el cotizador o el resolutor del catálogo). La etiqueta sí viaja
   (`furnitureLabel`).
-- **La foto en Atlas vive en el GridFS** y su ruta en el documento es `api/photos/…` (en casa es
-  `data/photos/…`): mismo lector, distinto almacén. Un objeto de storage (S3/R2) queda como lo próximo
-  si las fotos crecen.
+- **La foto vive en Cloudflare R2** (`tools/fotos-r2.mjs`): la clave es `photos/<ns>/<COT-####>/NN.ext`,
+  y el documento guarda `key` + `url` (la Public Development URL del bucket; con dominio propio, esa).
+  El camino es el de producción: el navegador pide una **URL firmada** (`POST /api/photos/firmas`, 10
+  minutos, un solo objeto), sube DIRECTO a R2 y a la base solo viajan los metadatos — los bytes no pasan
+  por la función. Sin R2 configurado la página manda los dataURL como antes (el servidor los sube a R2 si
+  está, o al GridFS/disco si no): el extra nunca es un requisito.
+- **Una lista de fotos VACÍA no borra nada**: la página manda su lista entera al guardar, y una copia
+  leída antes de que las fotos llegaran llegaría con `photos: []` — eso es «sin noticia de fotos», no
+  «bórralas todas» (la regla vive en los dos motores).
 
 Colecciones que el modelo ya nombra y el prototipo todavía no escribe: `tenants`, `brands`, `users`,
 `servicePoints`, `fabrics`, `furniture`, `settings` (hoy viven en los packs) y las dos que vienen con el

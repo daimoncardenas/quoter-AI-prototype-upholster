@@ -23,8 +23,56 @@ export function conectarElBus(elPuenteDeLaPagina) {
   const C = elTaller();
   if (!C) return false;
 
+  /* LO QUE EL CLIENTE HACE, DESDE SU PROPIO NAVEGADOR (dueño, 25/09: «AI can touch his own browser but
+   * this isnt guarantee that the browser of client is push or write the same... assistant should have a
+   * map where and what part is exactly in the browser of client... should have error for validations...
+   * or restrictions»).
+   *
+   * Aquí el asistente vive en la misma página, pero la memoria de la página NO puede depender de su
+   * copia del DOM: lo único que en producción viaja desde el navegador del cliente son sus EVENTOS.
+   * Así que cada acción suya (tecla, clic, cambio) se anota aparte, con quién la hizo: el navegador
+   * marca `isTrusted` en lo que toca una persona, y lo que escribe el asistente llega sin esa marca. */
+  const hizoElCliente = [];
+  const anotar = (el, quien, que) => {
+    const ultimo = hizoElCliente[hizoElCliente.length - 1];
+    if (ultimo && ultimo.el === el && Date.now() - ultimo.cuando < 1500) { ultimo.que = que; ultimo.cuando = Date.now(); return; }
+    hizoElCliente.push({ el, cuando: Date.now(), quien, que });
+    if (hizoElCliente.length > 12) hizoElCliente.shift();
+  };
+  const rotuloDe = el => {
+    const texto = (n) => { const c = n.cloneNode(true);
+      c.querySelectorAll('input,select,textarea,button,svg').forEach(x => x.remove());
+      return (c.textContent || '').replace(/\s+/g, ' ').trim(); };
+    if (!el) return 'un control';
+    /* Las tarjetas de elección (`.service-choice`, la reja de telas…) se llaman por su título, que va
+     * en la `<b>`: «eligió «Retapizado de muebles»», no «eligió un control». */
+    const titulo = el.querySelector && el.querySelector('b');
+    if (titulo && texto(titulo)) return texto(titulo);
+    return el.getAttribute('aria-label') || (el.closest && el.closest('label') ? texto(el.closest('label')) : '')
+      || el.id || el.value || 'un control';
+  };
+  document.addEventListener('input', e => {
+    const el = e.target;
+    if (!el || !el.closest || !el.closest('.wizard-step')) return;
+    anotar(el, e.isTrusted ? 'cliente' : 'asistente', `escribió «${String(el.value || '').slice(0, 30)}» en ${rotuloDe(el)}`);
+  }, true);
+  document.addEventListener('click', e => {
+    const c = e.target && e.target.closest ? e.target.closest('.service-choice, .furniture-card, [aria-checked], #needsGrid input, #damageGrid input, .insumo-row [data-insumo]') : null;
+    if (!c) return;
+    anotar(c, e.isTrusted ? 'cliente' : 'asistente', `eligió «${rotuloDe(c)}»`);
+  }, true);
+  /* Lo último que tocó ÉL (el asistente no cuenta como el cliente) — y también lo que hizo el propio
+   * asistente, para que no se confundan: la página lo dice con todas las letras. */
+  const loQueHizoElCliente = (n = 4) => hizoElCliente.filter(x => x.quien === 'cliente').slice(-n)
+    .map(x => ({ que: x.que, hace: Math.round((Date.now() - x.cuando) / 1000) + ' s' }));
+  const loUltimoQueToco = () => {
+    for (let i = hizoElCliente.length - 1; i >= 0; i--) if (hizoElCliente[i].quien === 'cliente') return hizoElCliente[i].que;
+    return null;
+  };
+
   const byId=id=>document.getElementById(id);
   const stepId=n=>(AssistantBrain.STEPS.find(s=>s.n===n)||{}).id||null;
+
   const emit=(type,payload={})=>{
     try{window.dispatchEvent(new CustomEvent('aci:event',{detail:{type,payload}}))}
     catch(err){console.warn('[aci] evento no publicado',type,err)}
@@ -131,6 +179,113 @@ export function conectarElBus(elPuenteDeLaPagina) {
     }};
   }
 
+  /* LO QUE EL CLIENTE TIENE EN PANTALLA, campo por campo (dueño, 25/09: «the AI sometimes forget fields
+   * and questions… always assistant take a screenshot… should create a JSON with fields and after
+   * question or lead a customer for each one until complete the section or step»).
+   *
+   * No es una captura: el paso VISIBLE se lee del propio formulario. Una captura sería una copia lenta
+   * y borrosa de esto —y Playwright no corre dentro de la página del cliente—; el DOM es la misma
+   * verdad y está fresca: un campo nuevo, movido o cambiado por un refactor aparece aquí el mismo día,
+   * sin lista que mantener. Devuelve EL PASO (su número y sus preguntas) y cada control con su estado;
+   * `faltan` son los que el cliente todavía no ha llenado. Best-effort: si el DOM cambiara tanto que
+   * esta lectura fallara, devuelve null y el turno sigue sin ella. */
+  function losCamposDelPaso(){
+    try {
+      const paso = document.querySelector('.wizard-step.active');
+      if (!paso) return null;
+      const aLaVista = el => !!el && !el.closest('[hidden]') && el.type !== 'hidden' && !el.disabled
+        && (el.offsetWidth > 0 || el.offsetHeight > 0 || el === document.activeElement);
+      const textoSin = (el) => { const c = el.cloneNode(true);
+        c.querySelectorAll('input,select,textarea,button,svg').forEach(x => x.remove());
+        return (c.textContent || '').replace(/\s+/g, ' ').trim(); };
+      const etiquetaDe = (el) => {
+        /* Las filas de las PIEZAS nombran su medida con el aria-label, que dice de qué pieza es
+         * («Ancho de la pieza 2»): el rótulo de la caja, solo, se leería «Ancho» a secas. */
+        if (el.closest && el.closest('.piezas-lista') && el.getAttribute('aria-label')) return el.getAttribute('aria-label');
+        const porFor = el.id ? document.querySelector(`label[for="${el.id}"]`) : null;
+        if (porFor) return textoSin(porFor);
+        const envuelto = el.closest('label');
+        if (envuelto) return textoSin(envuelto);
+        return el.getAttribute('aria-label') || el.getAttribute('placeholder') || el.id || el.name || 'sin nombre';
+      };
+      const llenoDe = el => el.type === 'checkbox' ? el.checked : String(el.value || '').trim() !== '';
+      const valorDe = el => el.type === 'checkbox' ? el.checked
+        : el.tagName === 'SELECT' ? ((el.selectedOptions[0] || {}).text || '').trim() : String(el.value || '').trim();
+      const campos = [];
+      paso.querySelectorAll('input, select, textarea, [role="radiogroup"]').forEach(el => {
+        /* Los grupos de tarjetas (la línea, la ruta, el propósito, los daños…) son UNA pregunta con sus
+         * opciones, y se contestan tocando: no tienen input que leer. */
+        if (el.getAttribute('role') === 'radiogroup') {
+          const elegido = el.querySelector('[aria-checked="true"]');
+          const rotulo = x => (x.querySelector('b') ? textoSin(x.querySelector('b')) : textoSin(x)).trim();
+          campos.push({ id: el.id || 'eleccion', pregunta: el.getAttribute('aria-label') || el.id || 'elegir',
+            tipo: 'eleccion', requerido: true, lleno: !!elegido, valor: elegido ? rotulo(elegido) : null,
+            opciones: [...el.querySelectorAll('[aria-checked]')].map(rotulo).filter(Boolean) });
+          return;
+        }
+        if (!aLaVista(el)) return;
+        /* LOS INSUMOS DEL TALLER NO SON DEL CLIENTE (dueño, 24/09: «dont show "insumos" to client»): su
+         * paso no le pregunta nada —los estima la mano—, así que sus casillas no cuentan como
+         * pendientes. Sin esto el paso nunca cerraba y ella repetía su título, «¿Qué se le cambia por
+         * dentro?», turno tras turno (medido en la sesión del 25/09, la cuarta). */
+        if (el.closest && el.closest('#insumoStep')) return;
+        const d = el.dataset || {};
+        /* Las medidas por PIEZA: cada fila tiene las suyas y dos comparten instrumento («width» en la
+         * pieza 1 y en la 2). El id las distingue: `pieza.<n>.<medida>` — con eso el que escribe sabe
+         * en cuál fila va el número, y `pieza 1` no se confunde con `pieza 2`. */
+        const fila = el.closest && el.closest('.piezas-lista .pieza-fila');
+        const instrumento = (fila && d.medida)
+          ? `pieza.${[...fila.parentNode.children].indexOf(fila)}.${d.medida}`
+          /* Los demás controles de la fila (el mueble, la cantidad, lo que se tapiza) también llevan su
+           * nombre de fila: dos filas comparten el mismo control y el que lee tiene que saber cuál es. */
+          : (fila
+            ? `pieza.${[...fila.parentNode.children].indexOf(fila)}.ctl${[...fila.querySelectorAll('input,select,textarea')].indexOf(el)}`
+            : (el.id || d.field || d.row || d.name || 'campo'));
+        campos.push({ id: instrumento, pregunta: etiquetaDe(el),
+          tipo: el.tagName === 'SELECT' ? 'lista' : (el.type || 'texto'), requerido: !!el.required,
+          /* Los LÍMITES de cada control, leídos de la página: son las restricciones que el cliente
+           * tiene delante (y las que el cotizador le va a hacer cumplir al pasar de paso). */
+          min: el.min !== '' && el.min != null ? Number(el.min) : null,
+          max: el.max !== '' && el.max != null ? Number(el.max) : null,
+          lleno: llenoDe(el), valor: valorDe(el) || null,
+          /* …Y SI ESTÁ LLENO PERO EL COTIZADOR NO LO ACEPTA, se dice AQUÍ: un ancho de 100 en un sofá
+           * queda escrito y el «Continuar» no pasa — ese campo es el pendiente de verdad del paso, y
+           * sin esto ella no lo veía y se iba a preguntar cosas de otros pasos (dueño, 25/09: «lia is
+           * in disorder… dont respect the step by step»). */
+          aviso: (() => {
+            try {
+              if (!llenoDe(el) || typeof mundoDelContrato !== 'function') return null;
+              if (fila && d.medida) {
+                const v = Contrato.validarValor(mundoDelContrato(), 'medidas',
+                  { campo: d.medida, valor: Number(String(el.value).replace(',', '.')) });
+                return v && v.ok === false ? v.motivo : null;
+              }
+              /* El contacto también: un celular mal escrito queda ESCRITO y el paso no cierra — sin
+               * esto ella lo daba por bueno y el cliente no sabía qué le faltaba (medido con el
+               * cliente robot, 25/09). */
+              const deContacto = { phone: 'celular', email: 'correo', fullName: 'nombre' }[el.id];
+              if (deContacto) {
+                const v = Contrato.validarValor(mundoDelContrato(), 'contacto', { campo: deContacto, valor: String(el.value).trim() });
+                return v && v.ok === false ? v.motivo : null;
+              }
+              return null;
+            } catch (err) { return null; }
+          })() });
+      });
+      /* Las fotos no son un input: son una zona con sus miniaturas (una por foto subida). */
+      const zonaFotos = paso.querySelector('.photo-strip, [data-foto-pieza]');
+      if (zonaFotos) {
+        const miniaturas = paso.querySelectorAll('.photo-strip .photo-thumb, [data-foto-pieza] .pieza-foto-mini').length;
+        campos.push({ id: 'fotos', pregunta: 'las fotos', tipo: 'fotos', requerido: false,
+          lleno: miniaturas > 0, valor: miniaturas });
+      }
+      const titulo = textoSin(paso.querySelector('.step-heading h2') || { cloneNode: () => document.createElement('i'), textContent: '' });
+      const subtitulo = textoSin(paso.querySelector('.step-heading p:not(.service-plan-note)') || { cloneNode: () => document.createElement('i'), textContent: '' });
+      return { paso: +paso.dataset.step, titulo, subtitulo, campos,
+        faltan: campos.filter(c => !c.lleno).map(c => c.pregunta) };
+    } catch (err) { return null; }
+  }
+
   const CONTROLS={
     'furniture.type':()=>document.querySelector('.piezas-lista .pieza-fila.en-foco .pieza-mueble')||document.querySelector('.pieza-mueble'),
     'photos':()=>document.querySelector('[data-foto-pieza]'),
@@ -186,7 +341,7 @@ export function conectarElBus(elPuenteDeLaPagina) {
   ['style','color','budget','city'].forEach(id=>byId(id).addEventListener('change',e=>emit('PREFERENCES_CHANGED',{field:id,value:e.target.value})));
   byId('consent').addEventListener('change',e=>emit('CONSENT_CHANGED',{checked:e.target.checked}));
 
-  ACI = {emit,stepId,context,env,execute,isTyping,fabricPayload};
+  ACI = {emit,stepId,context,env,execute,isTyping,fabricPayload,losCamposDelPaso,loQueHizoElCliente,loUltimoQueToco};
   /* También en window: las specs lo leen desde page.evaluate y la conversación lo usa por su nombre;
    * una propiedad global lo ve todo el mundo y dice en voz alta que este objeto es la superficie del
    * asistente en la página. */

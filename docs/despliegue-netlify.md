@@ -18,7 +18,7 @@ variables de entorno del sitio.
 - **En tu equipo** (para probar): pégala en `.env`:
 
       MONGODB_URI=mongodb+srv://…
-      MONGODB_DB=aci            # opcional: por defecto «aci»
+      MONGODB_DB=aci-local      # la base del prototipo (por defecto «aci-local»; producción usará «aci-production»)
 
   Y corre la prueba de ida y vuelta:
 
@@ -32,10 +32,20 @@ variables de entorno del sitio.
   | Variable | Para qué |
   | --- | --- |
   | `MONGODB_URI` | la cadena de Atlas (sin ella `/api/quotes` contesta 503 y lo dice) |
-  | `MONGODB_DB` | el nombre de la base (por defecto `aci`) |
+  | `MONGODB_DB` | el nombre de la base (por defecto `aci-local`; producción usará `aci-production`) |
+  | `R2_ENDPOINT` | `https://<account>.r2.cloudflarestorage.com` (bucket → Settings → S3 API) |
+  | `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` | el par S3 del token R2 (permiso **Object Read & Write**) |
+  | `R2_BUCKET` | `aci-furniture-local` (y `…-production` el día que exista) |
+  | `R2_PUBLIC_BASE` | la Public Development URL del bucket (`https://pub-….r2.dev`) — con esta, el documento lleva la `url` de cada foto |
   | `CLIENT` | qué pack se genera (p. ej. `CARDYRAM`) |
   | `DEEPSEEK_API_KEY` | la IA por API (opcional: sin ella la página usa lo suyo) |
   | `NPM_FLAGS` | `--omit=dev` — no instalar Playwright en el build (es de las pruebas) |
+
+  Y en el bucket, una vez: **Settings → CORS Policy** — el navegador sube con una URL firmada, así que R2
+  tiene que aceptar el PUT desde los orígenes de la página:
+
+      [{"AllowedOrigins":["http://127.0.0.1:3000","http://localhost:3000","https://*.netlify.app"],
+        "AllowedMethods":["PUT"],"AllowedHeaders":["content-type"],"MaxAgeSeconds":3600}]
 
 ## 3. El sitio
 

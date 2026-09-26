@@ -25,6 +25,61 @@ export function hablarConLaVoz(texto) { const v = laVoz; return v ? v.hablar(tex
 export function encenderElMicrofonoDelAsistente() { const v = laVoz; return v ? v.encender() : false; }
 export function apagarElMicrofonoDelAsistente() { const v = laVoz; if (v) v.apagar(); }
 
+/* ── decirlo como lo diría una persona ─────────────────────────────────────────
+ * El motor de voz lee mecánicamente lo que le des: un precio «$ 3.927.500» o una medida «260 × 85 cm»
+ * salen como lector de formulario. Esta pasada toca SOLO el texto que va a la voz (la pantalla no se
+ * cambia): los números grandes a palabras, «$» a pesos, las unidades dichas y el «·» como pausa
+ * (dueño, 25/09: «a voice less robotic... more human»). Puro y a nivel del módulo: se prueba sin
+ * oído y sin pantalla. */
+
+/* Un número a palabras, hasta billones (español de Colombia). */
+const UNIDADES = ['cero', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve',
+  'diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve',
+  'veinte', 'veintiuno', 'veintidós', 'veintitrés', 'veinticuatro', 'veinticinco', 'veintiséis', 'veintisiete', 'veintiocho', 'veintinueve'];
+const DECENAS = ['', '', '', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'];
+const CENTENAS = ['', 'ciento', 'doscientos', 'trescientos', 'cuatrocientos', 'quinientos', 'seiscientos', 'setecientos', 'ochocientos', 'novecientos'];
+function enPalabras(n) {
+  n = Math.round(Number(n));
+  if (!isFinite(n)) return String(n);
+  if (n < 0) return 'menos ' + enPalabras(-n);
+  if (n < 30) return UNIDADES[n];
+  if (n < 100) { const u = n % 10; return DECENAS[Math.floor(n / 10)] + (u ? ' y ' + UNIDADES[u] : ''); }
+  if (n < 1000) {
+    if (n === 100) return 'cien';
+    const r = n % 100;
+    return CENTENAS[Math.floor(n / 100)] + (r ? ' ' + enPalabras(r) : '');
+  }
+  /* Antes de «mil» y «millones», «uno» se vuelve «un» (veintiún mil, no veintiuno mil). */
+  const delante = (x) => enPalabras(x).replace(/uno$/, 'un');
+  if (n < 1e6) { const m = Math.floor(n / 1000), r = n % 1000; return (m === 1 ? 'mil' : delante(m) + ' mil') + (r ? ' ' + enPalabras(r) : ''); }
+  if (n < 1e12) { const m = Math.floor(n / 1e6), r = n % 1e6; return (m === 1 ? 'un millón' : delante(m) + ' millones') + (r ? ' ' + enPalabras(r) : ''); }
+  return String(n);
+}
+export function paraDecirEnVozAlta(texto) {
+  let t = String(texto || '');
+  /* Pausas y signos primero: «·» es una coma al hablar, «×» se dice «por», y un rango de precios se dice
+   * «de X a Y pesos» —con «pesos» UNA vez, al final—. Guion LARGO el de los rangos: «COT-1043» lleva
+   * guion corto y no se toca. */
+  t = t.replace(/\s*·\s*/g, ', ')
+    .replace(/×/g, ' por ')
+    /* «entre X – Y» se dice «entre X y Y» (y «pesos» queda al final, una sola vez). */
+    .replace(/\bentre\s+\$?\s*(\d{1,3}(?:\.\d{3})+|\d+)\s*–\s*\$?\s*(\d{1,3}(?:\.\d{3})+|\d+)/gi, 'entre $1 y $2 pesos')
+    .replace(/\$\s*(\d{1,3}(?:\.\d{3})+|\d+)\s*–\s*\$\s*(\d{1,3}(?:\.\d{3})+|\d+)/g, '$1 a $2 pesos')
+    .replace(/(\d)\s*–\s*\$?\s*(\d)/g, '$1 a $2')
+    .replace(/\$\s*(\d{1,3}(?:\.\d{3})+|\d+)/g, '$1 pesos')
+    .replace(/\$/g, 'pesos ');
+  /* Unidades y porcentajes ANTES de pasar los números a palabras (con los dígitos todavía a la vista). */
+  t = t.replace(/\bkm\b/gi, 'kilómetros').replace(/\bcm\b/gi, 'centímetros').replace(/\bmm\b/gi, 'milímetros')
+    .replace(/\bm2\b|\bm²\b/gi, 'metros cuadrados').replace(/\bkg\b/gi, 'kilos')
+    .replace(/\bkm2\b|\bkm²\b/gi, 'kilómetros cuadrados')
+    .replace(/(\d)\s*m\b/g, '$1 metros').replace(/(\d)\s*h\b/g, '$1 horas')
+    .replace(/(\d+(?:[.,]\d+)?)\s*%/g, '$1 por ciento');
+  /* Los grandes a palabras: 3.927.500 y 3927500 se dicen igual. Los cortos («3 fotos», «2 puestos») se
+   * quedan en cifra: el motor los lee bien y así no se toca lo que ya suena natural. */
+  t = t.replace(/\b(\d{1,3}(?:\.\d{3})+|\d{4,})\b/g, (m) => enPalabras(Number(m.replace(/\./g, ''))));
+  return t.replace(/\s{2,}/g, ' ').replace(/\s+([.,])/g, '$1').trim();
+}
+
 export function conectarLaVoz(elPuenteDeLaPagina) {
   guardarElTaller(elPuenteDeLaPagina);
   const C = elTaller();
@@ -117,7 +172,12 @@ export function conectarLaVoz(elPuenteDeLaPagina) {
          * arranque de su frase siguiente («el micrófono no capta mi voz»). */
         if (vozAudio.hablando) {
           if (pareceSuPropiaVoz(final || parcial)) return;    // su eco, no el cliente
-          if (!final.trim()) return;                          // un parcial suyo no escribe en el campo
+          /* Un parcial SUYO, de una o dos palabras, todavía no es el cliente (y cortarla con eso la
+           * dejaría muda a cada rato). Con DOS palabras ya alcanza: se calla y lo que él dice empieza
+           * a escribirse AL MOMENTO. Antes solo la interrumpía un resultado FINAL, y el navegador
+           * tarda casi un segundo en cerrar la frase: el cliente hablaba y el campo seguía mudo
+           * (dueño, 25/09: «after a second... retake my sound»). */
+          if (!final.trim() && lasPalabrasDe(parcial).length < 2) return;
           callarlaParaEscuchar();                             // el cliente la interrumpe: se calla
         }
         /* La cola del eco, corta: apenas termina de hablar, el micrófono todavía oye su última sílaba. */
@@ -267,10 +327,13 @@ export function conectarLaVoz(elPuenteDeLaPagina) {
     if (!limpio) return false;
     const decirAhora = () => {
       speechSynthesis.cancel();
-      const dicho = new SpeechSynthesisUtterance(limpio);
+      const dicho = new SpeechSynthesisUtterance(paraDecirEnVozAlta(limpio));
       /* COMO ESTABA (el dueño, 24/09: «esta tarde estaba… ni ruidoso»): idioma es-CO fijo, la voz a
        * cargo del sistema. El cambio de idioma a `voz.lang` se probó y se revirtió. */
       dicho.lang = 'es-CO';
+      /* Un pelo más lento que el default (el 1.0 suena a lector de formulario). Se ajusta DE OÍDO —
+       * el dueño escucha, no lo mide una spec (dueño, 25/09: «a voice less robotic... more human»). */
+      dicho.rate = 0.95;
       const elegida = laVozDelAsistente();
       /* Una voz que el motor no acepte (lista vieja) no puede tumbar su frase: se queda la de por
        * defecto del sistema. */

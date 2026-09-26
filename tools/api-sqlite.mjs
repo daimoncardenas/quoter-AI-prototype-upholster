@@ -27,8 +27,8 @@
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { dirname, resolve, extname } from 'node:path';
-
-const MIME_POR_EXT = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif' };
+import { clavesASnake, clavesACamel } from './claves.mjs';
+import { hayR2, almacenR2, claveDeFoto, claveDeArchivo, MIME_POR_EXT } from './fotos-r2.mjs';
 
 /* Claves que YA tienen su lugar en el modelo (columnas, piezas o fotos). Todo lo demás viaja en `data`
  * y vuelve tal cual al leer: el modelo crece sin perder nada por el camino. */
@@ -56,6 +56,10 @@ export function motorSqlite({ ruta = resolve(process.env.QUOTER_DB || 'data/quot
     return db;
   };
   const st = {};
+  /* El almacén de fotos: R2 cuando está configurado (el camino de producción); el disco de casa como
+   * respaldo sin R2. */
+  const r2 = hayR2() ? almacenR2() : null;
+  let migracion = null;                       // la migración del modelo viejo, si la hay
 
   function abrir() {
     if (db) return db;
@@ -152,24 +156,28 @@ export function motorSqlite({ ruta = resolve(process.env.QUOTER_DB || 'data/quot
 
     listo();                                   // la migración de abajo guarda con estas consultas
 
-    if (hayViejas) {
-      const viejas = db.prepare('SELECT id, namespace, payload FROM quotes_viejas').all();
-      let migradas = 0;
-      for (const v of viejas) {
-        try { guardarCotizacion(JSON.parse(v.payload), v.namespace); migradas++; }
-        catch (err) { console.warn('[base] no pude migrar', v.id, err.message); }
-      }
-      db.exec('DROP TABLE quotes_viejas');
-      console.log(`[base] migradas ${migradas} cotizaciones al modelo nuevo`);
-    }
+    if (hayViejas) migracion = migrar();       // async (las fotos pueden ir a R2): los métodos la esperan
     return db;
+  }
+
+  /* La migración de lo que estaba como JSON: una vez. Las fotos de esas cotizaciones viejas van al
+   * almacén que haya (R2 o disco), como cualquier otra. */
+  async function migrar() {
+    const viejas = db.prepare('SELECT id, namespace, payload FROM quotes_viejas').all();
+    let migradas = 0;
+    for (const v of viejas) {
+      try { await guardarCotizacion(JSON.parse(v.payload), v.namespace); migradas++; }
+      catch (err) { console.warn('[base] no pude migrar', v.id, err.message); }
+    }
+    db.exec('DROP TABLE quotes_viejas');
+    console.log(`[base] migradas ${migradas} cotizaciones al modelo nuevo`);
   }
 
   /* ── el mapeador: el JSON que conocen las páginas ↔ las tablas ──────────────── */
   const num = v => (v === null || v === undefined || v === '' || isNaN(Number(v))) ? null : Number(v);
   const txt = v => (v === null || v === undefined) ? null : String(v);
 
-  function guardarCotizacion(q, ns) {
+  async function guardarCotizacion(q, ns) {
     const ahora = new Date().toISOString();
     const servicio = q.service || {};
     const cliente = q.customer || {};
@@ -214,7 +222,8 @@ export function motorSqlite({ ruta = resolve(process.env.QUOTER_DB || 'data/quot
         num(total[0]), num(total[1]), num(consumo[0]), num(consumo[1]),
         num(facturable[0]) !== null ? num(facturable[0]) : num(facturable[1]),
         txt(q.notes || q.comment),
-        JSON.stringify(elResto(q)),
+        /* Las claves del cajón van en snake_case en la base (dueño, 25/09); al leer vuelven camel. */
+        JSON.stringify(clavesASnake(elResto(q))),
         txt(q.createdAt) || ahora, ahora
       );
 
@@ -233,35 +242,54 @@ export function motorSqlite({ ruta = resolve(process.env.QUOTER_DB || 'data/quot
         num(v[0]), num(v[1]), JSON.stringify(x.data || {}));
     });
 
-    /* Las fotos: si vienen con dataURL, el archivo se guarda en disco y en la base va su ruta.
-     * SOLO se tocan cuando el cuerpo las trae: un cambio de estado que no las mande no puede borrarlas. */
-    const traeFotos = Array.isArray(q.photos);
+    /* Las fotos: o YA subieron (el navegador las puso en R2 con su firma y aquí llegan clave y URL), o
+     * vienen en dataURL y se suben aquí —a R2 si está configurado, al disco si no—. SOLO se tocan
+     * cuando el cuerpo las trae Y TRAE ALGO: una lista VACÍA es «sin noticia de fotos» (una copia vieja
+     * leída antes de que llegaran, la página manda su lista entera), no «bórralas todas». */
+    const traeFotos = Array.isArray(q.photos) && q.photos.length > 0;
     if (traeFotos) st.borrarFotos.run(String(q.id), ns);
     const foto = db.prepare(`INSERT INTO quote_photos (quote_id, namespace, piece_idx, slot, path, width, height, bytes, data)
       VALUES (?,?,?,?,?,?,?,?,?)`);
     const porPieza = {};
-    (traeFotos ? q.photos : []).forEach((f, i) => {
-      if (!f) return;
+    const claves = [];
+    const lista = traeFotos ? q.photos : [];
+    for (let i = 0; i < lista.length; i++) {
+      const f = lista[i];
+      if (!f) continue;
       const cual = Number.isInteger(f.pieza) ? f.pieza + 1 : null;      // la pieza es 0-based en la página
       porPieza[cual] = (porPieza[cual] || 0) + 1;
-      let ruta = txt(f.path);
+      let ruta = txt(f.key || f.path);
+      let url = txt(f.url);
       if (!ruta && typeof f.dataUrl === 'string' && f.dataUrl.startsWith('data:')) {
         const ext = (f.dataUrl.match(/^data:image\/(\w+)/) || [, 'png'])[1];
-        ruta = `data/photos/${ns}/${q.id}/${String(i + 1).padStart(2, '0')}.${ext}`;
-        try {
-          mkdirSync(dirname(resolve(ruta)), { recursive: true });
-          writeFileSync(resolve(ruta), Buffer.from(f.dataUrl.split(',')[1] || '', 'base64'));
-        } catch (err) { ruta = null; }
+        const buffer = Buffer.from(f.dataUrl.split(',')[1] || '', 'base64');
+        if (r2) {
+          const subida = await r2.subir(claveDeFoto(ns, q.id, i + 1, ext), buffer, MIME_POR_EXT[ext] || 'application/octet-stream');
+          ruta = subida.clave; url = subida.url;
+        } else {
+          ruta = `data/photos/${ns}/${q.id}/${String(i + 1).padStart(2, '0')}.${ext}`;
+          try {
+            mkdirSync(dirname(resolve(ruta)), { recursive: true });
+            writeFileSync(resolve(ruta), buffer);
+          } catch (err) { ruta = null; }
+        }
       }
+      if (r2 && ruta && String(ruta).startsWith('photos/')) claves.push(String(ruta));
       foto.run(String(q.id), ns, cual, porPieza[cual], ruta, num(f.width), num(f.height), num(f.bytes),
-        JSON.stringify({ mime: f.mime || null, name: f.name || null }));
-    });
+        JSON.stringify({ mime: f.mime || null, name: f.name || null, url }));
+    }
+    /* Con R2, lo que sobra de esta cotización se suelta: una foto quitada desaparece del bucket. */
+    if (r2 && traeFotos) {
+      const suyas = await r2.llaves(`photos/${ns}/${q.id}/`);
+      const sobra = suyas.filter(k => !claves.includes(k));
+      if (sobra.length) await r2.borrarLlaves(sobra);
+    }
   }
 
   /* Arma el JSON que las páginas conocen, desde las tablas. */
   function armarCotizacion(fila) {
     let extra = {};
-    try { extra = JSON.parse(fila.data || '{}'); } catch (err) { extra = {}; }
+    try { extra = clavesACamel(JSON.parse(fila.data || '{}')); } catch (err) { extra = {}; }
     const piezas = st.leerPiezas.all(fila.id, fila.namespace).map(x => {
       let suyo = {};
       try { suyo = JSON.parse(x.data || '{}'); } catch (err) { suyo = {}; }
@@ -310,25 +338,27 @@ export function motorSqlite({ ruta = resolve(process.env.QUOTER_DB || 'data/quot
   return {
     nombre: 'sqlite',
     async listar(ns) {
-      abrir();
+      abrir(); if (migracion) await migracion;
       const quotes = st.leerCotizaciones.all(ns).map(armarCotizacion);
       const marca = st.leerMarca.get(ns);
       return { quotes, total: quotes.length, resetAt: (marca && marca.reset_at) || '' };
     },
     async guardar(ns, filas) {
-      abrir();
+      abrir(); if (migracion) await migracion;
       let guardadas = 0;
-      for (const q of filas) { if (!q || !q.id) continue; guardarCotizacion(q, ns); guardadas++; }
+      for (const q of filas) { if (!q || !q.id) continue; await guardarCotizacion(q, ns); guardadas++; }
       return guardadas;
     },
     async borrar(ns, id) {
-      abrir();
+      abrir(); if (migracion) await migracion;
       const r = st.borrarUna.run(id, ns);
+      if (r.changes && r2) await r2.borrarLlaves(await r2.llaves(`photos/${ns}/${id}/`));
       return r.changes || 0;
     },
     async reiniciar(ns) {
-      abrir();
+      abrir(); if (migracion) await migracion;
       st.borrarTodo.run(ns);
+      if (r2) await r2.borrarLlaves(await r2.llaves(`photos/${ns}/`));
       const ahora = new Date().toISOString();
       st.ponerMarca.run(ns, ahora);
       return ahora;
@@ -336,10 +366,14 @@ export function motorSqlite({ ruta = resolve(process.env.QUOTER_DB || 'data/quot
     async leerFoto(ns, id, archivo) {
       /* El archivo viene de la URL: se acepta un nombre suelto, nunca una ruta que suba o baje. */
       if (!archivo || archivo.includes('/') || archivo.includes('\\') || archivo.includes('..')) return null;
+      if (r2) {
+        const porR2 = await r2.leer(claveDeArchivo(ns, id, archivo));
+        if (porR2) return porR2;
+      }
       const rutaFoto = resolve('data', 'photos', ns, id, archivo);
       if (!existsSync(rutaFoto)) return null;
       try {
-        return { buffer: readFileSync(rutaFoto), mime: MIME_POR_EXT[extname(archivo).toLowerCase()] || 'application/octet-stream' };
+        return { buffer: readFileSync(rutaFoto), mime: MIME_POR_EXT[extname(archivo).toLowerCase().replace('.', '')] || 'application/octet-stream' };
       } catch (err) { return null; }
     }
   };

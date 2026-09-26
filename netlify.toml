@@ -10,7 +10,9 @@
 # Variables de entorno del sitio (Site configuration → Environment variables), NUNCA en el repo:
 #   CLIENT            qué pack se genera (p. ej. CARDYRAM)
 #   MONGODB_URI       la cadena de Atlas — sin ella la función de la base contesta 503
-#   MONGODB_DB        el nombre de la base (por defecto «aci»)
+#   MONGODB_DB        el nombre de la base (por defecto «aci-local»; producción usará «aci-production»)
+#   R2_ENDPOINT / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_BUCKET / R2_PUBLIC_BASE
+#                     las fotos en Cloudflare R2 (subida firmada desde el navegador); sin ellas van al GridFS
 #   DEEPSEEK_API_KEY  la llave de la IA (opcional: sin ella la página usa lo suyo)
 #   NPM_FLAGS         «--omit=dev» para no instalar Playwright en el build (es de las pruebas)
 #

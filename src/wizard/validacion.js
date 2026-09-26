@@ -109,6 +109,33 @@ export function conectarLaValidacion(elPuenteDeLaPagina) {
         C.decirError(err,'Escribe el número de la solicitud o la referencia del pedido que vas a completar.','pedidoBusca');
         if(busca)busca.scrollIntoView({behavior:'smooth',block:'center'});return false}
     }
+    /* El paso de los INSUMOS no avanza con una fila en blanco: un número, o un 0 EXPLÍCITO (dueño,
+     * 25/09: «block this continue is dont have number.. at least 0»). El cero dice «ese no se
+     * cambia», que es una respuesta; el blanco no dice nada. La salida rápida es la mano del taller
+     * —«Que Lía las estime»—, que está en el propio paso y ahora el aviso nombra. */
+    if(E.step===17){
+      const caja=document.getElementById('insumoRows');
+      const vacias=[...(caja?caja.querySelectorAll('[data-insumo]'):[])].filter(el=>String(el.value).trim()==='');
+      if(vacias.length){
+        const err=document.getElementById('insumoError');
+        C.decirError(err,`Escribe la cantidad de cada uno —0 en lo que esté bien— o pídele a ${C.asistenteCfg().enabled?C.asistenteCfg().name:'el asistente'} que las estime.`, vacias[0]);
+        if(caja)caja.scrollIntoView({behavior:'smooth',block:'center'});
+        return false;
+      }
+    }
+    /* La RECOMENDACIÓN tampoco avanza sin decir cómo se usará el mueble: al menos UNA respuesta marcada
+     * (dueño, 25/09: «and the same is necesary select something»). El estilo y la gama de color vienen
+     * con su valor puesto; los chips son los que el cliente declara y con los que se prioriza. */
+    if(E.step===12){
+      const marcados=document.querySelectorAll('#needsGrid input:checked').length;
+      if(!marcados){
+        const err=document.getElementById('preferenceError');
+        C.decirError(err,'Marca al menos una: con eso priorizamos durabilidad, limpieza, textura y estilo.','needsGrid');
+        const grid=document.getElementById('needsGrid');
+        if(grid)grid.scrollIntoView({behavior:'smooth',block:'center'});
+        return false;
+      }
+    }
     const idPaso=C.ACI.stepId(E.step);
     if(idPaso==='MEASUREMENTS'){
       /* Nada de burbujas del navegador (salen en el idioma del sistema y sin su voz): cada tropiezo
