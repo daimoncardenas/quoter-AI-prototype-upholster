@@ -37,7 +37,11 @@
 (function (root) {
   'use strict';
 
-  const NOMBRE_MEDIDA = { width: 'ancho', height: 'alto', depth: 'fondo' };
+  /* Los tres nombres son los de la ficha de la pieza («Ancho», «Alto», «Largo»): el cliente lee
+   * «Largo» en la tercera columna del formulario y estos motivos le decían «fondo» — dos nombres para
+   * la misma medida (dueño, 26/09: «she is confuse between "ancho" and "largo"»). «fondo» sigue
+   * entendiéndose al LEER lo que él dice; nunca se usa para nombrársela. */
+  const NOMBRE_MEDIDA = { width: 'ancho', height: 'alto', depth: 'largo' };
   /* Los mismos atributos del formulario (index.html, paso de medidas): son la primera puerta, la de
    * `checkValidity()`. La segunda es la banda del ±20 % sobre los rangos del catálogo. */
   const MEDIDAS_POSIBLES = { width: [20, 1000], height: [20, 500], depth: [10, 500] };
@@ -166,6 +170,15 @@
       falta: (m) => !(m.fabric && m.fabric.touched),
       mensaje: () => 'Elige la tela para tu mueble: te digo cuáles sirven y a cuánto el metro.',
       foco: 'fabricGrid' },
+
+    /* El RELLENO — el contrato ES el wizard, mismo paso y mismos campos (dueño, 26/09): la pregunta
+     * «¿solo la tela o el relleno también?» del paso 17 tiene aquí su campo, junto al de los insumos,
+     * o el paso y el contrato se desalinean (conversación que se salta la pregunta, medido el 26/09). */
+    { id: 'relleno', paso: 17, bloque: 'por linea', etiqueta: 'Relleno',
+      aplica: (m) => asks(m).indexOf('insumos') >= 0 || pasoEnElFlujo(17, m),
+      falta: (m) => !String(m.relleno || '').trim(),
+      mensaje: () => 'Dime si va solo la tela o también el relleno, y con eso dejo el promedio de lo que se repone.',
+      foco: 'rellenoGrid' },
 
     /* El paso 17 (los insumos del trabajo): la línea los pide (`asks:["insumos"]`) y la
      * conversación no los cobraba (dueño, 24/09: «no has hecho todavía lo de los insumos»). */

@@ -353,7 +353,8 @@ for (const slug of SLUGS) {
   await loop.click('#saveSettings');
   await openWizard(loop, D);
   check('los rangos de presupuesto del backoffice son los del cotizador',
-    await loop.$$eval('#budget option', els => els.map(e => e.value)), ['30000', '40000', '50000', '']);
+    // El hueco («Elige un rango…», `data-placeholder`) no es un rango: se filtra para comparar los tramos.
+    await loop.$$eval('#budget option', els => els.filter(e => !e.dataset.placeholder).map(e => e.value)), ['30000', '40000', '50000', '']);
 
   await toFabricStep();
   await loop.click('.fabric-card:has-text("Tela Prueba Loop")');

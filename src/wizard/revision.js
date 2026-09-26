@@ -59,7 +59,7 @@ export function conectarLaRevision(elPuenteDeLaPagina) {
     }
     if (C.pideMueble() && !varias) rows.push(['Mueble', !E.furniture ? 'Sin elegir' : (!rule ? E.furniture : (rule.scaleByQty && C.seatsSelect.value === '1' ? E.furniture : `${E.furniture} · ${qty}`))]);
     if (C.pideMedidas() && !varias) {
-      rows.push(['Medidas', w && h && d ? `${w} × ${h} × ${d} cm (ancho × alto × fondo)` : 'Sin registrar']);
+      rows.push(['Medidas', w && h && d ? `${w} × ${h} × ${d} cm (ancho × alto × largo)` : 'Sin registrar']);
       rows.push(['Qué se tapiza', coverage]);
     }
     if (C.pidePreferencias()) {
@@ -70,7 +70,10 @@ export function conectarLaRevision(elPuenteDeLaPagina) {
      * fuera: las rutas de la cantidad declarada llegan con la tela y los metros. */
     if (C.pideFotos()) rows.push(['Fotografías', `${E.photos.length} adjunta${E.photos.length === 1 ? '' : 's'}`]);
     (() => { const b = C.presupuestoDeclarado();
-      rows.push(['Presupuesto', b.declared ? `Hasta ${C.money(b.amount)} ${b.unitLabel}` : 'Sin tope declarado']); })();
+      /* Tres estados, no dos: sin elegir (el hueco de fábrica, y la tarjeta de arriba lo está
+       * preguntando), el tramo abierto («Más de $X», su etiqueta tal cual) y el tramo con cifra. */
+      rows.push(['Presupuesto', !b.declared ? 'Sin elegir todavía'
+        : (b.amount ? `Hasta ${C.money(b.amount)} ${b.unitLabel}` : b.label)]); })();
     (() => { const a = C.atencionDeclarada();
       if (a.customerCity) rows.push(['Ciudad del cliente', a.customerCity]);
       if (a.serviceCity) rows.push(['Ciudad del servicio', a.serviceCity]);

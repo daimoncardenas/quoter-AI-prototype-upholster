@@ -224,11 +224,10 @@ export function conectarElBus(elPuenteDeLaPagina) {
           return;
         }
         if (!aLaVista(el)) return;
-        /* LOS INSUMOS DEL TALLER NO SON DEL CLIENTE (dueño, 24/09: «dont show "insumos" to client»): su
-         * paso no le pregunta nada —los estima la mano—, así que sus casillas no cuentan como
-         * pendientes. Sin esto el paso nunca cerraba y ella repetía su título, «¿Qué se le cambia por
-         * dentro?», turno tras turno (medido en la sesión del 25/09, la cuarta). */
-        if (el.closest && el.closest('#insumoStep')) return;
+        /* LOS INSUMOS SÍ SON DEL CLIENTE (dueño, 26/09: «the insumos always exist... but refill not»):
+         * la regla vieja —«dont show "insumos" to client»— se borró; lo que se pregunta es el RELLENO
+         * («¿solo la tela o el relleno también?», asks.relleno) y con eso se llenan los promedios de lo
+         * que se repone. Sus filas cuentan como cualquier campo del paso. */
         const d = el.dataset || {};
         /* Las medidas por PIEZA: cada fila tiene las suyas y dos comparten instrumento («width» en la
          * pieza 1 y en la 2). El id las distingue: `pieza.<n>.<medida>` — con eso el que escribe sabe
@@ -246,13 +245,32 @@ export function conectarElBus(elPuenteDeLaPagina) {
              * 25/09). Con el grupo y el valor, cada uno es único. */
             : (el.id || d.field || d.row || d.name || el.getAttribute('name')
                || (el.closest && el.closest('[id]') ? el.closest('[id]').id + ':' + String(el.value || '') : 'campo')));
-        campos.push({ id: instrumento, pregunta: etiquetaDe(el),
+        /* UN GRUPO DE RADIOS ES UNA SOLA PREGUNTA (medido con la pregunta del relleno, 26/09): las
+         * opciones comparten `name`, así que se cuentan UNA vez —con el grupo lleno en cuanto una esté
+         * marcada— y no como dos campos, uno de ellos siempre «sin llenar» (lo que hacía que se
+         * volviera a preguntar lo ya contestado, en el traslado y en cualquier chips). */
+        const hermanas = (el.type === 'radio' && el.name)
+          ? [...paso.querySelectorAll(`input[type="radio"][name="${el.name.replace(/"/g, '\\"')}"]`)] : null;
+        if (hermanas && campos.some(c => c.id === instrumento)) return;
+        const marcada = hermanas ? hermanas.find(r => r.checked) : null;
+        /* La PREGUNTA de un grupo de radios es la del grupo («¿Solo la tela, o el relleno también?»),
+         * no la etiqueta de la primera opción (medido, 26/09: salía «Solo la tela» como pregunta). */
+        const rotuloDelGrupo = hermanas ? ((el.closest('.chip-grid, .choice-group, [role="radiogroup"]') || {}).getAttribute?.('aria-label') || null) : null;
+        campos.push({ id: instrumento, pregunta: rotuloDelGrupo || etiquetaDe(el),
           tipo: el.tagName === 'SELECT' ? 'lista' : (el.type || 'texto'), requerido: !!el.required,
           /* Los LÍMITES de cada control, leídos de la página: son las restricciones que el cliente
            * tiene delante (y las que el cotizador le va a hacer cumplir al pasar de paso). */
           min: el.min !== '' && el.min != null ? Number(el.min) : null,
           max: el.max !== '' && el.max != null ? Number(el.max) : null,
-          lleno: llenoDe(el), valor: valorDe(el) || null,
+          lleno: hermanas ? !!marcada : llenoDe(el),
+          valor: hermanas ? (marcada ? (etiquetaDe(marcada) || marcada.value) : null) : (valorDe(el) || null),
+          /* LAS OPCIONES DEL DESPLEGABLE (dueño, 26/09: «para dropdowns... será necesario mostrar en el
+           * chat las opciones y adicional decir cada una de las opciones... eso es clave»): viajan con
+           * el campo para que la frase que se publica —y la que se habla— las diga tal como están. El
+           * hueco de fábrica («Elige…», `data-placeholder`) no es una opción y no se ofrece. */
+          opciones: el.tagName === 'SELECT'
+            ? [...el.options].filter(o => !(o.dataset && o.dataset.placeholder)).map(o => (o.textContent || '').trim()).filter(Boolean)
+            : undefined,
           /* …Y SI ESTÁ LLENO PERO EL COTIZADOR NO LO ACEPTA, se dice AQUÍ: un ancho de 100 en un sofá
            * queda escrito y el «Continuar» no pasa — ese campo es el pendiente de verdad del paso, y
            * sin esto ella no lo veía y se iba a preguntar cosas de otros pasos (dueño, 25/09: «lia is

@@ -140,7 +140,11 @@ export function conectarLaValidacion(elPuenteDeLaPagina) {
     if(idPaso==='MEASUREMENTS'){
       /* Nada de burbujas del navegador (salen en el idioma del sistema y sin su voz): cada tropiezo
        * tiene su frase y la dice ella. */
-      const NOMBRE_MEDIDA={width:'ancho',height:'alto',depth:'fondo'};
+      /* Los tres nombres son los de la ficha de la pieza («Ancho», «Alto», «Largo»): el cliente lee
+       * «Largo» en su tercera columna y estas frases le decían «fondo» — dos nombres para la misma
+       * medida (dueño, 26/09: «she is confuse between "ancho" and "largo"»). «fondo» queda de sinónimo
+       * en el parser, nunca de nombre. */
+      const NOMBRE_MEDIDA={width:'ancho',height:'alto',depth:'largo'};
       const fields=['width','height','depth'].map(id=>document.getElementById(id));
       const vacia=fields.find(x=>!x.value);
       if(vacia){const err=document.getElementById('measureError');
@@ -153,7 +157,7 @@ export function conectarLaValidacion(elPuenteDeLaPagina) {
       if(sinMedidas){
         const err=document.getElementById('measureError'), i=(E.piezas||[]).indexOf(sinMedidas);
         if(i>=0&&i!==E.piezaEnFoco){ C.enfocarPieza(i); }
-        C.decirError(err,`Faltan las medidas de ${C.etiquetaDeLaPieza(sinMedidas)}: ancho, alto y fondo.`,null);
+        C.decirError(err,`Faltan las medidas de ${C.etiquetaDeLaPieza(sinMedidas)}: ancho, alto y largo.`,null);
         document.getElementById('width').focus({preventScroll:true});
         err.scrollIntoView({behavior:'smooth',block:'center'});return false}
       const imposible=fields.find(x=>!x.checkValidity());

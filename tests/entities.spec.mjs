@@ -22,10 +22,12 @@ check('estilos, colores y presupuestos también',
     document.querySelectorAll('#color option').length,
     // Cuatro cortes son CINCO tramos. Antes salían cuatro opciones y el corte
     // más alto no se nombraba en ninguna: los $160.000 no existían para el cliente.
-    document.querySelectorAll('#budget option').length]), [5,6,5]);
+    // Seis desde el 26/09: delante de los tramos va el HUECO sin valor («Elige un rango…»), porque el
+    // tramo del medio venía marcado de fábrica y el presupuesto no se preguntaba nunca.
+    document.querySelectorAll('#budget option').length]), [5,6,6]);
 check('los cortes de presupuesto se etiquetan solos, sin comerse el último',
   (await page.$$eval('#budget option', e=>e.map(o=>o.textContent))).map(t=>t.replace(/\s+/g,' ')),
-  ['Hasta $ 100.000','Entre $ 100.000 y $ 120.000','Entre $ 120.000 y $ 140.000',
+  ['Elige un rango…','Hasta $ 100.000','Entre $ 100.000 y $ 120.000','Entre $ 120.000 y $ 140.000',
    'Entre $ 140.000 y $ 160.000','Más de $ 160.000']);
 
 console.log('\nCREAR UN MUEBLE EN EL BACKOFFICE -> APARECE EN EL COTIZADOR');

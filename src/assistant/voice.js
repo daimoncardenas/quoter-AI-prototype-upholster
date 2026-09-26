@@ -114,18 +114,22 @@ export function conectarLaVoz(elPuenteDeLaPagina) {
     paso();
   }
 
-  /* La nota dice de dónde es el reconocimiento ANTES de que el cliente hable: el navegador puede
-   * mandar el audio a su servicio, y eso no se calla. Si el reconocimiento admite `processLocally`,
-   * se pide local y se dice. */
+  /* EL TEXTO HONESTO DEL RECONOCIMIENTO NO OCUPA UNA LÍNEA DEL PANEL (dueño, 26/09: «this message...
+   * waste space important for reading.... please hide it»): viaja en el TÍTULO del botón del micrófono
+   * —y en su aria-label, para el lector de pantalla—, que es donde se consulta: al pasar el ratón o al
+   * llegar con el teclado. La línea del panel queda para los AVISOS (permiso denegado, servicio caído),
+   * que sí tienen que verse cuando pasan. */
   function laNotaDeLaVoz(){
-    const el = document.getElementById('vozNotaAudio'); if (!el) return;
     const Soporte = window.SpeechRecognition || window.webkitSpeechRecognition;
     let texto = 'El movimiento sigue el nivel real de tu micrófono, y lo mide este equipo.';
     if (!Soporte) texto += ' Este navegador no sabe reconocer voz: escríbeme con el teclado.';
     /* Honestidad sobre el motor: el reconocimiento NO local (se dejó de pedir el 25/09: captaba
      * peor) lo hace el servicio del navegador y su audio puede salir hacia allá — se dice. */
     else texto += ' El reconocimiento de voz lo hace el navegador: puede enviar el audio a su servicio (el texto es lo único que entra a tu cotización).';
-    el.textContent = texto; el.hidden = false;
+    const boton = document.getElementById('vozMic');
+    if (boton) { boton.title = texto; boton.setAttribute('aria-label', texto); }
+    const el = document.getElementById('vozNotaAudio');
+    if (el) { el.textContent = ''; el.hidden = true; }
   }
 
   async function encenderElMicrofono(){
@@ -182,6 +186,11 @@ export function conectarLaVoz(elPuenteDeLaPagina) {
         }
         /* La cola del eco, corta: apenas termina de hablar, el micrófono todavía oye su última sílaba. */
         else if (Date.now() - (vozAudio.vozHasta || 0) < 400) return;
+        /* Y la cola LARGA se JUZGA en vez de tirarse: el reconocedor cierra la frase casi un segundo
+         * después de oírla, así que un eco puede llegar ya con ella callada y abrir un turno —el
+         * nombre del saludo le llegó así al dueño, 26/09—. Solo se descarta lo que SUENA a lo que ella
+         * acaba de decir; lo demás pasa en el acto, sin retrasarle una palabra al cliente. */
+        else if (Date.now() - (vozAudio.vozHasta || 0) < 2500 && pareceSuPropiaVoz(final || parcial)) return;
         const input = document.getElementById('vozInput');
         if (parcial) input.value = parcial;
         if (final.trim()) {
@@ -285,13 +294,43 @@ export function conectarLaVoz(elPuenteDeLaPagina) {
     return String(texto || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9ñ\s]/g, ' ').split(/\s+/).filter(p => p.length > 2);
   }
+  /* Dos palabras a UNA letra de distancia (una letra de más, de menos o cambiada). */
+  function aUnaLetraDe(a, b){
+    if (a === b) return true;
+    if (Math.abs(a.length - b.length) > 1) return false;
+    let i = 0, j = 0, fallos = 0;
+    while (i < a.length && j < b.length) {
+      if (a[i] === b[j]) { i++; j++; continue; }
+      if (++fallos > 1) return false;
+      if (a.length > b.length) i++; else if (b.length > a.length) j++; else { i++; j++; }
+    }
+    return fallos + (a.length - i) + (b.length - j) <= 1;
+  }
+  /* El HUESO de una palabra: sus consonantes en orden («diamond» → dmnd, «daimon» → dmn). Es la parte
+   * que el reconocedor suele acertar aunque cambie las vocales — y el micrófono escribe «Diamond»
+   * cuando ella dice «Daimon» (dueño, 26/09: «when she says "daimon"... my microphone write
+   * "Diamond"... and resend her»). Solo palabras de 5+ letras con hueso largo (3+): «200», «alto» o
+   * «sí» no pueden volver a ser suyos. */
+  function suenanIgual(a, b){
+    if (a === b) return true;
+    if (a.length < 5 || b.length < 5) return false;
+    const ha = a.replace(/[aeiou]/g, ''), hb = b.replace(/[aeiou]/g, '');
+    if (ha.length < 3 || hb.length < 3) return false;
+    return aUnaLetraDe(ha, hb);
+  }
   /* ¿Lo dictado es lo que ELLA acaba de decir por los parlantes? (dos de cada tres palabras suyas: su
    * eco no es el cliente — y lo que no suena como ella SÍ lo es, aunque esté hablando). */
   function pareceSuPropiaVoz(dicho){
     const suyas = lasPalabrasDe(vozAudio.dichas);
     const oidas = lasPalabrasDe(dicho);
-    if (!suyas.length || oidas.length < 2) return false;
-    return oidas.filter(p => suyas.indexOf(p) >= 0).length / oidas.length >= 0.6;
+    if (!suyas.length || !oidas.length) return false;
+    /* La regla de siempre: dos de cada tres palabras suyas. Cuenta como suya la palabra escrita igual
+     * y también la que SUENA igual («diamond» por «daimon»). */
+    const esSuya = p => suyas.indexOf(p) >= 0 || suyas.some(s => suenanIgual(p, s));
+    if (oidas.length >= 2 && oidas.filter(esSuya).length / oidas.length >= 0.6) return true;
+    /* Y la que faltaba: UNA palabra suelta que suena a lo que ella dijo. El nombre del saludo volvía
+     * del micrófono como «Diamond» y ese turno abría solo, contestándose a sí misma (dueño, 26/09). */
+    return oidas.length === 1 && esSuya(oidas[0]);
   }
   /* ¿El cliente está hablando AHORA? Lo dice el nivel REAL del micrófono, muestreado de una: el bucle de
    * la onda se detiene con la pestaña en segundo plano, y esta pregunta no puede depender de eso. Se mide
@@ -326,7 +365,12 @@ export function conectarLaVoz(elPuenteDeLaPagina) {
     const limpio = String(texto || '').replace(/[«»]/g, '').slice(0, 300);
     if (!limpio) return false;
     const decirAhora = () => {
-      speechSynthesis.cancel();
+      /* Si ya hay voz en el aire —o esperando su turno— esta frase entra en la FILA y se dice al
+       * terminar la anterior, en vez de tumbarla: con el cancel de siempre, el recibo («Anotado: …»)
+       * y su frase se cortaban la una a la otra (dueño, 26/09: todas las líneas del chat se dicen).
+       * Con la boca libre se limpia la cola y se dice, como estaba. */
+      const enElAire = () => { try { return !!(vozAudio.hablando || speechSynthesis.speaking || speechSynthesis.pending); } catch (err) { return false; } };
+      if (!enElAire()) speechSynthesis.cancel();
       const dicho = new SpeechSynthesisUtterance(paraDecirEnVozAlta(limpio));
       /* COMO ESTABA (el dueño, 24/09: «esta tarde estaba… ni ruidoso»): idioma es-CO fijo, la voz a
        * cargo del sistema. El cambio de idioma a `voz.lang` se probó y se revirtió. */

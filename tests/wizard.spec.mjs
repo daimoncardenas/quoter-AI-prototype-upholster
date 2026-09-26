@@ -428,7 +428,7 @@ const avisoMedida = await avisoDeElla();
 check('con una medida muy fuera de lo habitual no se avanza, y el paso dice por qué',
   [bloqueado.paso===enMedidas, avisoMedida.visible, avisoMedida.burbuja === bloqueado.texto.trim(), bloqueado.error], [true, true, true, false]);
 check('y el error trae el número y el rango habitual del mueble, del propio cotizador',
-  /El fondo de 200 cm está muy fuera de lo habitual para sofá \(lo habitual: 70 a 120 cm\)/.test(bloqueado.texto), true);
+  /El largo de 200 cm está muy fuera de lo habitual para sofá \(lo habitual: 70 a 120 cm\)/.test(bloqueado.texto), true);
 /* La medida es aproximada, no exacta: quedar apenas fuera de lo habitual no detiene a nadie. */
 await page.fill('#depth','130');   // apenas fuera (120), dentro del margen del 20 % (±10)
 await page.click('#nextButton');

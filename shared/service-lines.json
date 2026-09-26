@@ -338,7 +338,9 @@
       "_labor": "POR MUEBLE + POR METRO (docs/retapizado-trabajo.md): la obra no depende del precio de la tela. Valores DEMO: el taller los edita en el backoffice.",
       "labor": { "mode": "tabla", "perMeter": 9500,
         "porMueble": { "sofa": 180000, "sofa-l": 240000, "poltrona": 120000, "silla": 45000, "cabecero": 90000, "otro": 140000 } },
-      "asks": ["insumos"],
+      "asks": ["insumos", "traslado"],
+      "_relleno": "El relleno no siempre va (dueño, 26/09: «the insumos always exist... but refill not... debería haber una pregunta si solo la tela o el relleno también... y con eso se le rellenan un promedio de insumos según el caso y las medidas»): la pregunta es la del PROPIO paso de los insumos («¿Solo la tela, o el relleno también?») y con su respuesta se llenan los promedios de lo que se repone.",
+      "_traslado": "El mueble viaja al taller: «¿Vamos por él o lo traes?» (dueño, 26/09: «antes había uno... si lo recogemos... o usted lo trae... era un dropdown»). Se pregunta también en retapizado; el costo de «A domicilio» hoy solo suma en los oficios de precio por pieza (docs/onboarding-precios.md), aquí queda declarado.",
       "_insumos": "DEMO: precios de taller, se editan en el backoffice y se congelan en la solicitud.",
       "_estandares": "DEMO: cuánto gasta el taller por m² — la mano del paso de insumos (docs/insumos-asistidos.md). El backoffice todavía no los edita.",
       "insumos": [

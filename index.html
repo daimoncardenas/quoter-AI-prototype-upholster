@@ -502,6 +502,96 @@ html[data-assistant="off"] .voz-fab,html[data-assistant="off"] .voz-modal{displa
  * decrease the number... its uncomfortable»). */
 input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 input[type=number]{-moz-appearance:textfield;appearance:textfield}
+/* EL PASO DE REVISIÓN NO SCROLLEA (dueño, 26/09: «en ningún paso debe existir scroll... porque jodes el
+ * screenshot» — el paso entero se mira en UNA captura, y esa captura es lo que lee el modelo para armar
+ * el JSON). Medido a 1341×768: el contenido pedía 701 px donde hay 463 (238 de más). Todo lo suyo respira
+ * con vh, como el resto del cotizador: encabezado, presupuesto, la tarjeta del resumen y la nota. */
+@media(min-width:651px){
+  .wizard-step.active[data-brain="REVIEW"]{display:flex;flex-direction:column;gap:clamp(4px,.9vh,10px)}
+  .wizard-step.active[data-brain="REVIEW"]>.step-heading{margin:0}
+  .wizard-step.active[data-brain="REVIEW"] .step-heading h2{font-size:clamp(1.4rem,min(3.2vw,3.6vh),2.4rem);margin:4px 0 6px}
+  .wizard-step.active[data-brain="REVIEW"] .step-heading p{font-size:clamp(.7rem,1.15vh,.86rem);line-height:1.4}
+  .wizard-step.active[data-brain="REVIEW"] .budget-field{margin:0;padding:clamp(6px,1.2vh,14px) clamp(12px,1.6vw,18px)}
+  .wizard-step.active[data-brain="REVIEW"] .budget-field label{font-size:clamp(.72rem,1.2vh,.82rem)}
+  .wizard-step.active[data-brain="REVIEW"] .budget-row{margin-top:clamp(4px,.8vh,9px)}
+  .wizard-step.active[data-brain="REVIEW"] .budget-row select{min-height:clamp(32px,4.4vh,44px);font-size:clamp(.72rem,1.2vh,.82rem);padding-block:clamp(4px,.7vh,10px)}
+  .wizard-step.active[data-brain="REVIEW"] .budget-hint{margin-top:clamp(4px,.8vh,9px);font-size:clamp(.54rem,.95vh,.65rem);line-height:1.3}
+  .wizard-step.active[data-brain="REVIEW"] .ai-card{min-height:0;flex:1 1 auto;overflow:hidden}
+  .wizard-step.active[data-brain="REVIEW"] .ai-summary{padding:clamp(10px,1.9vh,30px) clamp(12px,1.6vw,26px);gap:2px}
+  .wizard-step.active[data-brain="REVIEW"] .ai-summary h4{font-size:clamp(.9rem,1.6vh,1.1rem);margin-bottom:clamp(2px,.5vh,8px)}
+  .wizard-step.active[data-brain="REVIEW"] .ai-summary dd{font-size:clamp(.62rem,1.05vh,.75rem);line-height:1.3}
+  /* El resumen en DOS columnas: son ocho filas (motivo, mueble, medidas, lo que se tapiza, uso, estilo,
+   * fotos y presupuesto) y en una sola columna pedía 259 px — la tarjeta no tenía de dónde sacarlos sin
+   * recortar. Cada fila sigue siendo su pareja (`dl>div`), así que no se parten. */
+  .wizard-step.active[data-brain="REVIEW"] .ai-summary dl{grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(3px,.7vh,8px) clamp(10px,1.2vw,22px)}
+  .wizard-step.active[data-brain="REVIEW"] .ai-summary dl>div{display:grid;gap:1px}
+  .wizard-step.active[data-brain="REVIEW"] .ai-summary dt{font-size:clamp(.52rem,.9vh,.6rem);letter-spacing:.09em}
+  .wizard-step.active[data-brain="REVIEW"] .ai-analysis{padding:clamp(10px,2vh,32px)}
+  .wizard-step.active[data-brain="REVIEW"] .ai-analysis h3{font-size:clamp(1rem,2.1vh,1.6rem);margin:clamp(6px,1.1vh,14px) 0 5px}
+  .wizard-step.active[data-brain="REVIEW"] .ai-analysis>p{font-size:clamp(.64rem,1.05vh,.76rem);line-height:1.4}
+  .wizard-step.active[data-brain="REVIEW"] .analysis-checks{margin:clamp(4px,.9vh,11px) 0 clamp(6px,1.1vh,16px);gap:clamp(4px,.9vh,9px)}
+  .wizard-step.active[data-brain="REVIEW"] .notice{margin-top:0;padding:clamp(6px,1vh,12px) clamp(10px,1.2vw,15px)}
+  .wizard-step.active[data-brain="REVIEW"] .notice p{font-size:clamp(.54rem,.95vh,.65rem);line-height:1.3}
+}
+/* LOS PASOS DENSOS TAMPOCO SCROLLEAN (dueño, 26/09: «en ningún paso debe existir scroll... porque jodes
+ * el screenshot»). Medido con la línea de retapizado del dueño a 1341×768: insumos pedía 83 px de más,
+ * estimación 92 y contacto 208. Se aprieta con vh, como el resto de la casa: encabezados, rejillas de
+ * insumos, bloques del estimado y los campos del contacto. */
+@media(min-width:651px){
+  .wizard-step.active[data-brain="INSUMOS"] .step-heading,
+  .wizard-step.active[data-brain="ESTIMATE"] .step-heading,
+  .wizard-step.active[data-brain="CONTACT"] .step-heading{margin-bottom:clamp(8px,1.3vh,24px)}
+  .wizard-step.active[data-brain="INSUMOS"] .step-heading h2,
+  .wizard-step.active[data-brain="ESTIMATE"] .step-heading h2,
+  .wizard-step.active[data-brain="CONTACT"] .step-heading h2{font-size:clamp(1.35rem,min(3.1vw,3.4vh),2.3rem);margin:4px 0 6px}
+  .wizard-step.active[data-brain="INSUMOS"] .step-heading p,
+  .wizard-step.active[data-brain="ESTIMATE"] .step-heading p,
+  .wizard-step.active[data-brain="CONTACT"] .step-heading p{font-size:clamp(.72rem,1.15vh,.86rem);line-height:1.4}
+  /* Insumos: la pregunta del relleno y la rejilla de lo que se repone. */
+  .wizard-step.active[data-brain="INSUMOS"] #rellenoGrid{grid-template-columns:repeat(2,1fr);gap:clamp(5px,1vh,10px);margin-bottom:clamp(4px,1vh,12px)}
+  .wizard-step.active[data-brain="INSUMOS"] #rellenoGrid span{min-height:clamp(28px,3.7vh,42px);padding:clamp(4px,.9vh,10px) clamp(7px,1.1vw,13px);font-size:clamp(.68rem,1.05vh,.78rem)}
+  .wizard-step.active[data-brain="INSUMOS"] .boq-rows{gap:clamp(3px,.7vh,8px);margin-bottom:clamp(6px,1.2vh,14px)}
+  .wizard-step.active[data-brain="INSUMOS"] .boq-row input{min-height:clamp(28px,3.7vh,40px);padding-block:clamp(3px,.6vh,10px);font-size:clamp(.72rem,1.1vh,.82rem)}
+  .wizard-step.active[data-brain="INSUMOS"] .boq-row label{font-size:clamp(.66rem,1.05vh,.76rem)}
+  .wizard-step.active[data-brain="INSUMOS"] .insumo-mano{gap:clamp(4px,.8vh,7px)}
+  /* Estimación: el precio, su desglose, el presupuesto declarado y lo que falta. */
+  .wizard-step.active[data-brain="ESTIMATE"] .estimate-layout{margin-top:clamp(6px,1.2vh,16px);gap:clamp(6px,1.2vh,14px)}
+  .wizard-step.active[data-brain="ESTIMATE"] .price-block{padding:clamp(12px,2vh,25px) clamp(14px,1.8vw,30px)}
+  .wizard-step.active[data-brain="ESTIMATE"] .estimate-breakdown{padding:clamp(10px,1.6vh,20px) clamp(12px,1.6vw,22px)}
+  .wizard-step.active[data-brain="ESTIMATE"] .estimate-budget{margin-top:clamp(4px,.7vh,10px);padding:clamp(5px,.9vh,10px) clamp(8px,1.3vw,13px);font-size:clamp(.58rem,1vh,.68rem)}
+  .wizard-step.active[data-brain="ESTIMATE"] .estimate-pending{margin-top:clamp(4px,.6vh,10px);padding:clamp(6px,1vh,14px) clamp(8px,1.4vw,18px)}
+  .wizard-step.active[data-brain="ESTIMATE"] .notice{padding:clamp(3px,.7vh,9px) clamp(8px,1vw,13px)}
+  .wizard-step.active[data-brain="ESTIMATE"] .notice p{font-size:clamp(.53rem,.9vh,.62rem);line-height:1.3}
+  /* Contacto: los campos, la sede y la tarjeta del resumen. */
+  .wizard-step.active[data-brain="CONTACT"] .final-layout{gap:clamp(14px,2.4vh,32px)}
+  .wizard-step.active[data-brain="CONTACT"] .contact-fields{gap:clamp(5px,.85vh,12px)}
+  .wizard-step.active[data-brain="CONTACT"] .contact-fields input,
+  .wizard-step.active[data-brain="CONTACT"] .contact-fields select,
+  .wizard-step.active[data-brain="CONTACT"] .atencion-field input,
+  .wizard-step.active[data-brain="CONTACT"] .atencion-field select{min-height:clamp(27px,3.7vh,38px);padding:clamp(6px,1.1vh,13px);font-size:clamp(.72rem,1.1vh,.82rem)}
+  .wizard-step.active[data-brain="CONTACT"] .atencion-field{gap:clamp(4px,.9vh,10px);padding-bottom:clamp(5px,.8vh,12px);grid-template-columns:1fr 1fr}
+  /* La sede y las dos ciudades, dos por fila: apiladas pedían 196 px y el paso se salía 58 a 720. */
+  .wizard-step.active[data-brain="CONTACT"] .atencion-field>*:last-child{grid-column:1/-1}
+  .wizard-step.active[data-brain="CONTACT"] .atencion-field label,
+  .wizard-step.active[data-brain="CONTACT"] .contact-fields>label{font-size:clamp(.64rem,1vh,.74rem)}
+  /* El hueco entre la etiqueta y su campo también respira: a 720 el paso pedía 12 px de más. */
+  .wizard-step.active[data-brain="CONTACT"] .contact-fields input{margin-top:clamp(4px,.7vh,7px)}
+  .wizard-step.active[data-brain="CONTACT"] .atencion-field select,.wizard-step.active[data-brain="CONTACT"] .atencion-otra input{padding:clamp(6px,1.1vh,13px);min-height:clamp(29px,3.9vh,40px)}
+  .wizard-step.active[data-brain="CONTACT"] .consent{gap:clamp(5px,.9vh,10px);font-size:clamp(.6rem,.92vh,.7rem);line-height:1.35}
+  .wizard-step.active[data-brain="CONTACT"] .summary-card{padding:clamp(10px,1.7vh,22px)}
+  .wizard-step.active[data-brain="CONTACT"] .summary-card dl{gap:clamp(3px,.6vh,7px);padding-top:clamp(4px,.7vh,8px)}
+  /* Las filas del resumen ya venían en flex (rótulo a la izquierda, valor a la derecha): lo que sobraba
+   * era su relleno vertical. Cinco filas por 9 px de arriba y abajo eran 90 px de la columna que manda. */
+  .wizard-step.active[data-brain="CONTACT"] .summary-card dl div{padding:clamp(3px,.6vh,7px) 0}
+  .wizard-step.active[data-brain="CONTACT"] .summary-card dl>div{display:flex;gap:6px;align-items:baseline}
+  /* El resumen, rótulo y valor en la misma línea: apilados pedía 168 px y era el que mandaba en el
+   * alto del paso (las columnas del grid se estiran a la más alta). */
+  .wizard-step.active[data-brain="CONTACT"] .summary-card dt{flex:0 0 auto}
+  .wizard-step.active[data-brain="CONTACT"] .summary-card dd{font-size:clamp(.62rem,1vh,.72rem);line-height:1.3}
+  .wizard-step.active[data-brain="CONTACT"] .summary-title{gap:clamp(5px,1vh,10px)}
+  .wizard-step.active[data-brain="CONTACT"] .summary-title b{font-size:clamp(.8rem,1.3vh,.9rem)}
+  .wizard-step.active[data-brain="CONTACT"] .summary-title small{font-size:clamp(.6rem,.95vh,.68rem)}
+}
 </style>
   {{MODE_STYLES}}
   <!-- store.js loads in <head> so Brand.apply() can paint any saved brand overrides (colors, fonts, header variant, title) before first paint; it is a no-op when nothing is overridden. -->
@@ -801,7 +891,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
         <div class="piezas-chips" id="medidasPiezas" hidden></div>
           <div class="measure-guide">
             <div class="measure-visual">
-              <div class="furniture-drawing"><div class="drawing-shape" id="drawingShape" aria-hidden="true"></div><span class="width-line">A — Ancho</span><span class="height-line">B — Alto</span><span class="depth-line">C — Fondo</span></div>
+              <div class="furniture-drawing"><div class="drawing-shape" id="drawingShape" aria-hidden="true"></div><span class="width-line">A — Ancho</span><span class="height-line">B — Alto</span><span class="depth-line">C — Largo</span></div>
               <p>Las medidas permiten estimar el consumo. Un asistente confirmará el cálculo final.</p>
             </div>
             <div class="measure-fields">
@@ -825,8 +915,16 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
         <section class="wizard-step" data-step="17" id="insumoStep" data-brain="INSUMOS">
           <div class="step-heading">
             <span class="eyebrow">Lo que se repone</span>
-            <h2>¿Qué se le cambia por dentro?</h2>
-            <p>Además de la tela, el taller repone rellenos y menudos. Escribe la cantidad de lo que se cambia y un 0 en lo que esté bien.</p>
+            <h2>¿Solo la tela, o el relleno también?</h2>
+            <p>Los insumos van siempre; el relleno no. Elige qué se le cambia por dentro y el taller repone un promedio del caso con las medidas del mueble.</p>
+          </div>
+          <!-- LA PREGUNTA DEL RELLENO (dueño, 26/09: «the insumos always exist... but refill not...
+               debería haber una pregunta si solo la tela o el relleno también... y con eso se le
+               rellenan un promedio de insumos según el caso y las medidas del sofá»). Es la pregunta
+               de ESTE paso, antes de la rejilla: su respuesta decide el promedio que llena la mano. -->
+          <div class="chip-grid" id="rellenoGrid" aria-label="¿Solo la tela, o el relleno también?">
+            <label><input type="radio" name="relleno" value="tela" data-field="relleno"><span>Solo la tela</span></label>
+            <label><input type="radio" name="relleno" value="relleno" data-field="relleno"><span>La tela y el relleno</span></label>
           </div>
           <!-- La mano (docs/insumos-asistidos.md, dueño 23/09): al lado de las filas y sólo en este
                paso. Con el asistente apagado queda la etiqueta neutra —la estimación sirve igual— y
@@ -1098,7 +1196,7 @@ const ESTIMATE_ENGINE_VERSION=3;
 // Furniture types, their consumption rules and their plausible measurement
 // ranges are all defined in the backoffice; nothing about them lives here.
 let furnitureRules={},measureRanges={};
-const MEASURE_LABELS={width:'ancho',height:'alto',depth:'fondo'};
+const MEASURE_LABELS={width:'ancho',height:'alto',depth:'largo'};
 // The catalog lives in the backoffice. Read it on every render so a tela
 // created or deactivated there shows up here without touching this file.
 const activeFabrics=()=>Store.all('fabrics').filter(f=>f.active);
@@ -1185,12 +1283,17 @@ function renderPreferenceOptions(){
   const tramos=b.map((v,i)=>i===0
     ? {label:`Hasta ${money(v)}`,value:v}
     : {label:`Entre ${money(b[i-1])} y ${money(v)}`,value:v});
-  // El tramo abierto no tiene tope: sin value, recommend() no marca nada como
-  // "sobre presupuesto", que es lo que "más de" significa.
+  /* El tramo abierto no tiene tope: sin value, recommend() no marca nada como
+   * "sobre presupuesto", que es lo que "más de" significa. */
   if(b.length)tramos.push({label:`Más de ${money(b[b.length-1])}`,value:''});
   else tramos.push({label:'Sin preferencia',value:''});
-  document.getElementById('budget').innerHTML=tramos.map((t,i)=>
-    `<option value="${t.value}"${i===1?' selected':''}>${esc(t.label)}</option>`).join('');
+  /* NADA ELEGIDO DE FÁBRICA (dueño, 26/09: «además no está preguntando por presupuesto»): el segundo
+   * tramo venía marcado solo, el campo se leía como contestado y ni el paso ni ella lo preguntaban —
+   * el mismo caso del mueble, que también iba marcado (dueño, 25/09). La primera opción es un HUECO sin
+   * valor (`data-placeholder`) que no cuenta como declarado; los tramos de verdad son los de siempre. */
+  document.getElementById('budget').innerHTML =
+    ['<option value="" data-placeholder="1" selected>Elige un rango…</option>']
+      .concat(tramos.map(t=>`<option value="${t.value}">${esc(t.label)}</option>`)).join('');
   document.getElementById('coverage').innerHTML=
     `<option value="complete">Todo el mueble</option><option value="seats">Solo asiento y respaldo</option><option value="partial">Una parte específica</option>`;
   const maxQ=Math.max(2,+cfg.maxQuantity||5);
@@ -1316,7 +1419,11 @@ const NITIDEZ_MINIMA=200;
  * manda al taller una cifra que él mismo considera imposible. Con margen: una medida tomada a ojo
  * puede quedar un poco fuera de lo habitual (es aproximada, no exacta), así que solo se detiene lo
  * que se aleja más de un 20 % del rango; el aviso de la asistente sigue saliendo en el borde. */
-const MEDIDA_NOMBRE={width:'El ancho',height:'El alto',depth:'El fondo'};
+/* LOS TRES NOMBRES SON LOS DE LA FICHA DE LA PIEZA («Ancho», «Alto», «Largo» — el `aria-label` de
+ * cada control): el cliente lee «Largo» en la tercera columna y el aviso le habla de «El fondo» — dos
+ * nombres para la misma medida (dueño, 26/09: «she is confuse between "ancho" and "largo"»). Se dice
+ * LARGO, y «fondo»/«profundidad» quedan como sinónimos que el parser entiende. */
+const MEDIDA_NOMBRE={width:'El ancho',height:'El alto',depth:'El largo'};
 const MARGEN_MEDIDA=0.2;
 const textoMedidasFuera=fuera=>fuera.map(f=>`${MEDIDA_NOMBRE[f.id]} de ${f.valor} cm está muy fuera de lo habitual para ${state.furniture.toLowerCase()} (lo habitual: ${f.min} a ${f.max} cm).`).join(' ')+' Corrige la medida para continuar.';
 function medidasMuyFueraDeLoHabitual(){
@@ -1752,12 +1859,14 @@ const UNIDADES_DEL_PRESUPUESTO={
   fabricacion:{pregunta:'¿Cuál es tu presupuesto por mueble?',unidad:'por mueble',corta:'/mueble'},
   unidad:{pregunta:'¿Cuál es tu presupuesto por proyecto?',unidad:'por proyecto',corta:'/proyecto'}};
 const unidadDelPresupuesto=(servicio)=>UNIDADES_DEL_PRESUPUESTO[(servicio||state.service||{}).pricing]||UNIDADES_DEL_PRESUPUESTO.tela;
-/* El tramo elegido, traducido. El tramo abierto («Más de $X») no tiene tope: `declared` queda en
- * false y nadie marca telas «sobre presupuesto» por él (es lo que «más de» significa). */
+/* El tramo elegido, traducido. Declarado es QUE ÉL HAYA ELEGIDO, no que haya cifra: el tramo abierto
+ * («Más de $X») declara sin tope —`amount` queda en null y nadie marca telas «sobre presupuesto» por él,
+ * que es lo que «más de» significa—, y el hueco de fábrica («Elige un rango…») no declara nada. */
 function presupuestoDeclarado(){
   const el=document.getElementById('budget'),u=unidadDelPresupuesto(state.service);
   const opcion=el&&el.options[el.selectedIndex],amount=+((el&&el.value)||0)||null;
-  return {amount,declared:!!amount,label:opcion?opcion.textContent.trim():'',unit:u.corta,unitLabel:u.unidad,pregunta:u.pregunta};
+  const esHueco=!!(opcion&&opcion.dataset&&opcion.dataset.placeholder);
+  return {amount,declared:!!opcion&&!esHueco,label:opcion?opcion.textContent.trim():'',unit:u.corta,unitLabel:u.unidad,pregunta:u.pregunta};
 }
 /* La cantidad del proyecto en la unidad de su oficio, para traducir el tramo a total. */
 function cantidadDelProyecto(q){
@@ -2325,8 +2434,9 @@ function promptDeLaCasa(){
  *   3 · EL CLIENTE — todo lo que él ya dijo y quedó anotado: mueble, medidas, fotos, tela, lista,
  *       pedido, atención, contacto, estimación. Se relee del cotizador cada turno: no envejece.
  *
- * Lo que no esté en estas tres, ella no lo sabe. Los insumos del taller NO van aquí: se estiman solos
- * y no se le cuentan al cliente (dueño, 24/09: «dont show "insumos" to client»). */
+ * Lo que no esté en estas tres, ella no lo sabe. Los insumos del taller SÍ van aquí desde el 26/09
+ * (la regla vieja, «dont show "insumos" to client», se borró): van siempre en el trabajo, y lo que se
+ * pregunta es el relleno — «¿solo la tela o el relleno también?»—, que decide los promedios. */
 function estadoDelCotizador(c){
   const est = c.estimate || {};
   const pantalla = (()=>{ try { return ACI.losCamposDelPaso(); } catch (e) { return null; } })();
@@ -2354,13 +2464,17 @@ function estadoDelCotizador(c){
       const estado = f.tipo === 'fotos' ? `${f.valor || 0} foto(s)` : f.lleno ? `«${f.valor}»` : 'sin llenar';
       return `${f.pregunta} (${estado})`;
     });
-    /* El paso del taller no es una pregunta para el cliente (dueño, 24/09: «dont show "insumos" to
-     * client»): si es el que está a la vista, se dice eso y nada más — si no, el modelo lee su título
-     * («¿Qué se le cambia por dentro?») y se lo pregunta al cliente (medido, 25/09). */
-    const esDelTaller = !!document.querySelector('.wizard-step.active#insumoStep, .wizard-step[data-brain="INSUMOS"].active');
-    if (esDelTaller) pagina.push('El paso que se ve es el del TALLER (insumos): al cliente no se le pregunta — lo estima la mano del taller y se sigue.');
-    else pagina.push(`Lo que el cliente TIENE EN PANTALLA en este paso —«${pantalla.titulo}», leído del propio formulario—: ${enPantalla.join(' · ')}.`);
-    if (pantalla.faltan.length) pagina.push(`De esta pantalla sigue sin llenar: ${pantalla.faltan.join(' · ')}. Pídelo tú, uno por uno y con tus palabras: ningún campo visible puede cerrar el paso en blanco.`);
+    /* El paso del taller ya no se esconde (dueño, 26/09: la regla «dont show "insumos" to client» se
+     * borró): si el que está a la vista es el de los insumos, se dice tal cual —con su pregunta del
+     * relleno— y sus filas las llena la mano del taller. */
+    pagina.push(`Lo que el cliente TIENE EN PANTALLA en este paso —«${pantalla.titulo}», leído del propio formulario—: ${enPantalla.join(' · ')}.`);
+    /* EL TURNO TIENE UN SOLO TEMA: EL PENDIENTE DE LA PANTALLA (dueño, 26/09: «¿por qué no se respeta el
+     * orden del wizard por cada paso?» — dicho muchas veces desde el 25/09). Antes se le pasaba la LISTA
+     * entera de lo que faltaba, «pídelo tú, uno por uno», y el modelo elegía por dónde empezar: preguntaba
+     * la tela con el mueble a la vista, o pedía unas medidas antes del mueble, y la respuesta del cliente
+     * caía en el parser de OTRO campo — «ese mueble no está en el catálogo», el desorden medido. Ahora se
+     * le dice EL campo, y que es el único de este turno: los demás llegan cuando les toque. */
+    if (pantalla.faltan.length) pagina.push(`LO QUE TOCA AHORA, y es lo ÚNICO que le preguntas en este turno: «${pantalla.faltan[0]}». Pídelo con tus palabras, como quieras, pero ese y solo ese; los demás campos de esta pantalla se piden después, uno por uno, en su orden. Si él contesta de otra cosa, se anota si se puede y se vuelve a este campo.`);
     /* …y lo que está ESCRITO pero el cotizador no acepta: el paso no avanza hasta corregirlo, así que
      * es lo primero que se pide (dueño, 25/09: «lia is in disorder… dont respect the step by step»). */
     const porCorregir = (pantalla.campos || []).filter(c => c.lleno && c.aviso);
@@ -2537,6 +2651,9 @@ function mundoDelContrato(){
       ? { id: state.fabric.id, name: state.fabric.name, colorName: state.fabric.colorName, auto: !state.fabricTouched, touched: !!state.fabricTouched }
       : null,
     supplies: insumosMarcados(),
+    /* El relleno declarado (paso 17, dueño 26/09): «solo la tela» o «la tela y el relleno» — decide
+     * qué promedios de insumos van. Su campo del contrato va alineado con esta pregunta del paso. */
+    relleno: (() => { const r = document.querySelector('#rellenoGrid input:checked'); return r ? r.value : null; })(),
     preferencias: pidePreferencias()
       ? { needs: [...document.querySelectorAll('#needsGrid input:checked')].map(x => x.value),
           style: (caja('style') || {}).value || '', color: (caja('color') || {}).value || '' }
@@ -2565,7 +2682,7 @@ const PREGUNTA_VOZ = {
   mueble: () => '¿Qué mueble quieres renovar? ' + Store.activeFurniture().map(f => f.name).join(', ') + ', o cuéntame cuál.',
   fotos: (f) => `Porfa sube al menos ${f.restantes} ${f.restantes === 1 ? 'foto' : 'fotos'} para conocer mejor tu mueble.`,
   danos: () => '¿Qué hay que revisar? ' + [...document.querySelectorAll('#damageGrid input')].map(i => i.dataset.label || i.value).join(', ') + ', o «que lo revisen».',
-  medidas: (f) => `¿Cuánto mide tu ${String(state.furniture || 'mueble').toLowerCase()}? Dime ancho, alto y fondo en centímetros.`,
+  medidas: (f) => `¿Cuánto mide tu ${String(state.furniture || 'mueble').toLowerCase()}? Dime ancho, alto y largo en centímetros.`,
   revision: () => 'Cuando quieras reviso tu información: dime «revisa» y la miro.',
   atencion: () => '¿En qué ciudad estás y para qué ciudad es el servicio?',
   contacto: () => 'Para la pre-cotización necesito tu nombre, tu correo y tu celular. La autorización la marcas tú en el paso de contacto.',
@@ -2594,14 +2711,19 @@ function olvidarLaMemoriaPresente(){ try { localStorage.removeItem(laClaveDeLaMe
 /* Se borra AL CARGAR, antes de que nadie diga nada. */
 olvidarLaMemoriaPresente();
 
-function decirEnLaConversacion(texto, quien = 'bot', callar = false){
+/* EL AVISO DEL COTIZADOR, dicho como una línea suya: sin la etiqueta «Ojo:» —«is unnecesary that she
+ * says word "Ojo"... this can be internal warning.. if she says the content is enoght» (dueño,
+ * 26/09)— y con la frase empezada. El aviso sigue siendo un AVISO por dentro: el DOM lo marca. */
+const elAvisoDicho = (texto) => { const t = String(texto || '').trim(); return t ? t.charAt(0).toUpperCase() + t.slice(1) : t; };
+
+function decirEnLaConversacion(texto, quien = 'bot', callar = false, tipo = null){
   const caja = document.getElementById('vozMessages'); if (!caja) return;
   if (quien === 'bot') voz.habloEsteTurno = true;
   /* NUNCA LA MISMA FRASE DOS VECES (dueño, 25/09: «the AI never should repeat phrase the same way and
    * words..one after the other... this action can be seen like a rude.... you can rephrase.. but never
    * repeat exactly»). Si ya se acaba de decir igual, se dice DE OTRA MANERA —o no se dice, si es un
    * recibo igual: repetirlo no informa nada y suena a loro—. Vale para TODA línea suya, también las
-   * que van con `callar` (el aviso del cotizador también se repetía: medido con el cliente robot,
+   * que antes iban sin voz (el aviso del cotizador también se repetía: medido con el cliente robot,
    * 25/09 — tres veces seguidas «Ojo: dime la referencia…»). */
   if (quien === 'bot') {
     /* Se mira una VENTANA de sus últimas burbujas, no solo la última: entre dos avisos iguales suele
@@ -2609,7 +2731,7 @@ function decirEnLaConversacion(texto, quien = 'bot', callar = false){
      * robot, 25/09: «Ojo: dime la referencia…» siete veces). */
     const ultimas = [...caja.querySelectorAll('.message.bot')].slice(-8).map(m => normalizarFrase(m.textContent));
     if (ultimas.includes(normalizarFrase(texto))) {
-      const otra = unaManeraDistintaDe(texto);
+      const otra = unaManeraDistintaDe(texto, tipo);
       /* Un recibo igual no informa nada: no se dice. Pero una frase que no tiene otra manera SE DICE
        * igual — peor que repetirse es dejar el turno en silencio (medido con el cliente robot, 25/09:
        * dos turnos con la burbuja vacía). */
@@ -2624,15 +2746,18 @@ function decirEnLaConversacion(texto, quien = 'bot', callar = false){
     }
   }
   const m = document.createElement('div'); m.className = 'message ' + quien;
+  /* `tipo` marca la CLASE de la línea en el DOM (hoy: 'aviso') sin gastar palabras visibles: quien
+   * vigila desde fuera —el arnés de la conversación, las specs— la lee del elemento. */
+  if (tipo) m.dataset.tipo = tipo;
   m.textContent = texto; caja.appendChild(m);
   voz.mensajes.push({ quien, texto });
   guardarLaMemoriaPresente();      // la memoria presente se escribe con cada mensaje
   caja.scrollTop = caja.scrollHeight;
-  /* Ella lo dice también en voz alta (si hay voces en el sistema y no la silenciaron). `callar` es
-   * para los recibos del sistema («Anotado: …»): se leen en la conversación, no se hablan — hablar
-   * más rato deja el micrófono sordo mientras tanto (dueño: «ese micrófono se demora en
-   * escribir», «eso estaba bien»). Y con la ventana CERRADA no habla nunca: el turno en camino
-   * llegaba después del cierre y ella seguía sonando (dueño, 25/09). */
+  /* TODAS las líneas del chat las dice ella en voz alta (dueño, 26/09: «is important that all messages
+   * that exist in the chat should say the assistant»): los recibos («Anotado: …») y los avisos
+   * («Ojo: …») se oían solo con los ojos. El parámetro `callar` queda como palanca de UNA línea para
+   * volver a silenciar una línea sin tocar la función (hoy ninguna lo usa). Y con la ventana CERRADA
+   * no habla nunca: el turno en camino llegaba después del cierre y ella seguía sonando (dueño, 25/09). */
   if (quien === 'bot' && !callar && voz.abierta) hablarConSuVoz(texto);
 }
 
@@ -3029,16 +3154,41 @@ async function aplicarLoDicho(id, texto){
         : { ok: false, motivo: 'la mano no encontró insumos con esas medidas: los miramos en el paso del taller', paso: 17 };
     }
     case 'preferencias': {
-      /* Estilo y color, contra las MISMAS opciones de los selects del paso (por su texto). */
+      /* El USO (las casillas del paso 12), el estilo y el color — las MISMAS opciones del paso. Las
+       * casillas entran AQUÍ porque la conversación las pedía y no las oía: «es para mascotas y
+       * resistente al agua» no marcaba nada, el paso no cerraba nunca y el cliente quedaba en un
+       * bucle con la pregunta del estilo y el color (dueño, 26/09: «has a loop»). */
       const plano = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       const dicho = plano(texto);
+      /* Una opción cuenta si su texto está en la frase —las CORTAS con límites de palabra: «Sol» no
+       * puede salir de «solo»— o si lo está su primera palabra LARGA por raíz («mascota» por
+       * «Mascotas», «limpiar» por «limpieza»). */
+      const laDijo = (opcion) => {
+        const p = plano(opcion).trim(); if (!p) return false;
+        const esc = p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        if (p.length < 5) return new RegExp('(^|[^a-z0-9ñ])' + esc + '([^a-z0-9ñ]|$)').test(dicho);
+        if (dicho.includes(p)) return true;
+        const raiz = p.split(/\s+/).filter(w => w.length >= 5)[0];
+        return !!raiz && new RegExp('\\b' + raiz.slice(0, Math.max(5, raiz.length - 2))).test(dicho);
+      };
       const puestos = [];
+      const usos = [];
+      for (const c of document.querySelectorAll('#needsGrid input[type="checkbox"]')) {
+        if (c.checked || !laDijo(c.value)) continue;
+        c.checked = true; c.dispatchEvent(new Event('change', { bubbles: true }));
+        usos.push(c.value);
+      }
+      if (usos.length) puestos.push('uso ' + usos.join(', '));
       for (const [id, que] of [['style', 'estilo'], ['color', 'color']]) {
         const el = document.getElementById(id); if (!el) continue;
-        const op = [...el.options].find(o => o.value && dicho.includes(plano(o.text)));
+        const op = [...el.options].find(o => o.value && laDijo(o.text));
         if (op) { el.value = op.value; el.dispatchEvent(new Event('change', { bubbles: true })); puestos.push(que + ' ' + op.text); }
       }
-      if (!puestos.length) return { ok: false, motivo: 'para el estilo y el color dime uno de los que tengo (por ejemplo «natural» o «grises») y los dejo puestos.', paso: 12 };
+      if (!puestos.length) {
+        const opciones = [...document.querySelectorAll('#needsGrid input[type="checkbox"]')].map(c => c.value);
+        return { ok: false, paso: 12, motivo: (opciones.length ? 'cómo se usará el mueble (' + opciones.slice(0, 3).join(', ') + ') y ' : '') +
+          'el estilo y el color: dime uno de los que tengo (por ejemplo «natural» o «grises») y los dejo puestos.' };
+      }
       return { ok: true, dicho: puestos.join(' y ') };
     }
     case 'presupuesto': {
@@ -3046,9 +3196,28 @@ async function aplicarLoDicho(id, texto){
       const el = document.getElementById('budget');
       if (!el) return { ok: false, motivo: 'no encuentro el presupuesto en este formulario', paso: null };
       const op = [...el.options].find(o => o.value && plano(texto).includes(plano(o.text)));
-      if (!op) return { ok: false, motivo: 'dime un rango de los que tengo para el presupuesto (por ejemplo «entre 400 y 800 mil»), y si no lo sabes, dímelo y lo dejo.', paso: 13 };
-      el.value = op.value; el.dispatchEvent(new Event('change', { bubbles: true }));
-      return { ok: true, dicho: 'presupuesto ' + op.text };
+      if (op) { el.selectedIndex = op.index; el.dispatchEvent(new Event('change', { bubbles: true })); return { ok: true, dicho: 'presupuesto ' + op.text }; }
+      /* EL NÚMERO SE LLEVA AL TRAMO MÁS CERCANO (dueño, 26/09: «se lleva al tramo más cercano»): el
+       * cliente dice «por ahí 30.000» y no tiene por qué saberse la lista de tramos. Se deja puesto el
+       * más cercano y se le dice cuál quedó; sin número, sigue la pregunta de siempre. */
+      const cifra = (() => {
+        const m = /(\d[\d.,\s]*)(?:\s*(mil|millones?))?/i.exec(texto);
+        if (!m) return null;
+        const n = Number(String(m[1]).replace(/[.,\s]/g, ''));
+        if (!n) return null;
+        if (/millones?/i.test(m[2] || '')) return n * 1e6;
+        if (/mil/i.test(m[2] || '') && n < 1000) return n * 1000;
+        return n < 1000 ? n * 1000 : n;      /* «por ahí 160» son 160 mil */
+      })();
+      const tramos = [...el.options].filter(o => String(o.value || '').trim() !== '' || /m[áa]s de/i.test(o.textContent));
+      const numero = (o) => Number(o.value) || Number(String(o.textContent).replace(/[^\d]/g, '')) || 0;
+      if (cifra && tramos.length) {
+        const elegido = tramos.reduce((a, b) => Math.abs(numero(b) - cifra) < Math.abs(numero(a) - cifra) ? b : a);
+        el.selectedIndex = elegido.index; el.dispatchEvent(new Event('change', { bubbles: true }));
+        return { ok: true, dicho: 'presupuesto ' + elegido.textContent.trim(),
+          aviso: `${money(cifra)} no es uno de los tramos: lo dejo en «${elegido.textContent.trim()}», que es el más cercano.` };
+      }
+      return { ok: false, motivo: 'dime un rango de los que tengo para el presupuesto (por ejemplo «entre 400 y 800 mil»), y si no lo sabes, dímelo y lo dejo.', paso: 13 };
     }
     case 'autorizacion': {
       /* La firma es del cliente: solo entra si él lo dijo, y en respuesta a la pregunta. */
@@ -3088,7 +3257,7 @@ const OTRA_PREGUNTA = {
   mueble: () => '¿De qué mueble hablamos? ' + Store.activeFurniture().map(f => f.name).join(', ') + '.',
   fotos: (f) => `Súbeme ${f.restantes} ${f.restantes === 1 ? 'foto' : 'fotos'} aquí abajo, porfa: con verlo me basta para entender tu mueble.`,
   danos: () => '¿Algo que revisar además de la tela? ' + [...document.querySelectorAll('#damageGrid input')].map(i => i.dataset.label || i.value).join(', ') + '.',
-  medidas: () => `Dime tres números y listo — ancho, alto y fondo de tu ${String(state.furniture || 'mueble').toLowerCase()}, en centímetros.`,
+  medidas: () => `Dime tres números y listo — ancho, alto y largo de tu ${String(state.furniture || 'mueble').toLowerCase()}, en centímetros.`,
   revision: () => 'Dime «revisa» cuando quieras y le echo un ojo a tu información.',
   atencion: () => '¿Desde qué ciudad me escribes, y dónde se entrega o presta el servicio?',
   contacto: () => 'Para dejarte la pre-cotización me faltan tus datos: nombre, correo y celular.'
@@ -3112,13 +3281,23 @@ const MANERAS_DE_PREGUNTAR = {
     (f) => `Con ${f.restantes} ${f.restantes === 1 ? 'foto' : 'fotos'} que le eche un ojo al mueble me alcanza: súbelas abajo.`
   ],
   medidas: [
-    () => 'Para la tela necesito los centímetros: ancho, alto y fondo.',
-    () => '¿Me mides el mueble? Ancho, alto y fondo, en centímetros.'
+    () => 'Para la tela necesito los centímetros: ancho, alto y largo.',
+    () => '¿Me mides el mueble? Ancho, alto y largo, en centímetros.'
   ],
   revision: [ () => 'Cuando quieras le echo un ojo: dime «revisa» y la miro.' ],
   atencion: [ () => '¿Me dices la ciudad? La necesito para la entrega o el servicio.' ],
   contacto: [ () => 'Para la pre-cotización: tu nombre, tu correo y tu celular.' ]
 };
+/* El mensaje del campo del CONTRATO, dicho en palabras: en el contrato viene como TEXTO o como FUNCIÓN
+ * del mundo (las fotos: «Agrega 3 fotos más…» depende de cuántas lleva ya). Sin resolver la función,
+ * `String(f.mensaje)` devolvía su CÓDIGO —«function (m) {…}»— y el guardia de no repetir comparaba
+ * contra eso: con las fotos el sistema volvía a preguntar lo que el modelo acababa de pedir, con una
+ * frase enlatada (dueño, 26/09: el modelo conversa y el sistema lo hacía sonar a robot). */
+function elMensajeDelCampo(f){
+  try { const m = (f || {}).mensaje;
+    return typeof m === 'function' ? String(m(mundoDelContrato()) || '') : String(m || ''); }
+  catch (err) { return ''; }
+}
 function elBancoDePreguntas(f){
   const min = elMinimoDeFotos();
   const extra = f.id === 'fotos' ? { restantes: Math.max(1, min - state.photos.length) } : {};
@@ -3132,18 +3311,19 @@ function normalizarFrase(t){
   return String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
 }
-/* Otra manera de decir lo mismo: si es una de las preguntas del banco, la siguiente; si es una cortesía,
- * otra cortesía; y si es una frase suelta de ella, lo que falta —dicho distinto—. */
-function unaManeraDistintaDe(texto){
+/* Otra manera de decir lo mismo: si es un AVISO del cotizador se le cambia el arranque (su contenido es
+ * un dato y no se puede decir de otra forma); si es una de las preguntas del banco, la siguiente; si es
+ * una cortesía, otra cortesía; y si es una frase suelta de ella, lo que falta —dicho distinto—. */
+function unaManeraDistintaDe(texto, tipo){
   const buscada = normalizarFrase(texto);
-  /* Los avisos del cotizador («Ojo: dime la referencia del catálogo…») no se pueden decir de otra
-   * manera sin cambiar el dato, pero SÍ sin decir la misma frase: se les cambia el arranque. */
-  if (/^ojo[:\s]/i.test(String(texto).trim())) {
-    const quitar = String(texto).trim().replace(/^Ojo[:\s]*/i, '');
+  /* Los avisos van marcados por su TIPO desde que el dueño mandó quitar la etiqueta «Ojo:» (26/09): el
+   * aviso se lee como una línea suya más, pero sigue sabiéndose cuál es. */
+  if (tipo === 'aviso') {
+    const suyo = String(texto).trim();
     const usados = [...document.querySelectorAll('#vozMessages .message.bot')].slice(-4).map(m => m.textContent.trim());
-    const arranques = ['Mira, ', 'Te insisto: ', 'Ojo otra vez: ', 'Sin afán: ', 'Perdona, '];
+    const arranques = ['Mira, ', 'Te insisto: ', 'Otra vez: ', 'Sin afán: ', 'Perdona, '];
     const libre = arranques.find(a => !usados.some(t => t.toLowerCase().startsWith(a.trim().toLowerCase()))) || 'Mira, ';
-    return libre + quitar.charAt(0).toLowerCase() + quitar.slice(1);
+    return libre + suyo.charAt(0).toLowerCase() + suyo.slice(1);
   }
   for (const id of Object.keys(PREGUNTA_VOZ)) {
     const banco = elBancoDePreguntas({ id });
@@ -3165,21 +3345,34 @@ function preguntaDelRespaldo(f){
   const veces = voz.preguntado[f.id] || 0;
   voz.preguntado[f.id] = veces + 1;
   const banco = elBancoDePreguntas(f);
-  if (!banco.length) return f.mensaje;
+  const conLasOpciones = (frase) => {
+    /* LOS DESPLEGABLES SE PREGUNTAN CON SUS OPCIONES (dueño, 26/09: «para dropdowns... será necesario
+     * mostrar en el chat las opciones y adicional decir cada una de las opciones... eso es clave»): la
+     * frase que se publica es la que se habla, así que las opciones van en la frase, tal como están en
+     * el propio desplegable. Si la frase ya las nombra, no se repiten. */
+    const opciones = (f && f.opciones || []).filter(Boolean);
+    if (!opciones.length) return frase;
+    const dicha = normalizarFrase(frase);
+    if (opciones.some(o => dicha.includes(normalizarFrase(o)))) return frase;
+    return frase.replace(/[\s.…]*$/, '') + `. Dime uno de estos: ${opciones.join(', ')}.`;
+  };
+  if (!banco.length) return conLasOpciones(elMensajeDelCampo(f) || f.etiqueta);
   const ultima = [...document.querySelectorAll('#vozMessages .message.bot')].pop();
   const yaDicha = ultima ? normalizarFrase(ultima.textContent) : '';
   /* Se rota por el banco —empezando por donde va la cuenta— y se salta la que acabe de decir. */
   for (let i = 0; i < banco.length; i++) {
     const frase = banco[(veces + i) % banco.length];
-    if (normalizarFrase(frase) !== yaDicha) return frase;
+    if (normalizarFrase(frase) !== yaDicha) return conLasOpciones(frase);
   }
-  return banco[0];
+  return conLasOpciones(banco[0]);
 }
-/* Los insumos del taller NO se le preguntan al cliente (dueño, 24/09: «dont show "insumos" to
- * client»): los estima la mano sola en cuanto hay medidas — el cliente no tiene que saber qué lleva
- * el trabajo por dentro. El campo del contrato se llena solo. Va en su propia función porque el
- * camino con modelo, cuando su frase pasa el cerco, NO vuelve a preguntar y la llamada de adentro
- * de `preguntarLoQueFalta` nunca corría (medido en la suite del camino con modelo, 25/09). */
+/* LA MANO LLENA LOS INSUMOS CUANDO TOCA (dueño, 23/09 y 26/09): los insumos van siempre en el
+ * trabajo, así que se estiman solos en cuanto hay medidas — y el cliente no tiene que teclear
+ * cantidades de taller. El relleno, en cambio, SÍ se pregunta («¿solo la tela o el relleno también?»,
+ * la pregunta del paso): con esa respuesta y las medidas sale el promedio de lo que se repone.
+ * Va en su propia función porque el camino con modelo, cuando su frase pasa el cerco, NO vuelve a
+ * preguntar y la llamada de adentro de `preguntarLoQueFalta` nunca corría (medido en la suite del
+ * camino con modelo, 25/09). */
 function estimarInsumosSiToca(){
   try {
     /* LAS MEDIDAS SE LEEN DE LA FILA VIVA, no de los campos retirados: con piezas a la vista, `#width`
@@ -3275,14 +3468,13 @@ function preguntarLoQueFalta(){
    * del recorrido, el cierre) y para juzgar cada valor que entra. */
   const enPantalla = elCampoDeLaPantalla();
   voz.campoDelPaso = enPantalla ? enPantalla.id : null;
-  /* Los INSUMOS no se le preguntan al cliente (dueño, 24/09: «dont show "insumos" to client»): los
-   * estima la mano del taller en cuanto hay medidas — y el paso tiene su propia mano a la vista. */
-  const delContrato = (faltantes[0] && faltantes[0].id === 'insumos' && faltantes.length > 1)
-    ? faltantes.find(x => x.id !== 'insumos')
-    : faltantes[0];
+  /* LOS INSUMOS SÍ SON DEL CLIENTE (dueño, 26/09: la regla vieja «dont show "insumos" to client» se
+   * borró): lo que se le pregunta es el RELLENO —asks.relleno, «¿solo la tela o el relleno también?»—
+   * y sus promedios se llenan solos. Su campo ya no se salta al elegir el pendiente del contrato. */
+  const delContrato = faltantes[0];
   const f = enPantalla
     ? { id: enPantalla.campo || ('pantalla.' + enPantalla.id), etiqueta: enPantalla.pregunta,
-        mensaje: elTextoDelPendienteDeLaPantalla(enPantalla), foco: enPantalla.id, deLaPantalla: true, aviso: enPantalla.aviso || null }
+        mensaje: elTextoDelPendienteDeLaPantalla(enPantalla), foco: enPantalla.id, deLaPantalla: true, aviso: enPantalla.aviso || null, opciones: enPantalla.opciones }
     : delContrato;
   /* La zona de fotos está SIEMPRE a la vista (el dueño lo pidió con la captura: «pensé que el
    * componente de subir fotos estaba aquí mismo» — y estaba, pero oculto mientras faltaba otra
@@ -3318,13 +3510,20 @@ function preguntarLoQueFalta(){
    * frase, tampoco se repite. */
   { const ultima = [...document.querySelectorAll('#vozMessages .message.bot')].pop();
     const dicho = ultima ? ultima.textContent.replace(/\s+/g, ' ').trim() : '';
-    const palabras = (String(f.mensaje || f.etiqueta || '').toLowerCase().match(/[a-záéíóúñ]{4,}/g) || [])
-      .filter(w => ['dime', 'tres', 'numeros', 'listo', 'cuando', 'puedas', 'porfa', 'para'].indexOf(w) < 0);
-    const clave = palabras[0] || '';
-    /* Si el valor que hay ESCRITO no lo acepta el cotizador, la pregunta empieza por el porqué. */
-    const conAviso = (t) => (f.aviso ? 'Ojo: ' + f.aviso + ' ' : '') + t;
+    /* Si el valor que hay ESCRITO no lo acepta el cotizador, la pregunta empieza por el porqué (sin la
+     * etiqueta «Ojo:»: el aviso es interno, dueño 26/09). */
+    const conAviso = (t) => (f.aviso ? elAvisoDicho(f.aviso) + ' ' : '') + t;
     const texto = conAviso(preguntaDelRespaldo(f));
-    const yaLoToco = clave && dicho.toLowerCase().includes(clave);
+    const palabras = (String([elMensajeDelCampo(f), f.etiqueta, f.id, texto].filter(Boolean).join(' ')).toLowerCase().match(/[a-záéíóúñ0-9]{4,}/g) || [])
+      .filter(w => ['dime', 'tres', 'numeros', 'listo', 'cuando', 'puedas', 'porfa', 'para'].indexOf(w) < 0);
+    /* La comparación va SIN ACENTOS ni puntuación —«súbeme» contiene «sube»— y mira las palabras de
+     * TODO lo que rodea al pendiente: su mensaje, su etiqueta, su id y la propia pregunta enlatada.
+     * Antes miraba solo el primer texto del campo, y cuando el pendiente venía de la PANTALLA ese
+     * texto era el del paso («¿Qué mueble quieres renovar?») — la clave salía «mueble» y la frase del
+     * modelo sobre las fotos no casaba: el sistema volvía a pedir con su frase hecha y ella sonaba a
+     * robot (dueño, 26/09: el modelo es conversacional). */
+    const claves = palabras.map(w => normalizarFrase(w)).filter(w => w && w.length >= 4);
+    const yaLoToco = claves.length && claves.some(k => normalizarFrase(dicho).includes(k));
     /* …pero si su pregunta era por algo que YA quedó lleno —«¿Y el ancho del sofá?» cuando el ancho
      * acaba de entrar en este mismo turno—, el anuncio SÍ va: el cliente necesita saber qué falta de
      * verdad (dueño, 25/09). */
@@ -3377,7 +3576,7 @@ function losValoresLegalesDe(id){
       .concat(['la cantidad en metros —o en rollos si la tela se vende por rollo—']);
     case 'pedido': return ['el número de una solicitud anterior (COT-####) o su referencia'];
     case 'atencion': return ['la ciudad del cliente y la del servicio, por su nombre'];
-    case 'medidas': return ['ancho, alto y fondo en centímetros, como los diga el cliente'];
+    case 'medidas': return ['ancho, alto y largo en centímetros, como los diga el cliente'];
     case 'contacto': return ['nombre completo, correo y celular'];
     case 'revision': return ['el cliente pide revisar («revisa»)'];
     case 'fotos': return [];
@@ -3423,12 +3622,12 @@ function elTextoDelPendienteDeLaPantalla(enPantalla){
 function conAvisoDelPendiente(enPantalla){
   const f = { id: CAMPO_DEL_INSTRUMENTO[enPantalla.id] || enPantalla.campo || ('pantalla.' + enPantalla.id),
     etiqueta: enPantalla.pregunta, mensaje: elTextoDelPendienteDeLaPantalla(enPantalla), aviso: enPantalla.aviso || null };
-  return (f.aviso ? 'Ojo: ' + f.aviso + ' ' : '') + preguntaDelRespaldo(f);
+  return (f.aviso ? elAvisoDicho(f.aviso) + ' ' : '') + preguntaDelRespaldo(f);
 }
 function elCampoDeLaPantalla(){
   const p = (() => { try { return ACI.losCamposDelPaso(); } catch (e) { return null; } })();
   if (!p || !(p.campos || []).length) return null;
-  const vacio = p.campos.find(c => !c.lleno && c.id !== 'insumos' && c.id !== 'fotos');
+  const vacio = p.campos.find(c => !c.lleno && c.id !== 'fotos');
   /* Las medidas por pieza llegan como `pieza.<n>.<medida>` y contestan al campo «medidas»; el MUEBLE de
    * la fila (`pieza.0.ctl0`) es su propio campo, no una medida (medido con la suite que camina, 25/09:
    * el pendiente del mueble salía como «medidas» y la conversación pedía centímetros para un mueble que
@@ -3438,12 +3637,12 @@ function elCampoDeLaPantalla(){
     if (/^needsGrid/.test(c.id)) return 'preferencias';
     return CAMPO_DEL_INSTRUMENTO[c.id] || (/^pieza\./.test(c.id) ? 'medidas' : null);
   };
-  if (vacio) return { id: vacio.id, pregunta: vacio.pregunta, tipo: vacio.tipo, campo: comoCampo(vacio), paso: p.paso };
+  if (vacio) return { id: vacio.id, pregunta: vacio.pregunta, tipo: vacio.tipo, campo: comoCampo(vacio), paso: p.paso, opciones: vacio.opciones };
   /* NADA VACÍO NO ES NADA PENDIENTE: si un campo quedó con un valor que el cotizador NO acepta —el
    * ancho de 100 cm de un sofá—, el «Continuar» no pasa y ESE es el pendiente. Antes se devolvía null y
    * la conversación se iba al contrato: preguntaba la ciudad con el paso a medio cerrar (dueño, 25/09:
    * «lia is in disorder.....dont respect the step by step»). */
-  const enFalta = p.campos.find(c => c.lleno && c.aviso && c.id !== 'insumos');
+  const enFalta = p.campos.find(c => c.lleno && c.aviso);
   if (enFalta) return { id: enFalta.id, pregunta: enFalta.pregunta, tipo: enFalta.tipo, campo: comoCampo(enFalta), paso: p.paso, aviso: enFalta.aviso };
   /* LAS FOTOS SÍ SON UN PENDIENTE: cuando el resto del paso está lleno y no llegan al mínimo, el paso
    * NO cierra. Antes quedaban fuera de esta cuenta y ella se quedaba «sin pendiente» en el paso 1: se
@@ -3559,7 +3758,7 @@ function promptDeLaConversacion(mundo){
     'SON VARIOS MUEBLES cuando lo dice: no lo pierdas ni lo cierres con el primero. Cada mueble es una PIEZA del cotizador (el paso «Tu mueble» las suma, y él las va nombrando de a una): pídele la siguiente —«¿y el otro mueble?»— y no vuelvas a preguntar por las que ya están anotadas.',
     'LAS LÍNEAS DE SERVICIO DE ESTE CLIENTE son las de su plan (las de abajo). Si pide algo que ENCAJA en una de ellas, esa es su línea: NUNCA le digas que eso no se hace aquí si la lista la tiene. Entiende por SIGNIFICADO, no por el nombre: si describe lo que la línea HACE, esa es la línea (comprar telas, una tela, cuántos metros → la línea de tela; cambiar la tela, forrar, tapizar → la de tapizado; fabricar, hacerlo a la medida → la de a medida; limpieza, proteger, reparar → mantenimiento). Anótala con el id.\n'
       + (lasLineasDelCliente().map(l => '- ' + l.rotulo + (l.id ? ' («' + l.id + '»)' : '') + (l.detalle ? ': ' + l.detalle : '')).join('\n') || '- (ninguna a la vista)'),
-    'Lo que puedes llenar tú: linea (el id o el rótulo), ruta, proposito, saber, rama (el ID DEL CONTRATO de la rama — abajo están todas con su cadena: en cuanto sepas cuál es el caso, anótala aquí y sigue con los campos de ESE contrato), mueble (del catálogo), muebleOtro (la descripción si el mueble es «Otro»), medidas (ancho/alto/fondo en cm), danos, atencion (ciudades), contacto (nombre, correo, celular), lista (las referencias con su cantidad —metros, o rollos si la tela se vende por rollo—; una fila por referencia), pedido (el número de la solicitud anterior, ej. COT-1042).',
+    'Lo que puedes llenar tú: linea (el id o el rótulo), ruta, proposito, saber, rama (el ID DEL CONTRATO de la rama — abajo están todas con su cadena: en cuanto sepas cuál es el caso, anótala aquí y sigue con los campos de ESE contrato), mueble (del catálogo), muebleOtro (la descripción si el mueble es «Otro»), medidas (ancho/alto/largo en cm), danos, atencion (ciudades), contacto (nombre, correo, celular), lista (las referencias con su cantidad —metros, o rollos si la tela se vende por rollo—; una fila por referencia), pedido (el número de la solicitud anterior, ej. COT-1042).',
     'LAS RAMAS Y SU CONTRATO (la lista completa de este negocio: elige la que corresponda a lo que el cliente pide —por el sentido, no por el nombre— y anótala en `rama` con su id; el contrato de esa rama manda qué campos faltan y qué acciones corren):\n' +
       elIndiceDeContratos().map(c => `- ${c.cadena.join(' → ')} → contrato ${c.id}`).join('\n'),
     'EL CATÁLOGO DE TELAS de este cliente (el precio es POR METRO —dato del catálogo, puedes nombrarlo y compararlo; nunca es el precio final de la solicitud):\n'
@@ -3569,7 +3768,7 @@ function promptDeLaConversacion(mundo){
     'EL ESTADO ES LA VERDAD —y lo que no esté ahí, no está. No afirmes que el cotizador anotó, cambió ni «ajustó» nada (ni ciudades, ni telas, ni metros) si no lo ves en el estado: si algo no aparece, di que lo anotas y sigue; para decir que algo quedó, míralo ahí primero. Nunca digas «en el cotizador quedó como…»: tú no ves sus controles. Y ojo con los nombres: «Lino Verona» es una TELA (nombre · color), no una ciudad — las ciudades son las de la línea «Atención» del estado, y no se mezclan.',
     'La AUTORIZACIÓN se da AQUÍ MISMO, hablando: cuando llegue el momento él dice «sí, autorizo» — o toca el botón «Sí, autorizo» que le aparece en ese momento justo debajo de la conversación. NUNCA le digas que busque una casilla ni que marque nada «al final del recuadro»: no hay casilla a la vista; la del formulario la marcas tú cuando él autoriza por aquí.',
     'FOTOS: se suben en la ZONA DE FOTOS que está en este mismo recuadro, debajo de vuestra conversación (no en otro paso, no por el chat): cuando falten, pídeselas ahí y dile que puede subirlas en esa zona. En el estado ves cuántas lleva.',
-    'AQUÍ SÍ PUEDES (el cotizador ya lo calculó, tú lo dices, nunca lo inventas): la RECOMENDACIÓN de tela — la que el cotizador marcó como la mejor para su mueble, con su razón — y lo que la REVISIÓN de las fotos vio (dilo tal cual, incluso si no se ve el mueble). NUNCA digas que «la tela te la dirá el asistente» ni que la recomendación toca esperarla: si el cotizador ya la calculó, la dices aquí. El asistente confirma el precio final, eso sí.',
+    'AQUÍ SÍ PUEDES (el cotizador ya lo calculó, tú lo dices, nunca lo inventas): la RECOMENDACIÓN de tela — la que el cotizador marcó como la mejor para su mueble, con su razón — y lo que la REVISIÓN de las fotos vio, contado CON TUS PALABRAS (también si lo que vio es que no se ve el mueble; nunca lo inventes ni lo adorne). NUNCA digas que «la tela te la dirá el asistente» ni que la recomendación toca esperarla: si el cotizador ya la calculó, la dices aquí. El asistente confirma el precio final, eso sí.',
     'Contesta SOLO con este JSON: {"decir": "lo que le dices ahora, en tus palabras", "valores": {"<campo>": <valor>}}.',
     'En "valores" va únicamente lo que el cliente ACABA de decir, con el valor ya normalizado (ids del catálogo, números, ciudades). Si no dijo nada nuevo, "valores" va vacío. Si en UNA frase dice DOS datos, van los DOS («el sofá es de mi mamá, vivo en Manizales» → mueble y atención): lo que dice de paso NO se pierde —medido, 25/09: el modelo contestó «anoto Manizales» y no lo mandó, y la ciudad nunca entró—. Si el cliente solo charla, en "decir" le contestas y le vuelves a lo que falta, con otras palabras.'
   ].join('\n');
@@ -4054,16 +4253,21 @@ async function elTurnoDeLaConversacion(dicho){
         }
         /* La confirmación la da el SISTEMA, no el modelo: el modelo habla en el mismo turno en que
          * propone y no puede ver si entró —decía «te dejo 5 metros» con la lista vacía—. Aquí se
-         * dice lo que de verdad quedó anotado (y si no entró nada, no se dice nada). Va SIN VOZ: es
-         * un recibo para leer, y hablar de más deja sordo al micrófono. */
+         * dice lo que de verdad quedó anotado (y si no entró nada, no se dice nada). Y se dice TAMBIÉN
+         * en voz alta (dueño, 26/09: «is important that all messages that exist in the chat should say
+         * the assistant»): antes iba sin voz para no tenerla hablando de más; él prefirió oírla. */
         /* El ÚLTIMO TURNO queda a la vista para quien mire desde fuera (el seguimiento de Playwright,
          * el que revisa un fallo): qué dijo el cliente, qué decidió el modelo y qué entró de verdad. */
         voz.ultimoTurno = { cuando: Date.now(), dicho, decir: turno.decir, valores: turno.valores || {},
           aplicados: aplicados.slice(), respaldo: false };
+        /* LO QUE EL COTIZADOR NO ACEPTÓ VA PRIMERO (dueño, 26/09: «the "Ojo" should be first in the
+         * conversation»), sin la etiqueta «Ojo:» — el aviso es interno y su contenido basta. Antes
+         * iba DESPUÉS de su frase; él lo quiere leer antes del recibo y de la pregunta. */
+        if (noLoAcepto) decirEnLaConversacion(elAvisoDicho(noLoAcepto), 'bot', false, 'aviso');
         /* El recibo dice lo anotado UNA vez y sin la etiqueta de la rama (no es un dato: «Retapizado
          * de muebles · Retapizado de muebles · rama Retapizado de muebles» se lee a robot). */
         { const recibo = elReciboDeLoAnotado(aplicados);
-          if (recibo) decirEnLaConversacion('Anotado: ' + recibo + '.', 'bot', true); }
+          if (recibo) decirEnLaConversacion('Anotado: ' + recibo + '.'); }
         await new Promise(r => setTimeout(r, 220));
         /* El cerco juzga también la conversación (el modelo nunca tiene la última palabra): una
          * cifra fuera de la estimación y del catálogo, una promesa o una frase que no habla del
@@ -4122,10 +4326,6 @@ async function elTurnoDeLaConversacion(dicho){
          * que el cliente esté pidiendo tiempo o agradeciendo—: el cliente nunca se queda sin saber qué
          * falta (dueño, 25/09: «dont ask according the step»). */
         if (juicio.limpia && !/[¿?]/.test(String(turno.decir || '')) && !pideTiempo && !cortesia) preguntarLoQueFalta();
-        /* Y lo que el cotizador NO aceptó se dice DESPUÉS de su frase (antes salía antes, y con el
-         * motivo de otro campo): el modelo no puede quedarse con un «listo, anotado» cuando el
-         * formulario dijo que no. */
-        if (noLoAcepto) decirEnLaConversacion('Ojo: ' + noLoAcepto, 'bot', true);
         const pendienteAhora = Contrato.faltantes(mundoDelContrato())[0];
         voz.campo = pendienteAhora ? pendienteAhora.id : null;
         /* El wizard se pone en el paso del nuevo pendiente — caminando, como en el respaldo. */
@@ -4195,10 +4395,11 @@ async function elTurnoDeLaConversacion(dicho){
    * análisis haya entrado y se queda preguntando lo mismo. */
   if (usado === 'revision') { for (let i = 0; i < 30 && !state.analyzed; i++) await new Promise(r => setTimeout(r, 150)); }
   else await new Promise(r => setTimeout(r, 220));
+  /* Lo que el cotizador no aceptó va PRIMERO y sin la etiqueta «Ojo:» (dueño, 26/09): lee como una
+   * línea suya más y el cliente lo ve antes del recibo de lo que sí entró. */
+  if (resultado.aviso) decirEnLaConversacion(elAvisoDicho(resultado.aviso), 'bot', false, 'aviso');
   { const recibo = elReciboDeLoAnotado(resultado.dicho);
     decirEnLaConversacion(recibo ? 'Listo: ' + recibo + '.' : 'Listo.'); }
-  /* Lo que el cotizador no aceptó, dicho aparte: entró el resto, pero el cliente tiene que oírlo. */
-  if (resultado.aviso) decirEnLaConversacion('Ojo: ' + resultado.aviso, 'bot', true);
   /* El seguimiento (quien mire desde fuera) también ve los turnos del respaldo. */
   voz.ultimoTurno = { cuando: Date.now(), dicho, decir: null, valores: null,
     aplicados: resultado.ok ? [resultado.dicho || usado] : [], respaldo: true };
@@ -4208,6 +4409,45 @@ async function elTurnoDeLaConversacion(dicho){
   seguirAlPasoQueToca();
   preguntarLoQueFalta();
   if (!revisado) decirEnLaConversacion('Con eso ya puedo calcular tu pre-cotización: la tienes en el último paso.');
+}
+
+/* EL SALUDO LO ESCRIBE ELLA (dueño, 26/09: «a un LLM no se le obliga a responder textualmente... lo que
+ * necesita es contexto... y saber de qué va el tema», con la frase del saludo delante). Con la API
+ * disponible el saludo sale del MODELO con el contexto de quien llega —su nombre, cuántas cotizaciones y
+ * la última con su estado—; la escalera de frases de la capa queda de RESPALDO cuando no hay modelo o no
+ * contesta a tiempo. Abriendo el archivo a doble clic (sin servidor, con el modelo del navegador) queda
+ * el respaldo: crear esa sesión en frío tarda más que el saludo y la página se vería muda. */
+async function pedirleElSaludoAlModelo(datos){
+  try {
+    if (proveedorIA() !== 'api') return '';
+    const d = datos || {};
+    const n = d.nombre ? String(d.nombre).trim() : '';
+    const u = d.ultima || null;
+    const quien = n
+      ? `Se llama ${n} y ya te conoce: ${Number(d.cuantas) > 1 ? 'han trabajado varias cotizaciones juntos' : 'tiene una cotización contigo'}`
+        + (u && u.mueble ? `; la última fue del ${u.mueble}${u.estado ? ' y quedó en estado «' + u.estado + '»' : ''}` : '') + '.'
+      : 'Es la PRIMERA vez que entra: no sabes nada de él, ni su nombre.';
+    const sistema = [promptDeLaCasa(),
+      'Estás SALUDANDO a alguien que acaba de llegar a la página: no has hablado con él todavía.',
+      'Escribe SOLO el saludo —una o dos frases, en tus palabras, naturales— y con su nombre si lo sabes. Nada de listas ni markdown, ninguna cifra, y no prometas precios, plazos, garantías ni transporte.'].join('\n');
+    const sesion = await sesionDelProveedor(sistema, { temperatura: 0.7 });
+    const crudo = await sesion.pedir({ texto: quien + '\n\nEscribe el saludo.' });
+    try { await sesion.soltar(); } catch (err) { /* la sesión se va sola */ }
+    return limpiarElSaludoDelModelo(crudo);
+  } catch (err) { return ''; }
+}
+/* Lo que devolvió el modelo, en una línea presentable —sin bloques ni markdown, sin comillas de más y
+ * como mucho dos frases—. Si no queda nada legible, devuelve '' y el saludo de respaldo hace su trabajo. */
+function limpiarElSaludoDelModelo(crudo){
+  let t = String(crudo || '').replace(/```[\s\S]*?```/g, ' ').replace(/[#*_>`]/g, ' ')
+    .replace(/\s+/g, ' ').trim().replace(/^["“«']+\s*/, '').replace(/\s*["”»']+$/, '');
+  /* Un modelo puede devolver el JSON del turno (`{"decir": …}`): aquí solo valen sus palabras. */
+  try { const j = JSON.parse(t); if (j && typeof j.decir === 'string') t = j.decir.trim(); } catch (err) { /* prosa */ }
+  const frases = t.split(/(?<=[.!?…])\s+/).slice(0, 2).join(' ').trim();
+  if (frases.length <= 240) return frases;
+  const corte = frases.slice(0, 240);
+  const punto = Math.max(corte.lastIndexOf('.'), corte.lastIndexOf('?'));
+  return (punto > 60 ? corte.slice(0, punto + 1) : corte).trim();
 }
 
 function abrirLaConversacion(){
@@ -4292,7 +4532,18 @@ function cerrarLaConversacion(){
   const zona = document.getElementById('vozFotoZona'), entrada = document.getElementById('vozFotoInput');
   zona.addEventListener('click', () => entrada.click());
   zona.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); entrada.click(); } });
-  entrada.addEventListener('change', () => { loadPhotos(entrada.files); entrada.value = ''; setTimeout(pintarProgresoDeLaConversacion, 600); setTimeout(preguntarLoQueFalta, 900); });
+  entrada.addEventListener('change', () => {
+    loadPhotos(entrada.files); entrada.value = '';
+    /* ELLA LO DICE (dueño, 26/09: «system dont identify when I upload photos»): la subida se quedaba
+     * en silencio —las fotos entraban al caso y el chat no decía nada— y se leía como que el sistema
+     * no las vio. El recibo es del SISTEMA y con la cuenta REAL (`state.photos`, la misma que mira el
+     * contrato en `mundoDelContrato().fotos.cargadas`), no una frase del modelo. */
+    setTimeout(() => {
+      const n = (state.photos || []).length;
+      if (n) decirEnLaConversacion('Listo: ya tengo ' + (n === 1 ? 'tu foto' : 'tus ' + n + ' fotos') + '.');
+    }, 700);
+    setTimeout(pintarProgresoDeLaConversacion, 600); setTimeout(preguntarLoQueFalta, 900);
+  });
   /* El contacto se ESCRIBE (nombre, correo, celular): los mismos campos del formulario, llenados por
    * el cliente — el micrófono no adivina letras ni dígitos (dueño, 25/09). */
   const parejas = [['vozNombre', 'fullName'], ['vozCorreo', 'email'], ['vozCelular', 'phone']];

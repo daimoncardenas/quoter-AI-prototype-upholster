@@ -27,8 +27,11 @@
     //   widthScaled: el ancho describe una sola pieza, así que escala el consumo.
     // Un sofá mide en "puestos" la misma pieza que mide el ancho, por eso no
     // multiplica: contaría dos veces el mismo mueble.
+    // La banda del LARGO (depth) del sofá se abrió a 320: dueño, 26/09: «largo es precisamente largo,
+    // el largo puede alcanzar perfectamente unos 50 más o menos incluso a veces más depende del sofá» —
+    // con 70–120 su propio sofá de 1,90 m salía marcado como «muy fuera de lo habitual».
     furniture: [
-      { id:'sofa',     name:'Sofá',      icon:'▰', hint:'2 a 4 puestos',      order:1, active:true, meters:[12,16],   quantityLabel:'Número de puestos',     unit:['puesto','puestos'],     scaleByQty:false, widthScaled:true,  ranges:{width:[140,320],height:[55,120],depth:[70,120]} },
+      { id:'sofa',     name:'Sofá',      icon:'▰', hint:'2 a 4 puestos',      order:1, active:true, meters:[12,16],   quantityLabel:'Número de puestos',     unit:['puesto','puestos'],     scaleByQty:false, widthScaled:true,  ranges:{width:[140,320],height:[55,120],depth:[70,320]} },
       { id:'sofa-l',   name:'Sofá en L', icon:'⌞', hint:'Seccional',          order:2, active:true, meters:[18,24],   quantityLabel:'Número de módulos',     unit:['módulo','módulos'],     scaleByQty:false, widthScaled:true,  ranges:{width:[200,420],height:[55,120],depth:[70,200]} },
       { id:'poltrona', name:'Poltrona',  icon:'▣', hint:'Una plaza',          order:3, active:true, meters:[5,8],     quantityLabel:'Cantidad de poltronas', unit:['poltrona','poltronas'], scaleByQty:true,  widthScaled:false, ranges:{width:[55,130], height:[55,130],depth:[55,120]} },
       { id:'silla',    name:'Silla',     icon:'♧', hint:'Comedor o auxiliar', order:4, active:true, meters:[1.5,2.5], quantityLabel:'Cantidad de sillas',    unit:['silla','sillas'],       scaleByQty:true,  widthScaled:false, ranges:{width:[30,75],  height:[60,130],depth:[30,80]} },

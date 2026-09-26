@@ -56,7 +56,8 @@ try {
     return { id: c && c.id, tieneAviso: !!(c && c.aviso), frase: c ? conAvisoDelPendiente(c) : '' };
   });
   check('el ancho de 100 cm en un sofá vuelve a ser el pendiente, con aviso', { id: conAviso.id, aviso: conAviso.tieneAviso }, { id: 'pieza.0.width', aviso: true });
-  check('y su frase empieza por «Ojo:»', conAviso.frase.startsWith('Ojo:'), true);
+  check('y su frase trae el aviso, sin la etiqueta «Ojo:» (dueño, 26/09)',
+    /ancho/.test(conAviso.frase) && /muy fuera de lo habitual/.test(conAviso.frase) && !/^Ojo:/.test(conAviso.frase), true);
 
   /* ── 5 · Nunca la misma frase dos veces ───────────────────────────────────────────────────────── */
   const repetidas = await pagina.evaluate(() => {

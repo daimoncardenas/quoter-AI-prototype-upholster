@@ -99,7 +99,7 @@ export function conectarLasPiezas(elTallerDeLaPagina) {
       <label class="pieza-campo">
         <span class="pieza-rotulo">Mueble</span>
         <select class="pieza-mueble" data-mueble="${i}" aria-label="Mueble de la pieza ${i + 1}">
-          <option value="">Elige el mueble…</option>
+          <option value="" data-placeholder="1">Elige el mueble…</option>
           ${catalogo.map(f => `<option value="${C.esc(f.name)}"${p.furniture === f.name ? ' selected' : ''}>${C.esc(f.name)}</option>`).join('')}
         </select>
       </label>

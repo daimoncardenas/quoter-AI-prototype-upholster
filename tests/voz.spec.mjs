@@ -109,14 +109,15 @@ console.log('\nEL MICRÓFONO: SE PIDE AL ABRIR, Y EL NIVEL REAL MUEVE LAS BARRAS
 const alAbrir = await p.evaluate(() => ({ estado: document.getElementById('vozOnda').dataset.estado,
   boton: document.getElementById('vozMic').getAttribute('aria-pressed'), encendido: vozAudio.escuchando,
   nota: document.getElementById('vozNotaAudio').textContent, notaVisible: !document.getElementById('vozNotaAudio').hidden,
+  tituloMic: document.getElementById('vozMic').title,
   pista: !!(vozAudio.stream && vozAudio.stream.getAudioTracks().length) }));
 check('al abrir, el micrófono ya está encendido y la onda dice que escucha',
   [alAbrir.estado, alAbrir.boton, alAbrir.encendido], ['escuchando', 'true', true]);
 check('y la pista del micrófono está viva', alAbrir.pista, true);
 check('y el campo avisa que la está reconociendo', /Te escucho/.test(await p.getAttribute('#vozInput', 'placeholder')), true);
-check('y la nota dice de dónde es el reconocimiento ANTES de hablar',
-  [alAbrir.notaVisible, /micrófono|equipo|navegador/.test(alAbrir.nota)], [true, true]);
-console.log('   nota: ' + alAbrir.nota);
+check('y el texto del reconocimiento se lee en el título del micrófono, sin gastar una línea del panel (dueño, 26/09)',
+  [alAbrir.notaVisible, /navegador|micrófono|equipo/.test(alAbrir.tituloMic)], [false, true]);
+console.log('   nota del micrófono: ' + alAbrir.tituloMic);
 console.log('   reconocimiento: ' + (await p.evaluate(() => vozAudio.reconocedor ? 'activo' : 'este Chromium no lo trae (se escribe)')));
 /* El nivel: se muestrean las alturas mientras corre el dispositivo de mentira. */
 const alturas = [];

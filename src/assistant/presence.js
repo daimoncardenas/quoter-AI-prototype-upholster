@@ -2116,7 +2116,15 @@ export async function empezarLaPresencia() {
      * burbuja al llegar es la misma con la que abre el chat. Se decide una vez, se publica en
      * `window` (el chat vive en la página y la presencia en su módulo) y quien llegue tarde la espera. */
     window.laEsperaDelSaludo = conTiempo(pedirleAlServidor, 1200)
-      .then(d => {
+      .then(async d => {
+        /* EL SALUDO LO ESCRIBE ELLA (dueño, 26/09: «a un LLM no se le obliga a responder textualmente...
+         * lo que necesita es contexto»): con la API disponible, la frase sale del modelo con el contexto
+         * de quien llega —su nombre, sus cotizaciones, la última con su estado— y la escalera de abajo
+         * queda de RESPALDO. La primera vez también la escribe él: ahí la escalera no tiene nada que
+         * decir y el chat caía en las cuatro frases de siempre. */
+        const delModelo = await conTiempo(
+          (typeof window.pedirleElSaludoAlModelo === 'function' ? window.pedirleElSaludoAlModelo(d) : Promise.resolve('')).catch(() => ''), 1600);
+        if (delModelo) { if (d && d.nombre) { try { Store.marcarVisitante({ firstName: d.nombre }); } catch (err) {} } return String(delModelo); }
         const frase = escaleraDeSaludos(d);
         if (frase) { try { Store.marcarVisitante({ firstName: d.nombre }); } catch (err) {} return frase; }
         return deLaFicha || '';

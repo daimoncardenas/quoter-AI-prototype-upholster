@@ -76,6 +76,24 @@ const GUIONES = {
     ],
     alFinal: { piezasMin: 1 }
   },
+  /* LA SESIÓN DEL DUEÑO DEL 26/09: dijo el propósito («las dos cosas»), luego el mueble, luego las
+   * tres medidas —y el «largo 190» cayó fuera de banda—, y la conversación siguió preguntando las
+   * medidas y se fue a la tela. Su queja: «dont respect the order of steps of the wizard». */
+  dueno: {
+    que: 'el caso del 26/09 del dueño: el propósito, el mueble y las medidas que no cerraban',
+    turnos: [
+      'listo sí la retapización de mi sofá sí porfa',
+      'sí las dos cosas',
+      'sofá',
+      'de ancho 190 perdón de ancho no, ahí me equivoqué',
+      'Okay no, este largo 190 de alto 90 y de ancho 140',
+      'ya subí las fotos',
+      'pero no entiendo, ya te di los centímetros de ancho alto y largo',
+      'sí todo el relleno',
+      'sí dame opciones'
+    ],
+    alFinal: { piezasMin: 1 }
+  },
   repite: {
     que: 'el cliente repite lo que ya dio y pregunta el rótulo suelto (la sesión del 25/09, la tercera)',
     turnos: [
@@ -404,11 +422,13 @@ for await (const [i, textoCliente] of (ROBOT ? respuestasDelRobot(Number(arg('ha
   if (entro.length) console.log('  entró  : ' + entro.join(' · '));
   const promete = /\bAnotado:/i.test(suyo.join(' '));
   if (promete && !entro.length) dice.push({ ok: false, texto: 'dice «Anotado: …» y en el formulario no cambió nada' });
-  /* Si ella MISMA dijo por qué no lo aceptó («Ojo: El fondo de 150 cm está muy fuera…»), el dato que no
-   * entró no es una falla — pero solo si el motivo habla de ESA medida, con sus sinónimos (el ancho, el
-   * alto, el largo/fondo/profundidad): un «Ojo» sobre el fondo no disculpa al ancho que también se perdió. */
+  /* Si ella MISMA dijo por qué no lo aceptó (las líneas marcadas como AVISO en el DOM: el dueño mandó
+   * quitar la etiqueta «Ojo:» el 26/09 y el aviso sigue marcado por dentro), el dato que no entró no es
+   * una falla — pero solo si el motivo habla de ESA medida, con sus sinónimos (el ancho, el alto, el
+   * largo/fondo/profundidad): un aviso sobre el fondo no disculpa al ancho que también se perdió. */
   const SINONIMOS = { 'el ancho': /ancho/, 'el alto': /alto|altura/, 'el largo': /largo|fondo|profundidad/ };
-  const avisos = (suyo.join(' ').match(/Ojo:[^.]*\./g) || []).map(a => a.toLowerCase());
+  const avisos = await pagina.evaluate(() => [...document.querySelectorAll('#vozMessages .message[data-tipo="aviso"]')]
+    .map(m => m.textContent.replace(/\s+/g, ' ').trim().toLowerCase()));
   const disculpa = (dice) => { const re = SINONIMOS[dice] || new RegExp(dice.replace(/^el /, '')); return avisos.find(a => re.test(a)); };
   for (const r of PIDE) {
     if (!r.pide.test(textoCliente) || !/\d/.test(textoCliente)) continue;
