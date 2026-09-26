@@ -277,7 +277,8 @@ export function conectarLaVoz(elPuenteDeLaPagina) {
     /* La CALIDAD primero entre acentos iguales (el dueño: «ese ruido al final de la voz»):
      * las voces nuevas del sistema (Natural/Neural/Online/Premium) salen limpias; las viejas chasquean
      * al cerrar la frase. Si solo hay viejas, se usa la mejor que haya — la página no puede inventarlas. */
-    const pesoDeCalidad = v => /natural|neural|online|premium|plus/i.test(v.name) ? 0 : 1;
+    const pesoDeCalidad = v => /natural|neural|online|premium|plus/i.test(v.name) ? 0
+      : (/desktop|compact|espeak|festival|pico|sam\b/i.test(v.name) ? 2 : 1);
     const ordenadas = espanolas.slice().sort((a, b) => pesoDeAcento(a) - pesoDeAcento(b) || pesoDeCalidad(a) - pesoDeCalidad(b));
     const quiere = sexo === 'masculina' ? masculinas : femeninas;
     const laOtra = sexo === 'masculina' ? femeninas : masculinas;
@@ -376,8 +377,14 @@ export function conectarLaVoz(elPuenteDeLaPagina) {
        * cargo del sistema. El cambio de idioma a `voz.lang` se probó y se revirtió. */
       dicho.lang = 'es-CO';
       /* Un pelo más lento que el default (el 1.0 suena a lector de formulario). Se ajusta DE OÍDO —
-       * el dueño escucha, no lo mide una spec (dueño, 25/09: «a voice less robotic... more human»). */
-      dicho.rate = 0.95;
+       * el dueño escucha, no lo mide una spec (dueño, 25/09: «a voice less robotic... more human»).
+       * Y EL VAIvÉN: ni el mismo tono en todas las frases (dueño, 26/09: «humanize more the voice»).
+       * El ritmo y el tono cambian un pelo de una línea a otra —sacados de la propia frase, así que la
+       * misma frase suena igual— dentro de un rango que no se nota como efecto: 0,93–0,98 de ritmo y
+       * 0,99–1,05 de tono. */
+      const vaiven = (() => { let h = 0; for (let i = 0; i < limpio.length; i++) h = (h * 31 + limpio.charCodeAt(i)) % 997; return h / 997; })();
+      dicho.rate = 0.93 + vaiven * 0.05;
+      dicho.pitch = 0.99 + vaiven * 0.06;
       const elegida = laVozDelAsistente();
       /* Una voz que el motor no acepte (lista vieja) no puede tumbar su frase: se queda la de por
        * defecto del sistema. */

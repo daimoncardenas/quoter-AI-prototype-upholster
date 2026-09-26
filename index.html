@@ -1221,7 +1221,51 @@ function dejarLaConfirmacion(){
   try{syncActionsHeight()}catch(err){}
   return true;
 }
+/* EL ADAPTADOR DEL NÚCLEO (dueño, 26/09, la crítica firmada): el núcleo no toca el DOM —se le enchufa
+ * esta página— y así, el día que un control cambie de forma, el cerebro no se entera. `leer` es lo que
+ * Lía recibe (describe), `escribir` la única puerta de escritura, y `avanzar` el caminador de verdad. */
+function conectarElNucleo(){
+  if (!(window.Wizard && Wizard.core)) return false;
+  Wizard.core.conectar({
+    leer: () => {
+      let p = {};
+      try { p = (typeof ACI !== 'undefined' && ACI.losCamposDelPaso) ? (ACI.losCamposDelPaso() || {}) : {}; } catch (e) {}
+      let foco = null; try { foco = elCampoDeLaPantalla(); } catch (e) {}
+      return { etiqueta: p.etiqueta || null, paso: state.step, campos: p.campos || [], pendiente: foco };
+    },
+    /* La única puerta de escritura: acepta el DATO (los `valores` del modelo) o la FRASE (lo que dijo
+     * el cliente), como los dos caminos de la app, y contesta siempre con el ACK. */
+    escribir: async (path, value, texto) => {
+      const a = await aplicarValorDelContrato(path, value, texto).catch(() => ({ ok: false }));
+      if (a && a.ok) return a;
+      return aplicarLoDicho(path, texto || String(value == null ? '' : value)).catch(() => ({ ok: false }));
+    },
+    avanzar: async (destino) => {
+      const ok = await caminarElWizard(destino);
+      return ok ? { ok: true, step: state.step } : { ok: false, reason: 'NO_AVANZO' };
+    }
+  });
+  /* La MANO y el TECLADO también escriben: cada cambio real sube la revisión, para que una propuesta
+   * vieja (la respuesta lenta del modelo) no pise lo que el cliente acaba de poner. */
+  ['input', 'change'].forEach(t => document.addEventListener(t, () => {
+    try { window.Wizard.core.oido('mano', { objetivo: (event.target && (event.target.id || event.target.name)) || null }); } catch (e) {}
+  }, true));
+  return true;
+}
+/* Se enchufa al arrancar: el núcleo queda con el adaptador de esta página puesto. */
+try { conectarElNucleo(); } catch (e) {}
 function showStep(n){
+  /* LA TRAZA DE LOS PASOS (dueño, 26/09: «por esta misma razon es necesario el testing con 2 browser...
+   * no se puede saber que funciona correctamente cualquier implementacion»): cada cambio de paso queda
+   * anotado con QUIÉN lo pidió —la pila del que llama— para poder cazar el salto que nadie pidió. Se
+   * lee desde fuera (`window.__pasos`) y no cuesta nada cuando nadie la mira. */
+  try {
+    const pila = new Error().stack || '';
+    const firma = window.__porQuien || '';
+    window.__porQuien = null;
+    window.__pasos = (window.__pasos || []).concat([{ de: state.step, a: n, cuando: Date.now(), firma,
+      quien: (pila.split('\n')[2] || '').replace(/^\s*at\s*/, '').replace(/\s*\(.*\)$/, '').slice(0, 70) }]).slice(-60);
+  } catch (e) {}
   dejarLaConfirmacion();
   state.step=n; steps.forEach(s=>s.classList.toggle('active',+s.dataset.step===n));
   /* El estado de la barra se decide por el ORDEN del recorrido, no por el número del paso: los
@@ -2474,7 +2518,7 @@ function estadoDelCotizador(c){
      * la tela con el mueble a la vista, o pedía unas medidas antes del mueble, y la respuesta del cliente
      * caía en el parser de OTRO campo — «ese mueble no está en el catálogo», el desorden medido. Ahora se
      * le dice EL campo, y que es el único de este turno: los demás llegan cuando les toque. */
-    if (pantalla.faltan.length) pagina.push(`LO QUE TOCA AHORA, y es lo ÚNICO que le preguntas en este turno: «${pantalla.faltan[0]}». Pídelo con tus palabras, como quieras, pero ese y solo ese; los demás campos de esta pantalla se piden después, uno por uno, en su orden. Si él contesta de otra cosa, se anota si se puede y se vuelve a este campo.`);
+    if (pantalla.faltan.length) pagina.push(`LO QUE TOCA AHORA, y es lo ÚNICO que le preguntas en este turno: «${pantalla.faltan[0]}». Pídelo con tus palabras, como quieras, pero ese y solo ese; los demás campos de esta pantalla se piden después, uno por uno, en su orden. Si él contesta de otra cosa, se anota si se puede y se vuelve a este campo. UNA SOLA INFORMACIÓN POR PREGUNTA (dueño, 26/09: «each question only ask one information»): si el campo es una medida, preguntas ESA medida y no las otras. Sí puedes ANUNCIAR lo que falta y pedir la primera, como él lo pide: «me faltan los siguientes datos alto, ancho y largo... pero vamos primero con el ancho: dime cuánto es el ancho de tu mueble en centímetros, por favor» — el anuncio es contexto, la pregunta es una sola. Y NO PREGUNTES NADA DE PASOS A LOS QUE NO HAS LLEGADO (dueño, 26/09: «por qué putas me pide nombre o correo y demás, si eso es del paso final»): el contacto, la ciudad, la tela y el presupuesto son de los últimos pasos — no los nombres hasta que el cliente esté en ellos.`);
     /* …y lo que está ESCRITO pero el cotizador no acepta: el paso no avanza hasta corregirlo, así que
      * es lo primero que se pide (dueño, 25/09: «lia is in disorder… dont respect the step by step»). */
     const porCorregir = (pantalla.campos || []).filter(c => c.lleno && c.aviso);
@@ -2753,12 +2797,14 @@ function decirEnLaConversacion(texto, quien = 'bot', callar = false, tipo = null
   voz.mensajes.push({ quien, texto });
   guardarLaMemoriaPresente();      // la memoria presente se escribe con cada mensaje
   caja.scrollTop = caja.scrollHeight;
-  /* TODAS las líneas del chat las dice ella en voz alta (dueño, 26/09: «is important that all messages
-   * that exist in the chat should say the assistant»): los recibos («Anotado: …») y los avisos
-   * («Ojo: …») se oían solo con los ojos. El parámetro `callar` queda como palanca de UNA línea para
-   * volver a silenciar una línea sin tocar la función (hoy ninguna lo usa). Y con la ventana CERRADA
-   * no habla nunca: el turno en camino llegaba después del cierre y ella seguía sonando (dueño, 25/09). */
-  if (quien === 'bot' && !callar && voz.abierta) hablarConSuVoz(texto);
+  /* QUÉ SE DICE EN VOZ ALTA (dueño, 26/09). Primero: «is important that all messages that exist in the
+   * chat should say the assistant» — las preguntas, los cierres y sus frases se oyen. Y después, el
+   * ajuste de la tarde: «lo de anotado puede escribirse en el chat... pero sobra que lo diga la AI» —
+   * los RECIBOS («Anotado: …», «Listo: …») se quedan escritos y NO se dicen: el dato ya lo dice ella
+   * con sus palabras, y oírlo dos veces es lo que sobra. Los AVISOS siguen como estaban (su contenido
+   * lo dice ella; el aviso es la marca interna). El parámetro `callar` sigue como palanca de UNA línea. Y con la ventana CERRADA no habla nunca: el
+   * turno en camino llegaba después del cierre y ella seguía sonando (dueño, 25/09). */
+  if (quien === 'bot' && !callar && tipo !== 'recibo' && voz.abierta) hablarConSuVoz(texto);
 }
 
 /* La rama del estado, como cadena de ids: es lo que el cotizador llama «el caso» que se está
@@ -2897,6 +2943,7 @@ const numeroDicho = t => {
  * esta conversación todavía no sabe llenar se entrega al formulario, con su paso a la vista. */
 async function aplicarLoDicho(id, texto){
   const t = normalizar(texto);
+  try { (window.__escrituras = window.__escrituras || []).push({ id, texto, quien: (new Error()).stack.split('\n')[2] || '' }); } catch (e) {}
   switch (id) {
     /* La RAMA entera de una vez: el modelo elige el caso y anota el id de su contrato; aquí se
      * aplica la cadena nodo por nodo con los MISMOS controles (la tarjeta de la línea, la del
@@ -3280,13 +3327,22 @@ const MANERAS_DE_PREGUNTAR = {
     (f) => `Cuando puedas, ${f.restantes} ${f.restantes === 1 ? 'foto' : 'fotos'} del mueble aquí abajo y seguimos.`,
     (f) => `Con ${f.restantes} ${f.restantes === 1 ? 'foto' : 'fotos'} que le eche un ojo al mueble me alcanza: súbelas abajo.`
   ],
+  /* UNA PREGUNTA, UNA INFORMACIÓN (dueño, 26/09: «each question only ask one information»). Antes:
+   * «¿Me mides el mueble? Ancho, alto y largo, en centímetros.» — tres datos de un golpe, y en su corrida
+   * del 26/09 eso fue el «Me faltan medidas» en bucle. El banco no sabe cuál medida falta (para eso está
+   * la rama del instrumento de la pantalla, que sí lo sabe y pregunta ESA), así que aquí se pide una y se
+   * sigue con la otra. */
   medidas: [
-    () => 'Para la tela necesito los centímetros: ancho, alto y largo.',
-    () => '¿Me mides el mueble? Ancho, alto y largo, en centímetros.'
+    () => 'Falta una medida del mueble. ¿Me la dices en centímetros?',
+    () => 'Me falta una medida del mueble: dime esa y seguimos con la otra.'
   ],
   revision: [ () => 'Cuando quieras le echo un ojo: dime «revisa» y la miro.' ],
   atencion: [ () => '¿Me dices la ciudad? La necesito para la entrega o el servicio.' ],
-  contacto: [ () => 'Para la pre-cotización: tu nombre, tu correo y tu celular.' ]
+  /* Lo mismo con el contacto: una cosa por pregunta (el paso los pide uno por uno). */
+  contacto: [
+    () => 'Para la pre-cotización: ¿me dices tu nombre completo?',
+    () => '¿Me regalas tu nombre completo para dejar la pre-cotización?'
+  ]
 };
 /* El mensaje del campo del CONTRATO, dicho en palabras: en el contrato viene como TEXTO o como FUNCIÓN
  * del mundo (las fotos: «Agrega 3 fotos más…» depende de cuántas lleva ya). Sin resolver la función,
@@ -3302,6 +3358,29 @@ function elBancoDePreguntas(f){
   const min = elMinimoDeFotos();
   const extra = f.id === 'fotos' ? { restantes: Math.max(1, min - state.photos.length) } : {};
   const de = (m) => (typeof m === 'function' ? m(extra) : m);
+  /* UNA PREGUNTA, UNA INFORMACIÓN (dueño, 26/09: «each question only ask one information... if Lia
+   * needs "ancho, largo y alto"... each one is separate questions... each input is a question
+   * separate... the precision is important»). Las medidas de una pieza se preguntan de a UNA, y se
+   * puede ANUNCIAR lo que falta en la misma frase —con su ejemplo: «me faltan los siguientes datos
+   * alto, ancho y largo... pero vamos primero con el ancho: dime cuánto es el ancho de tu mueble en
+   * centímetros, por favor»—: el anuncio es contexto, la PREGUNTA es una sola. */
+  const porMedida = /^pieza\.(\d+)\.(width|height|depth)$/.exec(String(f.instrumento || ''));
+  if (porMedida) {
+    const CUAL = { width: 'ancho', height: 'alto', depth: 'largo' }[porMedida[2]];
+    const fila = document.querySelectorAll('.piezas-lista .pieza-fila')[+porMedida[1]];
+    const NOMBRE = [['width', 'ancho'], ['height', 'alto'], ['depth', 'largo']];
+    const faltan = fila ? NOMBRE.filter(([m]) => !Number((fila.querySelector(`[data-medida="${m}"]`) || {}).value)).map(([, n]) => n) : [];
+    const anuncio = faltan.length > 1 ? `Me faltan los siguientes datos: ${faltan.join(', ')}. Pero vamos primero con el ${CUAL}: ` : '';
+    const DICHO = { width: 'dime cuánto es el ancho de tu mueble en centímetros, por favor.',
+      height: 'dime cuánto es el alto de tu mueble en centímetros, por favor.',
+      depth: 'dime cuánto es el largo de tu mueble en centímetros, por favor.' }[porMedida[2]];
+    const pregunta = `dime cuánto es el ${CUAL} de tu mueble en centímetros, por favor.`;
+    const conMinuscula = (s) => anuncio ? `${anuncio}${s[0].toLowerCase()}${s.slice(1)}` : s;
+    return [ anuncio ? `${anuncio}${pregunta}` : `${pregunta[0].toUpperCase()}${pregunta.slice(1)}`,
+      `¿Cuánto mide de ${CUAL}?`,
+      conMinuscula(`Dime el ${CUAL} en centímetros, por favor.`),
+      conMinuscula(`¿Me das el ${CUAL}? Si es aproximado, sirve igual.`) ];
+  }
   return [de(PREGUNTA_VOZ[f.id]), de(OTRA_PREGUNTA[f.id]), ...((MANERAS_DE_PREGUNTAR[f.id] || []).map(de))].filter(Boolean);
 }
 /* Palabra por palabra, sin tildes ni signos: la forma en que se comparan dos frases para no repetirlas
@@ -3409,6 +3488,15 @@ function caminarElWizard(destino){
     /* No se pisa el último paso con un clic (es el envío), salvo que el destino sea él mismo. */
     if (v.length - 1 === actual + 1 && Number(v[actual + 1]) === 15 && Number(destino) !== 15) return false;
     const antes = state.step;
+    /* NO SE CAMINA POR UN PASO A MEDIO LLENAR (dueño, 26/09): la traza de los dos navegadores mostró el
+     * salto 1→4→17 —con las medidas vacías— pedido por ESTE caminador, que iba al paso de un campo del
+     * contrato (el relleno, el 17) saltándose lo que el cliente aún no había llenado. Antes de pulsar,
+     * el paso actual tiene que estar lleno, leído del propio formulario: si le falta algo, se para aquí
+     * y la conversación pregunta lo de ESTE paso. El botón es el que manda, y con él no se pasa. */
+    const lleno = (() => { try { const p = ACI.losCamposDelPaso(); return !p || !(p.campos || []).some(c => !c.lleno); } catch (e) { return true; } })();
+    if (!lleno) return false;
+    /* Se firma el clic: la traza de `showStep` dirá que fue el caminador, y hacia dónde iba. */
+    try { window.__porQuien = 'caminarElWizard→' + destino; } catch (e) {}
     try { nextButton.click(); } catch (e) { return false; }
     if (state.step === antes) return false;
   }
@@ -3452,7 +3540,10 @@ function seguirAlPasoQueToca(){
      * se salta a la vista (antes había un `showStep(destino)` de escape y ella llegaba a pasos que el
      * cliente no puede alcanzar a mano). Se queda donde está y pregunta lo del paso que tiene delante,
      * que es lo que el contrato ES ahora. */
-    caminarElWizard(destino);
+    /* La autoridad del avance es el NÚCLEO (dueño, 26/09): el caminador pasa a ser su adaptador y el
+     * núcleo contesta STEP_INCOMPLETE con lo que falta, o deja pasar. */
+    if (window.Wizard && Wizard.core) { Wizard.core.advance({ destino, expectedRevision: Wizard.core.revision() }); }
+    else caminarElWizard(destino);
   } catch (e) {}
 }
 function preguntarLoQueFalta(){
@@ -3468,12 +3559,23 @@ function preguntarLoQueFalta(){
    * del recorrido, el cierre) y para juzgar cada valor que entra. */
   const enPantalla = elCampoDeLaPantalla();
   voz.campoDelPaso = enPantalla ? enPantalla.id : null;
-  /* LOS INSUMOS SÍ SON DEL CLIENTE (dueño, 26/09: la regla vieja «dont show "insumos" to client» se
-   * borró): lo que se le pregunta es el RELLENO —asks.relleno, «¿solo la tela o el relleno también?»—
-   * y sus promedios se llenan solos. Su campo ya no se salta al elegir el pendiente del contrato. */
-  const delContrato = faltantes[0];
+  /* NO SE PREGUNTA LO QUE AÚN NO TOCA (dueño, 26/09: «yo me refiero es porque putas me pide nombre o
+   * correo y demás... si eso es del paso final»): del contrato solo entran los campos cuyo paso YA está
+   * en el camino hecho o es el actual; los de más adelante se callan hasta que el cliente llegue. Antes
+   * se tomaba el primero de la lista y por ahí se colaban el contacto y la ciudad a mitad del recorrido. */
+  const delContrato = (() => {
+    const v = (typeof pasosVisibles === 'function' ? pasosVisibles() : []);
+    const i = v.indexOf(state.step);
+    const toca = (f) => {
+      const n = f && f.paso != null ? Number(f.paso) : null;
+      if (n == null) return true;                     /* sin paso (las fotos): son del momento */
+      const j = v.indexOf(n);
+      return j < 0 || i < 0 || j <= i;                /* ya pasó, es el actual, o no está en el recorrido */
+    };
+    return faltantes.find(toca) || null;
+  })();
   const f = enPantalla
-    ? { id: enPantalla.campo || ('pantalla.' + enPantalla.id), etiqueta: enPantalla.pregunta,
+    ? { id: enPantalla.campo || ('pantalla.' + enPantalla.id), etiqueta: enPantalla.pregunta, instrumento: enPantalla.id,
         mensaje: elTextoDelPendienteDeLaPantalla(enPantalla), foco: enPantalla.id, deLaPantalla: true, aviso: enPantalla.aviso || null, opciones: enPantalla.opciones }
     : delContrato;
   /* La zona de fotos está SIEMPRE a la vista (el dueño lo pidió con la captura: «pensé que el
@@ -3481,9 +3583,10 @@ function preguntarLoQueFalta(){
    * cosa). Subir fotos no espera a que el contrato las pida. */
   /* El contrato está completo, o sólo le falta la FIRMA del cliente (los datos de contacto ya
    * están y la casilla no): en los dos casos el cierre sigue aquí — nunca se le manda al paso. */
+  if (!f) { voz.campo = null; return false; }   /* lo que falta todavía no llega: no se pregunta */
   const soloLaFirma = faltantes.length === 1 && f.id === 'contacto'
     && ['fullName', 'email', 'phone'].every(i => ((document.getElementById(i) || {}).value || '').trim());
-  if (!f || soloLaFirma) {
+  if (soloLaFirma) {
     voz.campo = null;
     return elCierreDeLaConversacion();
     return false;
@@ -3918,6 +4021,10 @@ async function aplicarFilaDeLaLista(datos){
 /* Los valores del modelo, al formulario: por el MISMO camino que lo escrito (el parser y el
  * contrato de cada campo validan otra vez — el modelo nunca es la última palabra). */
 async function aplicarValorDelContrato(id, valor, texto){
+  /* TRAZA DE LAS ESCRITURAS (dueño, 26/09: «esa memoria de lo que el cliente le ha dicho... está muy
+   * mala» — el «120» del alto apareció anotado en el presupuesto). Cada valor que entra a un campo
+   * queda firmado con quién lo pidió: es la única forma de cazar al que escribe fuera de su turno. */
+  try { (window.__escrituras = window.__escrituras || []).push({ id, valor, quien: (new Error()).stack.split('\n')[2] || '' }); } catch (e) {}
   const numero = n => String(n).replace(/\./g, '');
   switch (id) {
     /* El modelo elige el CASO: si su turno trae `rama` (el id del contrato), se aplica la cadena
@@ -4120,6 +4227,10 @@ async function responderEnLaConversacion(texto){
   }
 }
 async function elTurnoDeLaConversacion(dicho){
+  /* LA REVISIÓN DEL TURNO: la foto que el modelo tenía delante cuando se le armó el contexto. Sus
+   * `valores` vuelven firmados con ella y, si la mano escribió mientras pensaba, rebotan con
+   * STALE_STATE en vez de pisar (dueño, 26/09: voz, chat, ratón y teclado tocan el mismo estado). */
+  try { voz.revisionDelTurno = (window.Wizard && Wizard.core) ? Wizard.core.revision() : null; } catch (e) {}
   /* El turno SIEMPRE procesa (lo que el cliente dijo entra al caso aunque cierre al medio); lo que
    * queda cortado con la ventana cerrada es hablar: `decirEnLaConversacion` y `preguntarLoQueFalta`
    * tienen su propia puerta (dueño, 25/09: «despite the modal had been closed Lia continue speak»). */
@@ -4176,7 +4287,22 @@ async function elTurnoDeLaConversacion(dicho){
           }
           for (const [id, valor] of Object.entries(turno.valores)) {
             if (aplicados.length && id === pendiente) continue;
-            const r = await aplicarValorDelContrato(id, valor, dicho).catch(() => ({ ok: false }));
+            /* SOLO LO QUE ESTÁ A LA VISTA, ADEMÁS DEL PENDIENTE (dueño, 26/09: el «1.90» del largo cayó
+             * en el presupuesto —«Anotado: presupuesto Entre $ 140.000 y $ 160.000»— y el largo se quedó
+             * vacío, con «Me faltan medidas» de bucle). Un valor del modelo para OTRO campo solo entra si
+             * ese campo se está viendo en ESTE paso (lo que el cliente dice «de paso» de lo que tiene
+             * delante); los que son de otro paso se pierden — mejor perderlos que escribir en el campo
+             * equivocado. El pendiente sigue entrando por el parser de arriba. */
+            const enEstePaso = (() => { try { const p = ACI.losCamposDelPaso();
+              return (p.campos || []).some(c => c.id === id || CAMPO_DEL_INSTRUMENTO[c.id] === id);
+            } catch (e) { return false; } })();
+            if (!enEstePaso) continue;
+            /* POR EL NÚCLEO, con la revisión del turno: el ACK es la única razón para decir que algo
+             * entró (dueño, 26/09) y lo que llegue viejo se rebota sin tocar el formulario. */
+            const r = (window.Wizard && Wizard.core)
+              ? await Wizard.core.apply({ path: id, value: valor, source: 'modelo', texto: dicho, expectedRevision: voz.revisionDelTurno })
+              : await aplicarValorDelContrato(id, valor, dicho).catch(() => ({ ok: false }));
+            if (r && r.reason === 'STALE_STATE') { try { console.info('[núcleo] propuesta vieja rebotada', id, r.currentRevision, r.expectedRevision); } catch (e) {} }
             if (r && r.ok) { aplicados.push(r.dicho || id); if (r.aviso) noLoAcepto = r.aviso; }
           }
           /* LO QUE ÉL CONFIRMA, SE ANOTA (dueño, 25/09): el cliente mide en metros y el modelo pregunta
@@ -4200,7 +4326,16 @@ async function elTurnoDeLaConversacion(dicho){
            * parser y el modelo puede mandarlo vacío). Y si el parser tampoco, se escribe en el control
            * del paso —la red de los campos nuevos—, con su guarda de medidas. */
           if (!aplicados.length) {
-            const candidatos = [pendiente].concat(Contrato.faltantes(mundoDelContrato()).map(x => x.id))
+            /* EL BARRIDO SE ACABA EN LO QUE ESTÁ A LA VISTA (dueño, 26/09: «esa memoria de lo que el
+             * cliente le ha dicho... está muy mala»). Antes, si nada entraba, la frase se probaba contra
+             * TODOS los campos que al contrato le faltan, hasta que uno la aceptara: el «120» del alto
+             * llegó al presupuesto —«Entre $ 100.000 y $ 120.000»— y ahí quedó anotado, con el alto
+             * vacío y el bucle de «Me faltan medidas» detrás. Ahora solo se prueban el campo que ella
+             * espera y los que el paso tiene DELANTE; lo que es de otro paso no se toca. */
+            const aLaVista = (() => { try { const p = (typeof ACI !== 'undefined' && ACI.losCamposDelPaso) ? ACI.losCamposDelPaso() : null;
+              return (p && p.campos || []).map(c => c.id); } catch (e) { return []; } })();
+            const candidatos = [pendiente]
+              .concat(aLaVista.map(id => CAMPO_DEL_INSTRUMENTO[id] || id))
               .filter((x, i, a) => x && a.indexOf(x) === i);
             for (const c of candidatos) {
               let r = { ok: false };
@@ -4267,7 +4402,7 @@ async function elTurnoDeLaConversacion(dicho){
         /* El recibo dice lo anotado UNA vez y sin la etiqueta de la rama (no es un dato: «Retapizado
          * de muebles · Retapizado de muebles · rama Retapizado de muebles» se lee a robot). */
         { const recibo = elReciboDeLoAnotado(aplicados);
-          if (recibo) decirEnLaConversacion('Anotado: ' + recibo + '.'); }
+          if (recibo) decirEnLaConversacion('Anotado: ' + recibo + '.', 'bot', false, 'recibo'); }
         await new Promise(r => setTimeout(r, 220));
         /* El cerco juzga también la conversación (el modelo nunca tiene la última palabra): una
          * cifra fuera de la estimación y del catálogo, una promesa o una frase que no habla del
@@ -4347,7 +4482,12 @@ async function elTurnoDeLaConversacion(dicho){
     if (pideTiempo || cortesia) { decirAlgoHumano(pideTiempo ? LAS_CALMAS : LOS_ACUSES); return; }
     preguntarLoQueFalta(); return;
   }
-  const porLlenar = [campo].concat(Contrato.faltantes(mundoDelContrato()).map(c => c.id))
+  /* …y aquí también se acaba en lo que está A LA VISTA (dueño, 26/09, «esa memoria… está muy mala»):
+   * probar la frase contra todos los campos que faltan es lo que llevaba el «120» del alto al
+   * presupuesto. El pendiente y los campos del paso delante; nada más. */
+  const aLaVistaAqui = (() => { try { const pp = (typeof ACI !== 'undefined' && ACI.losCamposDelPaso) ? ACI.losCamposDelPaso() : null;
+    return (pp && pp.campos || []).map(c => c.id); } catch (e) { return []; } })();
+  const porLlenar = [campo].concat(aLaVistaAqui.map(id => CAMPO_DEL_INSTRUMENTO[id] || id))
     .filter(id => id && ['fotos', 'estimacion', 'precio'].indexOf(id) < 0)
     .filter((v, i, a) => a.indexOf(v) === i);
   let resultado = { ok: false, motivo: 'no te entendí' };
@@ -4399,7 +4539,7 @@ async function elTurnoDeLaConversacion(dicho){
    * línea suya más y el cliente lo ve antes del recibo de lo que sí entró. */
   if (resultado.aviso) decirEnLaConversacion(elAvisoDicho(resultado.aviso), 'bot', false, 'aviso');
   { const recibo = elReciboDeLoAnotado(resultado.dicho);
-    decirEnLaConversacion(recibo ? 'Listo: ' + recibo + '.' : 'Listo.'); }
+    decirEnLaConversacion(recibo ? 'Listo: ' + recibo + '.' : 'Listo.', 'bot', false, recibo ? 'recibo' : null); }
   /* El seguimiento (quien mire desde fuera) también ve los turnos del respaldo. */
   voz.ultimoTurno = { cuando: Date.now(), dicho, decir: null, valores: null,
     aplicados: resultado.ok ? [resultado.dicho || usado] : [], respaldo: true };
@@ -4540,7 +4680,7 @@ function cerrarLaConversacion(){
      * contrato en `mundoDelContrato().fotos.cargadas`), no una frase del modelo. */
     setTimeout(() => {
       const n = (state.photos || []).length;
-      if (n) decirEnLaConversacion('Listo: ya tengo ' + (n === 1 ? 'tu foto' : 'tus ' + n + ' fotos') + '.');
+      if (n) decirEnLaConversacion('Listo: ya tengo ' + (n === 1 ? 'tu foto' : 'tus ' + n + ' fotos') + '.', 'bot', false, 'recibo');
     }, 700);
     setTimeout(pintarProgresoDeLaConversacion, 600); setTimeout(preguntarLoQueFalta, 900);
   });

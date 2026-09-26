@@ -175,7 +175,7 @@ const avanzarSiCerro = (pagina) => pagina.evaluate(async () => {
   const quedan = enVista ? (enVista.campos || []).filter(c => !c.lleno && c.id !== 'insumos').length : 1;
   if (quedan) return false;
   const b = document.getElementById('nextButton');
-  if (b && !b.disabled) { b.click(); await new Promise(r => setTimeout(r, 900)); return true; }
+  if (b && !b.disabled) { window.__porQuien = 'la herramienta (referencia)'; b.click(); await new Promise(r => setTimeout(r, 900)); return true; }
   return false;
 });
 
@@ -234,6 +234,10 @@ try {
     /* Las fotos las sube él con la mano (el chat solo las cobra): si el paso las está pidiendo, se
      * suben en los dos antes de la frase del turno. */
     await subirFotos(uno); await subirFotos(dos);
+    /* LA TRAZA DE LOS PASOS: cuántos movimientos llevaba cada navegador antes del turno, para leer
+     * solo los de este (y con quién los pidió: la pila del que llama, en `showStep`). */
+    const marcaA = await uno.evaluate(() => (window.__pasos || []).length);
+    const marcaB = await dos.evaluate(() => (window.__pasos || []).length);
     await hablar(uno, turno);
     await conLaMano(dos, turno);
     await avanzarSiCerro(dos);
@@ -246,6 +250,11 @@ try {
       diferencias.push({ turno: i + 1, dicho: turno, uno: `${a.paso} ${JSON.stringify(a.faltan)}`, dos: `${b.paso} ${JSON.stringify(b.faltan)}` });
       console.log('  ⚠ DIFERENTES: ' + (pasosDistintos ? `el paso (${a.paso} contra ${b.paso}) ` : '') + (faltanDistintos ? 'lo que falta ' : ''));
     } else console.log('  ✔ los dos en el mismo sitio');
+    /* LOS MOVIMIENTOS DEL TURNO, con su autor: si hay un salto, aquí sale quién lo pidió. */
+    const movDe = (pagina, desde) => pagina.evaluate((d) => (window.__pasos || []).slice(d).map(p => `paso ${p.de}→${p.a} ${p.firma ? 'por ' + p.firma : 'por ' + p.quien}`), desde);
+    const movA = await movDe(uno, marcaA), movB = await movDe(dos, marcaB);
+    if (movA.length) console.log('  pasos (1, hablando): ' + movA.join(' | '));
+    if (movB.length) console.log('  pasos (2, referencia): ' + movB.join(' | '));
     await uno.screenshot({ path: `${CAPTURAS}/${String(i + 1).padStart(2, '0')}-1-hablando.png` });
     await dos.screenshot({ path: `${CAPTURAS}/${String(i + 1).padStart(2, '0')}-2-referencia.png` });
   }

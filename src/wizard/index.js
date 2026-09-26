@@ -15,6 +15,8 @@ import { laAtencionDeclarada, pintarLasCiudades, pintarElResumen, conectarElCont
 import { correrLaValidacion, conectarLaValidacion } from './validacion.js';
 
 window.Wizard = {
+  /* EL NÚCLEO (dueño, 26/09, tras la crítica de su revisor): estado, revisión y órdenes. */
+  core: (typeof window !== 'undefined' ? window.WizardCore : null),
   mueble: { pintar: pintarElMueble },
   compra: { pintarTodo: pintarLaCompra, pintarLinea: pintarLaLinea, pintarProposito: pintarElProposito, pintarSaber: pintarElSaber, pintarRuta: pintarLaRuta, conectar: conectarLaCompra },
   piezas: {
